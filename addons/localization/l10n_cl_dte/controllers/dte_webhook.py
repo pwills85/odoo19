@@ -2,14 +2,28 @@
 """
 DTE Webhook Controller
 Recibe notificaciones del DTE Service cuando termina de procesar DTEs
+
+Seguridad implementada:
+- Rate limiting (10 req/min por IP)
+- IP whitelist configurable
+- HMAC signature validation
+- Logging detallado de intentos
 """
 
 from odoo import http
 from odoo.http import request
+from werkzeug.exceptions import TooManyRequests
+from functools import wraps
 import logging
 import json
+import time
+import hmac
+import hashlib
 
 _logger = logging.getLogger(__name__)
+
+# Cache en memoria para rate limiting (en producción usar Redis)
+_request_cache = {}
 
 
 class DTEWebhookController(http.Controller):
@@ -20,38 +34,35 @@ class DTEWebhookController(http.Controller):
     """
     
     @http.route('/api/dte/callback', type='json', auth='public', methods=['POST'], csrf=False)
+    @rate_limit(max_calls=10, period=60)
     def dte_callback(self, **kwargs):
         """
-        Recibe notificaciones del DTE Service
+        Webhook para recibir notificaciones del DTE Service
+        
+        Seguridad:
+        - Rate limiting: 10 req/min por IP
+        - IP whitelist configurable
+        - HMAC signature validation
         
         Payload esperado:
         {
-            "webhook_key": "secret_key",
-            "dte_id": "DTE-123",
-            "status": "sent|accepted|rejected|error",
-            "track_id": "TRACK-XXX",
-            "xml_b64": "base64...",
-            "message": "Mensaje descriptivo"
+            'dte_id': 'DTE-123',
+            'status': 'sent',
+            'track_id': '12345',
+            'xml_b64': 'base64...',
+            'message': 'Mensaje opcional'
         }
         
-        Returns:
-            dict: {'success': bool, 'move_id': int, 'status': str}
+        Headers requeridos:
+        - X-Webhook-Signature: HMAC-SHA256 del payload
         """
         try:
-            data = request.jsonrequest
-            
-            _logger.info(
-                "DTE Webhook recibido: dte_id=%s, status=%s",
-                data.get('dte_id'),
-                data.get('status')
-            )
-            
-            # 1. Validar webhook key
-            ICP = request.env['ir.config_parameter'].sudo()
-            expected_key = ICP.get_param('dte.webhook_key', 'default_key')
-            
-            if data.get('webhook_key') != expected_key:
-                _logger.warning(
+            # 1. Verificar IP whitelist
+            ip = request.httprequest.remote_addr
+            if not check_ip_whitelist(ip):
+                _logger.error(
+                    "Webhook rejected: IP not in whitelist",
+                    extra={'ip': ip}
                     "Intento de webhook con key inválida desde %s",
                     request.httprequest.remote_addr
                 )
