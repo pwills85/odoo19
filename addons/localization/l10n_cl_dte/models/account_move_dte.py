@@ -35,11 +35,15 @@ class AccountMoveDTE(models.Model):
         ('voided', 'Anulado'),
     ], string='Estado DTE', default='draft', tracking=True, copy=False)
     
-    dte_type = fields.Selection([
-        ('33', 'Factura Electrónica'),
-        ('61', 'Nota de Crédito Electrónica'),
-        ('56', 'Nota de Débito Electrónica'),
-    ], string='Tipo DTE', compute='_compute_dte_type', store=True)
+    # Campo relacionado con l10n_latam_document_type para integración Odoo base
+    dte_code = fields.Char(
+        string='Código DTE',
+        related='l10n_latam_document_type_id.code',
+        store=True,
+        readonly=True,
+        help='Código del tipo de documento DTE (33, 34, 52, 56, 61). '
+             'Integrado con l10n_latam_document_type para máxima compatibilidad Odoo 19 CE.'
+    )
     
     dte_folio = fields.Char(
         string='Folio DTE',
@@ -114,25 +118,12 @@ class AccountMoveDTE(models.Model):
     # CAMPOS COMPUTADOS
     # ═══════════════════════════════════════════════════════════
     
-    @api.depends('move_type', 'debit_origin_id')
-    def _compute_dte_type(self):
-        """Determina el tipo de DTE según el tipo de movimiento"""
-        for move in self:
-            if move.move_type == 'out_invoice':
-                move.dte_type = '33'  # Factura
-            elif move.move_type == 'out_refund':
-                move.dte_type = '61'  # Nota de Crédito
-            elif move.debit_origin_id:
-                move.dte_type = '56'  # Nota de Débito
-            else:
-                move.dte_type = False
-    
-    @api.depends('dte_folio', 'dte_type')
+    @api.depends('dte_folio', 'dte_code')
     def _compute_dte_xml_filename(self):
         """Genera nombre para archivo XML"""
         for move in self:
-            if move.dte_folio and move.dte_type:
-                move.dte_xml_filename = f'DTE_{move.dte_type}_{move.dte_folio}.xml'
+            if move.dte_folio and move.dte_code:
+                move.dte_xml_filename = f'DTE_{move.dte_code}_{move.dte_folio}.xml'
             else:
                 move.dte_xml_filename = False
     
@@ -142,16 +133,16 @@ class AccountMoveDTE(models.Model):
     
     @api.constrains('partner_id')
     def _check_partner_rut(self):
-        """Valida que el cliente tenga RUT válido para DTEs"""
+        """
+        Valida que el cliente tenga RUT para DTEs.
+        
+        NOTA: l10n_cl ya valida formato RUT automáticamente en partner._run_check_identification().
+        Solo verificamos presencia del RUT aquí.
+        """
         for move in self:
-            if move.move_type in ['out_invoice', 'out_refund'] and move.dte_type:
+            if move.move_type in ['out_invoice', 'out_refund'] and move.dte_code:
                 if not move.partner_id.vat:
                     raise ValidationError(_('El cliente debe tener RUT configurado para emitir DTE.'))
-                
-                if not validate_rut(move.partner_id.vat):
-                    raise ValidationError(
-                        _('El RUT del cliente es inválido: %s') % move.partner_id.vat
-                    )
     
     # ═══════════════════════════════════════════════════════════
     # BUSINESS METHODS - DTE
@@ -196,7 +187,7 @@ class AccountMoveDTE(models.Model):
                 action_type='send_dte',
                 status='success',
                 move_id=self.id,
-                dte_type=self.dte_type,
+                dte_type=self.dte_code,
                 dte_folio=self.dte_folio,
                 track_id=self.dte_track_id,
                 response_xml=self.dte_response_xml
@@ -227,7 +218,7 @@ class AccountMoveDTE(models.Model):
                 action_type='send_dte',
                 status='error',
                 move_id=self.id,
-                dte_type=self.dte_type,
+                dte_type=self.dte_code,
                 error_message=str(e)
             )
             
@@ -324,7 +315,7 @@ class AccountMoveDTE(models.Model):
         cert_data = certificate.get_certificate_data()
         
         return {
-            'dte_type': self.dte_type,
+            'dte_type': self.dte_code,
             'invoice_data': {
                 'folio': self.journal_id._get_next_folio(),
                 'fecha_emision': fields.Date.to_string(self.invoice_date or fields.Date.today()),
@@ -332,7 +323,7 @@ class AccountMoveDTE(models.Model):
                 'emisor': {
                     'rut': self.company_id.vat,
                     'razon_social': self.company_id.name,
-                    'giro': self.company_id.sii_activity_description or 'Servicios',
+                    'giro': self.company_id.l10n_cl_activity_description or 'Servicios',
                     'direccion': self._format_address(self.company_id),
                     'ciudad': self.company_id.city or '',
                     'comuna': self.company_id.state_id.name if self.company_id.state_id else '',
@@ -483,7 +474,7 @@ class AccountMoveDTE(models.Model):
         result = super().action_post()
         
         for move in self:
-            if move.dte_type and move.move_type in ['out_invoice', 'out_refund']:
+            if move.dte_code and move.move_type in ['out_invoice', 'out_refund']:
                 move.write({'dte_status': 'to_send'})
         
         return result
