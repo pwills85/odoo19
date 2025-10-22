@@ -253,15 +253,27 @@ class RabbitMQClient:
             await self.connect()
             
         # Declarar cola (idempotente)
+        # Usar TTL según tipo de queue
+        ttl_map = {
+            "dte.generate": 3600000,  # 1 hora
+            "dte.validate": 1800000,  # 30 minutos
+            "dte.send": 7200000,      # 2 horas
+        }
+        
+        queue_args = {
+            "x-message-ttl": ttl_map.get(queue_name, 3600000),
+            "x-dead-letter-exchange": "dte.dlx",
+            "x-dead-letter-routing-key": f"{queue_name}.dlq"
+        }
+        
+        # Solo agregar priority si es dte.generate
+        if queue_name == "dte.generate":
+            queue_args["x-max-priority"] = 10
+        
         queue = await self.channel.declare_queue(
             queue_name,
             durable=True,
-            arguments={
-                "x-message-ttl": 3600000,  # 1 hora
-                "x-max-priority": 10,
-                "x-dead-letter-exchange": "dte.dlx",
-                "x-dead-letter-routing-key": f"{queue_name}.dlq"
-            }
+            arguments=queue_args
         )
         
         # Bind a exchange
