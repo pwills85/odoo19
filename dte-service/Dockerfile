@@ -19,16 +19,8 @@ RUN apt-get update && \
 # Copiar requirements
 COPY requirements.txt .
 
-# Instalar dependencias Python
-COPY requirements.txt .
+# Instalar dependencias Python (incluye aio-pika y tenacity para RabbitMQ)
 RUN pip install --no-cache-dir -r requirements.txt
-
-# ═══════════════════════════════════════════════════════════
-# RABBITMQ - FASE 2: Instalar aio-pika y dependencias
-# ═══════════════════════════════════════════════════════════
-RUN pip install --no-cache-dir \
-    aio-pika==9.3.0 \
-    tenacity==8.2.3
 
 # Copiar código
 COPY . .
