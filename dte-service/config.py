@@ -51,10 +51,20 @@ class Settings(BaseSettings):
     redis_cache_ttl: int = 3600  # 1 hora
     
     # ═══════════════════════════════════════════════════════════
-    # RABBITMQ - FASE 1: Actualizado con credenciales seguras
+    # RABBITMQ - FASE 2: Credenciales desde environment
     # ═══════════════════════════════════════════════════════════
     
-    rabbitmq_url: str = "amqp://admin:changeme@rabbitmq:5672//odoo"
+    rabbitmq_user: str = Field(default="admin", env="RABBITMQ_USER")
+    rabbitmq_pass: str = Field(default="changeme", env="RABBITMQ_PASS")
+    rabbitmq_host: str = Field(default="rabbitmq", env="RABBITMQ_HOST")
+    rabbitmq_port: int = Field(default=5672, env="RABBITMQ_PORT")
+    rabbitmq_vhost: str = Field(default="/odoo", env="RABBITMQ_VHOST")
+    
+    @property
+    def rabbitmq_url(self) -> str:
+        """Construye URL de RabbitMQ desde componentes"""
+        return f"amqp://{self.rabbitmq_user}:{self.rabbitmq_pass}@{self.rabbitmq_host}:{self.rabbitmq_port}/{self.rabbitmq_vhost}"
+    
     rabbitmq_queue_name: str = "dte_queue"
     
     # ═══════════════════════════════════════════════════════════
