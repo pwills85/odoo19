@@ -67,8 +67,11 @@ services:
       RABBITMQ_DEFAULT_VHOST: /odoo
     
     # ⭐ FASE 1: PERSISTENCIA
+    # ⭐ FASE 2: CONFIGURACIÓN CUSTOM
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+      - ./config/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./config/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
     
     ports:
       - "127.0.0.1:15772:15672"  # Management UI (solo localhost, debugging)
