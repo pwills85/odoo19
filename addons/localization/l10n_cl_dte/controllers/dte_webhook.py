@@ -26,6 +26,110 @@ _logger = logging.getLogger(__name__)
 _request_cache = {}
 
 
+def rate_limit(max_calls=10, period=60):
+    """
+    Rate limiter decorator
+    
+    Args:
+        max_calls: Máximo de llamadas permitidas
+        period: Período en segundos
+    """
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            # Obtener IP del request
+            ip = request.httprequest.remote_addr
+            now = time.time()
+            
+            # Limpiar cache viejo
+            if ip in _request_cache:
+                _request_cache[ip] = [
+                    t for t in _request_cache[ip] 
+                    if now - t < period
+                ]
+            
+            # Verificar límite
+            if len(_request_cache.get(ip, [])) >= max_calls:
+                _logger.warning(
+                    "Rate limit exceeded",
+                    extra={
+                        'ip': ip,
+                        'calls': len(_request_cache[ip]),
+                        'period': period
+                    }
+                )
+                raise TooManyRequests(
+                    f"Rate limit exceeded: {max_calls} calls per {period}s"
+                )
+            
+            # Registrar request
+            _request_cache.setdefault(ip, []).append(now)
+            
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def check_ip_whitelist(ip):
+    """
+    Verifica si IP está en whitelist
+    
+    Args:
+        ip: IP address del request
+        
+    Returns:
+        bool: True si está permitida
+    """
+    whitelist_param = request.env['ir.config_parameter'].sudo().get_param(
+        'l10n_cl_dte.webhook_ip_whitelist',
+        '127.0.0.1,localhost,172.18.0.0/16,dte-service'
+    )
+    
+    whitelist = [ip.strip() for ip in whitelist_param.split(',')]
+    
+    # Verificar IP exacta o hostname
+    if ip in whitelist:
+        return True
+    
+    # Verificar rangos CIDR (simplificado)
+    for allowed in whitelist:
+        if '/' in allowed:  # Es un rango CIDR
+            # Para producción, usar ipaddress module
+            base = allowed.split('/')[0]
+            if ip.startswith(base.rsplit('.', 1)[0]):
+                return True
+    
+    _logger.warning(
+        "IP not in whitelist",
+        extra={'ip': ip, 'whitelist': whitelist}
+    )
+    return False
+
+
+def verify_hmac_signature(payload, signature, secret):
+    """
+    Verifica firma HMAC del payload
+    
+    Args:
+        payload: Payload del request (string)
+        signature: Firma recibida
+        secret: Secret key compartida
+        
+    Returns:
+        bool: True si la firma es válida
+    """
+    if not signature or not secret:
+        return False
+    
+    expected = hmac.new(
+        secret.encode('utf-8'),
+        payload.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+    
+    return hmac.compare_digest(signature, expected)
+
+
 class DTEWebhookController(http.Controller):
     """
     Controlador para recibir callbacks del DTE Service
@@ -63,17 +167,49 @@ class DTEWebhookController(http.Controller):
                 _logger.error(
                     "Webhook rejected: IP not in whitelist",
                     extra={'ip': ip}
-                    "Intento de webhook con key inválida desde %s",
-                    request.httprequest.remote_addr
                 )
                 return {
                     'success': False,
-                    'error': 'Invalid webhook key',
+                    'error': 'IP not allowed',
                     'code': 403
                 }
             
-            # 2. Extraer move_id del dte_id
-            dte_id = data.get('dte_id')
+            # 2. Verificar firma HMAC
+            signature = request.httprequest.headers.get('X-Webhook-Signature')
+            webhook_key = request.env['ir.config_parameter'].sudo().get_param(
+                'l10n_cl_dte.webhook_key',
+                'default_webhook_key_change_in_production'
+            )
+            
+            payload = json.dumps(kwargs, sort_keys=True)
+            
+            if not verify_hmac_signature(payload, signature, webhook_key):
+                _logger.error(
+                    "Webhook rejected: Invalid HMAC signature",
+                    extra={
+                        'ip': ip,
+                        'signature_received': signature[:20] if signature else None
+                    }
+                )
+                return {
+                    'success': False,
+                    'error': 'Invalid signature',
+                    'code': 401
+                }
+            
+            # 3. Procesar webhook
+            _logger.info(
+                "Webhook received and validated",
+                extra={
+                    'dte_id': kwargs.get('dte_id'),
+                    'status': kwargs.get('status'),
+                    'ip': ip,
+                    'signature_valid': True
+                }
+            )
+            
+            # 4. Extraer move_id del dte_id
+            dte_id = kwargs.get('dte_id')
             if not dte_id or not dte_id.startswith('DTE-'):
                 _logger.error("Formato de dte_id inválido: %s", dte_id)
                 return {
@@ -92,7 +228,7 @@ class DTEWebhookController(http.Controller):
                     'code': 400
                 }
             
-            # 3. Buscar factura
+            # 5. Buscar factura
             move = request.env['account.move'].sudo().browse(move_id)
             
             if not move.exists():
@@ -103,14 +239,14 @@ class DTEWebhookController(http.Controller):
                     'code': 404
                 }
             
-            # 4. Actualizar estado
-            status = data.get('status')
+            # 6. Actualizar estado
+            status = kwargs.get('status')
             
             success = move.dte_update_status_from_webhook(
                 status=status,
-                track_id=data.get('track_id'),
-                xml_b64=data.get('xml_b64'),
-                message=data.get('message')
+                track_id=kwargs.get('track_id'),
+                xml_b64=kwargs.get('xml_b64'),
+                message=kwargs.get('message')
             )
             
             if success:
