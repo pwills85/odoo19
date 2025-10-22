@@ -69,11 +69,14 @@ class Settings(BaseSettings):
     rabbitmq_queue_name: str = "dte_queue"
     
     # ═══════════════════════════════════════════════════════════
-    # ODOO CALLBACK
+    # ODOO CALLBACK - BRECHA 5
     # ═══════════════════════════════════════════════════════════
     
-    odoo_url: str = "http://odoo:8069"
-    odoo_webhook_key: str = "default_webhook_key"  # Cambiar en producción
+    odoo_url: str = Field(default="http://odoo:8069", env="ODOO_URL")
+    odoo_webhook_key: str = Field(
+        default="secret_webhook_key_change_in_production",
+        env="ODOO_WEBHOOK_KEY"
+    )
     
     # ═══════════════════════════════════════════════════════════
     # LOGGING

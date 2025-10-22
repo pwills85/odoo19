@@ -15,10 +15,78 @@ Cada consumer:
 """
 
 import structlog
+import httpx
 from typing import Dict, Any
 from .models import DTEMessage, DTEAction
 
 logger = structlog.get_logger(__name__)
+
+
+# ═══════════════════════════════════════════════════════════
+# HELPER: Notificar a Odoo
+# ═══════════════════════════════════════════════════════════
+
+async def _notify_odoo(dte_id: str, status: str, **kwargs):
+    """
+    Notifica a Odoo el resultado del procesamiento
+    
+    Args:
+        dte_id: ID del DTE (ej: "DTE-123")
+        status: Estado ('sent', 'accepted', 'rejected', 'error')
+        **kwargs: Datos adicionales (track_id, xml_b64, message, etc.)
+    """
+    from config import settings
+    
+    try:
+        payload = {
+            'webhook_key': settings.odoo_webhook_key,
+            'dte_id': dte_id,
+            'status': status,
+            **kwargs
+        }
+        
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(
+                f"{settings.odoo_url}/api/dte/callback",
+                json=payload
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get('success'):
+                    logger.info(
+                        "odoo_notified_successfully",
+                        dte_id=dte_id,
+                        status=status
+                    )
+                else:
+                    logger.error(
+                        "odoo_notification_failed",
+                        dte_id=dte_id,
+                        error=result.get('error')
+                    )
+            else:
+                logger.error(
+                    "odoo_notification_http_error",
+                    dte_id=dte_id,
+                    status_code=response.status_code,
+                    response=response.text[:200]
+                )
+                
+    except httpx.TimeoutException:
+        logger.error(
+            "odoo_notification_timeout",
+            dte_id=dte_id,
+            timeout=10.0
+        )
+    except Exception as e:
+        logger.error(
+            "odoo_notification_error",
+            dte_id=dte_id,
+            error=str(e),
+            error_type=type(e).__name__
+        )
+        # No re-raise: notificación es best-effort
 
 
 # ═══════════════════════════════════════════════════════════
@@ -89,6 +157,13 @@ async def generate_consumer(message: DTEMessage):
             xml_length=len(xml_generated)
         )
         
+        # ⭐ BRECHA 5: Notificar a Odoo
+        await _notify_odoo(
+            dte_id=message.dte_id,
+            status='processing',
+            message='DTE generado, iniciando validación'
+        )
+        
         # TODO: Publicar resultado a siguiente cola (validate)
         # await rabbitmq_client.publish(
         #     DTEMessage(..., action=DTEAction.VALIDATE),
@@ -101,6 +176,12 @@ async def generate_consumer(message: DTEMessage):
             dte_id=message.dte_id,
             error=str(e)
         )
+        # ⭐ BRECHA 5: Notificar error a Odoo
+        await _notify_odoo(
+            dte_id=message.dte_id,
+            status='error',
+            message=f'Error de validación: {str(e)}'
+        )
         raise
         
     except Exception as e:
@@ -109,6 +190,12 @@ async def generate_consumer(message: DTEMessage):
             dte_id=message.dte_id,
             error=str(e),
             error_type=type(e).__name__
+        )
+        # ⭐ BRECHA 5: Notificar error a Odoo
+        await _notify_odoo(
+            dte_id=message.dte_id,
+            status='error',
+            message=f'Error al generar DTE: {str(e)}'
         )
         raise
 
