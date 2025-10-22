@@ -16,10 +16,30 @@ import base64
 from config import settings
 
 # ═══════════════════════════════════════════════════════════
+# RABBITMQ - FASE 2: Imports
+# ═══════════════════════════════════════════════════════════
+from messaging.rabbitmq_client import get_rabbitmq_client, RabbitMQClient
+from messaging.models import DTEMessage, DTEAction
+from messaging.consumers import CONSUMERS
+
+# ═══════════════════════════════════════════════════════════
 # LOGGING
 # ═══════════════════════════════════════════════════════════
 
+structlog.configure(
+    processors=[
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.add_log_level,
+        structlog.processors.JSONRenderer()
+    ]
+)
+
 logger = structlog.get_logger()
+
+# ═══════════════════════════════════════════════════════════
+# GLOBAL RABBITMQ CLIENT - FASE 2
+# ═══════════════════════════════════════════════════════════
+rabbitmq: Optional[RabbitMQClient] = None
 
 # ═══════════════════════════════════════════════════════════
 # FASTAPI APP
@@ -122,14 +142,83 @@ def _get_generator(dte_type: str):
 # ENDPOINTS
 # ═══════════════════════════════════════════════════════════
 
+# ═══════════════════════════════════════════════════════════
+# STARTUP & SHUTDOWN - FASE 2
+# ═══════════════════════════════════════════════════════════
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    Inicializa RabbitMQ al arrancar el servicio
+    
+    - Conecta al broker
+    - Declara exchanges y queues
+    - Inicia consumers (opcional, comentado por ahora)
+    """
+    global rabbitmq
+    
+    logger.info("dte_service_starting")
+    
+    try:
+        # Inicializar RabbitMQ client
+        rabbitmq = get_rabbitmq_client(
+            url=settings.rabbitmq_url,
+            prefetch_count=10
+        )
+        
+        # Conectar
+        await rabbitmq.connect()
+        
+        logger.info("rabbitmq_startup_success")
+        
+        # TODO: Iniciar consumers en background
+        # for queue_name, consumer_func in CONSUMERS.items():
+        #     asyncio.create_task(rabbitmq.consume(queue_name, consumer_func))
+        #     logger.info("consumer_started", queue=queue_name)
+        
+    except Exception as e:
+        logger.error("rabbitmq_startup_error", error=str(e))
+        # No fallar el startup si RabbitMQ no está disponible
+        rabbitmq = None
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """
+    Cierra RabbitMQ gracefully al apagar el servicio
+    """
+    global rabbitmq
+    
+    logger.info("dte_service_shutting_down")
+    
+    if rabbitmq:
+        try:
+            await rabbitmq.close()
+            logger.info("rabbitmq_shutdown_success")
+        except Exception as e:
+            logger.error("rabbitmq_shutdown_error", error=str(e))
+
+
+# ═══════════════════════════════════════════════════════════
+# HEALTH CHECK
+# ═══════════════════════════════════════════════════════════
+
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """
+    Health check endpoint
+    
+    Verifica:
+    - Estado del servicio
+    - Conexión a RabbitMQ
+    """
+    rabbitmq_status = "connected" if rabbitmq and rabbitmq.connection else "disconnected"
+    
     return {
         "status": "healthy",
-        "service": settings.app_name,
-        "version": settings.app_version,
-        "environment": settings.sii_environment
+        "service": "dte-microservice",
+        "version": "1.0.0",
+        "rabbitmq": rabbitmq_status
     }
 
 @app.post("/api/dte/generate-and-send", 
