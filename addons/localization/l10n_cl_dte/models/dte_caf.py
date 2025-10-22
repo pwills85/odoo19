@@ -219,12 +219,19 @@ class DTECAF(models.Model):
         
         self.write({'state': 'valid'})
         
+        # Sincronizar con l10n_latam si está disponible
+        sync_result = self._sync_with_latam_sequence()
+        
+        message = _('CAF validado exitosamente. Folios: %d-%d') % (self.folio_desde, self.folio_hasta)
+        if sync_result:
+            message += _('\n✅ Sincronizado con l10n_latam_document_type')
+        
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'title': _('CAF Validado'),
-                'message': _('CAF validado exitosamente. Folios: %d-%d') % (self.folio_desde, self.folio_hasta),
+                'message': message,
                 'type': 'success',
             }
         }
@@ -295,6 +302,56 @@ class DTECAF(models.Model):
         
         if self.folio_desde <= folio <= self.folio_hasta:
             return self
+        
+        return False
+    
+    def _sync_with_latam_sequence(self):
+        """
+        Sincroniza CAF con secuencias l10n_latam.
+        Asegura que folios CAF coincidan con document_type sequence.
+        
+        INTEGRACIÓN ODOO 19 CE:
+        - Usa l10n_latam_document_type_id para mapear tipos
+        - Sincroniza con l10n_latam_use_documents cuando está habilitado
+        - Mantiene compatibilidad con sistema de folios custom
+        """
+        self.ensure_one()
+        
+        # Obtener document_type correspondiente
+        doc_type = self.env['l10n_latam.document.type'].search([
+            ('code', '=', str(self.dte_type)),
+            ('country_id.code', '=', 'CL')
+        ], limit=1)
+        
+        if not doc_type:
+            _logger.warning(
+                f'No existe l10n_latam.document.type para DTE {self.dte_type}. '
+                f'Sincronización omitida.'
+            )
+            return False
+        
+        # Verificar que journal usa documentos LATAM
+        if self.journal_id and hasattr(self.journal_id, 'l10n_latam_use_documents'):
+            if self.journal_id.l10n_latam_use_documents:
+                # Sincronizar rango de folios con journal
+                self.journal_id.write({
+                    'dte_folio_start': self.folio_desde,
+                    'dte_folio_end': self.folio_hasta,
+                    'dte_folio_current': self.folio_desde,
+                })
+                
+                _logger.info(
+                    f'CAF sincronizado con l10n_latam: '
+                    f'Journal {self.journal_id.name}, '
+                    f'Document Type {doc_type.name}, '
+                    f'Folios {self.folio_desde}-{self.folio_hasta}'
+                )
+                return True
+            else:
+                _logger.info(
+                    f'Journal {self.journal_id.name} no usa l10n_latam_use_documents. '
+                    f'Considerar habilitar para mejor integración con Odoo 19 CE.'
+                )
         
         return False
 
