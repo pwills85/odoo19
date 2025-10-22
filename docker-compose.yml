@@ -1,0 +1,193 @@
+version: '3.9'
+
+services:
+  # ══════════════════════════════════════════════════════════
+  # POSTGRESQL DATABASE
+  # ══════════════════════════════════════════════════════════
+  db:
+    image: postgres:15-alpine
+    container_name: odoo19_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${ODOO_DB_NAME:-odoo}
+      POSTGRES_USER: ${ODOO_DB_USER:-odoo}
+      POSTGRES_PASSWORD: ${ODOO_DB_PASSWORD:-odoo}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=es_CL.UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - "5432"  # Solo red interna
+    networks:
+      - stack_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ODOO_DB_USER:-odoo}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ══════════════════════════════════════════════════════════
+  # REDIS - CACHE Y SESSIONS
+  # ══════════════════════════════════════════════════════════
+  redis:
+    image: redis:7-alpine
+    container_name: odoo19_redis
+    restart: unless-stopped
+    expose:
+      - "6379"  # Solo red interna
+    networks:
+      - stack_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ══════════════════════════════════════════════════════════
+  # RABBITMQ - MESSAGE QUEUE
+  # ══════════════════════════════════════════════════════════
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: odoo19_rabbitmq
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:15772:15672"  # Management UI (solo localhost, debugging)
+    expose:
+      - "5672"   # AMQP - Solo red interna
+      - "15672"  # Management UI interno
+    networks:
+      - stack_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ══════════════════════════════════════════════════════════
+  # ODOO SERVICE
+  # ══════════════════════════════════════════════════════════
+  odoo:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: eergygroup/odoo19:v1
+    container_name: odoo19_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - HOST=db
+      - PORT=5432
+      - USER=${ODOO_DB_USER:-odoo}
+      - PASSWORD=${ODOO_DB_PASSWORD:-odoo}
+      - DB_NAME=${ODOO_DB_NAME:-odoo}
+      - TIMEZONE=America/Santiago
+      - LANG=es_CL.UTF-8
+      - TZ=America/Santiago
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
+      - ./addons/custom:/mnt/extra-addons/custom
+      - ./addons/localization:/mnt/extra-addons/localization
+      - ./addons/third_party:/mnt/extra-addons/third_party
+      - odoo_filestore:/var/lib/odoo
+    ports:
+      - "8169:8069"  # Web (puerto alternativo para evitar conflictos)
+      - "8171:8071"  # Longpolling
+    expose:
+      - "8069"  # También en red interna para microservicios
+    networks:
+      - stack_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8069/web/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # ══════════════════════════════════════════════════════════
+  # DTE MICROSERVICE - SOLO RED INTERNA ⭐
+  # ══════════════════════════════════════════════════════════
+  dte-service:
+    build: ./dte-service
+    container_name: odoo19_dte_service
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - rabbitmq
+    environment:
+      - API_KEY=${DTE_SERVICE_API_KEY:-default_dte_api_key}
+      - SII_ENVIRONMENT=${SII_ENVIRONMENT:-sandbox}
+      - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672//
+      - ODOO_URL=http://odoo:8069
+      - LOG_LEVEL=INFO
+    expose:
+      - "8001"  # ⭐ Solo red interna (NO exponer al exterior)
+    networks:
+      - stack_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ══════════════════════════════════════════════════════════
+  # OLLAMA - LLM LOCAL
+  # ══════════════════════════════════════════════════════════
+  ollama:
+    image: ollama/ollama:latest
+    container_name: odoo19_ollama
+    restart: unless-stopped
+    expose:
+      - "11434"  # Solo red interna
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - stack_network
+
+  # ══════════════════════════════════════════════════════════
+  # AI MICROSERVICE - SOLO RED INTERNA ⭐
+  # ══════════════════════════════════════════════════════════
+  ai-service:
+    build: ./ai-service
+    container_name: odoo19_ai_service
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - ollama
+    environment:
+      - API_KEY=${AI_SERVICE_API_KEY:-default_ai_api_key}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OLLAMA_URL=http://ollama:11434
+      - REDIS_URL=redis://redis:6379/1
+      - ODOO_URL=http://odoo:8069
+      - LOG_LEVEL=INFO
+    volumes:
+      - ai_cache:/app/cache
+      - ai_uploads:/app/uploads
+      - ai_chromadb:/app/data/chromadb
+    expose:
+      - "8002"  # ⭐ Solo red interna (NO exponer al exterior)
+    networks:
+      - stack_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+  odoo_filestore:
+  ollama_data:
+  ai_cache:
+  ai_uploads:
+  ai_chromadb:
+
+networks:
+  stack_network:
+    driver: bridge
+    internal: false  # Permite salida a internet (SII, Anthropic)

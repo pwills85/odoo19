@@ -1,0 +1,52 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile
+docker-compose.yml
+docker-compose.override.yml
+.dockerignore
+
+# Documentation
+*.md
+docs/
+README*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+
+# Logs
+logs/
+*.log
+
+# Data
+data/
+db_data/
+
+# Node
+node_modules/
+npm-debug.log
+
+# Local overrides
+docker-compose.override.yml
+.env.local

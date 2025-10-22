@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extensión de Vista Form de Facturas -->
+    <record id="view_move_form_dte" model="ir.ui.view">
+        <field name="name">account.move.form.dte</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            
+            <!-- Agregar botón "Enviar a SII" en header -->
+            <xpath expr="//header/button[@name='action_post']" position="after">
+                <button name="action_send_to_sii" string="Enviar a SII" type="object" 
+                        class="btn-primary" 
+                        attrs="{'invisible': ['|', ('dte_status', 'not in', ['draft', 'to_send', 'rejected']), ('state', '!=', 'posted')]}"/>
+                <button name="action_download_dte_xml" string="Descargar XML" type="object" 
+                        class="btn-secondary"
+                        attrs="{'invisible': [('dte_xml', '=', False)]}"/>
+            </xpath>
+            
+            <!-- Agregar campo de estado DTE en header -->
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="dte_status" widget="statusbar" 
+                       statusbar_visible="draft,to_send,sent,accepted"
+                       attrs="{'invisible': [('dte_type', '=', False)]}"/>
+            </xpath>
+            
+            <!-- Agregar página DTE en notebook -->
+            <xpath expr="//notebook" position="inside">
+                <page string="DTE" name="dte_page" 
+                      attrs="{'invisible': [('dte_type', '=', False)]}">
+                    <group>
+                        <group>
+                            <field name="dte_type" readonly="1"/>
+                            <field name="dte_folio" readonly="1"/>
+                            <field name="dte_timestamp" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="dte_track_id" readonly="1"/>
+                            <button name="action_view_communications" string="Ver Comunicaciones SII" 
+                                    type="object" class="oe_link" 
+                                    attrs="{'invisible': [('dte_communication_ids', '=', [])]}"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Respuesta SII" attrs="{'invisible': [('dte_response_xml', '=', False)]}">
+                        <field name="dte_response_xml" readonly="1"/>
+                    </group>
+                    
+                    <group string="Errores" attrs="{'invisible': [('dte_error_message', '=', False)]}">
+                        <field name="dte_error_message" readonly="1" class="text-danger"/>
+                    </group>
+                    
+                    <group string="XML DTE" attrs="{'invisible': [('dte_xml', '=', False)]}">
+                        <field name="dte_xml" filename="dte_xml_filename"/>
+                        <field name="dte_xml_filename" invisible="1"/>
+                    </group>
+                </page>
+            </xpath>
+            
+        </field>
+    </record>
+    
+    <!-- Extensión de Vista Tree de Facturas -->
+    <record id="view_move_tree_dte" model="ir.ui.view">
+        <field name="name">account.move.tree.dte</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_invoice_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="dte_status" optional="show" 
+                       decoration-success="dte_status == 'accepted'"
+                       decoration-warning="dte_status == 'to_send'"
+                       decoration-danger="dte_status == 'rejected'"/>
+                <field name="dte_folio" optional="show"/>
+                <field name="dte_type" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

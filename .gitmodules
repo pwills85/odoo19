@@ -1,0 +1,4 @@
+[submodule "odoo-docker-base"]
+	path = odoo-docker-base
+	url = https://github.com/odoo/docker.git
+	branch = 19.0

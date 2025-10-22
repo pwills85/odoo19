@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_dte_certificate_user,dte.certificate.user,model_dte_certificate,account.group_account_user,1,0,0,0
+access_dte_certificate_manager,dte.certificate.manager,model_dte_certificate,account.group_account_manager,1,1,1,1
+access_dte_caf_user,dte.caf.user,model_dte_caf,account.group_account_user,1,0,0,0
+access_dte_caf_manager,dte.caf.manager,model_dte_caf,account.group_account_manager,1,1,1,1
+access_dte_communication_user,dte.communication.user,model_dte_communication,account.group_account_user,1,0,0,0
+access_dte_communication_manager,dte.communication.manager,model_dte_communication,account.group_account_manager,1,1,1,0
+access_retencion_iue_user,retencion.iue.user,model_retencion_iue,account.group_account_user,1,0,0,0
+access_retencion_iue_manager,retencion.iue.manager,model_retencion_iue,account.group_account_manager,1,1,1,1
+

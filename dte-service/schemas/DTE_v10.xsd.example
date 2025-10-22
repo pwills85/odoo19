@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+Ejemplo de estructura XSD para DTE
+Archivo real debe descargarse del SII de Chile
+
+URL: http://www.sii.cl/factura_electronica/
+
+Este es un placeholder para referencia de estructura.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    
+    <!-- Elemento raíz DTE -->
+    <xs:element name="DTE">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Documento" type="DocumentoType"/>
+            </xs:sequence>
+            <xs:attribute name="version" type="xs:string" fixed="1.0"/>
+        </xs:complexType>
+    </xs:element>
+    
+    <!-- Tipo Documento -->
+    <xs:complexType name="DocumentoType">
+        <xs:sequence>
+            <xs:element name="Encabezado" type="EncabezadoType"/>
+            <xs:element name="Detalle" type="DetalleType" maxOccurs="unbounded"/>
+            <!-- Más elementos según especificación SII -->
+        </xs:sequence>
+        <xs:attribute name="ID" type="xs:string"/>
+    </xs:complexType>
+    
+    <!-- 
+    NOTA: Este es solo un ejemplo simplificado.
+    El XSD real del SII tiene cientos de líneas y elementos.
+    Descargar versión oficial del SII.
+    -->
+    
+</xs:schema>
+
