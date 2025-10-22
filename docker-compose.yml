@@ -49,6 +49,29 @@ services:
     image: rabbitmq:3.12-management-alpine
     container_name: odoo19_rabbitmq
     restart: unless-stopped
+    
+    # ⭐ FASE 1: LÍMITES DE RECURSOS
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    # ⭐ FASE 1: SEGURIDAD Y CONFIGURACIÓN
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-changeme}
+      RABBITMQ_DEFAULT_VHOST: /odoo
+      RABBITMQ_VM_MEMORY_HIGH_WATERMARK: 0.6
+      RABBITMQ_DISK_FREE_LIMIT: 2GB
+    
+    # ⭐ FASE 1: PERSISTENCIA
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    
     ports:
       - "127.0.0.1:15772:15672"  # Management UI (solo localhost, debugging)
     expose:
@@ -186,6 +209,7 @@ volumes:
   ai_cache:
   ai_uploads:
   ai_chromadb:
+  rabbitmq_data:  # ⭐ FASE 1: Persistencia RabbitMQ
 
 networks:
   stack_network:

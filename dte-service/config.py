@@ -51,10 +51,10 @@ class Settings(BaseSettings):
     redis_cache_ttl: int = 3600  # 1 hora
     
     # ═══════════════════════════════════════════════════════════
-    # RABBITMQ
+    # RABBITMQ - FASE 1: Actualizado con credenciales seguras
     # ═══════════════════════════════════════════════════════════
     
-    rabbitmq_url: str = "amqp://guest:guest@rabbitmq:5672//"
+    rabbitmq_url: str = "amqp://admin:changeme@rabbitmq:5672//odoo"
     rabbitmq_queue_name: str = "dte_queue"
     
     # ═══════════════════════════════════════════════════════════
