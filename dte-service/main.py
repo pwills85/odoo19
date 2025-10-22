@@ -209,15 +209,49 @@ async def generate_and_send_dte(data: DTEData):
         # 4. Incluir TED en DTE
         dte_xml = generator.add_ted_to_dte(dte_xml, ted_xml)
         
-        # 5. Validar contra XSD
+        # 5. ⭐ NUEVO: Validar contra XSD SII
         xsd_validator = XSDValidator()
-        is_valid, errors = xsd_validator.validate(dte_xml, 'DTE')
+        is_valid_xsd, errors_xsd = xsd_validator.validate(dte_xml, 'DTE')
         
-        if not is_valid and errors:
-            logger.warning("xsd_validation_failed", errors=errors)
-            # Continuar de todos modos (XSD puede no estar disponible)
+        # 6. ⭐ NUEVO: Validar estructura DTE según normativa SII
+        from validators.dte_structure_validator import DTEStructureValidator
+        structure_validator = DTEStructureValidator()
+        is_valid_structure, errors_structure, warnings_structure = structure_validator.validate(
+            dte_xml, data.dte_type
+        )
         
-        # 6. Firmar con XMLDsig
+        # 7. ⭐ NUEVO: Validar TED según normativa SII
+        from validators.ted_validator import TEDValidator
+        ted_validator = TEDValidator()
+        is_valid_ted, errors_ted, warnings_ted = ted_validator.validate(dte_xml)
+        
+        # Consolidar resultados de validación
+        all_validations_passed = is_valid_xsd and is_valid_structure and is_valid_ted
+        
+        validation_results = {
+            'xsd': {'valid': is_valid_xsd, 'errors': errors_xsd if not is_valid_xsd else []},
+            'structure': {'valid': is_valid_structure, 'errors': errors_structure, 'warnings': warnings_structure},
+            'ted': {'valid': is_valid_ted, 'errors': errors_ted, 'warnings': warnings_ted}
+        }
+        
+        logger.info("dte_validations_completed",
+                   xsd=is_valid_xsd,
+                   structure=is_valid_structure,
+                   ted=is_valid_ted,
+                   all_passed=all_validations_passed)
+        
+        # Si alguna validación crítica falla, no enviar al SII
+        if not all_validations_passed:
+            logger.error("dte_validation_failed", results=validation_results)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    'error': 'DTE no cumple con validaciones SII',
+                    'validations': validation_results
+                }
+            )
+        
+        # 8. Firmar con XMLDsig
         signer = XMLDsigSigner()
         signed_xml = signer.sign_xml(
             dte_xml,
