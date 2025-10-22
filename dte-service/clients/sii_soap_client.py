@@ -92,10 +92,10 @@ class SIISoapClient:
                 'response_xml': str(response),
                 'duration_ms': duration_ms
             }
-            
+
         except Fault as e:
             logger.error("sii_soap_fault", error=str(e), rut_emisor=rut_emisor)
-            
+
             # Interpretar código de error del SII
             from utils.sii_error_codes import interpret_sii_error
             
@@ -154,40 +154,127 @@ class SIISoapClient:
                 'error_message': str(e)
             }
     
-    def get_received_dte(self, rut_receptor: str, dte_type: str = None) -> list:
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        retry=retry_if_exception_type((ConnectionError, Timeout)),
+        reraise=True
+    )
+    def get_received_dte(self, rut_receptor: str, dte_type: str = None, fecha_desde: str = None) -> dict:
         """
         Descarga DTEs recibidos desde el SII (método GetDTE).
-        
+
+        Este método permite descargar DTEs que otros contribuyentes han enviado
+        a nuestra empresa y que están disponibles en el SII.
+
         Args:
             rut_receptor: RUT de la empresa receptora
-            dte_type: Filtro por tipo DTE (opcional)
-        
+            dte_type: Filtro por tipo DTE (33, 34, 52, 56, 61) - opcional
+            fecha_desde: Fecha inicio búsqueda formato YYYY-MM-DD - opcional
+
         Returns:
-            list: DTEs recibidos pendientes de procesar
+            dict: {
+                'success': bool,
+                'dtes': list[dict],  # Lista de DTEs recibidos
+                'count': int,
+                'errors': list
+            }
         """
-        logger.info("getting_received_dtes", rut_receptor=rut_receptor)
-        
+        start_time = time.time()
+
+        logger.info("getting_received_dtes",
+                   rut_receptor=rut_receptor,
+                   dte_type=dte_type,
+                   fecha_desde=fecha_desde)
+
         try:
             # Llamar método SOAP GetDTE del SII
+            # Nota: La estructura exacta puede variar según WSDL
+            # Este es el formato más común según documentación SII
+
             response = self.client.service.GetDTE(
                 rutReceptor=rut_receptor,
                 dvReceptor=self._extract_dv(rut_receptor),
-                tipoDTE=dte_type or ''
+                tipoDTE=dte_type if dte_type else '',
+                fechaDesde=fecha_desde if fecha_desde else ''
             )
-            
-            # Parsear respuesta (estructura depende del WSDL)
-            dtes = []
-            
-            # TODO: Parsear XML de respuesta según estructura real del SII
-            # Por ahora, estructura básica
-            
-            logger.info("dtes_retrieved", count=len(dtes))
-            
-            return dtes
-            
+
+            duration_ms = int((time.time() - start_time) * 1000)
+
+            # Parsear respuesta XML
+            from lxml import etree
+
+            dtes_list = []
+
+            # El SII retorna XML con DTEs en elementos <DTE>
+            if hasattr(response, 'DTE'):
+                # Si es lista de DTEs
+                dte_elements = response.DTE if isinstance(response.DTE, list) else [response.DTE]
+
+                for dte_elem in dte_elements:
+                    try:
+                        # Extraer información básica del DTE
+                        dte_info = {
+                            'folio': getattr(dte_elem, 'Folio', None),
+                            'tipo_dte': getattr(dte_elem, 'TipoDTE', None),
+                            'rut_emisor': getattr(dte_elem, 'RUTEmisor', None),
+                            'fecha_emision': getattr(dte_elem, 'FechaEmision', None),
+                            'monto_total': getattr(dte_elem, 'MontoTotal', None),
+                            'xml': str(dte_elem) if dte_elem else None,
+                            'estado': getattr(dte_elem, 'Estado', 'RECIBIDO')
+                        }
+
+                        dtes_list.append(dte_info)
+
+                    except Exception as parse_error:
+                        logger.warning("error_parsing_dte",
+                                      error=str(parse_error),
+                                      dte_index=len(dtes_list))
+                        continue
+
+            logger.info("dtes_retrieved_successfully",
+                       count=len(dtes_list),
+                       duration_ms=duration_ms,
+                       rut_receptor=rut_receptor)
+
+            return {
+                'success': True,
+                'dtes': dtes_list,
+                'count': len(dtes_list),
+                'errors': [],
+                'duration_ms': duration_ms
+            }
+
+        except Fault as e:
+            logger.error("sii_get_dte_fault",
+                        error=str(e),
+                        rut_receptor=rut_receptor)
+
+            # Interpretar código de error
+            from utils.sii_error_codes import interpret_sii_error
+
+            error_code = e.code if hasattr(e, 'code') else 'UNKNOWN'
+            error_info = interpret_sii_error(error_code)
+
+            return {
+                'success': False,
+                'dtes': [],
+                'count': 0,
+                'errors': [error_info['user_message']],
+                'error_code': error_code
+            }
+
         except Exception as e:
-            logger.error("get_dte_error", error=str(e), rut_receptor=rut_receptor)
-            return []
+            logger.error("get_dte_error",
+                        error=str(e),
+                        rut_receptor=rut_receptor)
+
+            return {
+                'success': False,
+                'dtes': [],
+                'count': 0,
+                'errors': [str(e)]
+            }
     
     def _extract_dv(self, rut: str) -> str:
         """Extrae dígito verificador del RUT"""

@@ -57,4 +57,14 @@ structlog>=23.2.0
 pytest>=7.4.3
 pytest-asyncio>=0.21.1
 pytest-cov>=4.1.0
+responses>=0.20.0
+
+# ═══════════════════════════════════════════════════════════
+# [NUEVO] SII MONITORING - Added 2025-10-22
+# ═══════════════════════════════════════════════════════════
+beautifulsoup4>=4.12.0          # Parse HTML del SII
+html5lib>=1.1                   # HTML parser robusto
+slack-sdk>=3.23.0               # Notificaciones Slack
+slowapi>=0.1.9                  # Rate limiting API
+validators>=0.22.0              # Validación URLs/emails
 

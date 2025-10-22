@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Reporte: Recibo DTE -->
+    <record id="report_dte_receipt" model="ir.actions.report">
+        <field name="name">Recibo DTE</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">l10n_cl_dte.report_receipt_dte_document</field>
+        <field name="print_report_name">'Recibo_%s' % (object.name)</field>
+    </record>
+    
+    <!-- Template: Recibo Simple -->
+    <template id="report_receipt_dte_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div class="page">
+                    <div class="text-center">
+                        <h2>RECIBO</h2>
+                        <p>Documento: <t t-esc="o.name"/></p>
+                    </div>
+                    
+                    <div class="row mt32">
+                        <div class="col-6">
+                            <strong>De:</strong><br/>
+                            <span t-field="o.company_id.name"/><br/>
+                            <span t-field="o.company_id.vat"/>
+                        </div>
+                        <div class="col-6">
+                            <strong>Para:</strong><br/>
+                            <span t-field="o.partner_id.name"/><br/>
+                            <span t-field="o.partner_id.vat"/>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt32">
+                        <div class="col-12">
+                            <strong>Monto Total:</strong> $<span t-field="o.amount_total"/>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

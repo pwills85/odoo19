@@ -5,6 +5,7 @@ from . import dte_caf
 from . import dte_communication
 from . import dte_consumo_folios
 from . import dte_libro
+from . import rabbitmq_helper
 from . import account_move_dte
 from . import account_journal_dte
 from . import account_tax_dte

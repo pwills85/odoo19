@@ -69,6 +69,7 @@ Licencia: LGPL-3
             'pyOpenSSL',
             'cryptography',
             'zeep',
+            'pika',  # RabbitMQ client
         ],
     },
     'data': [

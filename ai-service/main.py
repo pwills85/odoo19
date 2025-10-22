@@ -215,6 +215,158 @@ async def reconcile_invoice(request: ReconciliationRequest):
 # ═══════════════════════════════════════════════════════════
 
 @app.on_event("startup")
+
+# ═══════════════════════════════════════════════════════════
+# [NUEVO] SII MONITORING ENDPOINTS - Added 2025-10-22
+# ═══════════════════════════════════════════════════════════
+
+# Modelos Pydantic
+class SIIMonitorRequest(BaseModel):
+    """Request para trigger de monitoreo SII"""
+    force: bool = False  # Si True, ignora cache
+
+
+class SIIMonitorResponse(BaseModel):
+    """Response de monitoreo SII"""
+    status: str
+    execution_time: Optional[str]
+    urls_scraped: int
+    changes_detected: int
+    news_created: int
+    notifications_sent: int
+    errors: List[str]
+
+
+# Lazy initialization del orchestrator
+_orchestrator = None
+
+def get_orchestrator():
+    """Obtiene instancia del orchestrator (singleton)"""
+    global _orchestrator
+    
+    if _orchestrator is None:
+        # Importar aquí para evitar import circular
+        from sii_monitor.orchestrator import MonitoringOrchestrator
+        from clients.anthropic_client import get_anthropic_client
+        import redis
+        import os
+        
+        # Inicializar clientes
+        anthropic_client = get_anthropic_client(
+            settings.anthropic_api_key,
+            settings.anthropic_model
+        )
+        
+        redis_client = redis.Redis(
+            host=os.getenv('REDIS_HOST', 'redis'),
+            port=int(os.getenv('REDIS_PORT', 6379)),
+            db=int(os.getenv('REDIS_DB', 0)),
+            decode_responses=False
+        )
+        
+        slack_token = os.getenv('SLACK_TOKEN')
+        
+        _orchestrator = MonitoringOrchestrator(
+            anthropic_client=anthropic_client,
+            redis_client=redis_client,
+            slack_token=slack_token
+        )
+    
+    return _orchestrator
+
+
+@app.post(
+    "/api/ai/sii/monitor",
+    response_model=SIIMonitorResponse,
+    tags=["SII Monitoring"],
+    summary="Trigger monitoreo SII",
+    description="Ejecuta ciclo completo de monitoreo de noticias del SII"
+)
+async def trigger_sii_monitoring(
+    request: SIIMonitorRequest,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """
+    Trigger manual de monitoreo SII.
+    
+    Ejecuta:
+    1. Scraping de URLs SII
+    2. Detección de cambios
+    3. Análisis con Claude API
+    4. Clasificación de impacto
+    5. Notificaciones Slack
+    
+    Args:
+        request: Parámetros del monitoreo
+        credentials: Bearer token
+    
+    Returns:
+        Resultados de la ejecución
+    """
+    # Verificar API key
+    if credentials.credentials != settings.api_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key"
+        )
+    
+    logger.info("sii_monitoring_triggered", force=request.force)
+    
+    try:
+        orchestrator = get_orchestrator()
+        results = orchestrator.execute_monitoring(force=request.force)
+        
+        return SIIMonitorResponse(**results)
+        
+    except Exception as e:
+        logger.error("sii_monitoring_error", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Monitoring failed: {str(e)}"
+        )
+
+
+@app.get(
+    "/api/ai/sii/status",
+    tags=["SII Monitoring"],
+    summary="Estado del monitoreo",
+    description="Obtiene estado actual del sistema de monitoreo"
+)
+async def get_sii_monitoring_status(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """
+    Obtiene estado del sistema de monitoreo SII.
+    
+    Returns:
+        Dict con estado del sistema
+    """
+    if credentials.credentials != settings.api_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key"
+        )
+    
+    try:
+        orchestrator = get_orchestrator()
+        
+        # TODO: Agregar métricas reales desde Redis
+        status_data = {
+            "status": "operational",
+            "orchestrator_initialized": orchestrator is not None,
+            "last_execution": None,  # TODO: Obtener desde Redis
+            "news_count_last_24h": 0,  # TODO: Obtener desde Redis
+        }
+        
+        return status_data
+        
+    except Exception as e:
+        logger.error("status_check_error", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
 async def startup_event():
     """Inicialización al arrancar el servicio"""
     logger.info("ai_service_starting",
