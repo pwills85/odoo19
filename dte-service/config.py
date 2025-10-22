@@ -4,7 +4,8 @@ Configuración del DTE Microservice
 """
 
 from pydantic_settings import BaseSettings
-from typing import Literal
+from pydantic import Field
+from typing import Literal, Optional
 
 
 class Settings(BaseSettings):
