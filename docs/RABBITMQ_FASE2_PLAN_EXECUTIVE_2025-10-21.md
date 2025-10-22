@@ -31,19 +31,24 @@
 ### ETAPA 1: Preparación (30 min)
 
 **Acciones:**
-1. Instalar aio-pika==9.3.0
-2. Crear estructura directorios
-3. Crear archivos base
+1. Agregar aio-pika a Dockerfile y requirements.txt
+2. Rebuild imagen Docker
+3. Crear estructura directorios
+4. Crear archivos base
 
 **Comandos:**
 ```bash
-cd dte-service
-echo "aio-pika==9.3.0" >> requirements.txt
-pip install aio-pika==9.3.0
+# 1. Agregar aio-pika a requirements.txt (ya hecho)
+# 2. Agregar instalación en Dockerfile (ya hecho)
 
-mkdir -p ../config/rabbitmq
-mkdir -p messaging
-touch messaging/{__init__,models,rabbitmq_client,consumers}.py
+# 3. Rebuild imagen
+cd /Users/pedro/Documents/odoo19
+docker-compose build dte-service
+
+# 4. Crear estructura
+mkdir -p config/rabbitmq
+mkdir -p dte-service/messaging
+touch dte-service/messaging/{__init__,models,rabbitmq_client,consumers}.py
 ```
 
 ---
