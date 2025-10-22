@@ -149,48 +149,110 @@ def _get_generator(dte_type: str):
 @app.on_event("startup")
 async def startup_event():
     """
-    Inicializa RabbitMQ al arrancar el servicio
-    
-    - Conecta al broker
-    - Declara exchanges y queues
-    - Inicia consumers (opcional, comentado por ahora)
+    Inicializa servicios al arrancar:
+    - RabbitMQ connection
+    - DTE Status Poller (background scheduler)
+    - XSD schemas verification
     """
     global rabbitmq
-    
-    logger.info("dte_service_starting")
-    
+
+    logger.info("dte_service_starting",
+                version=settings.app_version,
+                environment=settings.sii_environment)
+
+    # ═══════════════════════════════════════════════════════════
+    # 1. RABBITMQ INITIALIZATION
+    # ═══════════════════════════════════════════════════════════
     try:
-        # Inicializar RabbitMQ client
         rabbitmq = get_rabbitmq_client(
             url=settings.rabbitmq_url,
             prefetch_count=10
         )
-        
-        # Conectar
+
         await rabbitmq.connect()
-        
         logger.info("rabbitmq_startup_success")
         
-        # TODO: Iniciar consumers en background
-        # for queue_name, consumer_func in CONSUMERS.items():
-        #     asyncio.create_task(rabbitmq.consume(queue_name, consumer_func))
-        #     logger.info("consumer_started", queue=queue_name)
-        
+        # ⭐ BRECHA 3: Activar consumers
+        import asyncio
+        for queue_name, consumer_func in CONSUMERS.items():
+            asyncio.create_task(rabbitmq.consume(queue_name, consumer_func))
+            logger.info("consumer_started", queue=queue_name)
+
     except Exception as e:
         logger.error("rabbitmq_startup_error", error=str(e))
-        # No fallar el startup si RabbitMQ no está disponible
         rabbitmq = None
+
+    # ═══════════════════════════════════════════════════════════
+    # 2. DTE STATUS POLLER INITIALIZATION (GAP #9)
+    # ═══════════════════════════════════════════════════════════
+    try:
+        from scheduler import init_poller
+        from clients.sii_soap_client import SIISoapClient
+
+        # Crear SII client para el poller
+        sii_client = SIISoapClient(
+            wsdl_url=settings.sii_wsdl_url,
+            timeout=settings.sii_timeout
+        )
+
+        # Iniciar poller (cada 15 minutos por defecto)
+        poll_interval = getattr(settings, 'dte_poll_interval_minutes', 15)
+
+        init_poller(
+            sii_client=sii_client,
+            redis_url=settings.redis_url,
+            poll_interval_minutes=poll_interval
+        )
+
+        logger.info("dte_status_poller_initialized",
+                   poll_interval_minutes=poll_interval)
+
+    except Exception as e:
+        logger.error("dte_poller_startup_error", error=str(e))
+        # No fallar el startup si el poller no está disponible
+
+    # ═══════════════════════════════════════════════════════════
+    # 3. XSD SCHEMAS VERIFICATION
+    # ═══════════════════════════════════════════════════════════
+    try:
+        from validators.xsd_validator import XSDValidator
+
+        validator = XSDValidator()
+
+        if 'DTE' in validator.schemas:
+            logger.info("xsd_schemas_loaded", schemas=list(validator.schemas.keys()))
+        else:
+            logger.warning("xsd_schemas_not_loaded",
+                          note="Validación XSD se omitirá. Ejecutar download_xsd.sh para validación completa.")
+
+    except Exception as e:
+        logger.error("xsd_validation_startup_error", error=str(e))
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """
-    Cierra RabbitMQ gracefully al apagar el servicio
+    Limpieza graceful al apagar el servicio:
+    - Cierra DTE Status Poller
+    - Cierra RabbitMQ connection
     """
     global rabbitmq
-    
+
     logger.info("dte_service_shutting_down")
-    
+
+    # ═══════════════════════════════════════════════════════════
+    # 1. SHUTDOWN DTE STATUS POLLER
+    # ═══════════════════════════════════════════════════════════
+    try:
+        from scheduler import shutdown_poller
+        shutdown_poller()
+        logger.info("dte_status_poller_shutdown_success")
+    except Exception as e:
+        logger.error("dte_poller_shutdown_error", error=str(e))
+
+    # ═══════════════════════════════════════════════════════════
+    # 2. SHUTDOWN RABBITMQ
+    # ═══════════════════════════════════════════════════════════
     if rabbitmq:
         try:
             await rabbitmq.close()
@@ -419,32 +481,6 @@ async def query_dte_status(track_id: str):
             detail=str(e)
         )
 
-# ═══════════════════════════════════════════════════════════
-# STARTUP / SHUTDOWN
-# ═══════════════════════════════════════════════════════════
-
-@app.on_event("startup")
-async def startup_event():
-    """Inicialización al arrancar el servicio"""
-    logger.info("dte_service_starting",
-                version=settings.app_version,
-                environment=settings.sii_environment)
-    
-    # Verificar carga de XSD schemas
-    from validators.xsd_validator import XSDValidator
-    
-    validator = XSDValidator()
-    
-    if 'DTE' in validator.schemas:
-        logger.info("xsd_schemas_loaded", schemas=list(validator.schemas.keys()))
-    else:
-        logger.warning("xsd_schemas_not_loaded",
-                      note="Validación XSD se omitirá. Descargar XSD del SII para validación completa.")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Limpieza al detener el servicio"""
-    logger.info("dte_service_stopping")
 
 # ═══════════════════════════════════════════════════════════
 # MAIN
