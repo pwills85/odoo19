@@ -21,16 +21,16 @@
             <xpath expr="//field[@name='state']" position="after">
                 <field name="dte_status" widget="statusbar" 
                        statusbar_visible="draft,to_send,sent,accepted"
-                       attrs="{'invisible': [('dte_type', '=', False)]}"/>
+                       attrs="{'invisible': [('dte_code', '=', False)]}"/>
             </xpath>
             
             <!-- Agregar página DTE en notebook -->
             <xpath expr="//notebook" position="inside">
                 <page string="DTE" name="dte_page" 
-                      attrs="{'invisible': [('dte_type', '=', False)]}">
+                      attrs="{'invisible': [('dte_code', '=', False)]}">
                     <group>
                         <group>
-                            <field name="dte_type" readonly="1"/>
+                            <field name="dte_code" readonly="1"/>
                             <field name="dte_folio" readonly="1"/>
                             <field name="dte_timestamp" readonly="1"/>
                         </group>
@@ -72,7 +72,7 @@
                        decoration-warning="dte_status == 'to_send'"
                        decoration-danger="dte_status == 'rejected'"/>
                 <field name="dte_folio" optional="show"/>
-                <field name="dte_type" optional="hide"/>
+                <field name="dte_code" optional="hide"/>
             </xpath>
         </field>
     </record>
