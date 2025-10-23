@@ -36,7 +36,7 @@ class ProjectMatcherClaude:
             anthropic_api_key: API key de Anthropic
         """
         self.client = anthropic.Anthropic(api_key=anthropic_api_key)
-        self.model = "claude-3-5-sonnet-20250219"
+        self.model = "claude-3-5-sonnet-20241022"  # Fixed: Modelo correcto disponible
 
     async def suggest_project(
         self,

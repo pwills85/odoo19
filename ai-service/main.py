@@ -4,12 +4,15 @@ AI Microservice - Main Application
 FastAPI service para inteligencia artificial aplicada a DTEs
 """
 
-from fastapi import FastAPI, Depends, HTTPException, Security, status
+from fastapi import FastAPI, Depends, HTTPException, Security, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 import structlog
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from config import settings
 
@@ -35,6 +38,14 @@ app = FastAPI(
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
 )
+
+# ═══════════════════════════════════════════════════════════
+# RATE LIMITING
+# ═══════════════════════════════════════════════════════════
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # ═══════════════════════════════════════════════════════════
 # MIDDLEWARE
@@ -122,7 +133,8 @@ async def health_check():
 @app.post("/api/ai/validate",
           response_model=DTEValidationResponse,
           dependencies=[Depends(verify_api_key)])
-async def validate_dte(request: DTEValidationRequest):
+@limiter.limit("20/minute")  # Max 20 validaciones por minuto por IP
+async def validate_dte(request: DTEValidationRequest, http_request: Request):
     """
     Pre-validación inteligente de un DTE antes de envío al SII.
     
@@ -163,7 +175,8 @@ async def validate_dte(request: DTEValidationRequest):
 @app.post("/api/ai/reconcile",
           response_model=ReconciliationResponse,
           dependencies=[Depends(verify_api_key)])
-async def reconcile_invoice(request: ReconciliationRequest):
+@limiter.limit("30/minute")  # Max 30 reconciliaciones por minuto
+async def reconcile_invoice(request: ReconciliationRequest, http_request: Request):
     """
     Reconcilia una factura recibida con órdenes de compra pendientes.
 
@@ -183,8 +196,6 @@ async def reconcile_invoice(request: ReconciliationRequest):
 # ═══════════════════════════════════════════════════════════
 # STARTUP / SHUTDOWN
 # ═══════════════════════════════════════════════════════════
-
-@app.on_event("startup")
 
 # ═══════════════════════════════════════════════════════════
 # [NUEVO] SII MONITORING ENDPOINTS - Added 2025-10-22
@@ -246,8 +257,10 @@ def get_orchestrator():
     summary="Trigger monitoreo SII",
     description="Ejecuta ciclo completo de monitoreo de noticias del SII"
 )
+@limiter.limit("5/minute")  # Max 5 triggers de monitoreo por minuto
 async def trigger_sii_monitoring(
     request: SIIMonitorRequest,
+    http_request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     """
@@ -429,8 +442,10 @@ def get_chat_engine() -> ChatEngine:
     summary="Send chat message",
     description="Send message to AI support assistant and get response with context awareness"
 )
+@limiter.limit("30/minute")  # Max 30 mensajes de chat por minuto
 async def send_chat_message(
     request: ChatMessageRequest,
+    http_request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     """

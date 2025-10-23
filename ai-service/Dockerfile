@@ -5,12 +5,10 @@ LABEL description="AI Microservice for DTE Intelligence"
 
 WORKDIR /app
 
-# Instalar dependencias del sistema para OCR, PDF y Web Scraping
+# Instalar solo dependencias necesarias (lxml, web scraping)
+# OPTIMIZACIÓN: Removidas dependencias OCR y PDF no utilizadas (-200MB)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        tesseract-ocr \
-        tesseract-ocr-spa \
-        poppler-utils \
         gcc \
         g++ \
         libxml2-dev \
@@ -26,9 +24,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar código
 COPY . .
-
-# Crear directorios de datos
-RUN mkdir -p /app/data/chromadb /app/cache /app/uploads
 
 # Exponer puerto (solo red interna Docker)
 EXPOSE 8002

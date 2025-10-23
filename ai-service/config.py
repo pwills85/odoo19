@@ -34,25 +34,20 @@ class Settings(BaseSettings):
     anthropic_max_tokens: int = 4096
     
     # ═══════════════════════════════════════════════════════════
-    # OLLAMA (LLM LOCAL)
+    # OPENAI API (Fallback LLM)
     # ═══════════════════════════════════════════════════════════
-    
-    ollama_url: str = "http://ollama:11434"
-    ollama_model: str = "llama2"  # Modelo por defecto
-    
-    # ═══════════════════════════════════════════════════════════
-    # EMBEDDINGS
-    # ═══════════════════════════════════════════════════════════
-    
-    embedding_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-    embedding_dimension: int = 384
+
+    openai_api_key: str = ""  # Optional fallback
+    openai_model: str = "gpt-4-turbo-preview"
+    openai_max_tokens: int = 4096
     
     # ═══════════════════════════════════════════════════════════
-    # VECTOR DATABASE (CHROMADB)
+    # CHAT ENGINE
     # ═══════════════════════════════════════════════════════════
-    
-    chromadb_path: str = "/app/data/chromadb"
-    chromadb_collection: str = "dte_embeddings"
+
+    chat_session_ttl: int = 3600  # 1 hour
+    chat_max_context_messages: int = 10  # Last N messages
+    chat_default_temperature: float = 0.7  # Creativity (0-2)
     
     # ═══════════════════════════════════════════════════════════
     # REDIS CACHE
@@ -73,7 +68,26 @@ class Settings(BaseSettings):
     # ═══════════════════════════════════════════════════════════
     
     validation_confidence_threshold: float = 0.80  # 80%
-    reconciliation_similarity_threshold: float = 0.85  # 85%
+
+    # ═══════════════════════════════════════════════════════════
+    # KNOWLEDGE BASE
+    # ═══════════════════════════════════════════════════════════
+
+    knowledge_base_path: str = "/app/knowledge"  # Markdown docs directory
+    knowledge_base_modules: list[str] = ["l10n_cl_dte"]  # Supported modules
+    
+    # ═══════════════════════════════════════════════════════════
+    # FEATURE FLAGS (UPGRADE TO MULTI-MODULE)
+    # ═══════════════════════════════════════════════════════════
+    
+    # Plugin system
+    enable_plugin_system: bool = False
+    enable_multi_module_kb: bool = False
+    enable_dynamic_prompts: bool = False
+    enable_generic_validation: bool = False
+    
+    # Backward compatibility (always True in production)
+    force_dte_compatibility_mode: bool = True
     
     # ═══════════════════════════════════════════════════════════
     # LOGGING

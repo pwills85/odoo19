@@ -1,5 +1,6 @@
-# AI Microservice - Python Dependencies
+# AI Support Assistant - Python Dependencies
 # Python 3.11+
+# Optimizado para API-only LLMs (Anthropic + OpenAI)
 
 # ═══════════════════════════════════════════════════════════
 # WEB FRAMEWORK
@@ -10,28 +11,15 @@ pydantic==2.5.0
 pydantic-settings==2.1.0
 
 # ═══════════════════════════════════════════════════════════
-# AI / LLM
+# AI / LLM (API-Only)
 # ═══════════════════════════════════════════════════════════
-anthropic==0.7.8
-openai==1.6.1
-ollama==0.1.6
+anthropic==0.7.8          # Primary LLM
+openai==1.6.1             # Fallback LLM
 
 # ═══════════════════════════════════════════════════════════
-# EMBEDDINGS Y VECTOR DB
-# ═══════════════════════════════════════════════════════════
-sentence-transformers==2.2.2
-chromadb==0.4.22
-numpy>=1.24.0
-
-# ═══════════════════════════════════════════════════════════
-# DOCUMENT PROCESSING
+# XML PARSING (for DTE)
 # ═══════════════════════════════════════════════════════════
 lxml>=4.9.0
-pypdf>=3.17.4
-pdfplumber>=0.10.3
-python-docx>=1.1.0
-pytesseract>=0.3.10
-Pillow>=10.1.0
 
 # ═══════════════════════════════════════════════════════════
 # HTTP Y COMUNICACIÓN
@@ -40,7 +28,7 @@ httpx>=0.25.2
 requests>=2.31.0
 
 # ═══════════════════════════════════════════════════════════
-# CACHE Y DB
+# CACHE Y SESSION STORAGE
 # ═══════════════════════════════════════════════════════════
 redis>=5.0.1
 
@@ -52,6 +40,20 @@ python-dateutil>=2.8.2
 structlog>=23.2.0
 
 # ═══════════════════════════════════════════════════════════
+# SII MONITORING
+# ═══════════════════════════════════════════════════════════
+beautifulsoup4>=4.12.0    # Parse HTML del SII
+html5lib>=1.1             # HTML parser robusto
+slack-sdk>=3.23.0         # Notificaciones Slack
+slowapi>=0.1.9            # Rate limiting API
+validators>=0.22.0        # Validación URLs/emails
+
+# ═══════════════════════════════════════════════════════════
+# RETRY Y RESILIENCIA
+# ═══════════════════════════════════════════════════════════
+tenacity>=8.2.3  # Retry with exponential backoff
+
+# ═══════════════════════════════════════════════════════════
 # TESTING
 # ═══════════════════════════════════════════════════════════
 pytest>=7.4.3
@@ -60,11 +62,14 @@ pytest-cov>=4.1.0
 responses>=0.20.0
 
 # ═══════════════════════════════════════════════════════════
-# [NUEVO] SII MONITORING - Added 2025-10-22
+# REMOVED (Heavy/Unused) - 2025-10-22
 # ═══════════════════════════════════════════════════════════
-beautifulsoup4>=4.12.0          # Parse HTML del SII
-html5lib>=1.1                   # HTML parser robusto
-slack-sdk>=3.23.0               # Notificaciones Slack
-slowapi>=0.1.9                  # Rate limiting API
-validators>=0.22.0              # Validación URLs/emails
-
+# ollama==0.1.6                    # Local LLM - not used
+# sentence-transformers==2.2.2     # Embeddings locales (1.2GB) - not needed
+# chromadb==0.4.22                 # Vector DB - not needed
+# numpy>=1.24.0                    # Only for sentence-transformers
+# pypdf>=3.17.4                    # Document processing - not used
+# pdfplumber>=0.10.3               # Document processing - not used
+# python-docx>=1.1.0               # Document processing - not used
+# pytesseract>=0.3.10              # OCR - not used
+# Pillow>=10.1.0                   # Image processing - not used
