@@ -419,70 +419,103 @@ class HrPayslip(models.Model):
     
     def _compute_basic_lines(self):
         """
-        Calcular líneas básicas
+        Calcular líneas básicas de liquidación usando SOPA 2025
         
-        NOTA: Implementación simplificada inicial.
-        TODO: Integrar con AI-Service para cálculos completos.
+        Migrado desde Odoo 11 CE con técnicas Odoo 19 CE.
+        Usa categorías con flags para cálculos correctos.
+        
+        Crea las líneas fundamentales:
+        - Sueldo base (categoría BASE, imponible=True)
+        - AFP (usa total_imponible)
+        - Salud (usa total_imponible)
         """
         self.ensure_one()
         
+        # Limpiar líneas existentes
+        self.line_ids.unlink()
+        
         LineObj = self.env['hr.payslip.line']
         
-        # Obtener datos
-        wage = self.contract_id.wage
-        indicator = self.indicadores_id
+        # Obtener categorías SOPA 2025
+        CategoryBase = self.env.ref('l10n_cl_hr_payroll.category_base', raise_if_not_found=False)
+        CategoryLegal = self.env.ref('l10n_cl_hr_payroll.category_desc_legal', raise_if_not_found=False)
         
-        # 1. SUELDO BASE
+        if not CategoryBase or not CategoryLegal:
+            raise UserError(_(
+                'Categorías SOPA 2025 no encontradas. '
+                'Por favor actualice el módulo con: odoo -u l10n_cl_hr_payroll'
+            ))
+        
+        # 1. SUELDO BASE (imponible=True, tributable=True)
         LineObj.create({
             'slip_id': self.id,
-            'code': 'SUELDO',
+            'code': 'BASIC',
             'name': 'Sueldo Base',
             'sequence': 10,
-            'category_id': self.env.ref('l10n_cl_hr_payroll.category_basic').id,
-            'amount': wage,
+            'category_id': CategoryBase.id,
+            'amount': self.contract_id.wage,
             'quantity': 1.0,
             'rate': 100.0,
-            'total': wage,
+            'total': self.contract_id.wage,
         })
         
-        # 2. AFP
-        if self.contract_id.afp_id:
-            afp_limit_clp = indicator.uf * indicator.afp_limit
-            imponible_afp = min(wage, afp_limit_clp)
-            afp_amount = imponible_afp * (self.contract_id.afp_rate / 100)
-            
+        # Forzar recálculo de totalizadores
+        self._compute_totals()
+        
+        # 2. AFP (usa total_imponible)
+        afp_amount = self._calculate_afp()
+        if afp_amount > 0:
             LineObj.create({
                 'slip_id': self.id,
                 'code': 'AFP',
                 'name': f'AFP {self.contract_id.afp_id.name}',
                 'sequence': 100,
-                'category_id': self.env.ref('l10n_cl_hr_payroll.category_deduction').id,
-                'amount': imponible_afp,
+                'category_id': CategoryLegal.id,
+                'amount': afp_amount,
                 'quantity': 1.0,
                 'rate': self.contract_id.afp_rate,
                 'total': -afp_amount,
             })
         
-        # 3. SALUD
-        if self.contract_id.is_fonasa:
-            # FONASA 7% fijo
-            health_amount = wage * 0.07
-            
+        # 3. SALUD (usa total_imponible)
+        health_amount = self._calculate_health()
+        if health_amount > 0:
+            health_name = 'FONASA' if self.contract_id.health_system == 'fonasa' else f'ISAPRE {self.contract_id.isapre_id.name}'
             LineObj.create({
                 'slip_id': self.id,
-                'code': 'FONASA',
-                'name': 'FONASA 7%',
+                'code': 'HEALTH',
+                'name': health_name,
                 'sequence': 110,
-                'category_id': self.env.ref('l10n_cl_hr_payroll.category_deduction').id,
-                'amount': wage,
+                'category_id': CategoryLegal.id,
+                'amount': health_amount,
                 'quantity': 1.0,
-                'rate': 7.0,
+                'rate': 7.0 if self.contract_id.health_system == 'fonasa' else 0.0,
                 'total': -health_amount,
             })
-        elif self.contract_id.isapre_id:
+        
+        _logger.info(
+            "Líneas SOPA 2025 creadas para liquidación %s: %d líneas, total_imponible=$%s",
+            self.name,
+            len(self.line_ids),
+            f"{self.total_imponible:,.0f}"
+        )
+    
+    def _calculate_afp(self):
+        """Calcular AFP"""
+        afp_limit_clp = self.indicadores_id.uf * self.indicadores_id.afp_limit
+        imponible_afp = min(self.contract_id.wage, afp_limit_clp)
+        afp_amount = imponible_afp * (self.contract_id.afp_rate / 100)
+        return afp_amount
+    
+    def _calculate_health(self):
+        """Calcular salud"""
+        if self.contract_id.health_system == 'fonasa':
+            # FONASA 7% fijo
+            health_amount = self.contract_id.wage * 0.07
+        elif self.contract_id.health_system == 'isapre':
             # ISAPRE variable
-            plan_clp = self.contract_id.isapre_plan_uf * indicator.uf
-            legal_7pct = wage * 0.07
+            plan_clp = self.contract_id.isapre_plan_uf * self.indicadores_id.uf
+            legal_7pct = self.contract_id.wage * 0.07
             
             if plan_clp > legal_7pct:
                 # Paga más que 7%
