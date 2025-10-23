@@ -14,6 +14,11 @@ import structlog
 from config import settings
 
 # ═══════════════════════════════════════════════════════════
+# ROUTER IMPORTS
+# ═══════════════════════════════════════════════════════════
+from routes.analytics import router as analytics_router
+
+# ═══════════════════════════════════════════════════════════
 # LOGGING
 # ═══════════════════════════════════════════════════════════
 
@@ -42,6 +47,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ═══════════════════════════════════════════════════════════
+# ROUTER REGISTRATION
+# ═══════════════════════════════════════════════════════════
+app.include_router(analytics_router)
 
 # ═══════════════════════════════════════════════════════════
 # SECURITY
@@ -91,22 +101,8 @@ class ReconciliationResponse(BaseModel):
 # GLOBAL INSTANCES (Singleton Pattern)
 # ═══════════════════════════════════════════════════════════
 
-_matcher_instance = None
-
-def get_matcher_singleton():
-    """
-    Singleton para InvoiceMatcher.
-    Carga el modelo una sola vez y lo reutiliza.
-    """
-    global _matcher_instance
-    
-    if _matcher_instance is None:
-        from reconciliation.invoice_matcher import InvoiceMatcher
-        logger.info("initializing_invoice_matcher")
-        _matcher_instance = InvoiceMatcher(settings.embedding_model)
-        logger.info("invoice_matcher_ready")
-    
-    return _matcher_instance
+# Removed: InvoiceMatcher (sentence-transformers) - not used
+# Future: Reimplementar reconciliation con Claude API si se necesita
 
 # ═══════════════════════════════════════════════════════════
 # ENDPOINTS
@@ -120,7 +116,7 @@ async def health_check():
         "service": settings.app_name,
         "version": settings.app_version,
         "anthropic_configured": bool(settings.anthropic_api_key),
-        "ollama_url": settings.ollama_url
+        "openai_configured": bool(settings.openai_api_key)
     }
 
 @app.post("/api/ai/validate",
@@ -170,45 +166,19 @@ async def validate_dte(request: DTEValidationRequest):
 async def reconcile_invoice(request: ReconciliationRequest):
     """
     Reconcilia una factura recibida con órdenes de compra pendientes.
-    
-    Usa embeddings semánticos con sentence-transformers.
+
+    DEPRECATED: Endpoint mantenido para compatibilidad.
+    TODO: Reimplementar con Claude API si se necesita.
     """
-    logger.info("ai_reconciliation_started", 
-                pending_pos_count=len(request.pending_pos))
-    
-    try:
-        # Parsear DTE XML para extraer datos
-        from receivers.xml_parser import XMLParser
-        
-        parser = XMLParser()
-        invoice_data = parser.parse_dte(request.dte_xml)
-        
-        # Usar InvoiceMatcher REAL (singleton)
-        matcher = get_matcher_singleton()
-        
-        # Hacer matching con embeddings
-        result = matcher.match_invoice_to_po(
-            invoice_data,
-            request.pending_pos,
-            threshold=settings.reconciliation_similarity_threshold
-        )
-        
-        return ReconciliationResponse(
-            po_id=result.get('po_id'),
-            confidence=result.get('confidence', 0.0),
-            line_matches=result.get('line_matches', [])
-        )
-        
-    except Exception as e:
-        logger.error("ai_reconciliation_error", error=str(e))
-        
-        # Retornar sin match en caso de error (no bloquear)
-        return ReconciliationResponse(
-            po_id=None,
-            confidence=0.0,
-            line_matches=[],
-            message=f"Error: {str(e)}"
-        )
+    logger.warning("reconcile_endpoint_deprecated",
+                   message="Endpoint deprecated - sentence-transformers removed")
+
+    # Retornar respuesta vacía (endpoint no funcional)
+    return ReconciliationResponse(
+        po_id=None,
+        confidence=0.0,
+        line_matches=[]
+    )
 
 # ═══════════════════════════════════════════════════════════
 # STARTUP / SHUTDOWN
@@ -231,12 +201,6 @@ class SIIMonitorResponse(BaseModel):
     status: str
     execution_time: Optional[str]
     urls_scraped: int
-    changes_detected: int
-    news_created: int
-    notifications_sent: int
-    errors: List[str]
-
-
 # Lazy initialization del orchestrator
 _orchestrator = None
 
@@ -367,17 +331,313 @@ async def get_sii_monitoring_status(
             detail=str(e)
         )
 
+@app.on_event("startup")
 async def startup_event():
     """Inicialización al arrancar el servicio"""
     logger.info("ai_service_starting",
                 version=settings.app_version,
                 anthropic_model=settings.anthropic_model,
-                ollama_url=settings.ollama_url)
+                openai_configured=bool(settings.openai_api_key))
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Limpieza al detener el servicio"""
     logger.info("ai_service_stopping")
+
+# ═══════════════════════════════════════════════════════════
+# [NEW] CHAT SUPPORT ENDPOINTS - Added 2025-10-22
+# ═══════════════════════════════════════════════════════════
+
+from chat.engine import ChatEngine, ChatResponse as EngineChatResponse
+from chat.context_manager import ContextManager
+from chat.knowledge_base import KnowledgeBase
+from utils.redis_helper import get_redis_client
+import uuid
+
+
+# Pydantic Models for Chat API
+class ChatMessageRequest(BaseModel):
+    """Request to send chat message"""
+    session_id: Optional[str] = None  # If None, creates new session
+    message: str
+    user_context: Optional[Dict[str, Any]] = None
+
+
+class NewSessionRequest(BaseModel):
+    """Request to create new chat session"""
+    user_context: Optional[Dict[str, Any]] = None
+
+
+class NewSessionResponse(BaseModel):
+    """Response with new session ID"""
+    session_id: str
+    welcome_message: str
+
+
+# Global Chat Engine (singleton)
+_chat_engine: Optional[ChatEngine] = None
+
+
+def get_chat_engine() -> ChatEngine:
+    """Get or create chat engine singleton."""
+    global _chat_engine
+
+    if _chat_engine is None:
+        logger.info("chat_engine_initializing")
+
+        # Initialize components
+        redis_client = get_redis_client()
+
+        context_manager = ContextManager(
+            redis_client=redis_client,
+            ttl_seconds=settings.chat_session_ttl
+        )
+
+        knowledge_base = KnowledgeBase()
+
+        # Get LLM clients
+        from clients.anthropic_client import get_anthropic_client
+        from clients.openai_client import get_openai_client
+
+        anthropic_client = get_anthropic_client(
+            settings.anthropic_api_key,
+            settings.anthropic_model
+        )
+
+        openai_client = get_openai_client(settings.openai_api_key) if settings.openai_api_key else None
+
+        # Create chat engine
+        _chat_engine = ChatEngine(
+            context_manager=context_manager,
+            knowledge_base=knowledge_base,
+            anthropic_client=anthropic_client,
+            openai_client=openai_client,
+            max_context_messages=settings.chat_max_context_messages,
+            default_temperature=settings.chat_default_temperature
+        )
+
+        logger.info("chat_engine_initialized",
+                   has_openai_fallback=openai_client is not None)
+
+    return _chat_engine
+
+
+@app.post(
+    "/api/chat/message",
+    response_model=EngineChatResponse,
+    tags=["Chat Support"],
+    summary="Send chat message",
+    description="Send message to AI support assistant and get response with context awareness"
+)
+async def send_chat_message(
+    request: ChatMessageRequest,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """
+    Send message to AI support assistant.
+
+    If session_id is None, creates new session automatically.
+    Context is preserved across messages in same session.
+
+    Example:
+    ```json
+    {
+      "session_id": "uuid-here",
+      "message": "¿Cómo genero un DTE 33?",
+      "user_context": {
+        "company_name": "Mi Empresa SpA",
+        "company_rut": "12345678-9",
+        "user_role": "Contador",
+        "environment": "Sandbox"
+      }
+    }
+    ```
+    """
+    # Verify API key
+    await verify_api_key(credentials)
+
+    # Create session if needed
+    session_id = request.session_id or str(uuid.uuid4())
+
+    logger.info("chat_message_request",
+                session_id=session_id,
+                message_preview=request.message[:100],
+                has_user_context=request.user_context is not None)
+
+    try:
+        engine = get_chat_engine()
+
+        response = await engine.send_message(
+            session_id=session_id,
+            user_message=request.message,
+            user_context=request.user_context
+        )
+
+        return response
+
+    except Exception as e:
+        logger.error("chat_message_error",
+                    session_id=session_id,
+                    error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Chat failed: {str(e)}"
+        )
+
+
+@app.post(
+    "/api/chat/session/new",
+    response_model=NewSessionResponse,
+    tags=["Chat Support"],
+    summary="Create new chat session",
+    description="Start new conversation with AI assistant"
+)
+async def create_chat_session(
+    request: NewSessionRequest,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """
+    Create new chat session.
+
+    Returns session_id to use in subsequent /api/chat/message calls.
+    Optionally saves user context for the session.
+    """
+    await verify_api_key(credentials)
+
+    session_id = str(uuid.uuid4())
+
+    # Save user context if provided
+    if request.user_context:
+        engine = get_chat_engine()
+        engine.context_manager.save_user_context(session_id, request.user_context)
+
+    logger.info("new_chat_session_created",
+                session_id=session_id,
+                has_user_context=request.user_context is not None)
+
+    # Welcome message (español chileno)
+    welcome = "¡Hola! Soy tu asistente especializado en facturación electrónica chilena. ¿En qué puedo ayudarte hoy?"
+
+    return NewSessionResponse(
+        session_id=session_id,
+        welcome_message=welcome
+    )
+
+
+@app.get(
+    "/api/chat/session/{session_id}",
+    tags=["Chat Support"],
+    summary="Get conversation history",
+    description="Retrieve conversation history for a session"
+)
+async def get_conversation_history(
+    session_id: str,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """
+    Get conversation history for session.
+
+    Returns all messages in the session (up to max_context_messages).
+    """
+    await verify_api_key(credentials)
+
+    try:
+        engine = get_chat_engine()
+        history = engine.context_manager.get_conversation_history(session_id)
+        stats = engine.get_conversation_stats(session_id)
+
+        return {
+            "session_id": session_id,
+            "message_count": len(history),
+            "messages": history,
+            "stats": stats
+        }
+
+    except Exception as e:
+        logger.error("get_history_error",
+                    session_id=session_id,
+                    error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get history: {str(e)}"
+        )
+
+
+@app.delete(
+    "/api/chat/session/{session_id}",
+    tags=["Chat Support"],
+    summary="Clear session",
+    description="Delete conversation history and context for a session"
+)
+async def clear_chat_session(
+    session_id: str,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """
+    Clear session (delete history and context).
+
+    Use this to start fresh or for privacy/cleanup.
+    """
+    await verify_api_key(credentials)
+
+    try:
+        engine = get_chat_engine()
+        engine.context_manager.clear_session(session_id)
+
+        logger.info("chat_session_cleared", session_id=session_id)
+
+        return {
+            "status": "cleared",
+            "session_id": session_id,
+            "message": "Session history and context deleted"
+        }
+
+    except Exception as e:
+        logger.error("clear_session_error",
+                    session_id=session_id,
+                    error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear session: {str(e)}"
+        )
+
+
+@app.get(
+    "/api/chat/knowledge/search",
+    tags=["Chat Support"],
+    summary="Search knowledge base",
+    description="Search DTE documentation knowledge base"
+)
+async def search_knowledge_base(
+    query: str,
+    top_k: int = 3,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """
+    Search knowledge base directly (without chat context).
+
+    Useful for testing knowledge base coverage.
+    """
+    await verify_api_key(credentials)
+
+    try:
+        engine = get_chat_engine()
+        results = engine.knowledge_base.search(query, top_k=top_k)
+
+        return {
+            "query": query,
+            "results_found": len(results),
+            "results": results
+        }
+
+    except Exception as e:
+        logger.error("knowledge_search_error",
+                    query=query,
+                    error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Search failed: {str(e)}"
+        )
 
 # ═══════════════════════════════════════════════════════════
 # MAIN

@@ -1,10 +1,25 @@
 # -*- coding: utf-8 -*-
 
+# TEMPORALMENTE DESACTIVADO: Causa AssertionError en Odoo 19 (import fuera de odoo.addons)
+# from . import dte_service_integration  # ⭐ Integration layer first
+# from . import ai_chat_integration      # ⭐ AI Chat integration
+
+# ═══════════════════════════════════════════════════════════
+# NUEVOS MODELOS - INTEGRACIÓN PROYECTOS (2025-10-23)
+# ═══════════════════════════════════════════════════════════
+from . import dte_ai_client  # Cliente AI Service (abstract model)
+from . import project_dashboard  # Dashboard rentabilidad proyectos
+
+# ═══════════════════════════════════════════════════════════
+# MODELOS EXISTENTES
+# ═══════════════════════════════════════════════════════════
 from . import dte_certificate
 from . import dte_caf
 from . import dte_communication
 from . import dte_consumo_folios
 from . import dte_libro
+from . import dte_libro_guias  # ⭐ Libro de Guías de Despacho
+from . import dte_inbox  # ⭐ DTE Reception (Gap #1)
 from . import rabbitmq_helper
 from . import account_move_dte
 from . import account_journal_dte

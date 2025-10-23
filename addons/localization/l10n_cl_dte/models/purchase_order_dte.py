@@ -18,9 +18,22 @@ class PurchaseOrderDTE(models.Model):
     _inherit = 'purchase.order'
     
     # ═══════════════════════════════════════════════════════════
+    # CAMPOS ANALÍTICA - PROYECTOS (EMPRESAS INGENIERÍA)
+    # ═══════════════════════════════════════════════════════════
+
+    project_id = fields.Many2one(
+        'account.analytic.account',
+        string='Proyecto',
+        required=False,  # Opcional por defecto (compatible upgrade)
+        tracking=True,
+        domain="[('company_id', '=', company_id)]",
+        help='Proyecto principal. Se propagará automáticamente a líneas sin analítica asignada.'
+    )
+
+    # ═══════════════════════════════════════════════════════════
     # CAMPOS DTE 34 (LIQUIDACIÓN HONORARIOS)
     # ═══════════════════════════════════════════════════════════
-    
+
     es_liquidacion_honorarios = fields.Boolean(
         string='Es Liquidación de Honorarios',
         default=False,
@@ -115,9 +128,30 @@ class PurchaseOrderDTE(models.Model):
     )
     
     # ═══════════════════════════════════════════════════════════
+    # ONCHANGE - PROPAGACIÓN PROYECTO
+    # ═══════════════════════════════════════════════════════════
+
+    @api.onchange('project_id')
+    def _onchange_project_id(self):
+        """
+        Propaga proyecto a líneas SIN analítica asignada.
+
+        Basado en documentación oficial Odoo 19 CE:
+        - purchase.order.line tiene campo analytic_distribution (JSON)
+        - Formato: {"account_id": percentage} donde sum = 100%
+        """
+        if self.project_id:
+            analytic_dist = {str(self.project_id.id): 100.0}
+            # Solo sobreescribe líneas vacías (respeta asignaciones manuales)
+            for line in self.order_line.filtered(
+                lambda l: not l.analytic_distribution and not l.display_type
+            ):
+                line.analytic_distribution = analytic_dist
+
+    # ═══════════════════════════════════════════════════════════
     # CAMPOS COMPUTADOS
     # ═══════════════════════════════════════════════════════════
-    
+
     @api.depends('order_line.price_subtotal')
     def _compute_monto_bruto_honorarios(self):
         """Calcula monto bruto como suma de líneas"""
@@ -175,9 +209,34 @@ class PurchaseOrderDTE(models.Model):
                     )
     
     # ═══════════════════════════════════════════════════════════
-    # BUSINESS METHODS
+    # BUSINESS METHODS - OVERRIDE
     # ═══════════════════════════════════════════════════════════
-    
+
+    def button_confirm(self):
+        """
+        Override de button_confirm para validar proyecto si empresa lo requiere.
+
+        Empresas de ingeniería pueden requerir proyecto obligatorio en compras.
+        Configuración: res.company.dte_require_analytic_on_purchases
+        """
+        # Validar proyecto si empresa lo requiere
+        if self.company_id.dte_require_analytic_on_purchases:
+            for line in self.order_line.filtered(lambda l: not l.display_type):
+                if not line.analytic_distribution:
+                    raise ValidationError(_(
+                        "La línea '%s' no tiene proyecto asignado.\n\n"
+                        "Para desactivar esta validación:\n"
+                        "Configuración → Facturación → DTE Chile → "
+                        "'Requerir proyecto en compras'"
+                    ) % line.product_id.name)
+
+        # Llamar método padre (incluye _validate_analytic_distribution de Odoo)
+        return super().button_confirm()
+
+    # ═══════════════════════════════════════════════════════════
+    # BUSINESS METHODS - DTE 34
+    # ═══════════════════════════════════════════════════════════
+
     def action_generar_liquidacion_dte34(self):
         """
         Genera DTE 34 (Liquidación de Honorarios)
