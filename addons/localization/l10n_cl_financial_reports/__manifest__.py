@@ -122,22 +122,24 @@ For technical support and customizations, contact EERGYGROUP.
     ],
     # Dependencias organizadas por prioridad
     "depends": [
-        # Core Odoo modules
+        # Core Odoo 19 modules
         "account",
         "base",
-
-        # Reporting modules
-        "date_range",
-        "report_xlsx",
+        "hr",  # NUEVO: Requerido para hr.employee, hr.department
 
         # Project management
         "project",
         "hr_timesheet",
-        "account_budget",
 
-        # Localization
+        # Localization - Chile
         "l10n_cl_base",  # Chilean localization services
+        "l10n_cl_dte",  # NUEVO: Integración DTEs en F29/Dashboard
+        "l10n_cl_hr_payroll",  # NUEVO: Integración Nóminas en F29/Dashboard
     ],
+    # Dependencias opcionales (no requeridas para funcionalidad core)
+    # - date_range: No usada (parámetro interno date_range=/= módulo OCA)
+    # - report_xlsx: Removida (se usa xlsxwriter Python library directamente)
+    # - account_budget: Feature opcional, validada en runtime (budget_comparison_report.py:338)
     "data": [
         # Security files first
         "security/security.xml",
