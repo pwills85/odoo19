@@ -1,0 +1,328 @@
+// Financial Dashboard Styles - Enhanced Version
+// Siguiendo convenciones de Odoo 18 y optimización de performance
+
+.o_financial_dashboard {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--o-webclient-background-color);
+    
+    // Loading state
+    .o_dashboard_loading {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        .spinner-border {
+            width: 4rem;
+            height: 4rem;
+        }
+    }
+    
+    // Dashboard content
+    .o_dashboard_content {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+    
+    // Control panel
+    .o_control_panel {
+        background-color: var(--o-view-background-color);
+        border-bottom: 1px solid var(--o-border-color);
+        padding: 1rem;
+        flex-shrink: 0;
+        
+        .o_control_panel_main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            
+            .o_control_panel_breadcrumbs {
+                h2 {
+                    margin: 0;
+                    font-size: 1.5rem;
+                    font-weight: 500;
+                    color: var(--o-main-text-color);
+                }
+            }
+            
+            .o_control_panel_actions {
+                display: flex;
+                gap: 0.5rem;
+                
+                .btn-light {
+                    border: 1px solid var(--o-border-color);
+                    background-color: var(--o-view-background-color);
+                    
+                    &:hover {
+                        background-color: var(--o-hover-background-color);
+                    }
+                }
+            }
+        }
+        
+        .o_control_panel_filters {
+            .o_filter_group {
+                display: flex;
+                align-items: center;
+                
+                label {
+                    white-space: nowrap;
+                    color: var(--o-gray-700);
+                    font-weight: 500;
+                    font-size: 0.875rem;
+                }
+                
+                input, select {
+                    min-width: 150px;
+                }
+            }
+        }
+    }
+    
+    // Filter container
+    .o_dashboard_filter_container {
+        padding: 0 1rem;
+    }
+    
+    // Dashboard grid container
+    .o_dashboard_grid_container {
+        flex: 1;
+        overflow: auto;
+        padding: 1rem;
+        
+        // Custom scrollbar
+        &::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        &::-webkit-scrollbar-track {
+            background: var(--o-gray-100);
+        }
+        
+        &::-webkit-scrollbar-thumb {
+            background: var(--o-gray-400);
+            border-radius: 4px;
+            
+            &:hover {
+                background: var(--o-gray-500);
+            }
+        }
+    }
+    
+    // Empty state
+    .o_dashboard_empty {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        .fa-chart-line {
+            opacity: 0.3;
+        }
+    }
+    
+    // GridStack customization
+    .grid-stack {
+        .grid-stack-item {
+            // Remove default transitions for better performance
+            transition: none !important;
+            
+            &.ui-draggable-dragging {
+                transition: none !important;
+                z-index: 100;
+                
+                .grid-stack-item-content {
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+                    transform: scale(1.02);
+                }
+            }
+            
+            &.ui-resizable-resizing {
+                z-index: 100;
+            }
+            
+            .grid-stack-item-content {
+                background-color: var(--o-view-background-color);
+                border-radius: var(--border-radius-lg);
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                transition: box-shadow 0.3s ease, transform 0.3s ease;
+                
+                &:hover {
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+                }
+                
+                .widget-header {
+                    padding: 0.75rem 1rem;
+                    background-color: var(--o-gray-50);
+                    border-bottom: 1px solid var(--o-border-color);
+                    cursor: move;
+                    display: flex;
+                    align-items: center;
+                    font-weight: 500;
+                    font-size: 0.875rem;
+                    color: var(--o-gray-700);
+                    user-select: none;
+                    
+                    i {
+                        opacity: 0.7;
+                        margin-right: 0.5rem;
+                    }
+                }
+                
+                .widget-body {
+                    flex: 1;
+                    overflow: hidden;
+                    position: relative;
+                    
+                    // Ensure child components fill the space
+                    > * {
+                        width: 100%;
+                        height: 100%;
+                    }
+                }
+            }
+        }
+        
+        // Placeholder styles
+        .grid-stack-placeholder {
+            background-color: var(--o-primary);
+            opacity: 0.1;
+            border: 2px dashed var(--o-primary);
+            border-radius: var(--border-radius-lg);
+            
+            .placeholder-content {
+                display: none;
+            }
+        }
+    }
+}
+
+// Responsive breakpoints
+@media (max-width: 1200px) {
+    .o_financial_dashboard {
+        .o_control_panel {
+            .o_control_panel_main {
+                flex-wrap: wrap;
+                gap: 1rem;
+                
+                .o_control_panel_actions {
+                    flex-wrap: wrap;
+                }
+            }
+            
+            .o_control_panel_filters {
+                .d-flex {
+                    flex-wrap: wrap;
+                    gap: 0.75rem !important;
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .o_financial_dashboard {
+        .o_control_panel {
+            padding: 0.75rem;
+            
+            .o_control_panel_breadcrumbs h2 {
+                font-size: 1.25rem;
+            }
+            
+            .o_control_panel_actions {
+                .btn {
+                    padding: 0.375rem 0.75rem;
+                    font-size: 0.875rem;
+                    
+                    &:not(.btn-primary) {
+                        .fa {
+                            margin: 0;
+                        }
+                        
+                        span {
+                            display: none;
+                        }
+                    }
+                }
+            }
+        }
+        
+        .o_dashboard_grid_container {
+            padding: 0.5rem;
+        }
+        
+        // Disable drag and resize on mobile
+        .grid-stack {
+            .grid-stack-item {
+                position: relative !important;
+                width: 100% !important;
+                height: auto !important;
+                margin-bottom: 0.5rem;
+                
+                .widget-header {
+                    cursor: default;
+                }
+            }
+        }
+    }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+    .o_financial_dashboard {
+        .grid-stack-item-content {
+            background-color: var(--o-gray-900);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+            
+            &:hover {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            }
+            
+            .widget-header {
+                background-color: rgba(255, 255, 255, 0.05);
+                border-bottom-color: rgba(255, 255, 255, 0.1);
+                color: var(--o-gray-300);
+            }
+        }
+        
+        .grid-stack-placeholder {
+            background-color: var(--o-primary);
+            opacity: 0.2;
+        }
+    }
+}
+
+// Print styles
+@media print {
+    .o_financial_dashboard {
+        .o_control_panel {
+            display: none;
+        }
+        
+        .o_dashboard_grid_container {
+            padding: 0;
+            overflow: visible;
+        }
+        
+        .grid-stack {
+            .grid-stack-item {
+                page-break-inside: avoid;
+                break-inside: avoid;
+                
+                .widget-header {
+                    background-color: transparent;
+                    border-bottom: 1px solid #000;
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,320 @@
+
+/* Mobile Optimizations for Financial Reports */
+
+/* ====== RESPONSIVE BREAKPOINTS ====== */
+$mobile-sm: 320px;
+$mobile-md: 480px;
+$tablet: 768px;
+$desktop: 1024px;
+
+/* ====== BASE MOBILE STYLES ====== */
+@media (max-width: $tablet) {
+
+    /* Dashboard adaptations */
+    .financial-dashboard {
+        padding: 8px;
+
+        .dashboard-widgets {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .widget-card {
+            width: 100% !important;
+            min-height: 200px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
+            .widget-header {
+                padding: 12px 16px;
+                font-size: 16px;
+                font-weight: 600;
+
+                .widget-actions {
+                    .btn {
+                        min-width: 36px;
+                        min-height: 36px;
+                        padding: 8px;
+                        border-radius: 8px;
+                    }
+                }
+            }
+
+            .widget-content {
+                padding: 12px 16px;
+
+                /* Table responsive behavior */
+                table {
+                    font-size: 12px;
+
+                    th, td {
+                        padding: 8px 4px;
+                        vertical-align: middle;
+                    }
+
+                    /* Hide less important columns on mobile */
+                    .d-mobile-none {
+                        display: none;
+                    }
+                }
+
+                /* Chart adaptations */
+                .chart-container {
+                    height: 250px;
+                    position: relative;
+
+                    canvas {
+                        max-height: 100%;
+                    }
+                }
+            }
+        }
+    }
+
+    /* Form adaptations */
+    .o_form_view {
+        .o_form_sheet {
+            padding: 16px;
+            margin: 8px;
+
+            .o_group {
+                .o_field_widget {
+                    font-size: 14px;
+                    min-height: 44px; /* Touch-friendly height */
+                }
+
+                label {
+                    font-size: 13px;
+                    margin-bottom: 4px;
+                }
+            }
+
+            /* Buttons larger for touch */
+            .o_form_buttons_view {
+                .btn {
+                    min-height: 44px;
+                    padding: 12px 20px;
+                    font-size: 14px;
+                    border-radius: 8px;
+                }
+            }
+        }
+    }
+
+    /* List view adaptations */
+    .o_list_view {
+        .o_list_table {
+            font-size: 12px;
+
+            thead th {
+                padding: 12px 8px;
+                font-size: 13px;
+            }
+
+            tbody td {
+                padding: 12px 8px;
+                min-height: 48px;
+            }
+
+            /* Hide columns on mobile */
+            .o_list_number_th,
+            .o_list_number {
+                display: none;
+            }
+        }
+    }
+
+    /* Mobile navigation */
+    .mobile-nav-tabs {
+        display: flex;
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 4px;
+        margin-bottom: 16px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+
+        .nav-tab {
+            flex-shrink: 0;
+            padding: 12px 20px;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+
+            &.active {
+                background: #007bff;
+                color: white;
+                box-shadow: 0 2px 4px rgba(0,123,255,0.3);
+            }
+        }
+    }
+}
+
+/* ====== TOUCH GESTURES ====== */
+.touch-enabled {
+    /* Swipe indicators */
+    .swipe-indicator {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0,0,0,0.1);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+
+        &.left {
+            left: 10px;
+        }
+
+        &.right {
+            right: 10px;
+        }
+
+        &.visible {
+            opacity: 1;
+        }
+    }
+
+    /* Pull to refresh */
+    .pull-refresh {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+
+        .refresh-icon {
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+    }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ====== MOBILE-SPECIFIC WIDGETS ====== */
+.mobile-widget {
+    .widget-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        color: #333;
+    }
+
+    .metric-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 24px;
+        border-radius: 16px;
+        text-align: center;
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .metric-change {
+            margin-top: 12px;
+            font-size: 12px;
+
+            &.positive {
+                color: #4ade80;
+            }
+
+            &.negative {
+                color: #f87171;
+            }
+        }
+    }
+}
+
+/* ====== ACCESSIBILITY ====== */
+@media (max-width: $tablet) {
+    /* Larger touch targets */
+    .btn,
+    .btn-link,
+    .o_field_widget,
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Better contrast */
+    .text-muted {
+        color: #555 !important;
+    }
+
+    /* Focus indicators */
+    *:focus {
+        outline: 2px solid #007bff;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+}
+
+/* ====== DARK MODE SUPPORT ====== */
+@media (prefers-color-scheme: dark) {
+    .financial-dashboard {
+        background-color: #1a1a1a;
+        color: #e0e0e0;
+
+        .widget-card {
+            background-color: #2d2d2d;
+            border: 1px solid #404040;
+
+            .widget-header {
+                border-bottom: 1px solid #404040;
+            }
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #4c1d95 0%, #1e1b4b 100%);
+        }
+    }
+}
+
+/* ====== PERFORMANCE OPTIMIZATIONS ====== */
+.financial-dashboard {
+    /* Enable hardware acceleration */
+    .widget-card {
+        transform: translateZ(0);
+        will-change: transform;
+    }
+
+    /* Smooth animations */
+    .chart-container {
+        transition: transform 0.3s ease;
+    }
+
+    /* Lazy loaded images */
+    img[data-src] {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+
+        &.loaded {
+            opacity: 1;
+        }
+    }
+}

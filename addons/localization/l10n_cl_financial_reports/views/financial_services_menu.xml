@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    
+    
+    <menuitem id="menu_financial_reports_main" 
+              name="Financial Reports" 
+              parent="account.menu_finance_reports" 
+              sequence="10"/>
+
+    
+    <menuitem id="menu_financial_report_service" 
+              name="Financial Reports" 
+              parent="menu_financial_reports_main" 
+              action="action_financial_report_service" 
+              sequence="10"/>
+
+    
+    <menuitem id="menu_financial_report_quick" 
+              name="Quick Report" 
+              parent="menu_financial_reports_main" 
+              action="action_financial_report_quick_wizard" 
+              sequence="20"/>
+
+    
+    <menuitem id="menu_ratio_analysis_main" 
+              name="Ratio Analysis" 
+              parent="menu_financial_reports_main" 
+              sequence="30"/>
+
+    
+    <menuitem id="menu_ratio_analysis_service" 
+              name="Ratio Analysis" 
+              parent="menu_ratio_analysis_main" 
+              action="action_ratio_analysis_service" 
+              sequence="10"/>
+
+    
+    <menuitem id="menu_ratio_analysis_quick" 
+              name="Quick Analysis" 
+              parent="menu_ratio_analysis_main" 
+              action="action_ratio_analysis_quick_wizard" 
+              sequence="20"/>
+
+    
+    <menuitem id="menu_ratio_analysis_dashboard" 
+              name="Dashboard" 
+              parent="menu_ratio_analysis_main" 
+              action="action_ratio_analysis_dashboard" 
+              sequence="30"/>
+
+    
+    <menuitem id="menu_financial_reports_config" 
+              name="Configuration" 
+              parent="menu_financial_reports_main" 
+              sequence="90"/>
+
+    
+    <record id="action_quick_balance_sheet" model="ir.actions.server">
+        <field name="name">Quick Balance Sheet</field>
+        <field name="model_id" ref="model_account_financial_report_service"/>
+        <field name="state">code</field>
+        <field name="code">
+report = model.create_quick_report('balance_sheet')
+action = {
+    'type': 'ir.actions.act_window',
+    'res_model': 'account.financial.report.service',
+    'res_id': report.id,
+    'view_mode': 'form',
+    'target': 'current',
+}
+        </field>
+    </record>
+
+    <record id="action_quick_profit_loss" model="ir.actions.server">
+        <field name="name">Quick Profit &amp; Loss</field>
+        <field name="model_id" ref="model_account_financial_report_service"/>
+        <field name="state">code</field>
+        <field name="code">
+report = model.create_quick_report('profit_loss')
+action = {
+    'type': 'ir.actions.act_window',
+    'res_model': 'account.financial.report.service',
+    'res_id': report.id,
+    'view_mode': 'form',
+    'target': 'current',
+}
+        </field>
+    </record>
+
+    <record id="action_quick_cash_flow" model="ir.actions.server">
+        <field name="name">Quick Cash Flow</field>
+        <field name="model_id" ref="model_account_financial_report_service"/>
+        <field name="state">code</field>
+        <field name="code">
+report = model.create_quick_report('cash_flow')
+action = {
+    'type': 'ir.actions.act_window',
+    'res_model': 'account.financial.report.service',
+    'res_id': report.id,
+    'view_mode': 'form',
+    'target': 'current',
+}
+        </field>
+    </record>
+
+    <record id="action_quick_comprehensive_analysis" model="ir.actions.server">
+        <field name="name">Quick Comprehensive Analysis</field>
+        <field name="model_id" ref="model_account_ratio_analysis_service"/>
+        <field name="state">code</field>
+        <field name="code">
+analysis = model.create_quick_analysis('comprehensive')
+action = {
+    'type': 'ir.actions.act_window',
+    'res_model': 'account.ratio.analysis.service',
+    'res_id': analysis.id,
+    'view_mode': 'form',
+    'target': 'current',
+}
+        </field>
+    </record>
+
+    
+    <menuitem id="menu_quick_balance_sheet" 
+              name="Quick Balance Sheet" 
+              parent="menu_financial_reports_config" 
+              action="action_quick_balance_sheet" 
+              sequence="10"/>
+
+    <menuitem id="menu_quick_profit_loss" 
+              name="Quick P&amp;L" 
+              parent="menu_financial_reports_config" 
+              action="action_quick_profit_loss" 
+              sequence="20"/>
+
+    <menuitem id="menu_quick_cash_flow" 
+              name="Quick Cash Flow" 
+              parent="menu_financial_reports_config" 
+              action="action_quick_cash_flow" 
+              sequence="30"/>
+
+    <menuitem id="menu_quick_comprehensive_analysis" 
+              name="Quick Analysis" 
+              parent="menu_financial_reports_config" 
+              action="action_quick_comprehensive_analysis" 
+              sequence="40"/>
+</odoo>

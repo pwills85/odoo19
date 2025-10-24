@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        
+        <record id="action_analytic_report_dashboard" model="ir.actions.client">
+            <field name="name">Reportes Analíticos por Proyecto</field>
+            <field name="tag">l10n_cl_financial_reports.analytic_dashboard</field>
+            <field name="target">fullscreen</field>
+            <field name="context">{
+                'active_test': False,
+                'search_default_active': 1
+            }</field>
+        </record>
+
+        
+        <menuitem 
+            id="menu_analytic_reports_main"
+            name="Reportes Analíticos"
+            parent="account.menu_finance_reports"
+            sequence="15"
+            groups="account.group_account_user"/>
+
+        
+        <menuitem 
+            id="menu_analytic_dashboard"
+            name="Dashboard de Proyectos"
+            parent="menu_analytic_reports_main"
+            action="action_analytic_report_dashboard"
+            sequence="10"
+            groups="account.group_account_user"/>
+
+        
+        <menuitem 
+            id="menu_analytic_detailed_report"
+            name="Detalle por Proyecto"
+            parent="menu_analytic_reports_main"
+            action="action_analytic_report_dashboard"
+            sequence="20"
+            groups="account.group_account_user"/>
+
+        
+        <menuitem 
+            id="menu_analytic_comparison"
+            name="Comparación de Proyectos"
+            parent="menu_analytic_reports_main"
+            action="action_analytic_report_dashboard"
+            sequence="30"
+            groups="account.group_account_user"/>
+
+        
+        <menuitem 
+            id="menu_analytic_profitability"
+            name="Análisis de Rentabilidad"
+            parent="menu_analytic_reports_main"
+            action="action_analytic_report_dashboard"
+            sequence="40"
+            groups="account.group_account_user"/>
+
+        
+        <menuitem 
+            id="menu_analytic_timesheet"
+            name="Timesheet Consolidado"
+            parent="menu_analytic_reports_main"
+            action="action_analytic_report_dashboard"
+            sequence="50"
+            groups="account.group_account_user"/>
+
+        
+        <menuitem 
+            id="menu_project_financial_reports"
+            name="Reportes Financieros"
+            parent="project.menu_main_pm"
+            sequence="100"
+            groups="account.group_account_user"/>
+
+        <menuitem 
+            id="menu_project_analytic_dashboard"
+            name="Dashboard Financiero"
+            parent="menu_project_financial_reports"
+            action="action_analytic_report_dashboard"
+            sequence="10"
+            groups="account.group_account_user"/>
+    </odoo>

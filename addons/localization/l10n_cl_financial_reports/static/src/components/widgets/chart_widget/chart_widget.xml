@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="account_financial_report.ChartWidget" owl="1">
+        <div t-att-class="containerClass">
+            <!-- Header del widget -->
+            <div class="o_chart_widget_header">
+                <div class="o_chart_widget_title">
+                    <i t-att-class="widgetIcon" class="me-2"/>
+                    <span t-esc="widgetTitle"/>
+                </div>
+                <div class="o_chart_widget_actions">
+                    <button 
+                        class="btn btn-sm btn-link"
+                        t-on-click="onRefreshClick"
+                        title="Refresh">
+                        <i class="fa fa-refresh"/>
+                    </button>
+                    <button 
+                        t-if="showExportButton"
+                        class="btn btn-sm btn-link"
+                        t-on-click="onExportClick"
+                        title="Export">
+                        <i class="fa fa-download"/>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Contenido del widget -->
+            <div class="o_chart_widget_content">
+                <!-- Estado de carga -->
+                <div t-if="state.isLoading" class="o_chart_loading_container">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading chart data...</p>
+                </div>
+                
+                <!-- Estado de error -->
+                <div t-elif="state.hasError" class="o_chart_error_container">
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fa fa-exclamation-triangle me-2"/>
+                        <span t-esc="state.errorMessage"/>
+                    </div>
+                    <button 
+                        class="btn btn-primary btn-sm"
+                        t-on-click="onRefreshClick">
+                        <i class="fa fa-refresh me-1"/>
+                        Try Again
+                    </button>
+                </div>
+                
+                <!-- Canvas del gráfico -->
+                <div t-else="" class="o_chart_canvas_container">
+                    <canvas t-ref="chartCanvas"/>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

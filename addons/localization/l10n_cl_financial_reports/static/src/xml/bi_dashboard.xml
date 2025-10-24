@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="account_financial_report.BiDashboard" owl="1">
+        <div class="o_bi_dashboard h-100">
+            <!-- Loading overlay -->
+            <div t-if="state.loading" class="o_bi_dashboard_loading">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+            
+            <!-- Dashboard Content -->
+            <div class="o_bi_dashboard_content p-4">
+                <!-- Header -->
+                <div class="o_bi_dashboard_header mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h1 class="mb-0">Business Intelligence Dashboard</h1>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <div class="btn-group" role="group">
+                                <input type="date" class="form-control mr-2" 
+                                       t-att-value="state.dateFrom"
+                                       t-on-change="(ev) => this.onDateChange('dateFrom', ev.target.value)"/>
+                                <input type="date" class="form-control mr-2" 
+                                       t-att-value="state.dateTo"
+                                       t-on-change="(ev) => this.onDateChange('dateTo', ev.target.value)"/>
+                                <button class="btn btn-primary" t-on-click="onRefreshClick">
+                                    <i class="fa fa-refresh"/> Refresh
+                                </button>
+                                <button class="btn btn-secondary" t-on-click="onExportClick">
+                                    <i class="fa fa-download"/> Export
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main KPIs -->
+                <div class="o_bi_dashboard_kpis mb-4">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-muted">Revenue</h5>
+                                    <h2 class="text-primary mb-2" id="kpi_revenue">$0</h2>
+                                    <span class="badge badge-success" id="kpi_revenue_growth">+0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-muted">Expenses</h5>
+                                    <h2 class="text-danger mb-2" id="kpi_expenses">$0</h2>
+                                    <span class="badge badge-warning" id="kpi_expense_ratio">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-muted">Profit</h5>
+                                    <h2 class="text-success mb-2" id="kpi_profit">$0</h2>
+                                    <span class="badge badge-info" id="kpi_margin">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-muted">Cash Balance</h5>
+                                    <h2 class="text-info mb-2" id="kpi_cash">$0</h2>
+                                    <small class="text-muted" id="kpi_cash_days">0 days</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Charts Section -->
+                <div class="o_bi_dashboard_charts mb-4">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Revenue Trend</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="revenue_trend_chart" height="250"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Expense Analysis</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="expense_analysis_chart" height="250"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-4">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Cash Flow Projection (Next 3 Months)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="cashflow_projection_chart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Alerts Section -->
+                <div class="o_bi_dashboard_alerts mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">
+                                <i class="fa fa-warning text-warning"/> Financial Alerts
+                            </h5>
+                        </div>
+                        <div class="card-body" id="alerts_container">
+                            <p class="text-muted">Loading alerts...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Detailed Information -->
+                <div class="o_bi_dashboard_details">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Top Customers</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-sm table-hover" id="top_customers_table">
+                                        <thead>
+                                            <tr>
+                                                <th>Customer</th>
+                                                <th class="text-right">Revenue</th>
+                                                <th class="text-right">%</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="3" class="text-center text-muted">
+                                                    Loading...
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Tax Compliance Status</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="tax_compliance_status">
+                                        <p class="text-center text-muted">Loading compliance status...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="account_financial_report.TableWidget" owl="1">
+        <div class="o_table_widget">
+            <!-- Header del widget -->
+            <div class="o_table_widget_header">
+                <div class="o_table_widget_title">
+                    <i t-att-class="widgetIcon" class="me-2"/>
+                    <span t-esc="widgetTitle"/>
+                </div>
+                <div class="o_table_widget_actions">
+                    <!-- Búsqueda -->
+                    <div t-if="showSearch" class="o_table_search">
+                        <input 
+                            type="text"
+                            class="form-control form-control-sm"
+                            placeholder="Search..."
+                            t-ref="searchInput"
+                            t-model="state.searchTerm"
+                            t-on-input="onSearchInput"/>
+                        <i class="fa fa-search o_table_search_icon"/>
+                    </div>
+                    
+                    <!-- Botones de acción -->
+                    <button 
+                        class="btn btn-sm btn-link"
+                        t-on-click="() => this.loadData()"
+                        title="Refresh">
+                        <i class="fa fa-refresh"/>
+                    </button>
+                    <button 
+                        t-if="showExportButton"
+                        class="btn btn-sm btn-link"
+                        t-on-click="onExportClick"
+                        title="Export CSV">
+                        <i class="fa fa-download"/>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Contenido del widget -->
+            <div class="o_table_widget_content" t-ref="tableContainer">
+                <!-- Estado de carga -->
+                <div t-if="state.isLoading" class="o_table_loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading data...</p>
+                </div>
+                
+                <!-- Estado de error -->
+                <div t-elif="state.hasError" class="o_table_error">
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fa fa-exclamation-triangle me-2"/>
+                        <span t-esc="state.errorMessage"/>
+                    </div>
+                    <button 
+                        class="btn btn-primary btn-sm"
+                        t-on-click="() => this.loadData()">
+                        <i class="fa fa-refresh me-1"/>
+                        Try Again
+                    </button>
+                </div>
+                
+                <!-- Tabla de datos -->
+                <div t-else="" class="o_table_container">
+                    <div class="table-responsive">
+                        <table class="table table-hover o_table">
+                            <thead>
+                                <tr>
+                                    <th t-foreach="state.data.columns" 
+                                        t-as="column" 
+                                        t-key="column.field"
+                                        t-att-class="{
+                                            'sortable': column.sortable,
+                                            'sorted': state.sortColumn?.field === column.field,
+                                            'sorted-asc': state.sortColumn?.field === column.field and state.sortDirection === 'asc',
+                                            'sorted-desc': state.sortColumn?.field === column.field and state.sortDirection === 'desc'
+                                        }"
+                                        t-on-click="() => onColumnSort(column)">
+                                        <span t-esc="column.header"/>
+                                        <i t-if="column.sortable" 
+                                           class="fa fa-sort ms-1"
+                                           t-att-class="{
+                                               'fa-sort': state.sortColumn?.field !== column.field,
+                                               'fa-sort-asc': state.sortColumn?.field === column.field and state.sortDirection === 'asc',
+                                               'fa-sort-desc': state.sortColumn?.field === column.field and state.sortDirection === 'desc'
+                                           }"/>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="visibleRows" 
+                                    t-as="row" 
+                                    t-key="row.id || row_index"
+                                    t-att-class="{
+                                        'table-active': state.selectedRows.has(row.id),
+                                        'o_table_row': true
+                                    }"
+                                    t-on-click="(ev) => onRowSelect(row, ev)">
+                                    <td t-foreach="state.data.columns" 
+                                        t-as="column" 
+                                        t-key="column.field"
+                                        t-att-class="'text-' + (column.align || 'start')">
+                                        <span t-esc="formatCellValue(row[column.field], column)"/>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Mensaje cuando no hay datos -->
+                                <tr t-if="visibleRows.length === 0">
+                                    <td t-att-colspan="state.data.columns.length" 
+                                        class="text-center text-muted py-4">
+                                        <i class="fa fa-inbox fa-3x mb-3 d-block"/>
+                                        <span>No data available</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Paginación -->
+                    <div t-if="showPagination" class="o_table_pagination">
+                        <div class="o_table_pagination_info">
+                            <span t-esc="paginationInfo"/>
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <!-- Primera página -->
+                                <li class="page-item" t-att-class="{'disabled': state.currentPage === 1}">
+                                    <a class="page-link" href="#" 
+                                       t-on-click.prevent="() => onPageChange(1)">
+                                        <i class="fa fa-angle-double-left"/>
+                                    </a>
+                                </li>
+                                
+                                <!-- Página anterior -->
+                                <li class="page-item" t-att-class="{'disabled': state.currentPage === 1}">
+                                    <a class="page-link" href="#" 
+                                       t-on-click.prevent="() => onPageChange(state.currentPage - 1)">
+                                        <i class="fa fa-angle-left"/>
+                                    </a>
+                                </li>
+                                
+                                <!-- Números de página -->
+                                <li t-foreach="Array.from({length: Math.min(5, totalPages)}, (_, i) => i + 1)" 
+                                    t-as="page" 
+                                    t-key="page"
+                                    class="page-item"
+                                    t-att-class="{'active': page === state.currentPage}">
+                                    <a class="page-link" href="#" 
+                                       t-on-click.prevent="() => onPageChange(page)">
+                                        <span t-esc="page"/>
+                                    </a>
+                                </li>
+                                
+                                <!-- Página siguiente -->
+                                <li class="page-item" t-att-class="{'disabled': state.currentPage === totalPages}">
+                                    <a class="page-link" href="#" 
+                                       t-on-click.prevent="() => onPageChange(state.currentPage + 1)">
+                                        <i class="fa fa-angle-right"/>
+                                    </a>
+                                </li>
+                                
+                                <!-- Última página -->
+                                <li class="page-item" t-att-class="{'disabled': state.currentPage === totalPages}">
+                                    <a class="page-link" href="#" 
+                                       t-on-click.prevent="() => onPageChange(totalPages)">
+                                        <i class="fa fa-angle-double-right"/>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

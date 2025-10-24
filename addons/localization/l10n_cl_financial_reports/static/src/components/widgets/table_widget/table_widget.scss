@@ -1,0 +1,361 @@
+// Table Widget Styles
+// Optimizado para performance y usabilidad
+
+.o_table_widget {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: var(--o-view-background-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    
+    // Header
+    .o_table_widget_header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        border-bottom: 1px solid var(--o-border-color);
+        background-color: var(--o-view-background-color);
+        flex-shrink: 0;
+        
+        .o_table_widget_title {
+            display: flex;
+            align-items: center;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--o-main-text-color);
+            
+            i {
+                font-size: 1.2rem;
+                opacity: 0.7;
+            }
+        }
+        
+        .o_table_widget_actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            
+            .o_table_search {
+                position: relative;
+                
+                input {
+                    padding-right: 2rem;
+                    width: 200px;
+                    transition: width 0.3s ease;
+                    
+                    &:focus {
+                        width: 250px;
+                    }
+                }
+                
+                .o_table_search_icon {
+                    position: absolute;
+                    right: 0.5rem;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    opacity: 0.5;
+                    pointer-events: none;
+                }
+            }
+            
+            .btn-link {
+                padding: 0.25rem 0.5rem;
+                color: var(--o-main-text-color);
+                opacity: 0.6;
+                transition: opacity 0.2s;
+                
+                &:hover {
+                    opacity: 1;
+                }
+            }
+        }
+    }
+    
+    // Content
+    .o_table_widget_content {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        
+        // Loading state
+        .o_table_loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            
+            .spinner-border {
+                width: 3rem;
+                height: 3rem;
+            }
+        }
+        
+        // Error state
+        .o_table_error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 2rem;
+            
+            .alert {
+                max-width: 500px;
+            }
+        }
+        
+        // Table container
+        .o_table_container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            
+            .table-responsive {
+                flex: 1;
+                overflow: auto;
+                
+                // Custom scrollbar
+                &::-webkit-scrollbar {
+                    width: 8px;
+                    height: 8px;
+                }
+                
+                &::-webkit-scrollbar-track {
+                    background: var(--o-gray-100);
+                }
+                
+                &::-webkit-scrollbar-thumb {
+                    background: var(--o-gray-400);
+                    border-radius: 4px;
+                    
+                    &:hover {
+                        background: var(--o-gray-500);
+                    }
+                }
+            }
+            
+            .o_table {
+                margin-bottom: 0;
+                
+                thead {
+                    position: sticky;
+                    top: 0;
+                    background-color: var(--o-gray-50);
+                    z-index: 10;
+                    
+                    th {
+                        font-weight: 600;
+                        font-size: 0.875rem;
+                        text-transform: uppercase;
+                        letter-spacing: 0.05em;
+                        color: var(--o-gray-700);
+                        padding: 0.75rem 1rem;
+                        white-space: nowrap;
+                        border-bottom: 2px solid var(--o-border-color);
+                        
+                        &.sortable {
+                            cursor: pointer;
+                            user-select: none;
+                            transition: background-color 0.2s;
+                            
+                            &:hover {
+                                background-color: var(--o-gray-100);
+                            }
+                            
+                            .fa-sort,
+                            .fa-sort-asc,
+                            .fa-sort-desc {
+                                opacity: 0.5;
+                                font-size: 0.75rem;
+                                transition: opacity 0.2s;
+                            }
+                            
+                            &.sorted {
+                                .fa-sort-asc,
+                                .fa-sort-desc {
+                                    opacity: 1;
+                                    color: var(--o-primary);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                tbody {
+                    tr {
+                        transition: background-color 0.15s;
+                        
+                        &.o_table_row {
+                            cursor: pointer;
+                            
+                            &:hover {
+                                background-color: var(--o-gray-50);
+                            }
+                            
+                            &.table-active {
+                                background-color: rgba(var(--o-primary-rgb), 0.1);
+                                
+                                &:hover {
+                                    background-color: rgba(var(--o-primary-rgb), 0.15);
+                                }
+                            }
+                        }
+                        
+                        td {
+                            padding: 0.75rem 1rem;
+                            font-size: 0.875rem;
+                            vertical-align: middle;
+                            
+                            // Tipos de datos especiales
+                            &.text-end {
+                                font-variant-numeric: tabular-nums;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Pagination
+            .o_table_pagination {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0.75rem 1rem;
+                border-top: 1px solid var(--o-border-color);
+                background-color: var(--o-gray-50);
+                flex-shrink: 0;
+                
+                .o_table_pagination_info {
+                    font-size: 0.875rem;
+                    color: var(--o-gray-600);
+                }
+                
+                .pagination {
+                    .page-link {
+                        padding: 0.25rem 0.5rem;
+                        font-size: 0.875rem;
+                        min-width: 2rem;
+                        text-align: center;
+                        color: var(--o-gray-700);
+                        border-color: var(--o-gray-300);
+                        
+                        &:hover {
+                            background-color: var(--o-gray-100);
+                            border-color: var(--o-gray-400);
+                        }
+                        
+                        &:focus {
+                            box-shadow: 0 0 0 0.2rem rgba(var(--o-primary-rgb), 0.25);
+                        }
+                    }
+                    
+                    .page-item {
+                        &.active .page-link {
+                            background-color: var(--o-primary);
+                            border-color: var(--o-primary);
+                        }
+                        
+                        &.disabled .page-link {
+                            opacity: 0.5;
+                            cursor: not-allowed;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Responsive
+@media (max-width: 768px) {
+    .o_table_widget {
+        .o_table_widget_header {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            
+            .o_table_widget_actions {
+                width: 100%;
+                
+                .o_table_search input {
+                    width: 100%;
+                    
+                    &:focus {
+                        width: 100%;
+                    }
+                }
+            }
+        }
+        
+        .o_table_container {
+            .o_table {
+                font-size: 0.8125rem;
+                
+                thead th,
+                tbody td {
+                    padding: 0.5rem;
+                }
+            }
+            
+            .o_table_pagination {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: stretch;
+                
+                .pagination {
+                    justify-content: center;
+                }
+            }
+        }
+    }
+}
+
+// Dark mode
+@media (prefers-color-scheme: dark) {
+    .o_table_widget {
+        .o_table {
+            thead {
+                background-color: rgba(255, 255, 255, 0.05);
+                
+                th {
+                    color: var(--o-gray-300);
+                    border-bottom-color: rgba(255, 255, 255, 0.1);
+                }
+            }
+            
+            tbody tr {
+                &:hover {
+                    background-color: rgba(255, 255, 255, 0.03);
+                }
+                
+                &.table-active {
+                    background-color: rgba(var(--o-primary-rgb), 0.2);
+                }
+            }
+        }
+        
+        .o_table_pagination {
+            background-color: rgba(255, 255, 255, 0.03);
+            border-top-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .table-responsive {
+            &::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.05);
+            }
+            
+            &::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.2);
+                
+                &:hover {
+                    background: rgba(255, 255, 255, 0.3);
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="account_financial_report.FilterPanel" owl="1">
+        <div class="o_filter_panel" t-ref="filterPanel" t-att-class="{'expanded': state.isExpanded}">
+            <!-- Panel Header -->
+            <div class="o_filter_panel_header" t-on-click="onToggleExpanded">
+                <div class="o_filter_panel_title">
+                    <i class="fa fa-filter me-2"/>
+                    <span>Filters</span>
+                    <span t-if="hasActiveFilters" class="badge bg-primary ms-2">
+                        <t t-esc="activeFilterCount"/>
+                    </span>
+                </div>
+                <div class="o_filter_panel_actions">
+                    <i class="fa" t-att-class="state.isExpanded ? 'fa-chevron-up' : 'fa-chevron-down'"/>
+                </div>
+            </div>
+            
+            <!-- Filter Summary (when collapsed) -->
+            <div t-if="!state.isExpanded and hasActiveFilters" class="o_filter_panel_summary">
+                <i class="fa fa-info-circle me-2 text-muted"/>
+                <span class="text-muted" t-esc="filterSummary"/>
+            </div>
+            
+            <!-- Filter Content (when expanded) -->
+            <div t-if="state.isExpanded" class="o_filter_panel_content">
+                <!-- Quick Period Selection -->
+                <div class="o_filter_group">
+                    <label class="o_filter_label">
+                        <i class="fa fa-calendar me-1"/>
+                        Period
+                    </label>
+                    <div class="o_filter_period_buttons">
+                        <Dropdown>
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle">
+                                <t t-if="state.localFilters.period">
+                                    <t t-esc="state.filterOptions?.periods[state.localFilters.period]?.name"/>
+                                </t>
+                                <t t-else="">Custom Period</t>
+                            </button>
+                            <t t-set-slot="content">
+                                <t t-foreach="periodOptions" t-as="period" t-key="period.id">
+                                    <div class="dropdown-item" 
+                                         t-on-click="() => onPeriodSelect(period.id)"
+                                         t-att-class="{'active': state.localFilters.period === period.id}">
+                                        <i t-att-class="period.icon" class="me-2 fa-fw"/>
+                                        <t t-esc="period.text"/>
+                                    </div>
+                                </t>
+                            </t>
+                        </Dropdown>
+                    </div>
+                </div>
+                
+                <!-- Date Range -->
+                <div class="o_filter_group o_filter_dates">
+                    <div class="o_filter_date_item">
+                        <label class="o_filter_label">From</label>
+                        <DateTimeInput
+                            type="'date'"
+                            value="state.localFilters.date_from"
+                            onChange="(value) => onFilterChange('date_from', value)"
+                        />
+                    </div>
+                    <div class="o_filter_date_item">
+                        <label class="o_filter_label">To</label>
+                        <DateTimeInput
+                            type="'date'"
+                            value="state.localFilters.date_to"
+                            onChange="(value) => onFilterChange('date_to', value)"
+                        />
+                    </div>
+                </div>
+                
+                <!-- Company Filter -->
+                <div t-if="state.filterOptions?.companies?.length > 1" class="o_filter_group">
+                    <label class="o_filter_label">
+                        <i class="fa fa-building me-1"/>
+                        Company
+                    </label>
+                    <select class="form-select form-select-sm"
+                            t-on-change="(ev) => onFilterChange('company_id', ev.target.value ? parseInt(ev.target.value) : null)">
+                        <option value="">All Companies</option>
+                        <t t-foreach="state.filterOptions.companies" t-as="company" t-key="company.id">
+                            <option t-att-value="company.id" 
+                                    t-att-selected="state.localFilters.company_id === company.id">
+                                <t t-esc="company.name"/>
+                            </option>
+                        </t>
+                    </select>
+                </div>
+                
+                <!-- Department Filter -->
+                <div t-if="state.filterOptions?.departments?.length > 0" class="o_filter_group">
+                    <label class="o_filter_label">
+                        <i class="fa fa-sitemap me-1"/>
+                        Department
+                    </label>
+                    <select class="form-select form-select-sm"
+                            t-on-change="(ev) => onFilterChange('department_id', ev.target.value ? parseInt(ev.target.value) : null)">
+                        <option value="">All Departments</option>
+                        <t t-foreach="state.filterOptions.departments" t-as="dept" t-key="dept.id">
+                            <option t-att-value="dept.id"
+                                    t-att-selected="state.localFilters.department_id === dept.id">
+                                <t t-esc="dept.complete_name || dept.name"/>
+                            </option>
+                        </t>
+                    </select>
+                </div>
+                
+                <!-- Account Type Filter -->
+                <div class="o_filter_group">
+                    <label class="o_filter_label">
+                        <i class="fa fa-tags me-1"/>
+                        Account Type
+                    </label>
+                    <select class="form-select form-select-sm"
+                            t-on-change="(ev) => onFilterChange('account_type', ev.target.value || null)">
+                        <option value="">All Types</option>
+                        <t t-foreach="state.filterOptions?.account_types || []" t-as="type" t-key="type.value">
+                            <option t-att-value="type.value"
+                                    t-att-selected="state.localFilters.account_type === type.value">
+                                <t t-esc="type.label"/>
+                            </option>
+                        </t>
+                    </select>
+                </div>
+                
+                <!-- Comparison Options -->
+                <div class="o_filter_group o_filter_comparison">
+                    <label class="o_filter_label">
+                        <i class="fa fa-exchange me-1"/>
+                        Compare With
+                    </label>
+                    <div class="form-check">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               id="compare_previous"
+                               t-att-checked="state.localFilters.compare_previous"
+                               t-on-change="(ev) => onFilterChange('compare_previous', ev.target.checked)"/>
+                        <label class="form-check-label" for="compare_previous">
+                            Previous Period
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               id="compare_year_ago"
+                               t-att-checked="state.localFilters.compare_year_ago"
+                               t-on-change="(ev) => onFilterChange('compare_year_ago', ev.target.checked)"/>
+                        <label class="form-check-label" for="compare_year_ago">
+                            Same Period Last Year
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Filter Presets -->
+                <div class="o_filter_group o_filter_presets">
+                    <label class="o_filter_label">
+                        <i class="fa fa-bookmark me-1"/>
+                        Filter Presets
+                    </label>
+                    <div class="btn-group btn-group-sm w-100">
+                        <Dropdown>
+                            <button class="btn btn-outline-secondary dropdown-toggle">
+                                <i class="fa fa-folder-open me-1"/>
+                                Load Preset
+                            </button>
+                            <t t-set-slot="content">
+                                <t t-if="filterPresets?.length">
+                                    <t t-foreach="filterPresets" t-as="preset" t-key="preset.id">
+                                        <div class="dropdown-item d-flex justify-content-between align-items-center"
+                                             t-on-click="() => onLoadPreset(preset.id)">
+                                            <span>
+                                                <t t-esc="preset.name"/>
+                                                <t t-if="!preset.is_mine">
+                                                    <small class="text-muted ms-1">
+                                                        (<t t-esc="preset.created_by"/>)
+                                                    </small>
+                                                </t>
+                                            </span>
+                                            <t t-if="preset.is_shared">
+                                                <i class="fa fa-share-alt text-muted ms-2"/>
+                                            </t>
+                                        </div>
+                                    </t>
+                                </t>
+                                <div t-else="" class="dropdown-item disabled text-muted">
+                                    <i>No saved presets</i>
+                                </div>
+                            </t>
+                        </Dropdown>
+                        <button class="btn btn-outline-secondary"
+                                t-on-click="onSavePreset"
+                                t-att-disabled="!hasActiveFilters">
+                            <i class="fa fa-save"/>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Validation Errors -->
+                <div t-if="state.errors.length > 0" class="o_filter_errors">
+                    <div t-foreach="state.errors" t-as="error" t-key="error_index" 
+                         class="alert alert-danger alert-sm">
+                        <i class="fa fa-exclamation-triangle me-1"/>
+                        <t t-esc="error"/>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="o_filter_actions">
+                    <button class="btn btn-sm btn-primary"
+                            t-on-click="applyFilters">
+                        <i class="fa fa-check me-1"/>
+                        Apply Filters
+                    </button>
+                    <button class="btn btn-sm btn-link"
+                            t-on-click="onClearFilters"
+                            t-att-disabled="!hasActiveFilters">
+                        <i class="fa fa-times me-1"/>
+                        Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </t>
+    
+    <!-- Save Preset Dialog -->
+    <t t-name="account_financial_report.SavePresetDialog" owl="1">
+        <Dialog title="'Save Filter Preset'" size="'sm'">
+            <div class="o_save_preset_dialog">
+                <div class="mb-3">
+                    <label class="form-label">Preset Name</label>
+                    <input type="text" 
+                           class="form-control" 
+                           t-model="state.name"
+                           placeholder="e.g., Q4 2024 Analysis"
+                           autofocus=""/>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               id="preset_shared"
+                               t-model="state.shared"/>
+                        <label class="form-check-label" for="preset_shared">
+                            Share with other users
+                        </label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description (Optional)</label>
+                    <textarea class="form-control" 
+                              rows="2"
+                              t-model="state.description"
+                              placeholder="Add notes about this filter preset..."/>
+                </div>
+            </div>
+            <t t-set-slot="footer">
+                <button class="btn btn-primary" 
+                        t-on-click="onConfirm"
+                        t-att-disabled="!state.name.trim()">
+                    Save Preset
+                </button>
+                <button class="btn btn-secondary" t-on-click="props.close">
+                    Cancel
+                </button>
+            </t>
+        </Dialog>
+    </t>
+</templates>

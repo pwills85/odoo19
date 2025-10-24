@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="account_financial_report.MobileFilterPanel">
+        <div class="mobile-filter-panel">
+            <!-- Header with tabs -->
+            <div class="filter-panel-header">
+                <div class="filter-tabs">
+                    <button t-att-class="'tab-button ' + (state.activeTab === 'period' ? 'active' : '')"
+                            t-on-click="() => switchTab('period')">
+                        <i class="fa fa-calendar"/> Período
+                    </button>
+                    <button t-att-class="'tab-button ' + (state.activeTab === 'company' ? 'active' : '')"
+                            t-on-click="() => switchTab('company')">
+                        <i class="fa fa-building"/> Empresa
+                    </button>
+                    <button t-att-class="'tab-button ' + (state.activeTab === 'advanced' ? 'active' : '')"
+                            t-on-click="() => switchTab('advanced')">
+                        <i class="fa fa-sliders"/> Avanzado
+                        <span class="filter-count" t-if="activeFiltersCount > 0">
+                            <t t-esc="activeFiltersCount"/>
+                        </span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Filter content -->
+            <div class="filter-panel-content">
+                <!-- Period Tab -->
+                <div t-if="state.activeTab === 'period'" class="filter-tab-content">
+                    <div class="period-quick-select">
+                        <h4 class="section-title">Selección Rápida</h4>
+                        <div class="period-grid">
+                            <t t-foreach="mobilePeriods" t-as="period" t-key="period.id">
+                                <button t-att-class="'period-button ' + (state.tempFilters.period_id === period.id ? 'selected' : '')"
+                                        t-on-click="() => selectPeriod(period.id)">
+                                    <i t-att-class="'fa ' + period.icon"/>
+                                    <span t-esc="period.label"/>
+                                </button>
+                            </t>
+                        </div>
+                    </div>
+                    
+                    <!-- Custom date picker -->
+                    <div t-if="state.showDatePicker" class="custom-date-section">
+                        <h4 class="section-title">Rango Personalizado</h4>
+                        <div class="date-inputs">
+                            <div class="date-input-group">
+                                <label>Desde</label>
+                                <input type="date" 
+                                       class="form-control"
+                                       t-att-value="state.tempFilters.date_from"
+                                       t-on-change="(ev) => handleCustomDateChange('date_from', ev.target.value)"/>
+                            </div>
+                            <div class="date-input-group">
+                                <label>Hasta</label>
+                                <input type="date" 
+                                       class="form-control"
+                                       t-att-value="state.tempFilters.date_to"
+                                       t-on-change="(ev) => handleCustomDateChange('date_to', ev.target.value)"/>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Period presets -->
+                    <div class="period-presets" t-if="props.presets and props.presets.length">
+                        <h4 class="section-title">Presets Guardados</h4>
+                        <div class="preset-list">
+                            <t t-foreach="props.presets" t-as="preset" t-key="preset.id">
+                                <button class="preset-button" t-on-click="() => loadPreset(preset)">
+                                    <i class="fa fa-bookmark-o"/>
+                                    <span t-esc="preset.name"/>
+                                </button>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Company Tab -->
+                <div t-if="state.activeTab === 'company'" class="filter-tab-content">
+                    <div class="company-selection">
+                        <h4 class="section-title">Seleccionar Empresas</h4>
+                        <div class="company-list">
+                            <!-- This would be populated with actual company data -->
+                            <label class="company-checkbox">
+                                <input type="checkbox" 
+                                       t-on-change="() => toggleCompany(1)"/>
+                                <span>Empresa Principal</span>
+                            </label>
+                            <label class="company-checkbox">
+                                <input type="checkbox" 
+                                       t-on-change="() => toggleCompany(2)"/>
+                                <span>Sucursal Norte</span>
+                            </label>
+                            <label class="company-checkbox">
+                                <input type="checkbox" 
+                                       t-on-change="() => toggleCompany(3)"/>
+                                <span>Sucursal Sur</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Advanced Tab -->
+                <div t-if="state.activeTab === 'advanced'" class="filter-tab-content">
+                    <!-- Account filters -->
+                    <div class="filter-section">
+                        <div class="section-header" t-on-click="() => toggleSection('account')">
+                            <h4 class="section-title">
+                                <i t-att-class="'fa fa-chevron-' + (state.expandedSections.account ? 'down' : 'right')"/>
+                                Cuentas Contables
+                            </h4>
+                        </div>
+                        <div t-if="state.expandedSections.account" class="section-content">
+                            <div class="filter-item">
+                                <label>Tipo de Cuenta</label>
+                                <select class="form-control">
+                                    <option value="">Todas</option>
+                                    <option value="asset">Activos</option>
+                                    <option value="liability">Pasivos</option>
+                                    <option value="income">Ingresos</option>
+                                    <option value="expense">Gastos</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <label>Código de Cuenta</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       placeholder="Ej: 1100-1199"/>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analytics filters -->
+                    <div class="filter-section">
+                        <div class="section-header" t-on-click="() => toggleSection('analytics')">
+                            <h4 class="section-title">
+                                <i t-att-class="'fa fa-chevron-' + (state.expandedSections.analytics ? 'down' : 'right')"/>
+                                Análisis y Métricas
+                            </h4>
+                        </div>
+                        <div t-if="state.expandedSections.analytics" class="section-content">
+                            <div class="filter-item">
+                                <label>Centro de Costo</label>
+                                <select class="form-control">
+                                    <option value="">Todos</option>
+                                    <option value="admin">Administración</option>
+                                    <option value="sales">Ventas</option>
+                                    <option value="production">Producción</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <label class="switch-label">
+                                    <input type="checkbox" class="switch-input"/>
+                                    <span class="switch-slider"></span>
+                                    <span>Incluir movimientos sin conciliar</span>
+                                </label>
+                            </div>
+                            <div class="filter-item">
+                                <label class="switch-label">
+                                    <input type="checkbox" class="switch-input"/>
+                                    <span class="switch-slider"></span>
+                                    <span>Solo cuentas con saldo</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer actions -->
+            <div class="filter-panel-footer">
+                <button class="btn btn-link" t-on-click="clearAllFilters">
+                    <i class="fa fa-times"/> Limpiar Todo
+                </button>
+                <button class="btn btn-primary" t-on-click="applyFilters">
+                    <i class="fa fa-check"/> Aplicar Filtros
+                    <span t-if="activeFiltersCount > 0" class="badge">
+                        <t t-esc="activeFiltersCount"/>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </t>
+</templates>

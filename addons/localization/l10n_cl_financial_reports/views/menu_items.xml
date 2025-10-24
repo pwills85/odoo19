@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    
+    
+    <menuitem id="menu_financial_reports"
+              name="Financial Reports BI"
+              parent="account.menu_finance_reports"
+              sequence="5"/>
+    
+    
+    <menuitem id="menu_project_financial_analysis"
+              name="📊 Project Analysis"
+              parent="menu_financial_reports"
+              sequence="10"/>
+    
+    
+    <menuitem id="menu_project_profitability"
+              name="Project Profitability (EVM)"
+              parent="menu_project_financial_analysis"
+              action="action_project_profitability_report"
+              sequence="10"/>
+    
+    
+    
+    
+    <menuitem id="menu_resource_management"
+              name="👥 Resource Management"
+              parent="menu_financial_reports"
+              sequence="20"/>
+    
+    
+    <menuitem id="menu_analytics_reports"
+              name="📈 Analytics &amp; KPIs"
+              parent="menu_financial_reports"
+              sequence="30"/>
+    
+    
+    <menuitem id="menu_resource_utilization_main"
+              name="Resource Utilization"
+              parent="menu_resource_management"
+              action="action_resource_utilization_report"
+              sequence="10"/>
+    
+    
+    <menuitem id="menu_financial_kpis"
+              name="Financial KPIs"
+              parent="menu_analytics_reports"
+              action="action_financial_report_kpi"
+              sequence="10"/>
+    
+    
+    <menuitem id="menu_analytic_reports_main"
+              name="Analytic Cost/Benefit"
+              parent="menu_analytics_reports"
+              action="action_analytic_cost_benefit_report"
+              sequence="20"/>
+    
+    
+    
+    
+    
+    <menuitem id="menu_separator_1"
+              name="────────────────"
+              parent="menu_financial_reports"
+              sequence="90"/>
+    
+    
+    <menuitem id="menu_financial_reports_config"
+              name="⚙️ Configuration"
+              parent="menu_financial_reports"
+              sequence="100"
+              groups="account.group_account_manager"/>
+
+</odoo>

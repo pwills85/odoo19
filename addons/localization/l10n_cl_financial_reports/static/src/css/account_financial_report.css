@@ -1,0 +1,17 @@
+.o_kpi_toggle {
+    color: #d3d3d3; /* Light gray for unselected KPI */
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.o_kpi_toggle:hover {
+    color: #f0ad4e; /* Orange on hover, suggesting selection */
+}
+
+.o_kpi_enabled {
+    color: #f0ad4e; /* Orange for selected KPI */
+}
+
+.o_kpi_enabled:hover {
+    color: #d3d3d3; /* Light gray on hover, suggesting deselection */
+}

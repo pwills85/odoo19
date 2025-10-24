@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="account_financial_report.FinancialReportViewer" owl="1">
+        <div class="o_financial_report_viewer">
+            <div class="o_report_control_panel">
+                <div class="o_report_title">
+                    <h3><t t-esc="state.report_name"/></h3>
+                    <span><t t-esc="state.company_name"/></span>
+                </div>
+                <div class="o_report_filters">
+                    <!-- Placeholder for filters -->
+                </div>
+                <div class="o_report_buttons">
+                    <button class="btn btn-primary" t-on-click="() => this.exportReport('xlsx')">Exportar a Excel</button>
+                </div>
+            </div>
+            <div class="o_report_content">
+                <!-- Template for Balance 8 Columns -->
+                <t t-if="state.report_code === 'balance_8_columns'">
+                    <table class="table table-sm table-hover">
+                        <!-- ... (table content for 8 columns) ... -->
+                    </table>
+                </t>
+                <!-- Template for Trial Balance -->
+                <t t-if="state.report_code === 'trial_balance'">
+                    <table class="table table-sm table-hover">
+                        <!-- ... (table content for trial balance) ... -->
+                    </table>
+                </t>
+                <!-- Template for General Ledger -->
+                <t t-if="state.report_code === 'general_ledger'">
+                    <table class="table table-sm table-hover">
+                        <!-- ... (table content for general ledger) ... -->
+                    </table>
+                </t>
+            </div>
+        </div>
+    </t>
+</templates>

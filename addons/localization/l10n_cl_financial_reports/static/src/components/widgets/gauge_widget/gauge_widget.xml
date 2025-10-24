@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="account_financial_report.GaugeWidget" owl="1">
+        <div class="o_gauge_widget">
+            <!-- Header -->
+            <div class="o_gauge_widget_header">
+                <div class="o_gauge_widget_title">
+                    <i t-att-class="widgetIcon" class="me-2"/>
+                    <span t-esc="widgetTitle"/>
+                </div>
+                <div class="o_gauge_widget_actions">
+                    <button 
+                        class="btn btn-sm btn-link"
+                        t-on-click="onRefreshClick"
+                        title="Refresh">
+                        <i class="fa fa-refresh"/>
+                    </button>
+                    <button 
+                        t-if="showDetails"
+                        class="btn btn-sm btn-link"
+                        t-on-click="onDetailsClick"
+                        title="Details">
+                        <i class="fa fa-info-circle"/>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Content -->
+            <div class="o_gauge_widget_content">
+                <!-- Loading state -->
+                <div t-if="state.isLoading" class="o_gauge_loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                
+                <!-- Error state -->
+                <div t-elif="state.hasError" class="o_gauge_error">
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fa fa-exclamation-triangle me-2"/>
+                        <span t-esc="state.errorMessage"/>
+                    </div>
+                    <button 
+                        class="btn btn-primary btn-sm"
+                        t-on-click="onRefreshClick">
+                        <i class="fa fa-refresh me-1"/>
+                        Try Again
+                    </button>
+                </div>
+                
+                <!-- Gauge -->
+                <div t-else="" class="o_gauge_container">
+                    <canvas t-ref="gaugeCanvas" class="o_gauge_canvas"/>
+                    
+                    <!-- Quick details -->
+                    <div t-if="showDetails" class="o_gauge_quick_details">
+                        <div t-foreach="detailItems" t-as="item" t-key="item.label" class="o_gauge_detail_item">
+                            <span class="o_gauge_detail_label" t-esc="item.label"/>
+                            <span class="o_gauge_detail_value" t-esc="item.value"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+    
+    <!-- Details Dialog Template -->
+    <t t-name="account_financial_report.GaugeDetailsDialog" owl="1">
+        <Dialog title="props.title" size="'md'">
+            <div class="o_gauge_details_dialog">
+                <div class="row">
+                    <div class="col-12">
+                        <h5 class="mb-3">Current Metrics</h5>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Current Value</td>
+                                    <td class="text-end fw-bold">
+                                        <t t-esc="props.data.value.toFixed(1)"/>
+                                        <t t-esc="props.data.units"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Status</td>
+                                    <td class="text-end">
+                                        <span class="badge" t-att-class="{
+                                            'bg-success': props.data.status === 'excellent' or props.data.status === 'good',
+                                            'bg-warning': props.data.status === 'fair',
+                                            'bg-danger': props.data.status === 'poor' or props.data.status === 'critical'
+                                        }">
+                                            <t t-esc="props.data.status"/>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Range</td>
+                                    <td class="text-end">
+                                        <t t-esc="props.data.min"/> - <t t-esc="props.data.max"/>
+                                        <t t-esc="props.data.units"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <div t-if="props.data.details and Object.keys(props.data.details).length > 0">
+                            <h5 class="mt-4 mb-3">Breakdown</h5>
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr t-foreach="Object.entries(props.data.details)" t-as="detail" t-key="detail[0]">
+                                        <td t-esc="detail[0].replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())"/>
+                                        <td class="text-end" t-esc="detail[1]"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <t t-set-slot="footer">
+                <button class="btn btn-primary" t-on-click="props.close">Close</button>
+            </t>
+        </Dialog>
+    </t>
+</templates>

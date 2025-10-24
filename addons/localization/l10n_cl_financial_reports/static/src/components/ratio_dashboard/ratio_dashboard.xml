@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="account_financial_report.RatioDashboard" owl="1">
+        <div class="o_ratio_dashboard">
+            <div class="o_control_panel">
+                <h3>Ratio Analysis Dashboard</h3>
+            </div>
+            <div class="o_content">
+                <div class="o_kpi_container">
+                    <div t-foreach="state.ratios" t-as="ratio" t-key="ratio.name" class="o_kpi_card">
+                        <div class="o_kpi_label"><t t-esc="ratio.name"/></div>
+                        <div class="o_kpi_value" t-att-class="ratio.class">
+                            <t t-esc="ratio.value.toFixed(2)"/>
+                        </div>
+                        <div class="o_kpi_interpretation"><t t-esc="ratio.interpretation"/></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

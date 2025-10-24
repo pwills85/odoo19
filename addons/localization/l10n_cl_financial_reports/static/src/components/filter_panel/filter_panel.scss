@@ -1,0 +1,257 @@
+// Filter Panel Styles
+// Panel de filtros avanzados con diseño moderno
+
+.o_filter_panel {
+    background-color: var(--o-view-background-color);
+    border: 1px solid var(--o-border-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    
+    // Header
+    .o_filter_panel_header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        user-select: none;
+        
+        &:hover {
+            background-color: var(--o-hover-background-color);
+        }
+        
+        .o_filter_panel_title {
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            color: var(--o-main-text-color);
+            
+            .badge {
+                font-size: 0.75rem;
+                padding: 0.25rem 0.5rem;
+            }
+        }
+        
+        .o_filter_panel_actions {
+            .fa {
+                transition: transform 0.3s ease;
+            }
+        }
+    }
+    
+    // Summary (when collapsed)
+    .o_filter_panel_summary {
+        padding: 0.5rem 1rem 0.75rem;
+        font-size: 0.875rem;
+        border-top: 1px solid var(--o-border-color);
+    }
+    
+    // Content (when expanded)
+    .o_filter_panel_content {
+        padding: 1rem;
+        border-top: 1px solid var(--o-border-color);
+        animation: slideDown 0.3s ease;
+        
+        // Filter groups
+        .o_filter_group {
+            margin-bottom: 1rem;
+            
+            &:last-child {
+                margin-bottom: 0;
+            }
+            
+            .o_filter_label {
+                display: block;
+                font-size: 0.875rem;
+                font-weight: 500;
+                color: var(--o-gray-700);
+                margin-bottom: 0.5rem;
+                
+                i {
+                    opacity: 0.7;
+                }
+            }
+            
+            // Period buttons
+            &.o_filter_period_buttons {
+                .dropdown-toggle {
+                    min-width: 150px;
+                    justify-content: space-between;
+                }
+                
+                .dropdown-item {
+                    &.active {
+                        background-color: var(--o-primary);
+                        color: white;
+                        
+                        i {
+                            color: white;
+                        }
+                    }
+                }
+            }
+            
+            // Date inputs
+            &.o_filter_dates {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+                
+                @media (max-width: 768px) {
+                    grid-template-columns: 1fr;
+                }
+            }
+            
+            // Comparison options
+            &.o_filter_comparison {
+                .form-check {
+                    margin-bottom: 0.5rem;
+                    
+                    .form-check-label {
+                        font-size: 0.875rem;
+                        color: var(--o-gray-600);
+                    }
+                }
+            }
+            
+            // Presets
+            &.o_filter_presets {
+                .btn-group {
+                    .dropdown-toggle {
+                        border-top-right-radius: 0;
+                        border-bottom-right-radius: 0;
+                    }
+                    
+                    .btn:last-child {
+                        border-top-left-radius: 0;
+                        border-bottom-left-radius: 0;
+                        border-left: 0;
+                    }
+                }
+                
+                .dropdown-item {
+                    font-size: 0.875rem;
+                    
+                    small {
+                        font-size: 0.75rem;
+                    }
+                }
+            }
+        }
+        
+        // Validation errors
+        .o_filter_errors {
+            margin: 1rem 0;
+            
+            .alert {
+                padding: 0.5rem 0.75rem;
+                margin-bottom: 0.5rem;
+                font-size: 0.875rem;
+                
+                &:last-child {
+                    margin-bottom: 0;
+                }
+            }
+        }
+        
+        // Action buttons
+        .o_filter_actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--o-border-color);
+            
+            .btn-link {
+                color: var(--o-gray-600);
+                
+                &:hover:not(:disabled) {
+                    color: var(--o-danger);
+                }
+                
+                &:disabled {
+                    opacity: 0.5;
+                }
+            }
+        }
+    }
+    
+    // Expanded state
+    &.expanded {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        
+        .o_filter_panel_header {
+            .fa-chevron-down {
+                transform: rotate(180deg);
+            }
+        }
+    }
+}
+
+// Animations
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Dark mode
+@media (prefers-color-scheme: dark) {
+    .o_filter_panel {
+        background-color: var(--o-gray-900);
+        border-color: rgba(255, 255, 255, 0.1);
+        
+        .o_filter_panel_header:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .o_filter_panel_content {
+            .o_filter_label {
+                color: var(--o-gray-300);
+            }
+            
+            .form-select,
+            .form-control {
+                background-color: var(--o-gray-800);
+                border-color: rgba(255, 255, 255, 0.1);
+                color: var(--o-gray-100);
+                
+                &:focus {
+                    background-color: var(--o-gray-800);
+                    border-color: var(--o-primary);
+                    color: var(--o-gray-100);
+                }
+            }
+            
+            .form-check-label {
+                color: var(--o-gray-400);
+            }
+        }
+    }
+}
+
+// Save preset dialog
+.o_save_preset_dialog {
+    .form-label {
+        font-weight: 500;
+        color: var(--o-gray-700);
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control {
+        &:focus {
+            border-color: var(--o-primary);
+            box-shadow: 0 0 0 0.2rem rgba(var(--o-primary-rgb), 0.25);
+        }
+    }
+    
+    .form-check-label {
+        font-size: 0.875rem;
+    }
+}
