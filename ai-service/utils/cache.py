@@ -101,6 +101,101 @@ def cache_llm_response(ttl_seconds: int = 900, key_prefix: str = "llm_cache"):
     return decorator
 
 
+def cache_method(ttl_seconds: int = 900, key_prefix: str = "llm"):
+    """
+    Cache decorator for class methods (handles 'self' parameter correctly).
+    
+    Specialized version of cache_llm_response designed for instance methods.
+    Automatically excludes 'self' from cache key generation and includes
+    class name + method name for better key uniqueness.
+    
+    Args:
+        ttl_seconds: Time to live in seconds (default 15 min)
+        key_prefix: Prefix for cache key (default 'llm')
+    
+    Usage:
+        class AnthropicClient:
+            @cache_method(ttl_seconds=1800)
+            def validate_dte(self, dte_data, history):
+                # Method implementation
+                pass
+    
+    Returns:
+        Cached result or fresh execution if cache miss
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            # Import Redis client (lazy loading to avoid circular imports)
+            from utils.redis_helper import get_redis_client
+
+            # Skip 'self' parameter and serialize remaining args
+            cache_args = _serialize_args(args)
+            cache_kwargs = _serialize_args((kwargs,))
+
+            # Create cache key with class + method name for uniqueness
+            class_name = self.__class__.__name__
+            method_name = func.__name__
+            key_data = f"{class_name}.{method_name}:{cache_args}:{cache_kwargs}"
+            cache_key = f"{key_prefix}:{hashlib.md5(key_data.encode()).hexdigest()}"
+
+            # Get Redis client instance
+            redis_client = get_redis_client()
+
+            # Try to get from cache
+            try:
+                cached = redis_client.get(cache_key)
+                if cached:
+                    logger.info(
+                        "cache_hit",
+                        key=cache_key,
+                        method=f"{class_name}.{method_name}",
+                        ttl=ttl_seconds
+                    )
+                    return json.loads(cached)
+                else:
+                    logger.info(
+                        "cache_miss",
+                        key=cache_key,
+                        method=f"{class_name}.{method_name}"
+                    )
+            except Exception as e:
+                logger.warning(
+                    "cache_read_error",
+                    error=str(e),
+                    key=cache_key,
+                    method=f"{class_name}.{method_name}"
+                )
+            
+            # Execute function (fresh execution)
+            result = func(self, *args, **kwargs)
+            
+            # Save to cache
+            try:
+                redis_client.setex(
+                    cache_key,
+                    ttl_seconds,
+                    json.dumps(result, default=str)
+                )
+                logger.info(
+                    "cache_saved",
+                    key=cache_key,
+                    ttl=ttl_seconds,
+                    method=f"{class_name}.{method_name}"
+                )
+            except Exception as e:
+                logger.warning(
+                    "cache_write_error",
+                    error=str(e),
+                    key=cache_key,
+                    method=f"{class_name}.{method_name}"
+                )
+            
+            return result
+        return wrapper
+    return decorator
+
+
 def _serialize_args(args: tuple) -> str:
     """
     Serializa argumentos para cache key.
@@ -220,4 +315,3 @@ def get_cache_stats() -> dict:
             'memory_used_mb': 0,
             'error': str(e)
         }
-

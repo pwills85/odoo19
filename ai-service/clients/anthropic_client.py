@@ -1,32 +1,51 @@
 # -*- coding: utf-8 -*-
 """
-Cliente para Anthropic Claude API
+Cliente Async para Anthropic Claude API con Circuit Breaker
+
+Incluye:
+- AsyncAnthropic para concurrencia mejorada
+- Circuit breaker para resiliencia
+- Retry logic con exponential backoff
+- Caching de respuestas
+- Fallback graceful
+
+FASE 3: Async & Performance - 2025-10-23
+Gap Closure Sprint
 """
 
 import anthropic
 import structlog
 from typing import Dict, Any, List, Optional
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from utils.cache import cache_method
+from utils.circuit_breaker import anthropic_circuit_breaker, CircuitBreakerError
 
 logger = structlog.get_logger()
 
 
 class AnthropicClient:
-    """Cliente para interactuar con Claude API"""
-    
-    def __init__(self, api_key: str, model: str = "claude-3-5-sonnet-20241022"):
+    """
+    Cliente Async para interactuar con Claude API.
+
+    IMPORTANTE: Usa AsyncAnthropic para mejor throughput y concurrencia.
+    Todos los métodos son async y deben ser llamados con await.
+    """
+
+    def __init__(self, api_key: str, model: str = "claude-sonnet-4-5-20250929"):
         """
-        Inicializa el cliente de Anthropic.
-        
+        Inicializa el cliente async de Anthropic.
+
         Args:
             api_key: API key de Anthropic
-            model: Modelo de Claude a utilizar
+            model: Modelo de Claude a utilizar (default: claude-sonnet-4-5-20250929)
         """
-        self.client = anthropic.Anthropic(api_key=api_key)
+        self.client = anthropic.AsyncAnthropic(api_key=api_key)
         self.model = model
-        
-        logger.info("anthropic_client_initialized", model=model)
+
+        logger.info("anthropic_async_client_initialized", model=model)
     
+    # NOTA: cache_method no soporta async methods actualmente
+    # TODO: Implementar async cache decorator en FASE 3
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
@@ -40,42 +59,76 @@ class AnthropicClient:
             attempt=retry_state.attempt_number
         )
     )
-    def validate_dte(self, dte_data: Dict[str, Any], history: List[Dict]) -> Dict[str, Any]:
+    async def validate_dte(self, dte_data: Dict[str, Any], history: List[Dict]) -> Dict[str, Any]:
         """
-        Valida un DTE usando Claude con retry automático.
-        
+        Valida un DTE usando Claude con retry automático (ASYNC).
+
         Analiza los datos del DTE y compara con historial de rechazos
         para detectar posibles errores.
-        
+
         Args:
             dte_data: Datos del DTE a validar
             history: Historial de rechazos previos
-        
+
         Returns:
             Dict con resultado de validación
+
+        Note:
+            Este método es async. Debe ser llamado con await.
         """
         from utils.llm_helpers import extract_json_from_llm_response, validate_llm_json_schema
         from utils.cache import cache_llm_response
-        
+        from config import settings
+
         logger.info("claude_validation_started")
-        
+
         try:
             # Construir prompt
             prompt = self._build_validation_prompt(dte_data, history)
-            
-            # Llamar a Claude
-            message = self.client.messages.create(
-                model=self.model,
-                max_tokens=2048,
-                temperature=0.1,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            
+
+            # Llamar a Claude con circuit breaker protection (ASYNC)
+            try:
+                with anthropic_circuit_breaker:
+                    message = await self.client.messages.create(
+                        model=self.model,
+                        max_tokens=settings.dte_validation_max_tokens,
+                        temperature=0.1,
+                        messages=[
+                            {"role": "user", "content": prompt}
+                        ]
+                    )
+            except CircuitBreakerError as e:
+                logger.error("circuit_breaker_open_fallback",
+                           error=str(e))
+                # Fallback graceful: retornar respuesta conservadora
+                return {
+                    'confidence': 0.0,
+                    'warnings': [
+                        'AI validation service temporarily unavailable',
+                        'Recommend manual review before sending to SII'
+                    ],
+                    'errors': [],
+                    'recommendation': 'review',
+                    'fallback': 'circuit_breaker_open'
+                }
+
             # Parsear respuesta con validación
             response_text = message.content[0].text
-            
+
+            # Track token usage and cost
+            try:
+                from utils.cost_tracker import get_cost_tracker
+                tracker = get_cost_tracker()
+                tracker.record_usage(
+                    input_tokens=message.usage.input_tokens,
+                    output_tokens=message.usage.output_tokens,
+                    model=self.model,
+                    endpoint="/api/dte/validate",
+                    operation="dte_validation"
+                )
+            except Exception as e:
+                logger.warning("cost_tracking_failed", error=str(e))
+
             try:
                 result = extract_json_from_llm_response(response_text)
                 

@@ -11,11 +11,12 @@ Autor: EERGYGROUP - Ing. Pedro Troncoso Willz
 Fecha: 2025-10-23
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Header
-from pydantic import BaseModel, Field
-from typing import List, Optional, Dict
+from fastapi import APIRouter, Depends, HTTPException, Header, Request
+from pydantic import BaseModel, Field, validator
+from typing import List, Optional, Dict, Any
 import os
 import logging
+import re
 
 # Import del matcher (asumiendo estructura ai-service/)
 try:
@@ -79,12 +80,15 @@ class ProjectSuggestionResponse(BaseModel):
 # DEPENDENCY: API KEY AUTHENTICATION
 # ═══════════════════════════════════════════════════════════
 
-async def verify_api_key(authorization: str = Header(None)):
+async def verify_api_key(authorization: str = Header(None)) -> bool:
     """
     Verifica API key en header Authorization.
 
     Args:
         authorization: Header "Authorization: Bearer <api_key>"
+
+    Returns:
+        True if API key is valid
 
     Raises:
         HTTPException: Si API key inválida
@@ -126,8 +130,9 @@ async def verify_api_key(authorization: str = Header(None)):
 @router.post("/suggest_project", response_model=ProjectSuggestionResponse)
 async def suggest_project(
     request: ProjectSuggestionRequest,
+    http_request: Request,
     authorized: bool = Depends(verify_api_key)
-):
+) -> ProjectSuggestionResponse:
     """
     Sugiere proyecto para factura usando Claude 3.5 Sonnet.
 
@@ -183,7 +188,7 @@ async def suggest_project(
 
 
 @router.get("/health")
-async def health_check():
+async def health_check() -> Dict[str, Any]:
     """Health check endpoint (no requiere autenticación)"""
     anthropic_key_configured = bool(os.getenv('ANTHROPIC_API_KEY'))
 
@@ -200,7 +205,7 @@ async def health_check():
 
 
 @router.get("/stats")
-async def get_stats(authorized: bool = Depends(verify_api_key)):
+async def get_stats(authorized: bool = Depends(verify_api_key)) -> Dict[str, Any]:
     """
     Estadísticas del servicio (requiere autenticación).
 

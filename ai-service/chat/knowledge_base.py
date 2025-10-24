@@ -352,9 +352,9 @@ Solución:
 Causa: Servicio DTE caído o red
 Solución:
 - Verificar Docker: `docker-compose ps`
-- Ver logs: `docker-compose logs dte-service`
+- Ver logs: `docker-compose logs odoo-eergy-services`
 - Si SII caído → usa Modo Contingencia
-- Reiniciar: `docker-compose restart dte-service`
+- Reiniciar: `docker-compose restart odoo-eergy-services`
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **5. "DTE rejected by SII"**
@@ -389,7 +389,7 @@ Verificar:
 
 Docker:
 ```bash
-docker-compose logs dte-service | tail -100
+docker-compose logs odoo-eergy-services | tail -100
 docker-compose logs ai-service | tail -100
 docker-compose logs odoo | grep DTE
 ```

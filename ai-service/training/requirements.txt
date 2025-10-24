@@ -18,7 +18,7 @@ sentence-transformers==2.2.2
 faiss-cpu==1.7.4  # Use faiss-gpu for GPU support
 
 # Claude API
-anthropic==0.7.7
+anthropic==0.34.0
 
 # Utilities
 python-dotenv==1.0.0

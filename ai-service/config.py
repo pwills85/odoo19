@@ -23,23 +23,28 @@ class Settings(BaseSettings):
     # ═══════════════════════════════════════════════════════════
     
     api_key: str = "default_ai_api_key"  # Cambiar en producción
-    allowed_origins: list[str] = ["http://odoo:8069", "http://dte-service:8001"]
+    allowed_origins: list[str] = ["http://odoo:8069", "http://odoo-eergy-services:8001"]
     
     # ═══════════════════════════════════════════════════════════
-    # ANTHROPIC API
-    # ═══════════════════════════════════════════════════════════
-    
-    anthropic_api_key: str
-    anthropic_model: str = "claude-3-5-sonnet-20241022"
-    anthropic_max_tokens: int = 4096
-    
-    # ═══════════════════════════════════════════════════════════
-    # OPENAI API (Fallback LLM)
+    # ANTHROPIC API (Solo Claude) - Actualizado 2025-10-23
     # ═══════════════════════════════════════════════════════════
 
-    openai_api_key: str = ""  # Optional fallback
-    openai_model: str = "gpt-4-turbo-preview"
-    openai_max_tokens: int = 4096
+    anthropic_api_key: str
+    anthropic_model: str = "claude-sonnet-4-5-20250929"  # Claude Sonnet 4.5 (Sept 2025)
+
+    # Max tokens por caso de uso
+    anthropic_max_tokens_default: int = 8192
+    chat_max_tokens: int = 16384
+    dte_validation_max_tokens: int = 4096
+    payroll_validation_max_tokens: int = 2048
+    previred_scraping_max_tokens: int = 4096
+    analytics_matching_max_tokens: int = 1024
+    sii_monitoring_max_tokens: int = 8192
+
+    # Configuración avanzada
+    anthropic_temperature_default: float = 0.7
+    anthropic_timeout_seconds: int = 60
+    anthropic_max_retries: int = 3
     
     # ═══════════════════════════════════════════════════════════
     # CHAT ENGINE
@@ -96,10 +101,25 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     
     # ═══════════════════════════════════════════════════════════
-    # LOAD FROM .env
+    # ENVIRONMENT CONFIGURATION
+    # ═══════════════════════════════════════════════════════════
+    # 
+    # PRODUCTION (Docker):
+    #   Variables are loaded from docker-compose.yml which reads from
+    #   project root .env file: /Users/pedro/Documents/odoo19/.env
+    #   No local .env file is needed or used.
+    #
+    # DEVELOPMENT (Local without Docker):
+    #   Create local .env file or export variables from root .env:
+    #   $ export $(cat ../.env | grep -v '^#' | xargs)
+    #
+    # See: /docs/ANALISIS_VARIABLES_ENTORNO_AI_SERVICE.md
     # ═══════════════════════════════════════════════════════════
     
     class Config:
+        # NOTE: In Docker, this env_file is NOT used.
+        # Variables come from docker-compose.yml environment section.
+        # This setting only applies to local development.
         env_file = ".env"
         env_file_encoding = "utf-8"
 

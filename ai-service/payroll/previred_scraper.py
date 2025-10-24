@@ -203,53 +203,128 @@ class PreviredScraper:
     
     async def _parse_with_claude(self, content, content_type: str, period: str) -> Dict:
         """
-        Parsear contenido con Claude API
-        
-        TODO: Implementar parsing real con Claude
-        Por ahora retorna estructura de ejemplo
+        Parsear contenido con Claude API (IMPLEMENTACIÓN REAL)
         """
         logger.info("parsing_with_claude", content_type=content_type, period=period)
         
-        # TODO: Llamar Claude API real
-        # Por ahora, retornar estructura de ejemplo
+        # 1. Convertir contenido a texto
+        if content_type == "pdf":
+            try:
+                import PyPDF2
+                import io
+                
+                pdf_reader = PyPDF2.PdfReader(io.BytesIO(content))
+                text_parts = []
+                
+                for page in pdf_reader.pages:
+                    text_parts.append(page.extract_text())
+                
+                text = "\n".join(text_parts)
+                logger.info("pdf_parsed", pages=len(pdf_reader.pages), chars=len(text))
+                
+            except Exception as e:
+                logger.error("pdf_parse_failed", error=str(e))
+                raise Exception(f"Error parseando PDF: {str(e)}")
+        else:
+            # HTML
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(content, 'html.parser')
+            text = soup.get_text(separator='\n', strip=True)
+            logger.info("html_parsed", chars=len(text))
         
-        # Estructura de 60 campos que debe retornar
-        indicators = {
-            # Indicadores económicos (4)
-            "uf": 39383.07,
-            "utm": 68647,
-            "uta": 823764,
-            "sueldo_minimo": 500000,
-            
-            # Topes (3)
-            "afp_tope_uf": 87.8,
-            "salud_tope_uf": 0.0,  # Sin tope
-            "afc_tope_uf": 131.9,
-            
-            # Tasas AFP ejemplo (solo algunas, total 35)
-            "afp_capital_fondo_a": 11.44,
-            "afp_capital_fondo_b": 11.44,
-            "afp_capital_fondo_c": 11.44,
-            "afp_capital_fondo_d": 11.44,
-            "afp_capital_fondo_e": 11.44,
-            
-            # Tasas cotización (8)
-            "exvida_pct": 0.9,
-            "aporteafpe_pct": 0.1,
-            "afc_trabajador_indefinido": 0.6,
-            "afc_empleador_indefinido": 2.4,
-            "fonasa_pct": 7.0,
-            "sis_pct": 1.57,
-            
-            # Asignación familiar (9)
-            "asig_fam_tramo_1": 15000,
-            "asig_fam_tramo_2": 10000,
-            "asig_fam_tramo_3": 5000,
-        }
+        # 2. Limitar texto (Claude tiene límite de tokens)
+        text = text[:15000]  # ~15K chars ≈ 4K tokens
         
-        logger.info("parsing_completed", fields_extracted=len(indicators))
+        # 3. Construir prompt especializado
+        prompt = f"""Eres un experto en legislación previsional chilena.
+
+Extrae EXACTAMENTE estos campos del documento de indicadores Previred para {period}:
+
+**INDICADORES ECONÓMICOS (4 campos):**
+- uf: Valor UF en pesos (número decimal, ej: 39383.07)
+- utm: Valor UTM en pesos (número entero, ej: 68647)
+- uta: Valor UTA en pesos (número entero, ej: 823764)
+- sueldo_minimo: Sueldo mínimo mensual en pesos (número entero, ej: 500000)
+
+**TOPES IMPONIBLES (3 campos):**
+- afp_tope_uf: Tope AFP en UF (ej: 87.8)
+- salud_tope_uf: Tope Salud en UF (0.0 si sin tope)
+- afc_tope_uf: Tope AFC en UF (ej: 131.9)
+
+**TASAS AFP POR FONDO (25 campos: 5 AFPs × 5 fondos):**
+Para Capital, Cuprum, Habitat, PlanVital, Provida:
+- afp_capital_fondo_a, afp_capital_fondo_b, ..., afp_capital_fondo_e
+- afp_cuprum_fondo_a, afp_cuprum_fondo_b, ..., afp_cuprum_fondo_e
+- afp_habitat_fondo_a, ..., afp_provida_fondo_e
+
+**TASAS COTIZACIÓN (8 campos):**
+- exvida_pct: Seguro invalidez y sobrevivencia (ej: 1.57)
+- aporteafpe_pct: Aporte empleador (ej: 0.0)
+- afc_trabajador_indefinido: AFC trabajador (ej: 0.6)
+- afc_empleador_indefinido: AFC empleador (ej: 2.4)
+- afc_trabajador_plazo_fijo: AFC trab plazo fijo (ej: 0.0)
+- afc_empleador_plazo_fijo: AFC emp plazo fijo (ej: 3.0)
+- fonasa_pct: Cotización Fonasa (ej: 7.0)
+- sis_pct: Seguro accidentes (ej: 0.93)
+
+**ASIGNACIÓN FAMILIAR (20 campos aprox):**
+- asig_fam_tramo_1, asig_fam_tramo_2, asig_fam_tramo_3, asig_fam_tramo_4
+- asig_fam_maternal_tramo_1, asig_fam_maternal_tramo_2, etc.
+
+DOCUMENTO:
+{text}
+
+IMPORTANTE:
+1. Busca tablas con encabezados como "AFP", "Fondo A", "Fondo B", etc.
+2. Si un campo no está en el documento, usa 0.0
+3. Todos los valores son números (float o int)
+4. NO agregues símbolos $ ni puntos miles
+
+RESPONDE EN JSON ESTRICTO (sin markdown ni ```json):
+{{
+    "uf": 39383.07,
+    "utm": 68647,
+    "uta": 823764,
+    "sueldo_minimo": 500000,
+    "afp_tope_uf": 87.8,
+    "afp_capital_fondo_a": 11.44,
+    ... (todos los 60 campos)
+}}
+"""
         
-        return indicators
+        # 4. Llamar Claude API (ASYNC)
+        try:
+            from config import settings
+
+            response = await self.claude.client.messages.create(
+                model=self.claude.model,
+                max_tokens=settings.previred_scraping_max_tokens,
+                temperature=0.0,  # Precisión máxima para números
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            response_text = response.content[0].text
+            
+            # 5. Parsear JSON
+            from utils.llm_helpers import extract_json_from_llm_response
+            indicators = extract_json_from_llm_response(response_text)
+            
+            # 6. Logging con costo
+            logger.info(
+                "parsing_completed",
+                period=period,
+                fields_extracted=len(indicators),
+                input_tokens=response.usage.input_tokens,
+                output_tokens=response.usage.output_tokens,
+                cost_usd=round(response.usage.input_tokens * 0.000003 + 
+                              response.usage.output_tokens * 0.000015, 4)
+            )
+            
+            return indicators
+            
+        except Exception as e:
+            logger.error("claude_parsing_failed", error=str(e))
+            raise Exception(f"Error parseando con Claude: {str(e)}")
     
     def _validate_indicators(self, indicators: Dict):
         """Validar coherencia de indicadores"""

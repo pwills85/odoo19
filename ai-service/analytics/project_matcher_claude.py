@@ -17,6 +17,8 @@ from typing import Dict, List, Optional
 import logging
 from datetime import datetime
 import json
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from utils.cache import cache_method
 
 logger = logging.getLogger(__name__)
 
@@ -30,13 +32,14 @@ class ProjectMatcherClaude:
 
     def __init__(self, anthropic_api_key: str):
         """
-        Inicializa cliente Anthropic.
+        Inicializa cliente Anthropic (ASYNC).
 
         Args:
             anthropic_api_key: API key de Anthropic
         """
-        self.client = anthropic.Anthropic(api_key=anthropic_api_key)
-        self.model = "claude-3-5-sonnet-20241022"  # Fixed: Modelo correcto disponible
+        from config import settings
+        self.client = anthropic.AsyncAnthropic(api_key=anthropic_api_key)
+        self.model = settings.anthropic_model
 
     async def suggest_project(
         self,
@@ -48,6 +51,9 @@ class ProjectMatcherClaude:
     ) -> Dict:
         """
         Sugiere proyecto basado en análisis semántico de factura.
+        
+        NOTA: Cache no aplicado en método async debido a limitaciones del decorator.
+        Ver suggest_project_sync para versión con cache.
 
         Args:
             partner_name: Nombre del proveedor
@@ -77,15 +83,19 @@ class ProjectMatcherClaude:
         prompt = self._build_prompt(context)
 
         try:
-            response = self.client.messages.create(
+            from config import settings
+            response = await self.client.messages.create(
                 model=self.model,
-                max_tokens=500,
+                max_tokens=settings.analytics_matching_max_tokens,
                 temperature=0.1,  # Baja temperatura = más consistente
                 messages=[{"role": "user", "content": prompt}]
             )
 
-            # Parsear respuesta JSON
-            result = json.loads(response.content[0].text)
+            # Parsear respuesta JSON con helper robusto
+            from utils.llm_helpers import extract_json_from_llm_response
+            
+            response_text = response.content[0].text
+            result = extract_json_from_llm_response(response_text)
 
             logger.info(
                 "project_match_success: partner=%s, project=%s, confidence=%.1f%%",
@@ -96,8 +106,8 @@ class ProjectMatcherClaude:
 
             return result
 
-        except json.JSONDecodeError as e:
-            logger.error("Claude response not valid JSON: %s", str(e))
+        except ValueError as e:
+            logger.error("Failed to parse Claude response: %s", str(e))
             return {
                 'project_id': None,
                 'project_name': None,
@@ -240,6 +250,19 @@ Analiza la factura del proveedor y determina a qué proyecto pertenece con la ma
 - Solo devolver JSON, sin texto adicional
 """
 
+    @cache_method(ttl_seconds=1800)  # Cache 30 minutos (proyectos cambian poco)
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((
+            anthropic.RateLimitError,
+            anthropic.APIConnectionError,
+            anthropic.InternalServerError
+        )),
+        before_sleep=lambda retry_state: logger.warning(
+            "project_matcher_retry: attempt=%d", retry_state.attempt_number
+        )
+    )
     def suggest_project_sync(
         self,
         partner_name: str,
@@ -249,12 +272,14 @@ Analiza la factura del proveedor y determina a qué proyecto pertenece con la ma
         historical_purchases: Optional[List[Dict]] = None
     ) -> Dict:
         """
-        Versión síncrona de suggest_project.
+        Versión síncrona de suggest_project con cache LLM.
 
-        Útil para casos donde async no está disponible.
+        Wrapper para compatibilidad con código síncrono.
+        Cache TTL: 1800 segundos (30 minutos) - proyectos cambian poco.
         """
-        # En Python, si el método no tiene await, es síncrono por defecto
-        # Esta es una versión sin async/await
+        from utils.llm_helpers import extract_json_from_llm_response
+        
+        # Build context
         context = self._build_context(
             partner_name=partner_name,
             partner_vat=partner_vat,
@@ -266,29 +291,33 @@ Analiza la factura del proveedor y determina a qué proyecto pertenece con la ma
         prompt = self._build_prompt(context)
 
         try:
-            response = self.client.messages.create(
-                model=self.model,
-                max_tokens=500,
-                temperature=0.1,
-                messages=[{"role": "user", "content": prompt}]
-            )
+            from config import settings
 
-            result = json.loads(response.content[0].text)
+            # NOTE: This is a sync wrapper - use asyncio to run async client
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                response = loop.run_until_complete(
+                    self.client.messages.create(
+                        model=self.model,
+                        max_tokens=settings.analytics_matching_max_tokens,
+                        temperature=0.1,
+                        messages=[{"role": "user", "content": prompt}]
+                    )
+                )
+            finally:
+                loop.close()
 
-            logger.info(
-                "project_match_success: partner=%s, project=%s, confidence=%.1f%%",
-                partner_name,
-                result.get('project_name'),
-                result.get('confidence', 0)
-            )
+            response_text = response.content[0].text
+            result = extract_json_from_llm_response(response_text)
 
             return result
 
         except Exception as e:
-            logger.exception("Error in project matching: %s", str(e))
+            logger.error("project_matcher_error", error=str(e))
             return {
-                'project_id': None,
-                'project_name': None,
-                'confidence': 0,
-                'reasoning': f'Error: {str(e)[:100]}'
+                "project_id": None,
+                "confidence": 0.0,
+                "reasoning": f"Error: {str(e)}"
             }

@@ -97,7 +97,7 @@ class DTEPlugin(AIPlugin):
             history = context.get('history', []) if context else []
             
             # Call Anthropic client (SAME as before)
-            result = self.anthropic_client.validate_dte(data, history)
+            result = await self.anthropic_client.validate_dte(data, history)
             
             logger.info("dte_plugin_validation_completed",
                        confidence=result.get('confidence'))

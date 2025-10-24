@@ -27,7 +27,7 @@ from datetime import datetime
 from .context_manager import ContextManager
 from .knowledge_base import KnowledgeBase
 from clients.anthropic_client import AnthropicClient
-from clients.openai_client import OpenAIClient
+# OpenAI eliminado - Solo Anthropic
 
 logger = structlog.get_logger(__name__)
 
@@ -97,34 +97,38 @@ class ChatEngine:
 
     def __init__(
         self,
-        context_manager: ContextManager,
-        knowledge_base: KnowledgeBase,
         anthropic_client: AnthropicClient,
-        openai_client: Optional[OpenAIClient] = None,
+        redis_client = None,
+        session_ttl: int = 3600,
         max_context_messages: int = 10,
+        context_manager = None,
+        knowledge_base = None,
         default_temperature: float = 0.7
     ):
         """
         Initialize chat engine.
 
         Args:
-            context_manager: Redis-based context manager
-            knowledge_base: DTE documentation knowledge base
-            anthropic_client: Anthropic Claude client
-            openai_client: OpenAI GPT-4 client (optional fallback)
+            anthropic_client: Anthropic Claude client (PRIMARY)
+            redis_client: Redis client for caching
+            session_ttl: Session TTL in seconds
             max_context_messages: Max messages to keep in context
+            context_manager: Redis-based context manager (optional)
+            knowledge_base: DTE documentation knowledge base (optional)
             default_temperature: LLM temperature (0-2)
         """
+        self.anthropic_client = anthropic_client
+        self.redis = redis_client
+        self.session_ttl = session_ttl
+        self.max_context_messages = max_context_messages
         self.context_manager = context_manager
         self.knowledge_base = knowledge_base
-        self.anthropic_client = anthropic_client
-        self.openai_client = openai_client
-        self.max_context_messages = max_context_messages
         self.default_temperature = default_temperature
 
         logger.info("chat_engine_initialized",
                    max_context_messages=max_context_messages,
-                   has_openai_fallback=openai_client is not None)
+                   has_context_manager=context_manager is not None,
+                   has_knowledge_base=knowledge_base is not None)
 
     async def send_message(
         self,
@@ -190,16 +194,11 @@ class ChatEngine:
                              session_id=session_id,
                              error=str(e))
 
-                if self.openai_client:
-                    response_text, tokens_used = await self._call_openai(
-                        system_prompt,
-                        history[-self.max_context_messages:]
-                    )
-                    llm_used = 'openai'
-                else:
-                    logger.error("no_fallback_available",
-                               session_id=session_id)
-                    raise Exception("Anthropic failed and no OpenAI fallback configured")
+                # NO FALLBACK - Solo Anthropic
+                logger.error("anthropic_failed_no_fallback",
+                           session_id=session_id,
+                           error=str(e))
+                raise Exception(f"Anthropic API failed: {str(e)}")
 
             # 6. Add assistant response to history
             assistant_msg = {
@@ -306,10 +305,12 @@ class ChatEngine:
                    message_count=len(messages))
 
         try:
-            # Anthropic API format
-            response = self.anthropic_client.client.messages.create(
+            from config import settings
+
+            # Anthropic API format (ASYNC)
+            response = await self.anthropic_client.client.messages.create(
                 model=self.anthropic_client.model,
-                max_tokens=2048,
+                max_tokens=settings.chat_max_tokens,
                 temperature=self.default_temperature,
                 system=system_prompt,
                 messages=[
@@ -373,10 +374,11 @@ class ChatEngine:
                     })
 
             # Call OpenAI
+            from config import settings
             result = await self.openai_client.send_message(
                 messages=openai_messages,
                 model=self.openai_client.client._client_wrapper._api_key and "gpt-4-turbo-preview",
-                max_tokens=2048,
+                max_tokens=settings.chat_max_tokens,
                 temperature=self.default_temperature
             )
 

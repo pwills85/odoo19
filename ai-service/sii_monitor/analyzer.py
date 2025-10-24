@@ -92,35 +92,39 @@ class SIIDocumentAnalyzer:
                    text_length=len(document_text))
         
         try:
+            from config import settings
+
             # Construir prompt
             prompt = self._build_analysis_prompt(document_text, metadata)
-            
-            # Llamar a Claude
-            response = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=2048,
-                temperature=0.0,  # Determinista para análisis técnico
-                messages=[{"role": "user", "content": prompt}]
-            )
+
+            # Llamar a Claude (Async client in sync context)
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                response = loop.run_until_complete(
+                    self.client.messages.create(
+                        model=settings.anthropic_model,
+                        max_tokens=settings.sii_monitoring_max_tokens,
+                        temperature=0.0,  # Determinista para análisis técnico
+                        messages=[{"role": "user", "content": prompt}]
+                    )
+                )
+            finally:
+                loop.close()
             
             # Parsear respuesta
             response_text = response.content[0].text
             
             # Intentar parsear JSON
             try:
-                # Buscar JSON en la respuesta
-                json_start = response_text.find('{')
-                json_end = response_text.rfind('}') + 1
+                # Usar helper robusto para extraer JSON
+                from utils.llm_helpers import extract_json_from_llm_response
                 
-                if json_start >= 0 and json_end > json_start:
-                    json_text = response_text[json_start:json_end]
-                    analysis_data = json.loads(json_text)
-                else:
-                    logger.warning("no_json_found_in_response")
-                    analysis_data = self._create_fallback_analysis(metadata)
+                analysis_data = extract_json_from_llm_response(response_text)
                     
-            except json.JSONDecodeError as e:
-                logger.error("json_parse_error", error=str(e))
+            except ValueError as e:
+                logger.error("sii_analysis_json_parse_failed", error=str(e))
                 analysis_data = self._create_fallback_analysis(metadata)
             
             analysis = Analysis(analysis_data)

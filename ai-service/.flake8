@@ -1,0 +1,37 @@
+[flake8]
+# Flake8 Configuration - AI Service Code Quality
+# ================================================
+
+max-line-length = 100
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    *.pyc,
+    .pytest_cache,
+    build,
+    dist,
+    *.egg-info,
+    tests/fixtures
+
+# Ignore specific errors
+ignore =
+    E203,  # whitespace before ':' (conflicts with Black)
+    E501,  # line too long (handled by Black)
+    W503,  # line break before binary operator (conflicts with Black)
+    E402,  # module level import not at top (sometimes needed for conditional imports)
+
+# Per-file ignores
+per-file-ignores =
+    __init__.py:F401,F403  # Allow unused imports in __init__.py
+
+# Complexity
+max-complexity = 15
+
+# Enable some optional checks
+enable-extensions = G
+
+# Show source code for errors
+show-source = True
+statistics = True
