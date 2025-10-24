@@ -2,7 +2,6 @@
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
-from odoo.addons.l10n_cl_dte.tools.rut_validator import validate_rut
 import requests
 import logging
 import json
@@ -94,7 +93,44 @@ class AccountMoveDTE(models.Model):
         copy=False,
         help='Mensaje de error del SII o del sistema'
     )
-    
+
+    # ⭐ CAMPOS ADICIONALES PARA TRACKING Y RELACIONES
+    dte_accepted_date = fields.Datetime(
+        string='Fecha Aceptación SII',
+        readonly=True,
+        copy=False,
+        help='Fecha y hora en que el SII aceptó el DTE'
+    )
+
+    dte_certificate_id = fields.Many2one(
+        'dte.certificate',
+        string='Certificado Digital',
+        readonly=True,
+        copy=False,
+        help='Certificado digital usado para firmar este DTE'
+    )
+
+    dte_caf_id = fields.Many2one(
+        'dte.caf',
+        string='CAF Utilizado',
+        readonly=True,
+        copy=False,
+        help='Código de Autorización de Folios (CAF) usado para este DTE'
+    )
+
+    dte_environment = fields.Selection([
+        ('sandbox', 'Sandbox (Maullin)'),
+        ('production', 'Producción (Palena)')
+    ], string='Ambiente SII', default='sandbox',
+       help='Ambiente del SII donde se envió el DTE')
+
+    is_contingency = fields.Boolean(
+        string='Es Contingencia',
+        default=False,
+        copy=False,
+        help='Indica si este DTE fue emitido en modo contingencia'
+    )
+
     # ═══════════════════════════════════════════════════════════
     # CAMPOS RABBITMQ - INTEGRACIÓN ASÍNCRONA
     # ═══════════════════════════════════════════════════════════
@@ -261,20 +297,16 @@ class AccountMoveDTE(models.Model):
     def _validate_dte_data(self):
         """Validaciones locales antes de enviar al DTE Service"""
         self.ensure_one()
-        
+
         # Validar RUT cliente
+        # Nota: Validación RUT delegada a Odoo nativo (l10n_cl → base_vat → python-stdnum)
+        # Odoo valida automáticamente al asignar partner.vat con country_code='CL'
         if not self.partner_id.vat:
             raise ValidationError(_('El cliente debe tener RUT configurado.'))
-        
-        if not validate_rut(self.partner_id.vat):
-            raise ValidationError(_('El RUT del cliente es inválido: %s') % self.partner_id.vat)
-        
+
         # Validar RUT empresa
         if not self.company_id.vat:
             raise ValidationError(_('La compañía debe tener RUT configurado.'))
-        
-        if not validate_rut(self.company_id.vat):
-            raise ValidationError(_('El RUT de la compañía es inválido: %s') % self.company_id.vat)
         
         # Validar que tenga líneas
         if not self.invoice_line_ids:
@@ -307,7 +339,7 @@ class AccountMoveDTE(models.Model):
         # URL del DTE Service
         dte_service_url = self.env['ir.config_parameter'].sudo().get_param(
             'l10n_cl_dte.dte_service_url',
-            'http://dte-service:8001'
+            'http://odoo-eergy-services:8001'
         )
         
         # Preparar datos
@@ -358,9 +390,10 @@ class AccountMoveDTE(models.Model):
                     'rut': self.company_id.vat,
                     'razon_social': self.company_id.name,
                     'giro': self.company_id.l10n_cl_activity_description or 'Servicios',
+                    'acteco': self.company_id.l10n_cl_activity_code,  # OBLIGATORIO: código 6 dígitos
                     'direccion': self._format_address(self.company_id),
                     'ciudad': self.company_id.city or '',
-                    'comuna': self.company_id.state_id.name if self.company_id.state_id else '',
+                    'comuna': self.company_id.partner_id.l10n_cl_comuna or (self.company_id.state_id.name if self.company_id.state_id else ''),
                 },
                 # Receptor (cliente)
                 'receptor': {
@@ -369,7 +402,7 @@ class AccountMoveDTE(models.Model):
                     'giro': self.partner_id.industry_id.name if self.partner_id.industry_id else 'N/A',
                     'direccion': self._format_address(self.partner_id),
                     'ciudad': self.partner_id.city or '',
-                    'comuna': self.partner_id.state_id.name if self.partner_id.state_id else '',
+                    'comuna': self.partner_id.l10n_cl_comuna or (self.partner_id.state_id.name if self.partner_id.state_id else ''),
                 },
                 # Totales
                 'totales': {

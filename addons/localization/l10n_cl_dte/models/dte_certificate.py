@@ -174,14 +174,13 @@ class DTECertificate(models.Model):
                 record.days_until_expiry = 0
     
     # ═══════════════════════════════════════════════════════════
-    # CONSTRAINTS
+    # CONSTRAINTS (Odoo 19 CE style)
     # ═══════════════════════════════════════════════════════════
-    
-    _sql_constraints = [
-        ('unique_cert_rut_company', 
-         'UNIQUE(cert_rut, company_id)', 
-         'Ya existe un certificado con este RUT para esta compañía.')
-    ]
+
+    _unique_cert_rut_company = models.Constraint(
+        'UNIQUE(cert_rut, company_id)',
+        'Ya existe un certificado con este RUT para esta compañía.'
+    )
     
     @api.constrains('validity_to')
     def _check_validity(self):
@@ -250,21 +249,22 @@ class DTECertificate(models.Model):
         
         try:
             from OpenSSL import crypto
-            from odoo.addons.l10n_cl_dte.tools.rut_validator import validate_rut, clean_rut
-            
+            from stdnum.cl.rut import compact as clean_rut
+
             # 1. Cargar certificado
             cert_data = base64.b64decode(self.cert_file)
             p12 = crypto.load_pkcs12(cert_data, self.cert_password.encode())
             certificate = p12.get_certificate()
-            
+
             # 2. Validar vigencia (ya implementado)
             self._update_state()
-            
+
             # 3. NUEVO: Validar RUT coincide con empresa
+            # Nota: Usando python-stdnum.cl.rut (mismo que Odoo nativo)
             if self.cert_rut and self.company_id.vat:
                 cert_rut_clean = clean_rut(self.cert_rut)
                 company_rut_clean = clean_rut(self.company_id.vat)
-                
+
                 if cert_rut_clean != company_rut_clean:
                     raise ValidationError(
                         _('El RUT del certificado (%s) no coincide con el RUT de la empresa (%s).\n'
