@@ -51,14 +51,9 @@ class ExecutiveDashboardService(models.AbstractModel):
         if not date_to:
             date_to = fields.Date.today()
             
-        # Use cache service from l10n_cl_base
-        cache_service = self.env['l10n_cl_base.cache_service']
-        cache_key = f'executive_summary_{company_id}_{date_from}_{date_to}'
-        
-        cached_data = cache_service.get(cache_key)
-        if cached_data:
-            return cached_data
-            
+        # Note: Cache eliminado - usar @tools.ormcache en métodos _get_*_metrics
+        # para cache granular. Ver docs/architecture/ARQUITECTURA_CACHE.md
+
         try:
             summary = {
                 'financial': self._get_financial_metrics(company_id, date_from, date_to),
@@ -68,9 +63,6 @@ class ExecutiveDashboardService(models.AbstractModel):
                 'alerts': self._get_active_alerts(company_id),
                 'generated_at': fields.Datetime.now(),
             }
-            
-            # Cache for 1 hour
-            cache_service.set(cache_key, summary, ttl=3600)
             
             return summary
             

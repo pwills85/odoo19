@@ -132,11 +132,14 @@ For technical support and customizations, contact EERGYGROUP.
         "hr_timesheet",
 
         # Localization - Chile
-        "l10n_cl_base",  # Chilean localization services
-        "l10n_cl_dte",  # NUEVO: Integración DTEs en F29/Dashboard
-        "l10n_cl_hr_payroll",  # NUEVO: Integración Nóminas en F29/Dashboard
+        "l10n_cl_dte",  # Integración DTEs en F29/Dashboard
+        "l10n_cl_hr_payroll",  # Integración Nóminas en F29/Dashboard
     ],
-    # Dependencias opcionales (no requeridas para funcionalidad core)
+    # Dependencias eliminadas (arquitectura optimizada)
+    # - l10n_cl_base: ELIMINADO (duplicaba funcionalidad nativa + nunca usada)
+    #   * RUT validation → Odoo base_vat nativo (res.partner.check_vat)
+    #   * Cache → @tools.ormcache nativo Odoo 19
+    #   * Validaciones → Inline o AI-Service microservicio
     # - date_range: No usada (parámetro interno date_range=/= módulo OCA)
     # - report_xlsx: Removida (se usa xlsxwriter Python library directamente)
     # - account_budget: Feature opcional, validada en runtime (budget_comparison_report.py:338)

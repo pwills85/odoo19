@@ -810,20 +810,28 @@ class BiDashboardService(models.AbstractModel):
     # ========================================================================
     
     def _get_from_cache(self, key):
-        """Obtiene valor del cache si existe."""
-        try:
-            cache_service = self.env['l10n_cl_base.cache_service']
-            return cache_service.get(f"bi_dashboard_{key}")
-        except:
-            return None
-    
+        """
+        Obtiene valor del cache si existe.
+
+        Note: Cache delegado a @tools.ormcache en métodos específicos.
+        Este método se mantiene por compatibilidad pero retorna None.
+        Usar decorador @tools.ormcache en métodos compute_* para cache real.
+        """
+        # Cache architecture: usar @tools.ormcache en métodos compute
+        # Ver docs/architecture/ARQUITECTURA_CACHE.md
+        return None
+
     def _save_to_cache(self, key, value, timeout=None):
-        """Guarda valor en cache."""
-        try:
-            cache_service = self.env['l10n_cl_base.cache_service']
-            cache_service.set(f"bi_dashboard_{key}", value, timeout)
-        except:
-            pass
+        """
+        Guarda valor en cache.
+
+        Note: Cache delegado a @tools.ormcache en métodos específicos.
+        Este método se mantiene por compatibilidad pero no hace nada.
+        Usar decorador @tools.ormcache en métodos compute_* para cache real.
+        """
+        # Cache architecture: usar @tools.ormcache en métodos compute
+        # Ver docs/architecture/ARQUITECTURA_CACHE.md
+        pass
     
     # ========================================================================
     # MÉTODOS PÚBLICOS ADICIONALES

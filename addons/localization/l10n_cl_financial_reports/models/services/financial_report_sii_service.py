@@ -257,38 +257,35 @@ class AccountFinancialReportSiiIntegrationService(models.AbstractModel):
     
     def _validate_f22_data(self, f22_data):
         """
-        Valida consistencia de datos F22 usando utilidades centralizadas
+        Valida consistencia de datos F22.
+
+        Note: Validaciones implementadas inline (arquitectura simplificada).
+        Para validaciones complejas/ML, delegar a AI-Service.
         """
-        cl_utils = self.env['cl.utils']
-        
-        # Validaciones básicas usando utilidades centralizadas
-        validation_result = cl_utils.validate_invoice_data({
-            'amount_total': f22_data.get('ingresos_totales', 0),
-            'invoice_date': f22_data.get('period_end'),
-        })
-        
-        if not validation_result['is_valid']:
-            raise UserError(f"F22 validation failed: {', '.join(validation_result['errors'])}")
-        
-        # Validaciones específicas F22
-        if f22_data['ingresos_totales'] < 0:
+        # Validaciones básicas de montos
+        ingresos = f22_data.get('ingresos_totales', 0)
+        gastos = f22_data.get('gastos_totales', 0)
+
+        if ingresos < 0:
             raise UserError("Los ingresos totales no pueden ser negativos")
-        
-        if f22_data['gastos_totales'] < 0:
+
+        if gastos < 0:
             raise UserError("Los gastos totales no pueden ser negativos")
-        
+
         # Validación coherencia tributaria
-        if (f22_data['renta_liquida_imponible'] > 0 and 
+        if (f22_data['renta_liquida_imponible'] > 0 and
             f22_data['impuesto_primera_categoria'] == 0):
             raise UserError("Renta imponible positiva debe generar impuesto")
-        
-        # Log compliance event
-        cl_utils.log_compliance_event(
-            'tax_calculation',
-            f"F22 data validated for period {f22_data.get('fiscal_year')}",
-            self.env.company.id
+
+        # Log compliance event (Odoo logging nativo)
+        _logger.info(
+            "F22 validation completed: period=%s, company_id=%s, ingresos=%s, gastos=%s",
+            f22_data.get('fiscal_year'),
+            self.env.company.id,
+            ingresos,
+            gastos
         )
-        
+
         return True
     
     @api.model  
