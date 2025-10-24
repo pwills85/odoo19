@@ -3,20 +3,28 @@
     "name": "Chile - Base Localization Services",
     "version": "19.0.1.0.0",
     "category": "Localization/Chile",
-    "summary": "Servicios base para localización chilena",
+    "summary": "Utilidades base para localización chilena (RUT)",
     "description": """
-Chile - Base Localization Services
-===================================
+Chile - Base Localization Utilities
+====================================
 
-Módulo base que proporciona servicios comunes para la localización chilena:
-- Cache service para optimización de consultas
-- Utilidades comunes para módulos de localización
-- Servicios compartidos entre módulos chilenos
+Módulo base que proporciona utilidades esenciales para la localización chilena:
 
-Este módulo es requerido por:
-- l10n_cl_dte (Facturación Electrónica)
-- l10n_cl_hr_payroll (Nóminas Chile)
-- l10n_cl_financial_reports (Reportes Financieros)
+**RUT Utilities:**
+- format_rut(): Formatea RUT a XX.XXX.XXX-X
+- validate_rut(): Valida dígito verificador
+- clean_rut(): Limpia formato (solo números + K)
+
+**Arquitectura:**
+- AbstractModel (cl.utils) - Helper methods, sin persistencia
+- Alto rendimiento (pure functions, sin I/O)
+- Usado por: l10n_cl_dte, l10n_cl_hr_payroll, l10n_cl_financial_reports
+
+**Cache Strategy:**
+Este módulo NO incluye cache service. Para caching:
+- Odoo models: Use @tools.cache decorator (Odoo 19 CE nativo)
+- Microservices: Use Redis directo (ver ai-service/utils/cache.py)
+- Performance: Redis ~0.5-2ms vs PostgreSQL ~50-100ms
     """,
     "author": "EERGYGROUP - Ing. Pedro Troncoso Willz",
     "website": "https://github.com/pwills85",
