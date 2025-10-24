@@ -1,0 +1,61 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# .dockerignore - Odoo Docker Build
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+README*
+CHANGELOG*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+logs/
+*.log
+
+# Node
+node_modules/
+npm-debug.log
+
+# Local overrides
+.env.local
+docker-compose.override.yml
+
+# Backup files
+*.backup
+*.bak
+*~
+
+# Scripts (no necesarios en imagen)
+scripts/

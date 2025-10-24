@@ -9,7 +9,7 @@
         <field name="name">l10n_cl.boleta_honorarios.tree</field>
         <field name="model">l10n_cl.boleta_honorarios</field>
         <field name="arch" type="xml">
-            <tree string="Boletas de Honorarios"
+            <list string="Boletas de Honorarios"
                   decoration-info="state=='draft'"
                   decoration-success="state=='paid'"
                   decoration-warning="state=='validated'"
@@ -29,7 +29,7 @@
                        decoration-warning="state in ['validated', 'accounted']"
                        decoration-danger="state=='cancelled'"/>
                 <field name="company_id" groups="base.group_multi_company"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -41,22 +41,22 @@
             <form string="Boleta de Honorarios">
                 <header>
                     <button name="action_validate" string="Validar" type="object"
-                            class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                            class="oe_highlight" invisible="state != 'draft'"/>
                     <button name="action_create_vendor_bill" string="Crear Factura Proveedor" type="object"
-                            class="oe_highlight" attrs="{'invisible': ['|', ('state', 'not in', ['validated', 'accounted']), ('vendor_bill_id', '!=', False)]}"/>
+                            class="oe_highlight" invisible="state not in ['validated', 'accounted'] or vendor_bill_id != False"/>
                     <button name="action_generate_certificado" string="Generar Certificado" type="object"
-                            attrs="{'invisible': ['|', ('vendor_bill_id', '=', False), ('certificado_generado', '=', True)]}"/>
+                            invisible="vendor_bill_id == False or certificado_generado == True"/>
                     <button name="action_mark_paid" string="Marcar como Pagada" type="object"
-                            attrs="{'invisible': [('state', '!=', 'accounted')]}"/>
+                            invisible="state != 'accounted'"/>
                     <button name="action_cancel" string="Cancelar" type="object"
-                            attrs="{'invisible': [('state', 'in', ['paid', 'cancelled'])]}"/>
+                            invisible="state in ['paid', 'cancelled']"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,validated,accounted,paid"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button name="%(account.action_move_in_invoice_type)d" type="action"
                                 class="oe_stat_button" icon="fa-pencil-square-o"
-                                attrs="{'invisible': [('vendor_bill_id', '=', False)]}"
+                                invisible="vendor_bill_id == False"
                                 context="{'default_move_type': 'in_invoice', 'search_default_id': vendor_bill_id}">
                             <div class="o_stat_info">
                                 <span class="o_stat_text">Factura</span>
@@ -90,22 +90,22 @@
                         </group>
                     </group>
 
-                    <group string="Descripción de Servicios">
+                    <group>
                         <field name="descripcion_servicios" nolabel="1" required="1"
                                placeholder="Detalle de los servicios profesionales prestados..."/>
                     </group>
 
-                    <group name="facturacion" string="Facturación" attrs="{'invisible': [('vendor_bill_id', '=', False)]}">
+                    <group name="facturacion" string="Facturación" invisible="vendor_bill_id == False">
                         <field name="vendor_bill_id" readonly="1"/>
                         <field name="vendor_bill_state" readonly="1" invisible="1"/>
                     </group>
 
-                    <group name="certificado" string="Certificado de Retención" attrs="{'invisible': [('certificado_generado', '=', False)]}">
+                    <group name="certificado" string="Certificado de Retención" invisible="certificado_generado == False">
                         <field name="certificado_generado" readonly="1"/>
                         <field name="certificado_fecha" readonly="1"/>
                     </group>
 
-                    <group string="Notas Adicionales">
+                    <group>
                         <field name="notas" nolabel="1" placeholder="Observaciones adicionales..."/>
                     </group>
 
@@ -144,13 +144,9 @@
                 <filter string="Sin Certificado" name="filter_no_cert" domain="[('certificado_generado', '=', False)]"/>
                 <filter string="Con Certificado" name="filter_with_cert" domain="[('certificado_generado', '=', True)]"/>
                 <separator/>
-                <filter string="Mes Actual" name="filter_current_month"
-                        domain="[('fecha_emision', '>=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d')),
-                                 ('fecha_emision', '&lt;', (context_today() + relativedelta(months=1, day=1)).strftime('%Y-%m-%d'))]"/>
-                <filter string="Año Actual" name="filter_current_year"
-                        domain="[('fecha_emision', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Fecha Emisión" name="filter_fecha_emision" date="fecha_emision"/>
                 <separator/>
-                <group expand="0" string="Agrupar Por">
+                <group>
                     <filter string="Profesional" name="group_by_profesional" context="{'group_by': 'profesional_id'}"/>
                     <filter string="Estado" name="group_by_state" context="{'group_by': 'state'}"/>
                     <filter string="Mes Emisión" name="group_by_month" context="{'group_by': 'fecha_emision:month'}"/>

@@ -69,14 +69,6 @@
         action="action_boleta_honorarios"
         sequence="45"/>
 
-    <!-- Tasas de Retención IUE (Configuración) -->
-    <menuitem
-        id="menu_retencion_iue_tasa"
-        name="Tasas de Retención IUE"
-        parent="menu_dte_configuration"
-        action="action_retencion_iue_tasa"
-        sequence="30"/>
-
     <!-- ══════════════════════════════════════════════════════════════════
          RECEPCIÓN DE COMPRAS
          ══════════════════════════════════════════════════════════════════ -->
@@ -133,6 +125,48 @@
         sequence="40"/>
 
     <!-- ══════════════════════════════════════════════════════════════════
+         DISASTER RECOVERY (Native)
+         ══════════════════════════════════════════════════════════════════ -->
+
+    <!-- DTE Backups -->
+    <menuitem
+        id="menu_dte_backup"
+        name="DTE Backups"
+        parent="menu_dte_root"
+        action="action_dte_backup"
+        sequence="60"/>
+
+    <!-- Failed DTEs Queue -->
+    <menuitem
+        id="menu_dte_failed_queue"
+        name="Failed DTEs Queue"
+        parent="menu_dte_root"
+        action="action_dte_failed_queue"
+        sequence="61"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         CONTINGENCY MODE (SII Regulatory Requirement)
+         ══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Contingency Status -->
+    <menuitem
+        id="menu_dte_contingency"
+        name="Contingency Status"
+        parent="menu_dte_root"
+        action="action_dte_contingency"
+        sequence="70"
+        groups="account.group_account_user"/>
+
+    <!-- Pending DTEs (Contingency) -->
+    <menuitem
+        id="menu_dte_contingency_pending"
+        name="Pending DTEs (Contingency)"
+        parent="menu_dte_root"
+        action="action_dte_contingency_pending"
+        sequence="71"
+        groups="account.group_account_user"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
          CONFIGURACIÓN DTE
          ══════════════════════════════════════════════════════════════════ -->
 
@@ -157,6 +191,14 @@
         parent="menu_dte_configuration"
         action="action_dte_caf"
         sequence="20"/>
+
+    <!-- Tasas de Retención IUE -->
+    <menuitem
+        id="menu_retencion_iue_tasa"
+        name="Tasas de Retención IUE"
+        parent="menu_dte_configuration"
+        action="action_retencion_iue_tasa"
+        sequence="30"/>
 
     <!-- ⭐ TEMPORALMENTE DESACTIVADO: base.action_res_config_settings no existe en Odoo 19
     <menuitem

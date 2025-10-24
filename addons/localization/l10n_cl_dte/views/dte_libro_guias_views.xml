@@ -155,12 +155,7 @@
 
                 <separator/>
 
-                <filter string="Mes Actual" name="filter_mes_actual"
-                        domain="[('periodo_mes', '&gt;=', (context_today() - relativedelta(day=1)).strftime('%Y-%m-%d')),
-                                 ('periodo_mes', '&lt;=', (context_today() + relativedelta(day=31)).strftime('%Y-%m-%d'))]"/>
-                <filter string="Mes Anterior" name="filter_mes_anterior"
-                        domain="[('periodo_mes', '&gt;=', (context_today() - relativedelta(months=1, day=1)).strftime('%Y-%m-%d')),
-                                 ('periodo_mes', '&lt;=', (context_today() - relativedelta(months=1, day=31)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Período" name="filter_periodo" date="periodo_mes"/>
 
                 <separator/>
 

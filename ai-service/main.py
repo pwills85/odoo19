@@ -883,11 +883,11 @@ _chat_engine: Optional[ChatEngine] = None
 
 
 def get_chat_engine() -> ChatEngine:
-    """Get or create chat engine singleton."""
+    """Get or create chat engine singleton (Phase 2B Enhanced)."""
     global _chat_engine
 
     if _chat_engine is None:
-        logger.info("chat_engine_initializing")
+        logger.info("chat_engine_initializing", plugins_enabled=settings.enable_plugin_system)
 
         # Initialize components
         redis_client = get_redis_client()
@@ -907,9 +907,21 @@ def get_chat_engine() -> ChatEngine:
             settings.anthropic_model
         )
 
-        # Create chat engine (solo Anthropic)
+        # Initialize plugin registry (Phase 2B)
+        plugin_registry = None
+        if settings.enable_plugin_system:
+            from plugins.registry import get_plugin_registry
+            plugin_registry = get_plugin_registry()
+            logger.info(
+                "plugin_registry_loaded",
+                plugin_count=len(plugin_registry.list_modules()),
+                modules=plugin_registry.list_modules()
+            )
+
+        # Create chat engine with plugin support (Phase 2B Enhanced)
         _chat_engine = ChatEngine(
             anthropic_client=anthropic_client,
+            plugin_registry=plugin_registry,  # 🆕 Phase 2B
             redis_client=redis_client,
             session_ttl=settings.chat_session_ttl,
             max_context_messages=settings.chat_max_context_messages,
@@ -919,7 +931,8 @@ def get_chat_engine() -> ChatEngine:
         )
 
         logger.info("chat_engine_initialized",
-                   model=settings.anthropic_model)
+                   model=settings.anthropic_model,
+                   plugins_enabled=settings.enable_plugin_system)
 
     return _chat_engine
 

@@ -11,9 +11,25 @@ from . import dte_ai_client  # Cliente AI Service (abstract model)
 from . import analytic_dashboard  # Dashboard rentabilidad cuentas analíticas
 
 # ═══════════════════════════════════════════════════════════
+# AI INTEGRATION - PHASE 2 (2025-10-24)
+# ═══════════════════════════════════════════════════════════
+from . import ai_agent_selector  # 🆕 RBAC-aware plugin selector
+
+# ═══════════════════════════════════════════════════════════
 # NUEVOS MODELOS - BHE (Boleta Honorarios) 2025-10-23
 # ═══════════════════════════════════════════════════════════
 from . import l10n_cl_bhe_retention_rate  # Tasas históricas 2018-2025
+
+# ═══════════════════════════════════════════════════════════
+# DISASTER RECOVERY - NATIVE IMPLEMENTATION (2025-10-24)
+# ═══════════════════════════════════════════════════════════
+from . import dte_backup  # ⭐ NEW: DTE backup storage (PostgreSQL + ir.attachment)
+from . import dte_failed_queue  # ⭐ NEW: Failed DTEs retry queue (exponential backoff)
+
+# ═══════════════════════════════════════════════════════════
+# CONTINGENCY MODE - NATIVE IMPLEMENTATION (Sprint 3 - 2025-10-24)
+# ═══════════════════════════════════════════════════════════
+from . import dte_contingency  # ⭐ NEW: Contingency mode (OBLIGATORIO normativa SII)
 
 # ═══════════════════════════════════════════════════════════
 # MODELOS EXISTENTES

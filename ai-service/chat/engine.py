@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Chat Engine - Conversational AI with Context Management
-========================================================
+Chat Engine - Conversational AI with Multi-Agent Plugin System
+===============================================================
 
-Professional chat engine for multi-turn conversations with LLM routing.
+Professional chat engine with plugin-based multi-agent architecture.
 
-Features:
+Features (Phase 2B Enhanced):
+- Multi-agent plugin system (specialized per module)
+- Intelligent plugin selection (keyword matching + context)
 - Multi-turn conversation awareness (last N messages)
-- Knowledge base injection (relevant DTE docs)
-- LLM routing (Anthropic primary, OpenAI fallback)
+- Knowledge base injection (module-specific docs)
 - User context (company, role, permissions)
 - Spanish + Chilean terminology support
 - Structured logging and error handling
@@ -17,17 +18,20 @@ Architecture:
 - Stateless (all state in Redis via ContextManager)
 - Scalable (multiple AI service instances)
 - Resilient (graceful degradation on LLM failures)
+- Multi-agent (plugin per Odoo module)
+
+Author: EERGYGROUP - Phase 2B Enhancement 2025-10-24
 """
 
 from typing import List, Dict, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import structlog
 from datetime import datetime
 
 from .context_manager import ContextManager
 from .knowledge_base import KnowledgeBase
 from clients.anthropic_client import AnthropicClient
-# OpenAI eliminado - Solo Anthropic
+from plugins.registry import PluginRegistry
 
 logger = structlog.get_logger(__name__)
 
@@ -42,62 +46,33 @@ class ChatMessage:
 
 @dataclass
 class ChatResponse:
-    """Response from chat engine."""
+    """Response from chat engine (Phase 2B Enhanced)."""
     message: str  # AI response text
     sources: List[str]  # Knowledge base sources used
     confidence: float  # 0-100
     session_id: str
     llm_used: str  # 'anthropic' | 'openai'
     tokens_used: Optional[Dict] = None  # {input, output, total}
+    plugin_used: Optional[str] = None  # 🆕 Plugin module name (Phase 2B)
 
 
 class ChatEngine:
     """
-    Conversational AI engine with multi-turn context awareness.
+    Conversational AI engine with multi-agent plugin system (Phase 2B).
 
     Features:
-    - Multi-LLM support (Anthropic primary, OpenAI fallback)
+    - Multi-agent architecture (plugin per module)
+    - Intelligent plugin selection
     - Context management (last N messages)
-    - Knowledge base injection
+    - Knowledge base injection (module-specific)
     - Session tracking
-    - Chilean DTE specialized prompts
+    - Specialized prompts per plugin
     """
-
-    # System prompt base (especializado en DTE chileno)
-    SYSTEM_PROMPT_BASE = """Eres un asistente especializado en Facturación Electrónica Chilena (DTE) para Odoo 19.
-
-**Tu Experiencia Incluye:**
-- Generación de DTEs (tipos 33, 34, 52, 56, 61)
-- Compliance SII (Servicio de Impuestos Internos de Chile)
-- Gestión de certificados digitales y CAF
-- Operación en modo contingencia
-- Resolución de errores comunes
-- Mejores prácticas fiscales chilenas
-
-**Cómo Debes Responder:**
-1. **Claro y Accionable**: Instrucciones paso a paso cuando sea apropiado
-2. **Específico a Odoo**: Referencias a pantallas, wizards, y menús concretos
-3. **Terminología Chilena**: Usa vocabulario local (ej: "factura", "folio", "RUT")
-4. **Ejemplos Prácticos**: Casos de uso reales cuando ayude
-5. **Troubleshooting**: Si detectas error, explica causa + solución
-
-**Formato de Respuestas:**
-- Usa **negritas** para términos clave
-- Usa listas numeradas para procesos paso a paso
-- Usa ✅ ❌ ⚠️ para indicar estados
-- Incluye comandos/rutas exactas cuando sea relevante
-
-**Contexto Usuario:**
-{user_context}
-
-**Documentación Relevante:**
-{knowledge_base_docs}
-
-**IMPORTANTE:** Si la pregunta está fuera de tu expertise (DTE/Odoo), indícalo claramente y sugiere dónde buscar."""
 
     def __init__(
         self,
         anthropic_client: AnthropicClient,
+        plugin_registry: Optional[PluginRegistry] = None,  # 🆕 Plugin registry
         redis_client = None,
         session_ttl: int = 3600,
         max_context_messages: int = 10,
@@ -106,10 +81,11 @@ class ChatEngine:
         default_temperature: float = 0.7
     ):
         """
-        Initialize chat engine.
+        Initialize chat engine with plugin support (Phase 2B).
 
         Args:
             anthropic_client: Anthropic Claude client (PRIMARY)
+            plugin_registry: Plugin registry for multi-agent (Phase 2B)
             redis_client: Redis client for caching
             session_ttl: Session TTL in seconds
             max_context_messages: Max messages to keep in context
@@ -118,6 +94,7 @@ class ChatEngine:
             default_temperature: LLM temperature (0-2)
         """
         self.anthropic_client = anthropic_client
+        self.plugin_registry = plugin_registry  # 🆕
         self.redis = redis_client
         self.session_ttl = session_ttl
         self.max_context_messages = max_context_messages
@@ -125,10 +102,17 @@ class ChatEngine:
         self.knowledge_base = knowledge_base
         self.default_temperature = default_temperature
 
-        logger.info("chat_engine_initialized",
-                   max_context_messages=max_context_messages,
-                   has_context_manager=context_manager is not None,
-                   has_knowledge_base=knowledge_base is not None)
+        # Check if plugin system is enabled
+        self.plugins_enabled = plugin_registry is not None
+
+        logger.info(
+            "chat_engine_initialized",
+            max_context_messages=max_context_messages,
+            has_context_manager=context_manager is not None,
+            has_knowledge_base=knowledge_base is not None,
+            plugins_enabled=self.plugins_enabled,  # 🆕
+            plugin_count=len(plugin_registry.list_modules()) if plugin_registry else 0  # 🆕
+        )
 
     async def send_message(
         self,
@@ -137,7 +121,9 @@ class ChatEngine:
         user_context: Optional[Dict] = None
     ) -> ChatResponse:
         """
-        Send user message and get AI response.
+        Send user message and get AI response (Phase 2B Enhanced).
+
+        Uses plugin system for intelligent module-specific responses.
 
         Args:
             session_id: Unique session identifier
@@ -150,16 +136,35 @@ class ChatEngine:
         logger.info("chat_message_received",
                    session_id=session_id,
                    message_length=len(user_message),
-                   has_user_context=user_context is not None)
+                   has_user_context=user_context is not None,
+                   plugins_enabled=self.plugins_enabled)
 
         try:
-            # 1. Retrieve conversation history
+            # 1. Select appropriate plugin (Phase 2B)
+            plugin = None
+            plugin_module = None
+
+            if self.plugins_enabled and self.plugin_registry:
+                plugin = self.plugin_registry.get_plugin_for_query(
+                    query=user_message,
+                    context=user_context
+                )
+
+                if plugin:
+                    plugin_module = plugin.get_module_name()
+                    logger.info(
+                        "plugin_selected",
+                        plugin_module=plugin_module,
+                        display_name=plugin.get_display_name()
+                    )
+
+            # 2. Retrieve conversation history
             history = self.context_manager.get_conversation_history(session_id)
             logger.debug("conversation_history_retrieved",
                         session_id=session_id,
                         message_count=len(history))
 
-            # 2. Add user message to history
+            # 3. Add user message to history
             user_msg = {
                 'role': 'user',
                 'content': user_message,
@@ -167,20 +172,29 @@ class ChatEngine:
             }
             history.append(user_msg)
 
-            # 3. Retrieve relevant knowledge base docs
+            # 4. Search knowledge base (module-specific if plugin selected)
+            kb_filters = {'module': plugin_module} if plugin_module else {}
             relevant_docs = self.knowledge_base.search(
                 query=user_message,
                 top_k=3,
-                filters={'module': 'l10n_cl_dte'}
+                filters=kb_filters
             )
             logger.info("knowledge_base_searched",
                        session_id=session_id,
+                       module=plugin_module or "all",
                        docs_found=len(relevant_docs))
 
-            # 4. Build system prompt with knowledge
-            system_prompt = self._build_system_prompt(relevant_docs, user_context)
+            # 5. Build system prompt (plugin-specific or default)
+            if plugin:
+                system_prompt = self._build_plugin_system_prompt(
+                    plugin=plugin,
+                    relevant_docs=relevant_docs,
+                    user_context=user_context
+                )
+            else:
+                system_prompt = self._build_system_prompt(relevant_docs, user_context)
 
-            # 5. Call LLM (Anthropic primary, OpenAI fallback)
+            # 6. Call LLM (Anthropic primary)
             llm_used = 'anthropic'
             tokens_used = None
 
@@ -190,47 +204,47 @@ class ChatEngine:
                     history[-self.max_context_messages:]  # Last N messages
                 )
             except Exception as e:
-                logger.warning("anthropic_failed_fallback_to_openai",
-                             session_id=session_id,
-                             error=str(e))
-
-                # NO FALLBACK - Solo Anthropic
                 logger.error("anthropic_failed_no_fallback",
                            session_id=session_id,
                            error=str(e))
                 raise Exception(f"Anthropic API failed: {str(e)}")
 
-            # 6. Add assistant response to history
+            # 7. Add assistant response to history (with plugin metadata)
             assistant_msg = {
                 'role': 'assistant',
                 'content': response_text,
                 'timestamp': datetime.utcnow().isoformat()
             }
+            if plugin_module:
+                assistant_msg['plugin_used'] = plugin_module  # 🆕 Track plugin
+
             history.append(assistant_msg)
 
-            # 7. Save conversation history (keep last N messages)
+            # 8. Save conversation history (keep last N messages)
             self.context_manager.save_conversation_history(
                 session_id,
                 history[-self.max_context_messages:]
             )
 
-            # 8. Save user context if provided
+            # 9. Save user context if provided
             if user_context:
                 self.context_manager.save_user_context(session_id, user_context)
 
-            # 9. Build response
+            # 10. Build response
             response = ChatResponse(
                 message=response_text,
                 sources=[doc['title'] for doc in relevant_docs],
                 confidence=95.0,  # TODO: Calculate from LLM confidence scores
                 session_id=session_id,
                 llm_used=llm_used,
-                tokens_used=tokens_used
+                tokens_used=tokens_used,
+                plugin_used=plugin_module  # 🆕 Phase 2B
             )
 
             logger.info("chat_message_completed",
                        session_id=session_id,
                        llm_used=llm_used,
+                       plugin_used=plugin_module,  # 🆕
                        response_length=len(response_text),
                        sources_used=len(relevant_docs))
 
@@ -281,10 +295,81 @@ class ChatEngine:
             kb_text = "No hay documentación específica para esta consulta."
 
         # Build complete prompt
-        return self.SYSTEM_PROMPT_BASE.format(
+        # Fallback to default DTE prompt (backward compatibility)
+        default_prompt = """Eres un asistente especializado en Odoo 19.
+
+**Contexto Usuario:**
+{user_context}
+
+**Documentación Relevante:**
+{knowledge_base_docs}
+
+**IMPORTANTE:** Si la pregunta está fuera de tu expertise, indícalo claramente."""
+
+        return default_prompt.format(
             user_context=context_text,
             knowledge_base_docs=kb_text
         )
+
+    def _build_plugin_system_prompt(
+        self,
+        plugin,
+        relevant_docs: List[Dict],
+        user_context: Optional[Dict]
+    ) -> str:
+        """
+        Build system prompt using plugin's specialized prompt (Phase 2B).
+
+        Args:
+            plugin: Selected plugin
+            relevant_docs: Relevant KB documents
+            user_context: User context dict
+
+        Returns:
+            Complete system prompt with plugin specialization
+        """
+        # Get plugin's base system prompt
+        plugin_prompt = plugin.get_system_prompt()
+
+        # Build user context section
+        context_text = ""
+        if user_context:
+            context_text = f"""
+**User Context:**
+- **Company:** {user_context.get('company_name', 'N/A')}
+- **Company RUT:** {user_context.get('company_rut', 'N/A')}
+- **User Role:** {user_context.get('user_role', 'User')}
+- **Environment:** {user_context.get('environment', 'Sandbox')}
+"""
+
+        # Build knowledge base docs section
+        kb_text = ""
+        if relevant_docs:
+            kb_text = "**Relevant Documentation:**\n\n"
+            for i, doc in enumerate(relevant_docs, 1):
+                # Limit doc content to avoid token bloat
+                content_preview = doc['content'][:800] if len(doc['content']) > 800 else doc['content']
+                kb_text += f"{i}. **{doc['title']}**\n{content_preview}...\n\n"
+
+        # Combine plugin prompt + context + KB
+        combined_prompt = f"""{plugin_prompt}
+
+{context_text}
+
+{kb_text}
+
+**IMPORTANT:** You are answering as a specialist in {plugin.get_display_name()}.
+Focus on this module and suggest other specialists if the question is out of scope.
+"""
+
+        logger.debug(
+            "plugin_system_prompt_built",
+            plugin_module=plugin.get_module_name(),
+            prompt_length=len(combined_prompt),
+            kb_docs=len(relevant_docs)
+        )
+
+        return combined_prompt
 
     async def _call_anthropic(
         self,

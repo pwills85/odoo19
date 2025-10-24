@@ -15,6 +15,10 @@ import json
 import logging
 from datetime import datetime
 
+# SPRINT 4 (2025-10-24): Import native validators
+from ..libs.dte_structure_validator import DTEStructureValidator
+from ..libs.ted_validator import TEDValidator
+
 _logger = logging.getLogger(__name__)
 
 
@@ -22,7 +26,11 @@ class DTEInbox(models.Model):
     _name = 'dte.inbox'
     _description = 'Received DTEs Inbox'
     _order = 'received_date desc'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = [
+        'mail.thread',
+        'mail.activity.mixin',
+        'dte.ai.client'  # SPRINT 4 (2025-10-24): AI-powered validation
+    ]
 
     # ═══════════════════════════════════════════════════════════
     # FIELDS - IDENTIFICACIÓN
@@ -207,6 +215,45 @@ class DTEInbox(models.Model):
     validation_errors = fields.Text('Validation Errors')
     validation_warnings = fields.Text('Validation Warnings')
 
+    # ═══════════════════════════════════════════════════════════
+    # FIELDS - AI-POWERED VALIDATION (SPRINT 4 - 2025-10-24)
+    # ═══════════════════════════════════════════════════════════
+
+    ai_validated = fields.Boolean(
+        string='AI Validated',
+        default=False,
+        help='True if DTE was validated by AI Service'
+    )
+
+    ai_confidence = fields.Float(
+        string='AI Confidence',
+        digits=(5, 2),
+        help='AI confidence score (0-100)'
+    )
+
+    ai_recommendation = fields.Selection([
+        ('accept', 'Accept'),
+        ('review', 'Review Manually'),
+        ('reject', 'Reject'),
+    ], string='AI Recommendation')
+
+    ai_anomalies = fields.Text(
+        string='AI Detected Anomalies',
+        help='Anomalies detected by AI (semantic, amounts, etc.)'
+    )
+
+    native_validation_passed = fields.Boolean(
+        string='Native Validation Passed',
+        default=False,
+        help='True if passed native validation (structure, RUT, TED, etc.)'
+    )
+
+    ted_validated = fields.Boolean(
+        string='TED Validated',
+        default=False,
+        help='True if TED (Timbre Electrónico) validation passed'
+    )
+
     company_id = fields.Many2one(
         'res.company',
         string='Company',
@@ -233,97 +280,232 @@ class DTEInbox(models.Model):
 
     def action_validate(self):
         """
-        Validate DTE and attempt to match with Purchase Order.
+        SPRINT 4 (2025-10-24): Dual Validation (Native + AI).
 
-        Steps:
-        1. Call DTE Service for structural validation
-        2. Call AI Service for PO matching
-        3. Update state based on results
+        Validación optimizada en 2 fases:
+        1. NATIVE (rápida, sin costo): Estructura, RUT, montos, TED
+        2. AI (semántica, anomalías): Solo si pasa fase 1
+
+        Luego intenta matching PO usando AI.
+
+        Returns:
+            Action notification or raises UserError
         """
         self.ensure_one()
 
         if self.state != 'new':
             raise UserError(_('Only new DTEs can be validated'))
 
+        _logger.info(f"🔍 Starting DUAL validation for DTE {self.name}")
+
+        errors = []
+        warnings = []
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # FASE 1: NATIVE VALIDATION (Fast, no AI cost)
+        # ═══════════════════════════════════════════════════════════════════════
+
         try:
-            # Get DTE Service URL from config
-            dte_service_url = self.env['ir.config_parameter'].sudo().get_param(
-                'l10n_cl_dte.dte_service_url',
-                'http://odoo-eergy-services:8001'
-            )
-
-            # Get AI Service URL
-            ai_service_url = self.env['ir.config_parameter'].sudo().get_param(
-                'l10n_cl_dte.ai_service_url',
-                'http://ai-service:8002'
-            )
-
-            # 1. Structural validation (already done at reception, but re-validate)
-            _logger.info(f"Validating DTE {self.name}")
-
-            # 2. Call AI Service for PO matching
             parsed_data = json.loads(self.parsed_data) if self.parsed_data else {}
 
-            # Obtener órdenes de compra pendientes del proveedor
+            # Preparar datos para validadores
+            dte_data = {
+                'tipo_dte': self.dte_type,
+                'folio': self.folio,
+                'fecha_emision': self.fecha_emision,
+                'rut_emisor': self.emisor_rut,
+                'razon_social_emisor': self.emisor_name,
+                'monto_total': float(self.monto_total),
+                'monto_neto': float(self.monto_neto),
+                'monto_iva': float(self.monto_iva),
+                'monto_exento': float(self.monto_exento)
+            }
+
+            # 1.1. Structure validation
+            structure_result = DTEStructureValidator.validate_dte(
+                dte_data=dte_data,
+                xml_string=self.raw_xml
+            )
+
+            if not structure_result['valid']:
+                errors.extend(structure_result['errors'])
+                _logger.warning(f"❌ Native structure validation FAILED: {len(errors)} errors")
+            else:
+                _logger.info("✅ Native structure validation PASSED")
+
+            warnings.extend(structure_result.get('warnings', []))
+
+            # 1.2. TED validation
+            if self.raw_xml:
+                ted_result = TEDValidator.validate_ted(
+                    xml_string=self.raw_xml,
+                    dte_data=dte_data
+                )
+
+                if ted_result['valid']:
+                    self.ted_validated = True
+                    _logger.info("✅ TED validation PASSED")
+                else:
+                    errors.extend(ted_result['errors'])
+                    _logger.warning(f"❌ TED validation FAILED")
+
+                warnings.extend(ted_result.get('warnings', []))
+
+            # Update native validation flag
+            self.native_validation_passed = len(errors) == 0
+
+            # Si falla validación nativa → STOP
+            if not self.native_validation_passed:
+                self.validation_errors = '\n'.join(errors)
+                self.validation_warnings = '\n'.join(warnings) if warnings else False
+                self.state = 'error'
+                self.processed_date = fields.Datetime.now()
+
+                raise UserError(
+                    _('Native validation failed:\n\n%s') % '\n'.join(errors)
+                )
+
+        except UserError:
+            raise  # Re-raise UserError
+        except Exception as e:
+            _logger.error(f"Native validation exception: {e}", exc_info=True)
+            self.state = 'error'
+            self.validation_errors = f"Native validation error: {str(e)}"
+            raise UserError(_('Validation error: %s') % str(e))
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # FASE 2: AI VALIDATION (Semantic, anomalies)
+        # ═══════════════════════════════════════════════════════════════════════
+
+        try:
+            # Get vendor history for anomaly detection
+            vendor_history = self._get_vendor_history()
+
+            # AI validation (usa método heredado de dte.ai.client)
+            ai_result = self.validate_received_dte(
+                dte_data=dte_data,
+                vendor_history=vendor_history
+            )
+
+            # Save AI results
+            self.ai_validated = True
+            self.ai_confidence = ai_result.get('confidence', 0)
+            self.ai_recommendation = ai_result.get('recommendation', 'review')
+
+            ai_anomalies = ai_result.get('anomalies', [])
+            ai_warnings = ai_result.get('warnings', [])
+
+            if ai_anomalies:
+                self.ai_anomalies = '\n'.join(ai_anomalies)
+                warnings.extend(ai_anomalies)
+
+            warnings.extend(ai_warnings)
+
+            _logger.info(
+                f"✅ AI validation completed: confidence={self.ai_confidence:.1f}%, "
+                f"recommendation={self.ai_recommendation}"
+            )
+
+        except Exception as e:
+            _logger.warning(f"AI validation failed (non-blocking): {e}")
+            # AI validation failure is non-blocking
+            self.ai_validated = False
+            self.ai_recommendation = 'review'
+            warnings.append(f"AI validation unavailable: {str(e)[:50]}")
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # FASE 3: PO MATCHING (AI-powered)
+        # ═══════════════════════════════════════════════════════════════════════
+
+        try:
+            # Get pending POs
             pending_pos = self._get_pending_purchase_orders()
 
-            # API Key
-            api_key = self.env['ir.config_parameter'].sudo().get_param(
-                'dte.ai_service_api_key',
-                ''
-            )
+            if pending_pos:
+                # Preparar datos para matching
+                dte_received_data = {
+                    'partner_id': self.partner_id.id if self.partner_id else None,
+                    'partner_vat': self.emisor_rut,
+                    'partner_name': self.emisor_name,
+                    'total_amount': float(self.monto_total),
+                    'date': self.fecha_emision.isoformat() if self.fecha_emision else None,
+                    'reference': self.folio,
+                    'lines': parsed_data.get('items', [])
+                }
 
-            ai_response = requests.post(
-                f"{ai_service_url}/api/ai/reconcile",  # ✅ Endpoint correcto (era /api/ai/reception/match_po)
-                json={
-                    'invoice_data': {
-                        'partner_id': self.partner_id.id if self.partner_id else None,
-                        'partner_vat': self.emisor_rut,
-                        'partner_name': self.emisor_name,
-                        'total_amount': float(self.monto_total),
-                        'date': self.fecha_emision.isoformat() if self.fecha_emision else None,
-                        'reference': self.folio,
-                        'lines': parsed_data.get('items', [])
-                    },
-                    'pending_pos': pending_pos
-                },
-                headers={'Authorization': f'Bearer {api_key}'} if api_key else {},
-                timeout=30
-            )
+                # AI PO matching (usa método heredado de dte.ai.client)
+                match_result = self.match_purchase_order_ai(
+                    dte_received_data=dte_received_data,
+                    pending_pos=pending_pos
+                )
 
-            if ai_response.status_code == 200:
-                ai_result = ai_response.json()
-
-                if ai_result.get('matched_po_id'):
-                    # Found matching PO
-                    self.purchase_order_id = ai_result['matched_po_id']
-                    self.po_match_confidence = ai_result.get('confidence', 0)
+                if match_result.get('matched_po_id'):
+                    # PO match found
+                    self.purchase_order_id = match_result['matched_po_id']
+                    self.po_match_confidence = match_result.get('confidence', 0)
                     self.state = 'matched'
 
                     self.message_post(
-                        body=_('Matched with Purchase Order: %s (Confidence: %.1f%%)') % (
+                        body=_('✅ Matched with PO: %s (AI Confidence: %.1f%%)') % (
                             self.purchase_order_id.name,
                             self.po_match_confidence
                         )
                     )
-                else:
-                    # No PO match found
-                    self.state = 'validated'
-                    self.message_post(
-                        body=_('Validated but no Purchase Order match found')
-                    )
-            else:
-                # AI Service failed, mark as validated anyway
-                self.state = 'validated'
-                _logger.warning(f"AI Service failed for DTE {self.name}")
 
-            self.processed_date = fields.Datetime.now()
+                    _logger.info(f"✅ PO matching: {self.purchase_order_id.name} ({self.po_match_confidence:.1f}%)")
+                else:
+                    # No match
+                    self.state = 'validated'
+                    _logger.info("No PO match found")
+            else:
+                # No pending POs
+                self.state = 'validated'
+                _logger.info("No pending POs for matching")
 
         except Exception as e:
-            _logger.error(f"Validation failed for DTE {self.name}: {e}")
-            self.state = 'error'
-            self.validation_errors = str(e)
-            raise UserError(_('Validation failed: %s') % str(e))
+            _logger.warning(f"PO matching failed (non-blocking): {e}")
+            # PO matching failure is non-blocking
+            self.state = 'validated'
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # FINALIZE
+        # ═══════════════════════════════════════════════════════════════════════
+
+        self.validation_warnings = '\n'.join(warnings) if warnings else False
+        self.processed_date = fields.Datetime.now()
+
+        # Return notification
+        notification_type = 'success'
+        title = _('DTE Validated Successfully')
+        message_parts = [
+            f"Native validation: ✅ PASSED",
+            f"TED validation: {'✅ PASSED' if self.ted_validated else '⚠️ SKIPPED'}",
+        ]
+
+        if self.ai_validated:
+            message_parts.append(
+                f"AI confidence: {self.ai_confidence:.1f}% ({self.ai_recommendation})"
+            )
+
+        if self.state == 'matched':
+            message_parts.append(
+                f"PO matched: {self.purchase_order_id.name} ({self.po_match_confidence:.1f}%)"
+            )
+
+        if warnings:
+            notification_type = 'warning'
+            message_parts.append(f"\n⚠️ Warnings: {len(warnings)}")
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': title,
+                'message': '\n'.join(message_parts),
+                'type': notification_type,
+                'sticky': False
+            }
+        }
 
     def action_create_invoice(self):
         """
@@ -518,6 +700,42 @@ class DTEInbox(models.Model):
                     'price_unit': float(line.price_unit),
                     'subtotal': float(line.price_subtotal)
                 } for line in po.order_line]
+            })
+
+        return result
+
+    def _get_vendor_history(self, limit=20):
+        """
+        Get vendor's DTE history for anomaly detection.
+
+        SPRINT 4 (2025-10-24): Helper method for AI validation.
+
+        Args:
+            limit (int): Max DTEs to retrieve
+
+        Returns:
+            list: List of dict with historical DTE data
+        """
+        if not self.partner_id:
+            return []
+
+        # Get accepted DTEs from this vendor (last 20)
+        history_dtes = self.env['dte.inbox'].search([
+            ('partner_id', '=', self.partner_id.id),
+            ('state', 'in', ['validated', 'matched', 'accepted', 'invoiced']),
+            ('id', '!=', self.id)  # Exclude current DTE
+        ], limit=limit, order='fecha_emision desc')
+
+        result = []
+        for dte in history_dtes:
+            result.append({
+                'tipo_dte': dte.dte_type,
+                'folio': dte.folio,
+                'fecha_emision': dte.fecha_emision.isoformat() if dte.fecha_emision else None,
+                'monto_total': float(dte.monto_total),
+                'monto_neto': float(dte.monto_neto),
+                'monto_iva': float(dte.monto_iva),
+                'monto_exento': float(dte.monto_exento)
             })
 
         return result

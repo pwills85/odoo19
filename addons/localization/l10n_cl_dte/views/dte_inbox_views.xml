@@ -245,10 +245,7 @@
 
                 <separator/>
 
-                <filter string="This Month" name="filter_this_month"
-                        domain="[('received_date', '&gt;=', (context_today() - relativedelta(day=1)).strftime('%Y-%m-%d'))]"/>
-                <filter string="This Week" name="filter_this_week"
-                        domain="[('received_date', '&gt;=', (context_today() - relativedelta(weeks=1)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Received Date" name="filter_received_date" date="received_date"/>
 
                 <group>
                     <filter string="State" name="group_state" context="{'group_by': 'state'}"/>

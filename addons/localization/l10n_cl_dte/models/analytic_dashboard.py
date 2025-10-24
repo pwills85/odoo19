@@ -44,14 +44,6 @@ class AnalyticDashboard(models.Model):
     _rec_name = 'analytic_account_id'
     _order = 'margin_percentage desc'
 
-    # SQL Constraints (Odoo 19 new format)
-    _constraints = [
-        Constraint(
-            'CHECK (analytic_account_id IS NOT NULL)',
-            'La cuenta analítica es obligatoria.'
-        ),
-    ]
-
     # ═══════════════════════════════════════════════════════════
     # CAMPOS BÁSICOS
     # ═══════════════════════════════════════════════════════════

@@ -7,6 +7,7 @@ import base64
 import logging
 from cryptography.fernet import Fernet
 import os
+from ..tools.encryption_helper import get_encryption_helper
 
 _logger = logging.getLogger(__name__)
 
@@ -71,19 +72,31 @@ class DTECertificate(models.Model):
         string='Nombre de Archivo'
     )
     
+    # 🔐 ENCRYPTED PASSWORD STORAGE (Security Enhancement 2025-10-24)
+    # Storage field: encrypted value
+    _cert_password_encrypted = fields.Char(
+        string='Password Encrypted (Internal)',
+        groups='base.group_system',
+        help='Encrypted certificate password (Fernet AES-128)'
+    )
+
+    # Interface field: plain text (auto-encrypted on write)
     cert_password = fields.Char(
         string='Contraseña Certificado',
         required=True,
+        compute='_compute_cert_password',
+        inverse='_inverse_cert_password',
+        store=False,  # Not stored directly, uses _cert_password_encrypted
         groups='base.group_system',  # Solo administradores del sistema
-        help='Contraseña para desbloquear el certificado (almacenada de forma segura)'
+        help='Contraseña para desbloquear el certificado (almacenada encriptada con Fernet AES-128)'
     )
 
-    # Nota: Odoo no tiene encrypted=True para fields.Char, pero sí para Binary
-    # La contraseña se protege mediante:
-    # 1. groups='base.group_system' - Solo admins pueden ver
-    # 2. No se muestra en logs
-    # 3. Se almacena en texto plano en BD (estándar Odoo para passwords)
-    # Para mayor seguridad enterprise, se requeriría HashiCorp Vault
+    # Security Implementation:
+    # 1. Fernet symmetric encryption (AES-128 CBC + HMAC SHA-256)
+    # 2. Key stored in ir.config_parameter (not in code)
+    # 3. Auto-generated on first use
+    # 4. groups='base.group_system' - Only system admins can see
+    # 5. Transparent encryption/decryption (compute + inverse)
     
     # ═══════════════════════════════════════════════════════════
     # METADATOS DEL CERTIFICADO (EXTRAÍDOS)
@@ -161,7 +174,47 @@ class DTECertificate(models.Model):
     # ═══════════════════════════════════════════════════════════
     # CAMPOS COMPUTADOS
     # ═══════════════════════════════════════════════════════════
-    
+
+    @api.depends('_cert_password_encrypted')
+    def _compute_cert_password(self):
+        """
+        Compute method: Decrypt password for display.
+
+        Decrypts _cert_password_encrypted → cert_password (plain text).
+        """
+        for record in self:
+            if record._cert_password_encrypted:
+                try:
+                    helper = get_encryption_helper(self.env)
+                    record.cert_password = helper.decrypt(record._cert_password_encrypted)
+                    _logger.debug("🔓 Password decrypted for certificate ID %s", record.id)
+                except Exception as e:
+                    _logger.error("❌ Failed to decrypt password for certificate ID %s: %s",
+                                 record.id, e)
+                    # Don't expose decryption errors to user (security)
+                    record.cert_password = False
+            else:
+                record.cert_password = False
+
+    def _inverse_cert_password(self):
+        """
+        Inverse method: Encrypt password on save.
+
+        Encrypts cert_password (plain text) → _cert_password_encrypted.
+        """
+        for record in self:
+            if record.cert_password:
+                try:
+                    helper = get_encryption_helper(self.env)
+                    record._cert_password_encrypted = helper.encrypt(record.cert_password)
+                    _logger.info("🔒 Password encrypted for certificate ID %s", record.id)
+                except Exception as e:
+                    _logger.error("❌ Failed to encrypt password for certificate ID %s: %s",
+                                 record.id, e)
+                    raise UserError(_('Error al encriptar la contraseña del certificado: %s') % str(e))
+            else:
+                record._cert_password_encrypted = False
+
     @api.depends('validity_to')
     def _compute_days_until_expiry(self):
         """Calcula días hasta vencimiento"""

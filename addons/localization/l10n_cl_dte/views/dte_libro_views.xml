@@ -170,12 +170,7 @@
                         domain="[('tipo_libro', '=', 'compra')]"/>
 
                 <separator/>
-                <filter string="Este Mes" name="filter_this_month"
-                        domain="[('periodo_mes', '&gt;=', (context_today() - relativedelta(day=1)).strftime('%Y-%m-01')),
-                                 ('periodo_mes', '&lt;=', (context_today() + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d'))]"/>
-                <filter string="Mes Anterior" name="filter_last_month"
-                        domain="[('periodo_mes', '&gt;=', (context_today() - relativedelta(months=1, day=1)).strftime('%Y-%m-01')),
-                                 ('periodo_mes', '&lt;=', (context_today() - relativedelta(day=1)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Período" name="filter_periodo" date="periodo_mes"/>
 
                 <group>
                     <filter string="Tipo" name="group_tipo" context="{'group_by': 'tipo_libro'}"/>
