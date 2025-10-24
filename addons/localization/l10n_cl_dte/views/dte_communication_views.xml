@@ -5,7 +5,7 @@
         <field name="name">dte.communication.tree</field>
         <field name="model">dte.communication</field>
         <field name="arch" type="xml">
-            <tree string="Comunicaciones SII" decoration-success="status == 'success'" 
+            <list string="Comunicaciones SII" decoration-success="status == 'success'" 
                   decoration-danger="status == 'error'" create="false" edit="false">
                 <field name="create_date"/>
                 <field name="action_type"/>
@@ -15,7 +15,7 @@
                 <field name="status" widget="badge"/>
                 <field name="duration_ms"/>
                 <field name="user_id"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -26,8 +26,8 @@
         <field name="arch" type="xml">
             <form string="Comunicación SII" create="false" edit="false">
                 <header>
-                    <button name="action_retry" string="Reintentar" type="object" 
-                            class="btn-warning" attrs="{'invisible': [('status', '!=', 'error')]}"/>
+                    <button name="action_retry" string="Reintentar" type="object"
+                            class="btn-warning" invisible="status != 'error'"/>
                     <field name="status" widget="statusbar"/>
                 </header>
                 <sheet>
@@ -36,7 +36,7 @@
                             <field name="display_name"/>
                         </h1>
                     </div>
-                    
+
                     <group>
                         <group>
                             <field name="action_type"/>
@@ -52,12 +52,12 @@
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                     </group>
-                    
+
                     <group string="Timing">
                         <field name="create_date"/>
                         <field name="duration_ms"/>
                     </group>
-                    
+
                     <notebook>
                         <page string="Request XML" name="request">
                             <field name="request_xml" widget="ace" options="{'mode': 'xml'}"/>
@@ -69,7 +69,7 @@
                             </group>
                             <field name="response_xml" widget="ace" options="{'mode': 'xml'}"/>
                         </page>
-                        <page string="Error" name="error" attrs="{'invisible': [('error_message', '=', False)]}">
+                        <page string="Error" name="error" invisible="not error_message">
                             <field name="error_message" class="text-danger"/>
                         </page>
                     </notebook>

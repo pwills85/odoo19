@@ -201,15 +201,29 @@ class DTEAIClient(models.AbstractModel):
             }
 
         try:
+            # Construir payload según schema esperado por AI Service
+            payload = {
+                'dte_data': dte_data,
+                'history': [],  # Historial de validaciones previas
+                'company_id': self.env.company.id
+            }
+
             response = requests.post(
-                f'{url}/api/ai/validate_dte',
-                json=dte_data,
+                f'{url}/api/ai/validate',  # ✅ Endpoint correcto (era /api/ai/validate_dte)
+                json=payload,
                 headers={'Authorization': f'Bearer {api_key}'},
                 timeout=timeout
             )
 
             if response.status_code == 200:
-                return response.json()
+                result = response.json()
+                # Mapear respuesta AI Service a formato esperado
+                return {
+                    'valid': result.get('recommendation') != 'reject',
+                    'confidence': result.get('confidence', 0),
+                    'issues': result.get('errors', []),
+                    'suggestions': result.get('warnings', [])
+                }
             else:
                 # Fallback graceful
                 return {

@@ -9,42 +9,46 @@
             
             <!-- Agregar botones en header -->
             <xpath expr="//header/button[@name='action_post']" position="after">
-                <!-- Botón Envío Síncrono -->
-                <button name="action_send_to_sii" string="Enviar a SII" type="object" 
-                        class="btn-primary" 
-                        attrs="{'invisible': ['|', ('dte_status', 'not in', ['draft', 'to_send', 'rejected']), ('state', '!=', 'posted')]}"/>
-                
-                <!-- Botón Envío Asíncrono (RabbitMQ) -->
-                <button name="action_send_dte_async" string="Enviar DTE (Async)" type="object" 
-                        class="oe_highlight" 
-                        icon="fa-paper-plane"
-                        attrs="{'invisible': ['|', '|',
-                                ('state', '!=', 'posted'),
-                                ('dte_code', '=', False),
-                                ('dte_async_status', 'in', ['queued', 'processing'])]}"/>
-                
-                <button name="action_download_dte_xml" string="Descargar XML" type="object" 
+                <!-- ✅ ACTIVADO ETAPA 2: Botón Professional Wizard -->
+                <button name="%(action_dte_generate_wizard)d"
+                        string="Generar DTE"
+                        type="action"
+                        class="oe_highlight"
+                        invisible="state != 'posted' or not dte_code"/>
+
+                <!-- Botón Envío Síncrono (Legacy) -->
+                <button name="action_send_to_sii" string="Enviar a SII" type="object"
                         class="btn-secondary"
-                        attrs="{'invisible': [('dte_xml', '=', False)]}"/>
+                        invisible="dte_status not in ('draft', 'to_send', 'rejected') or state != 'posted'"/>
+
+                <!-- Botón Envío Asíncrono (RabbitMQ) -->
+                <button name="action_send_dte_async" string="Enviar DTE (Async)" type="object"
+                        class="oe_highlight"
+                        icon="fa-paper-plane"
+                        invisible="state != 'posted' or not dte_code or dte_async_status in ('queued', 'processing')"/>
+
+                <button name="action_download_dte_xml" string="Descargar XML" type="object"
+                        class="btn-secondary"
+                        invisible="not dte_xml"/>
             </xpath>
             
             <!-- Agregar campos de estado DTE en header -->
             <xpath expr="//field[@name='state']" position="after">
                 <!-- Estado DTE Síncrono -->
-                <field name="dte_status" widget="statusbar" 
+                <field name="dte_status" widget="statusbar"
                        statusbar_visible="draft,to_send,sent,accepted"
-                       attrs="{'invisible': [('dte_code', '=', False)]}"/>
+                       invisible="not dte_code"/>
                 
                 <!-- Estado DTE Asíncrono (RabbitMQ) -->
                 <field name="dte_async_status" widget="statusbar"
                        statusbar_visible="draft,queued,processing,sent,accepted"
-                       attrs="{'invisible': [('dte_async_status', '=', 'draft')]}"/>
+                       invisible="dte_async_status == 'draft'"/>
             </xpath>
             
             <!-- Agregar página DTE en notebook -->
             <xpath expr="//notebook" position="inside">
-                <page string="DTE" name="dte_page" 
-                      attrs="{'invisible': [('dte_code', '=', False)]}">
+                <page string="DTE" name="dte_page"
+                      invisible="not dte_code">
                     <group>
                         <group>
                             <field name="dte_code" readonly="1"/>
@@ -53,29 +57,73 @@
                         </group>
                         <group>
                             <field name="dte_track_id" readonly="1"/>
-                            <button name="action_view_communications" string="Ver Comunicaciones SII" 
-                                    type="object" class="oe_link" 
-                                    attrs="{'invisible': [('dte_communication_ids', '=', [])]}"/>
+                            <button name="action_view_communications" string="Ver Comunicaciones SII"
+                                    type="object" class="oe_link"
+                                    invisible="not dte_communication_ids"/>
                         </group>
                     </group>
                     
-                    <group string="Respuesta SII" attrs="{'invisible': [('dte_response_xml', '=', False)]}">
+                    <group string="Respuesta SII" invisible="not dte_response_xml">
                         <field name="dte_response_xml" readonly="1"/>
                     </group>
-                    
-                    <group string="Errores" attrs="{'invisible': [('dte_error_message', '=', False)]}">
+
+                    <group string="Errores" invisible="not dte_error_message">
                         <field name="dte_error_message" readonly="1" class="text-danger"/>
                     </group>
-                    
-                    <group string="XML DTE" attrs="{'invisible': [('dte_xml', '=', False)]}">
+
+                    <group string="XML DTE" invisible="not dte_xml">
                         <field name="dte_xml" filename="dte_xml_filename"/>
                         <field name="dte_xml_filename" invisible="1"/>
                     </group>
                 </page>
                 
+                <!-- ⭐ NUEVO: Página DTE Information (Professional) -->
+                <page string="DTE Information" name="dte_info_page"
+                      invisible="not dte_code">
+                    <group>
+                        <group string="DTE Status" col="2">
+                            <field name="dte_code" readonly="1"/>
+                            <field name="dte_folio" readonly="1"/>
+                            <field name="dte_track_id" readonly="1"/>
+                            <field name="dte_status" readonly="1" invisible="1"/>
+                            <field name="dte_timestamp" readonly="1"/>
+                            <field name="dte_accepted_date" readonly="1"
+                                   invisible="not dte_accepted_date"/>
+                            <field name="is_contingency" readonly="1"/>
+                        </group>
+
+                        <group string="DTE Configuration" col="2">
+                            <field name="dte_certificate_id" readonly="1"/>
+                            <field name="dte_caf_id" readonly="1"/>
+                            <field name="dte_environment" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Error Message (if any) -->
+                    <group invisible="not dte_error_message">
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fa fa-exclamation-triangle" title="Advertencia DTE" aria-label="Advertencia"/>
+                            <strong>DTE Error:</strong><br/>
+                            <field name="dte_error_message" readonly="1" nolabel="1"/>
+                        </div>
+                    </group>
+
+                    <!-- QR Code Display -->
+                    <group invisible="not dte_qr_image">
+                        <label for="dte_qr_image" string="QR Code"/>
+                        <field name="dte_qr_image" widget="image" readonly="1" nolabel="1"/>
+                    </group>
+
+                    <!-- DTE XML (Technical) -->
+                    <group string="Technical Information" groups="base.group_no_one">
+                        <field name="dte_xml" readonly="1" widget="ace" options="{'mode': 'xml'}"/>
+                        <field name="dte_response_xml" readonly="1" widget="ace" options="{'mode': 'xml'}"/>
+                    </group>
+                </page>
+
                 <!-- Nueva página: Procesamiento Asíncrono -->
                 <page string="Procesamiento Asíncrono" name="dte_async_page"
-                      attrs="{'invisible': [('dte_async_status', '=', 'draft')]}">
+                      invisible="dte_async_status == 'draft'">
                     <group>
                         <group string="Estado Asíncrono">
                             <field name="dte_async_status" readonly="1" widget="badge"
@@ -89,12 +137,12 @@
                         </group>
                         <group string="Resultado">
                             <field name="dte_track_id" readonly="1"/>
-                            <field name="dte_error_message" readonly="1" 
+                            <field name="dte_error_message" readonly="1"
                                    class="text-danger"
-                                   attrs="{'invisible': [('dte_error_message', '=', False)]}"/>
+                                   invisible="not dte_error_message"/>
                         </group>
                     </group>
-                    
+
                     <group string="Información RabbitMQ">
                         <div class="alert alert-info" role="alert">
                             <p><strong>Procesamiento Asíncrono:</strong></p>
@@ -110,26 +158,29 @@
             
             <!-- Smart Buttons en button_box -->
             <xpath expr="//div[@name='button_box']" position="inside">
-                <button name="action_view_rabbitmq_status"
+                <!-- ⭐ NUEVO: DTE XML Download Smart Button -->
+                <button name="action_download_dte_xml"
                         type="object"
                         class="oe_stat_button"
-                        icon="fa-exchange"
-                        attrs="{'invisible': [('dte_async_status', '=', 'draft')]}">
-                    <field name="dte_async_status" widget="statinfo" string="Estado Async"/>
+                        icon="fa-file-code-o"
+                        invisible="not dte_xml">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">DTE XML</span>
+                    </div>
                 </button>
             </xpath>
             
         </field>
     </record>
-    
-    <!-- Extensión de Vista Tree de Facturas -->
+
+    <!-- ⭐ TEMPORALMENTE DESACTIVADO: account.view_invoice_tree cambió en Odoo 19
     <record id="view_move_tree_dte" model="ir.ui.view">
         <field name="name">account.move.tree.dte</field>
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_invoice_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='state']" position="after">
-                <field name="dte_status" optional="show" 
+                <field name="dte_status" optional="show"
                        decoration-success="dte_status == 'accepted'"
                        decoration-warning="dte_status == 'to_send'"
                        decoration-danger="dte_status == 'rejected'"/>
@@ -143,7 +194,8 @@
             </xpath>
         </field>
     </record>
-    
+    -->
+
     <!-- Filtros de búsqueda para estados async -->
     <record id="view_move_search_dte_async" model="ir.ui.view">
         <field name="name">account.move.search.dte.async</field>

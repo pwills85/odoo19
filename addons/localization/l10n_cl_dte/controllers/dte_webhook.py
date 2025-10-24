@@ -82,7 +82,7 @@ def check_ip_whitelist(ip):
     """
     whitelist_param = request.env['ir.config_parameter'].sudo().get_param(
         'l10n_cl_dte.webhook_ip_whitelist',
-        '127.0.0.1,localhost,172.18.0.0/16,dte-service'
+        '127.0.0.1,localhost,172.18.0.0/16,odoo-eergy-services'
     )
     
     whitelist = [ip.strip() for ip in whitelist_param.split(',')]
@@ -137,7 +137,7 @@ class DTEWebhookController(http.Controller):
     Endpoint: POST /api/dte/callback
     """
     
-    @http.route('/api/dte/callback', type='json', auth='public', methods=['POST'], csrf=False)
+    @http.route('/api/dte/callback', type='jsonrpc', auth='public', methods=['POST'], csrf=False)
     @rate_limit(max_calls=10, period=60)
     def dte_callback(self, **kwargs):
         """
@@ -284,7 +284,7 @@ class DTEWebhookController(http.Controller):
                 'code': 500
             }
     
-    @http.route('/api/dte/test', type='json', auth='public', methods=['GET', 'POST'])
+    @http.route('/api/dte/test', type='jsonrpc', auth='public', methods=['GET', 'POST'])
     def dte_test(self):
         """
         Endpoint de prueba para verificar que el webhook está activo

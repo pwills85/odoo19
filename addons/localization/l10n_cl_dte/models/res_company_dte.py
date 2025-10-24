@@ -113,6 +113,44 @@ class ResCompanyDTE(models.Model):
                     )
 
     # ═══════════════════════════════════════════════════════════
+    # CONFIGURACIÓN BHE (Boleta Honorarios Electrónica)
+    # Según SII - Res. Ex. N° 34 del 2019
+    # ═══════════════════════════════════════════════════════════
+
+    l10n_cl_bhe_journal_id = fields.Many2one(
+        'account.journal',
+        string='Diario BHE',
+        domain="[('type', '=', 'general'), ('company_id', '=', id)]",
+        help='Diario contable para registrar BHE recibidas.\n\n'
+             'Recomendado: Crear diario específico "BHE" tipo General.\n'
+             'Ejemplo: Código "BHE", Nombre "Boletas de Honorarios"'
+    )
+
+    l10n_cl_bhe_expense_account_id = fields.Many2one(
+        'account.account',
+        string='Cuenta Gasto Honorarios',
+        domain="[('account_type', 'in', ['expense', 'expense_depreciation']), ('company_id', '=', id)]",
+        help='Cuenta contable para registrar el gasto de honorarios.\n\n'
+             'Plan de cuentas chileno:\n'
+             '  6301010 - Honorarios por Servicios Profesionales\n\n'
+             'Débito: Esta cuenta (monto bruto)'
+    )
+
+    l10n_cl_bhe_retention_account_id = fields.Many2one(
+        'account.account',
+        string='Cuenta Retención Honorarios',
+        domain="[('account_type', '=', 'liability_current'), ('company_id', '=', id)]",
+        help='Cuenta contable para registrar la retención de honorarios.\n\n'
+             'Plan de cuentas chileno:\n'
+             '  2105020 - Retención Honorarios (Impuesto a la Renta Art. 42 N°2)\n\n'
+             'Crédito: Esta cuenta (monto retención 14.5%)\n\n'
+             'IMPORTANTE:\n'
+             '• Se declara mensualmente en F29 línea 150\n'
+             '• Se paga al SII al declarar F29\n'
+             '• Tasa variable según año: 10% (2018-2020) a 14.5% (2025+)'
+    )
+
+    # ═══════════════════════════════════════════════════════════
     # NOTA: Validación RUT YA ESTÁ en l10n_cl
     # No duplicamos validaciones
     # ═══════════════════════════════════════════════════════════

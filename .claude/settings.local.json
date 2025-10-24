@@ -1,13 +1,21 @@
 {
   "permissions": {
     "allow": [
-      "Bash(chmod:*)",
-      "Bash(./download_xsd.sh)",
-      "Bash(bash:*)",
-      "Bash(find:*)",
-      "Bash(python3:*)",
-      "Bash(xargs -I {} bash -c 'echo \"\"\"\"=== {} ===\"\"\"\" && head -80 {}')",
-      "Bash(cat:*)"
+      "Bash(while read f)",
+      "Bash(for f in /Users/pedro/Documents/odoo19/odoo-eergy-services/generators/*.py)",
+      "Bash(addons/localization/l10n_cl_dte/models/account_move_dte.py )",
+      "Bash(addons/localization/l10n_cl_dte/models/purchase_order_dte.py )",
+      "Bash(addons/localization/l10n_cl_dte/models/res_partner_dte.py )",
+      "Bash(addons/localization/l10n_cl_dte/models/dte_certificate.py )",
+      "Bash(addons/localization/l10n_cl_dte/tools/__init__.py )",
+      "Bash(odoo-eergy-services/utils/rut_utils.py )",
+      "Bash(odoo-eergy-services/generators/*.py)",
+      "Bash(odoo-eergy-services/requirements.txt )",
+      "Bash(ai-service/utils/validators.py )",
+      "Bash(ai-service/requirements.txt)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.anthropic.com)",
+      "Bash(git tag:*)"
     ],
     "deny": [],
     "ask": []

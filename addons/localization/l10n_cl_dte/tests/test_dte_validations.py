@@ -37,7 +37,7 @@ class TestDTEValidations(TransactionCase):
             dte_service_path = os.path.join(
                 os.path.dirname(__file__), 
                 '..', '..', '..', '..', '..', 
-                'dte-service'
+                'odoo-eergy-services'
             )
             sys.path.insert(0, dte_service_path)
             
@@ -57,7 +57,7 @@ class TestDTEValidations(TransactionCase):
             dte_service_path = os.path.join(
                 os.path.dirname(__file__), 
                 '..', '..', '..', '..', '..', 
-                'dte-service'
+                'odoo-eergy-services'
             )
             sys.path.insert(0, dte_service_path)
             
@@ -88,7 +88,7 @@ class TestDTEValidations(TransactionCase):
             dte_service_path = os.path.join(
                 os.path.dirname(__file__), 
                 '..', '..', '..', '..', '..', 
-                'dte-service'
+                'odoo-eergy-services'
             )
             sys.path.insert(0, dte_service_path)
             
@@ -107,7 +107,7 @@ class TestDTEValidations(TransactionCase):
             dte_service_path = os.path.join(
                 os.path.dirname(__file__), 
                 '..', '..', '..', '..', '..', 
-                'dte-service'
+                'odoo-eergy-services'
             )
             sys.path.insert(0, dte_service_path)
             
@@ -143,7 +143,7 @@ class TestDTEValidations(TransactionCase):
             dte_service_path = os.path.join(
                 os.path.dirname(__file__), 
                 '..', '..', '..', '..', '..', 
-                'dte-service'
+                'odoo-eergy-services'
             )
             sys.path.insert(0, dte_service_path)
             

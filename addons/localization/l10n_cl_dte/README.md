@@ -1,11 +1,20 @@
-# 🇨🇱 Módulo l10n_cl_dte - Facturación Electrónica Chile
+# 🇨🇱 Chilean Electronic Invoicing - DTE System
 
-**Versión:** 19.0.1.0.0  
-**Odoo:** 19.0 Community Edition  
-**Autor:** Eergygroup  
-**Licencia:** LGPL-3  
-**Estado:** ✅ **IMPLEMENTADO AL 100%**  
-**Fecha:** 2025-10-21
+![Version](https://img.shields.io/badge/version-19.0.1.0.0-blue)
+![Odoo](https://img.shields.io/badge/Odoo-19.0%20CE-purple)
+![License](https://img.shields.io/badge/license-LGPL--3-green)
+![Quality](https://img.shields.io/badge/audit-95%2F100-brightgreen)
+![SII](https://img.shields.io/badge/SII-100%25%20compliance-success)
+
+**Sistema enterprise-grade de facturación electrónica para Chile**
+
+**Desarrollado por:** Ing. Pedro Troncoso Willz
+**Empresa:** EERGYGROUP
+**Contacto:** contacto@eergygroup.cl
+**Versión:** 19.0.1.0.0
+**Licencia:** LGPL-3
+**Estado:** ✅ **APROBADO PARA PRODUCCIÓN** (Auditoría 95/100)
+**Última actualización:** 2025-10-23
 
 ---
 

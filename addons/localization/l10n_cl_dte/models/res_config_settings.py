@@ -16,7 +16,7 @@ class ResConfigSettings(models.TransientModel):
     dte_service_url = fields.Char(
         string='URL DTE Service',
         config_parameter='l10n_cl_dte.dte_service_url',
-        default='http://dte-service:8001',
+        default='http://odoo-eergy-services:8001',
         help='URL del microservicio DTE (red interna Docker)'
     )
     
@@ -45,7 +45,32 @@ class ResConfigSettings(models.TransientModel):
         default=False,
         help='Activar pre-validación inteligente antes de enviar DTEs'
     )
-    
+
+    # ═══════════════════════════════════════════════════════════
+    # DATOS TRIBUTARIOS EMPRESA (desde res.company)
+    # ═══════════════════════════════════════════════════════════
+
+    l10n_cl_activity_code = fields.Char(
+        related='company_id.l10n_cl_activity_code',
+        string='Código Actividad Económica',
+        readonly=False,
+        help='Código SII de 6 dígitos (OBLIGATORIO en XML DTE)'
+    )
+
+    dte_resolution_number = fields.Char(
+        related='company_id.dte_resolution_number',
+        string='Número Resolución SII',
+        readonly=False,
+        help='Número de resolución de autorización de DTEs del SII'
+    )
+
+    dte_resolution_date = fields.Date(
+        related='company_id.dte_resolution_date',
+        string='Fecha Resolución DTE',
+        readonly=False,
+        help='Fecha de la resolución de autorización de DTEs'
+    )
+
     # ═══════════════════════════════════════════════════════════
     # CONFIGURACIÓN SII
     # ═══════════════════════════════════════════════════════════

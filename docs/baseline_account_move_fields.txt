@@ -1,0 +1,19 @@
+     column_name     |          data_type          
+---------------------+-----------------------------
+ dte_accepted_date   | timestamp without time zone
+ dte_async_status    | character varying
+ dte_caf_id          | integer
+ dte_certificate_id  | integer
+ dte_code            | character varying
+ dte_environment     | character varying
+ dte_error_message   | text
+ dte_folio           | character varying
+ dte_processing_date | timestamp without time zone
+ dte_queue_date      | timestamp without time zone
+ dte_response_xml    | text
+ dte_retry_count     | integer
+ dte_status          | character varying
+ dte_timestamp       | timestamp without time zone
+ dte_track_id        | character varying
+(15 rows)
+

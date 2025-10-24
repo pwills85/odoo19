@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- VISTA FORM: hr.payslip -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    
+    <record id="view_hr_payslip_form" model="ir.ui.view">
+        <field name="name">hr.payslip.form</field>
+        <field name="model">hr.payslip</field>
+        <field name="arch" type="xml">
+            <form string="Liquidación de Sueldo">
+                <header>
+                    <button name="action_compute_sheet" 
+                            string="Calcular" 
+                            type="object" 
+                            class="oe_highlight"
+                            invisible="state != 'draft'"/>
+                    <button name="action_verify" 
+                            string="Enviar a Revisión" 
+                            type="object" 
+                            class="oe_highlight"
+                            invisible="state != 'draft'"/>
+                    <button name="action_done" 
+                            string="Marcar como Pagado" 
+                            type="object" 
+                            class="oe_highlight"
+                            invisible="state != 'verify'"/>
+                    <button name="action_draft" 
+                            string="Volver a Borrador" 
+                            type="object"
+                            invisible="state not in ['verify', 'cancel']"/>
+                    <button name="action_cancel" 
+                            string="Cancelar" 
+                            type="object"
+                            invisible="state in ['done', 'cancel']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,verify,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="number" readonly="1" placeholder="Número automático"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group name="employee_info">
+                            <field name="employee_id" 
+                                   required="1"
+                                   readonly="state != 'draft'"/>
+                            <field name="contract_id" 
+                                   required="1"
+                                   readonly="state != 'draft'"
+                                   domain="[('employee_id', '=', employee_id), ('state', 'in', ['open', 'pending'])]"/>
+                            <field name="company_id" invisible="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group name="period_info">
+                            <field name="date_from" 
+                                   required="1"
+                                   readonly="state != 'draft'"/>
+                            <field name="date_to" 
+                                   required="1"
+                                   readonly="state != 'draft'"/>
+                            <field name="indicadores_id" 
+                                   readonly="1"
+                                   string="Indicadores Económicos"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Líneas de Liquidación" name="lines">
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <tree editable="bottom" decoration-success="total > 0" decoration-danger="total &lt; 0">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="category_id"/>
+                                    <field name="amount" sum="Total Base"/>
+                                    <field name="quantity"/>
+                                    <field name="rate"/>
+                                    <field name="total" sum="Total"/>
+                                </tree>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="basic_wage" widget="monetary"/>
+                                <field name="gross_wage" widget="monetary" class="oe_subtotal_footer_separator"/>
+                                <field name="total_deductions" widget="monetary"/>
+                                <field name="net_wage" widget="monetary" class="oe_subtotal_footer_separator" style="font-weight: bold;"/>
+                            </group>
+                        </page>
+                        
+                        <page string="Inputs Adicionales" name="inputs">
+                            <field name="input_line_ids" readonly="state != 'draft'">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="amount"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <page string="Notas" name="notes">
+                            <field name="notes" placeholder="Notas internas..."/>
+                        </page>
+                        
+                        <page string="Auditoría" name="audit">
+                            <group>
+                                <group>
+                                    <field name="computed_date" readonly="1"/>
+                                    <field name="computed_by" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- VISTA TREE: hr.payslip -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    
+    <record id="view_hr_payslip_tree" model="ir.ui.view">
+        <field name="name">hr.payslip.tree</field>
+        <field name="model">hr.payslip</field>
+        <field name="arch" type="xml">
+            <tree string="Liquidaciones" 
+                  decoration-info="state == 'draft'" 
+                  decoration-warning="state == 'verify'"
+                  decoration-success="state == 'done'"
+                  decoration-muted="state == 'cancel'">
+                <field name="number"/>
+                <field name="employee_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="basic_wage" sum="Total Sueldo Base"/>
+                <field name="net_wage" sum="Total Líquido"/>
+                <field name="state" 
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'verify'"
+                       decoration-success="state == 'done'"
+                       decoration-muted="state == 'cancel'"
+                       widget="badge"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- VISTA SEARCH: hr.payslip -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    
+    <record id="view_hr_payslip_search" model="ir.ui.view">
+        <field name="name">hr.payslip.search</field>
+        <field name="model">hr.payslip</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Liquidaciones">
+                <field name="number" string="Número"/>
+                <field name="employee_id" string="Empleado"/>
+                <field name="date_from" string="Período"/>
+                <separator/>
+                <filter string="Borrador" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="En Revisión" name="verify" domain="[('state', '=', 'verify')]"/>
+                <filter string="Pagadas" name="done" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter string="Mes Actual" name="current_month" 
+                        domain="[('date_from', '&gt;=', (context_today() - relativedelta(day=1)).strftime('%Y-%m-%d')),
+                                 ('date_from', '&lt;=', (context_today() + relativedelta(day=31)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <group expand="0" string="Agrupar Por">
+                    <filter string="Empleado" name="group_employee" context="{'group_by': 'employee_id'}"/>
+                    <filter string="Estado" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Período" name="group_period" context="{'group_by': 'date_from'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- ACTION: hr.payslip -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    
+    <record id="action_hr_payslip" model="ir.actions.act_window">
+        <field name="name">Liquidaciones</field>
+        <field name="res_model">hr.payslip</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_hr_payslip_search"/>
+        <field name="context">{'search_default_current_month': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear nueva liquidación de sueldo
+            </p>
+            <p>
+                Las liquidaciones de sueldo calculan automáticamente haberes y descuentos
+                según la normativa chilena vigente.
+            </p>
+        </field>
+    </record>
+    
+</odoo>

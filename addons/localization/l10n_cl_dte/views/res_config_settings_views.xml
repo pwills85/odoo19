@@ -6,7 +6,8 @@
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="account.res_config_settings_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//div[hasclass('settings')]" position="inside">
+            <!-- ⭐ CORREGIDO para Odoo 19: insertar después del último bloque -->
+            <xpath expr="//form" position="inside">
                 <div class="app_settings_block" data-string="Facturación Electrónica Chile (DTE)" 
                      string="Facturación Electrónica Chile (DTE)" data-key="l10n_cl_dte">
                     
@@ -23,7 +24,7 @@
                                 </div>
                                 <div class="content-group">
                                     <div class="mt16">
-                                        <field name="dte_service_url" placeholder="http://dte-service:8001"/>
+                                        <field name="dte_service_url" placeholder="http://odoo-eergy-services:8001"/>
                                         <field name="dte_api_key" password="True" placeholder="API Key"/>
                                         <button name="action_test_dte_service" string="Probar Conexión" 
                                                 type="object" class="btn-link"/>
@@ -41,7 +42,7 @@
                                 <div class="text-muted">
                                     Pre-validación inteligente con IA
                                 </div>
-                                <div class="content-group" attrs="{'invisible': [('use_ai_validation', '=', False)]}">
+                                <div class="content-group" invisible="not use_ai_validation">
                                     <div class="mt16">
                                         <field name="ai_service_url" placeholder="http://ai-service:8002"/>
                                         <field name="ai_api_key" password="True" placeholder="API Key"/>
@@ -53,6 +54,51 @@
                         </div>
                     </div>
                     
+                    <!-- Datos Tributarios Empresa -->
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label string="Código Actividad Económica (Acteco)" for="company_id"/>
+                                <div class="text-muted">
+                                    Código SII de 6 dígitos (OBLIGATORIO en XML DTE)
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="company_id" invisible="1"/>
+                                        <field name="l10n_cl_activity_code"
+                                               required="company_id"
+                                               placeholder="Ej: 421000"/>
+                                        <div class="text-muted mt8">
+                                            <a href="https://www.sii.cl/destacados/codigos_actividades/"
+                                               target="_blank">
+                                                Ver catálogo oficial de códigos SII
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label string="Resolución DTE" for="dte_resolution_number"/>
+                                <div class="text-muted">
+                                    Datos de resolución de autorización SII
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <label for="dte_resolution_number" string="Número"/>
+                                        <field name="dte_resolution_number" placeholder="Ej: 80"/>
+                                        <label for="dte_resolution_date" string="Fecha" class="mt8"/>
+                                        <field name="dte_resolution_date"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Configuración SII -->
                     <div class="row mt16 o_settings_container">
                         <div class="col-12 col-lg-6 o_setting_box">
@@ -69,7 +115,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="col-12 col-lg-6 o_setting_box">
                             <div class="o_setting_left_pane"/>
                             <div class="o_setting_right_pane">

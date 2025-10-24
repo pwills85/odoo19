@@ -1,19 +1,147 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Menú Principal DTE -->
+    <!-- ══════════════════════════════════════════════════════════════════
+         MENÚ PRINCIPAL DTE CHILE
+         Ubicación: Contabilidad > DTE Chile
+         ══════════════════════════════════════════════════════════════════ -->
+
     <menuitem
         id="menu_dte_root"
         name="DTE Chile"
         parent="account.menu_finance"
         sequence="10"/>
-    
-    <!-- Submenú: Configuración DTE -->
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         OPERACIONES DTE (Submenú principal)
+         ══════════════════════════════════════════════════════════════════ -->
+
+    <menuitem
+        id="menu_dte_operations"
+        name="Operaciones"
+        parent="menu_dte_root"
+        sequence="10"/>
+
+    <!-- Facturas DTE (heredan de account.move) -->
+    <menuitem
+        id="menu_dte_invoices"
+        name="Facturas Electrónicas"
+        parent="menu_dte_operations"
+        action="account.action_move_out_invoice_type"
+        sequence="10"/>
+
+    <!-- Notas de Crédito DTE -->
+    <menuitem
+        id="menu_dte_credit_notes"
+        name="Notas de Crédito"
+        parent="menu_dte_operations"
+        action="account.action_move_out_refund_type"
+        sequence="20"/>
+
+    <!-- Guías de Despacho (stock.picking) -->
+    <menuitem
+        id="menu_dte_guias_despacho"
+        name="Guías de Despacho"
+        parent="menu_dte_operations"
+        action="stock.action_picking_tree_all"
+        sequence="30"/>
+
+    <!-- Liquidaciones Honorarios (purchase.order) -->
+    <menuitem
+        id="menu_dte_honorarios"
+        name="Liquidaciones Honorarios"
+        parent="menu_dte_operations"
+        action="purchase.purchase_form_action"
+        sequence="40"/>
+
+    <!-- Retenciones IUE -->
+    <menuitem
+        id="menu_retencion_iue"
+        name="Retenciones IUE"
+        parent="menu_dte_operations"
+        action="action_retencion_iue"
+        sequence="50"/>
+
+    <!-- Boletas de Honorarios -->
+    <menuitem
+        id="menu_boleta_honorarios"
+        name="Boletas de Honorarios"
+        parent="menu_dte_operations"
+        action="action_boleta_honorarios"
+        sequence="45"/>
+
+    <!-- Tasas de Retención IUE (Configuración) -->
+    <menuitem
+        id="menu_retencion_iue_tasa"
+        name="Tasas de Retención IUE"
+        parent="menu_dte_configuration"
+        action="action_retencion_iue_tasa"
+        sequence="30"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         RECEPCIÓN DE COMPRAS
+         ══════════════════════════════════════════════════════════════════ -->
+
+    <menuitem
+        id="menu_dte_inbox"
+        name="DTEs Recibidos"
+        parent="menu_dte_root"
+        action="action_dte_inbox"
+        sequence="20"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         REPORTES SII
+         ══════════════════════════════════════════════════════════════════ -->
+
+    <menuitem
+        id="menu_dte_reportes"
+        name="Reportes SII"
+        parent="menu_dte_root"
+        sequence="30"/>
+
+    <!-- Libro de Compra/Venta -->
+    <menuitem
+        id="menu_dte_libro_compra_venta"
+        name="Libro Compra/Venta"
+        parent="menu_dte_reportes"
+        action="action_dte_libro"
+        sequence="10"/>
+
+    <!-- Libro de Guías -->
+    <menuitem
+        id="menu_dte_libro_guias"
+        name="Libro de Guías"
+        parent="menu_dte_reportes"
+        action="action_dte_libro_guias"
+        sequence="20"/>
+
+    <!-- Consumo de Folios -->
+    <menuitem
+        id="menu_dte_consumo_folios"
+        name="Consumo de Folios"
+        parent="menu_dte_reportes"
+        sequence="30"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         COMUNICACIONES SII
+         ══════════════════════════════════════════════════════════════════ -->
+
+    <menuitem
+        id="menu_dte_communications"
+        name="Comunicaciones SII"
+        parent="menu_dte_root"
+        action="action_dte_communication"
+        sequence="40"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         CONFIGURACIÓN DTE
+         ══════════════════════════════════════════════════════════════════ -->
+
     <menuitem
         id="menu_dte_configuration"
         name="Configuración"
         parent="menu_dte_root"
         sequence="100"/>
-    
+
     <!-- Certificados Digitales -->
     <menuitem
         id="menu_dte_certificates"
@@ -21,7 +149,7 @@
         parent="menu_dte_configuration"
         action="action_dte_certificate"
         sequence="10"/>
-    
+
     <!-- CAF (Folios) -->
     <menuitem
         id="menu_dte_caf"
@@ -29,20 +157,14 @@
         parent="menu_dte_configuration"
         action="action_dte_caf"
         sequence="20"/>
-    
-    <!-- Retenciones IUE -->
+
+    <!-- ⭐ TEMPORALMENTE DESACTIVADO: base.action_res_config_settings no existe en Odoo 19
     <menuitem
-        id="menu_retencion_iue"
-        name="Retenciones IUE"
-        parent="menu_dte_root"
-        action="action_retencion_iue"
-        sequence="50"/>
-    
-    <!-- Comunicaciones SII -->
-    <menuitem
-        id="menu_dte_communications"
-        name="Comunicaciones SII"
-        parent="menu_dte_root"
-        action="action_dte_communication"
-        sequence="90"/>
+        id="menu_dte_settings"
+        name="Configuración General"
+        parent="menu_dte_configuration"
+        action="base.action_res_config_settings"
+        sequence="100"/>
+    -->
+
 </odoo>

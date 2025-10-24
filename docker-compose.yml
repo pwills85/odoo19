@@ -132,17 +132,18 @@ services:
       start_period: 40s
 
   # ══════════════════════════════════════════════════════════
-  # DTE MICROSERVICE - SOLO RED INTERNA ⭐
+  # EERGY SERVICES - Microservicio Multi-Propósito ⭐
+  # Soporta: DTE, Nómina, SII, Integraciones fiscales
   # ══════════════════════════════════════════════════════════
-  dte-service:
-    build: ./dte-service
-    container_name: odoo19_dte_service
+  odoo-eergy-services:
+    build: ./odoo-eergy-services
+    container_name: odoo19_eergy_services
     restart: unless-stopped
     depends_on:
       - redis
       - rabbitmq
     environment:
-      - API_KEY=${DTE_SERVICE_API_KEY:-default_dte_api_key}
+      - API_KEY=${EERGY_SERVICES_API_KEY:-default_eergy_api_key}
       - SII_ENVIRONMENT=${SII_ENVIRONMENT:-sandbox}
       - REDIS_URL=redis://redis:6379/0
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672//
@@ -152,25 +153,26 @@ services:
       - "8001"  # ⭐ Solo red interna (NO exponer al exterior)
     networks:
       - stack_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    # Healthcheck defined in Dockerfile (uses Python requests, not curl)
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
 
   # ══════════════════════════════════════════════════════════
-  # OLLAMA - LLM LOCAL
+  # OLLAMA - LLM LOCAL (ELIMINADO - Usando solo Claude)
   # ══════════════════════════════════════════════════════════
-  ollama:
-    image: ollama/ollama:latest
-    container_name: odoo19_ollama
-    restart: unless-stopped
-    expose:
-      - "11434"  # Solo red interna
-    volumes:
-      - ollama_data:/root/.ollama
-    networks:
-      - stack_network
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: odoo19_ollama
+  #   restart: unless-stopped
+  #   expose:
+  #     - "11434"  # Solo red interna
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   networks:
+  #     - stack_network
 
   # ══════════════════════════════════════════════════════════
   # AI MICROSERVICE - SOLO RED INTERNA ⭐
@@ -181,13 +183,44 @@ services:
     restart: unless-stopped
     depends_on:
       - redis
-      - ollama
+      # - ollama  # Eliminado - Usando solo Claude
     environment:
+      # AI Service Authentication
       - API_KEY=${AI_SERVICE_API_KEY:-default_ai_api_key}
+
+      # Anthropic Claude API (Único LLM) - Actualizado 2025-10-23
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - OLLAMA_URL=http://ollama:11434
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-sonnet-4-5-20250929}
+
+      # Max Tokens por Caso de Uso
+      - ANTHROPIC_MAX_TOKENS_DEFAULT=${ANTHROPIC_MAX_TOKENS_DEFAULT:-8192}
+      - ANTHROPIC_MAX_TOKENS_CHAT=${ANTHROPIC_MAX_TOKENS_CHAT:-16384}
+      - ANTHROPIC_MAX_TOKENS_DTE_VALIDATION=${ANTHROPIC_MAX_TOKENS_DTE_VALIDATION:-4096}
+      - ANTHROPIC_MAX_TOKENS_PAYROLL=${ANTHROPIC_MAX_TOKENS_PAYROLL:-2048}
+      - ANTHROPIC_MAX_TOKENS_PREVIRED=${ANTHROPIC_MAX_TOKENS_PREVIRED:-4096}
+      - ANTHROPIC_MAX_TOKENS_ANALYTICS=${ANTHROPIC_MAX_TOKENS_ANALYTICS:-1024}
+      - ANTHROPIC_MAX_TOKENS_SII_MONITOR=${ANTHROPIC_MAX_TOKENS_SII_MONITOR:-8192}
+
+      # Configuración Avanzada Anthropic
+      - ANTHROPIC_TEMPERATURE_DEFAULT=${ANTHROPIC_TEMPERATURE_DEFAULT:-0.7}
+      - ANTHROPIC_TIMEOUT_SECONDS=${ANTHROPIC_TIMEOUT_SECONDS:-60}
+      - ANTHROPIC_MAX_RETRIES=${ANTHROPIC_MAX_RETRIES:-3}
+
+      # Chat Engine Configuration
+      - CHAT_SESSION_TTL=${CHAT_SESSION_TTL:-3600}
+      - CHAT_MAX_CONTEXT_MESSAGES=${CHAT_MAX_CONTEXT_MESSAGES:-10}
+      - CHAT_DEFAULT_TEMPERATURE=${CHAT_DEFAULT_TEMPERATURE:-0.7}
+
+      # Redis Configuration
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_DB=${REDIS_DB:-1}
       - REDIS_URL=redis://redis:6379/1
+
+      # Odoo Integration
       - ODOO_URL=http://odoo:8069
+
+      # Logging
       - LOG_LEVEL=INFO
     volumes:
       - ai_cache:/app/cache
@@ -206,7 +239,7 @@ services:
 volumes:
   postgres_data:
   odoo_filestore:
-  ollama_data:
+  # ollama_data:  # Eliminado - Ollama no se usa
   ai_cache:
   ai_uploads:
   ai_chromadb:

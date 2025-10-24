@@ -138,14 +138,13 @@ class DTECAF(models.Model):
     ], string='Estado', default='draft', readonly=True, tracking=True)
     
     # ═══════════════════════════════════════════════════════════
-    # CONSTRAINTS
+    # CONSTRAINTS (Odoo 19 CE style)
     # ═══════════════════════════════════════════════════════════
-    
-    _sql_constraints = [
-        ('unique_caf_range', 
-         'UNIQUE(dte_type, folio_desde, folio_hasta, company_id)', 
-         'Ya existe un CAF con este rango de folios.')
-    ]
+
+    _unique_caf_range = models.Constraint(
+        'UNIQUE(dte_type, folio_desde, folio_hasta, company_id)',
+        'Ya existe un CAF con este rango de folios.'
+    )
     
     @api.constrains('folio_desde', 'folio_hasta')
     def _check_folio_range(self):

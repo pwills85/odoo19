@@ -155,6 +155,9 @@ RUN pip install --no-cache-dir --break-system-packages \
     requests>=2.28.0 \
     urllib3>=1.26.0 \
     \
+    # RabbitMQ Client (CRÍTICO - Para integración con dte-service)
+    pika>=1.3.0 \
+    \
     # Códigos QR (CRÍTICO)
     qrcode[pil]>=7.3.0 \
     pillow>=9.0.0 \

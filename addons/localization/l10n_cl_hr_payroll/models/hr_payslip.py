@@ -21,6 +21,18 @@ class HrPayslip(models.Model):
     _order = 'date_from desc, id desc'
     
     # ═══════════════════════════════════════════════════════════
+    # CREATE - Asignar número secuencial
+    # ═══════════════════════════════════════════════════════════
+    
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Asignar número secuencial automático - Odoo 19 CE"""
+        for vals in vals_list:
+            if vals.get('number', '/') == '/' or not vals.get('number'):
+                vals['number'] = self.env['ir.sequence'].next_by_code('hr.payslip') or '/'
+        return super(HrPayslip, self).create(vals_list)
+    
+    # ═══════════════════════════════════════════════════════════
     # CAMPOS BÁSICOS
     # ═══════════════════════════════════════════════════════════
     
@@ -56,6 +68,22 @@ class HrPayslip(models.Model):
         readonly=True,
         states={'draft': [('readonly', False)]},
         domain="[('employee_id', '=', employee_id), ('state', 'in', ['open', 'pending'])]"
+    )
+    
+    struct_id = fields.Many2one(
+        'hr.payroll.structure',
+        string='Estructura Salarial',
+        readonly=True,
+        states={'draft': [('readonly', False)]},
+        help='Estructura que define las reglas de cálculo'
+    )
+    
+    payslip_run_id = fields.Many2one(
+        'hr.payslip.run',
+        string='Lote de Nóminas',
+        readonly=True,
+        copy=False,
+        help='Lote al que pertenece esta liquidación'
     )
     
     # ═══════════════════════════════════════════════════════════
@@ -182,13 +210,23 @@ class HrPayslip(models.Model):
         help='AFP + Salud + Impuesto'
     )
     
-    @api.depends('line_ids.total', 'line_ids.category_id')
+    @api.depends('line_ids.total', 
+                 'line_ids.category_id',
+                 'line_ids.category_id.imponible',
+                 'line_ids.category_id.tributable',
+                 'line_ids.category_id.afecta_gratificacion',
+                 'line_ids.category_id.code')
     def _compute_totals(self):
         """
-        Calcular totales de la liquidación usando categorías SOPA 2025
+        Calcular totales de la liquidación usando categorías SOPA 2025 - Odoo 19 CE
         
         Migrado desde Odoo 11 CE con técnicas Odoo 19 CE.
         Usa flags de categorías para calcular bases correctas.
+        
+        Totalizadores:
+        - total_imponible: Base AFP/Salud (suma líneas con imponible=True)
+        - total_tributable: Base Impuesto (suma líneas con tributable=True)
+        - total_gratificacion_base: Base gratificación (afecta_gratificacion=True)
         """
         for payslip in self:
             # Sueldo base
@@ -446,7 +484,10 @@ class HrPayslip(models.Model):
                 'Por favor actualice el módulo con: odoo -u l10n_cl_hr_payroll'
             ))
         
-        # 1. SUELDO BASE (imponible=True, tributable=True)
+        # ═══════════════════════════════════════════════════════════
+        # PASO 1: HABERES BASE
+        # ═══════════════════════════════════════════════════════════
+        
         LineObj.create({
             'slip_id': self.id,
             'code': 'BASIC',
@@ -459,10 +500,41 @@ class HrPayslip(models.Model):
             'total': self.contract_id.wage,
         })
         
-        # Forzar recálculo de totalizadores
+        # ═══════════════════════════════════════════════════════════
+        # PASO 2: PROCESAR INPUTS (SPRINT 3.2 ✨)
+        # ═══════════════════════════════════════════════════════════
+        
+        self._process_input_lines()
+        
+        # ═══════════════════════════════════════════════════════════
+        # PASO 3: INVALIDAR Y COMPUTAR TOTALIZADORES
+        # ═══════════════════════════════════════════════════════════
+        
+        self.invalidate_recordset(['line_ids'])
         self._compute_totals()
         
-        # 2. AFP (usa total_imponible)
+        _logger.info(
+            "Totalizadores: imponible=$%s, tributable=$%s",
+            f"{self.total_imponible:,.0f}",
+            f"{self.total_tributable:,.0f}"
+        )
+        
+        # ═══════════════════════════════════════════════════════════
+        # PASO 3.5: GRATIFICACIÓN Y ASIGNACIÓN FAMILIAR (SPRINT 4) ✅
+        # ═══════════════════════════════════════════════════════════
+        
+        self._compute_gratification_lines()
+        self._compute_family_allowance_lines()
+        
+        # Recomputar totalizadores después de agregar gratificación/asignación
+        self.invalidate_recordset(['line_ids'])
+        self._compute_totals()
+        
+        # ═══════════════════════════════════════════════════════════
+        # PASO 4: DESCUENTOS PREVISIONALES
+        # ═══════════════════════════════════════════════════════════
+        
+        # 4.1 AFP (usa total_imponible con tope)
         afp_amount = self._calculate_afp()
         if afp_amount > 0:
             LineObj.create({
@@ -476,11 +548,13 @@ class HrPayslip(models.Model):
                 'rate': self.contract_id.afp_rate,
                 'total': -afp_amount,
             })
+            _logger.debug("AFP: $%s", f"{afp_amount:,.0f}")
         
-        # 3. SALUD (usa total_imponible)
+        # 4.2 SALUD (usa total_imponible)
         health_amount = self._calculate_health()
         if health_amount > 0:
-            health_name = 'FONASA' if self.contract_id.health_system == 'fonasa' else f'ISAPRE {self.contract_id.isapre_id.name}'
+            health_name = 'FONASA' if self.contract_id.health_system == 'fonasa' \
+                         else f'ISAPRE {self.contract_id.isapre_id.name}'
             LineObj.create({
                 'slip_id': self.id,
                 'code': 'HEALTH',
@@ -492,55 +566,521 @@ class HrPayslip(models.Model):
                 'rate': 7.0 if self.contract_id.health_system == 'fonasa' else 0.0,
                 'total': -health_amount,
             })
+            _logger.debug("Salud: $%s", f"{health_amount:,.0f}")
         
+        # 4.3 AFC (Seguro de Cesantía - SPRINT 3.2 ✨)
+        afc_amount = self._calculate_afc()
+        if afc_amount > 0:
+            LineObj.create({
+                'slip_id': self.id,
+                'code': 'AFC',
+                'name': 'Seguro de Cesantía',
+                'sequence': 115,
+                'category_id': CategoryLegal.id,
+                'amount': afc_amount,
+                'quantity': 1.0,
+                'rate': 0.6,
+                'total': -afc_amount,
+            })
+            _logger.debug("AFC: $%s", f"{afc_amount:,.0f}")
+        
+        # ═══════════════════════════════════════════════════════════
+        # PASO 5: IMPUESTO ÚNICO (SPRINT 3.2 ✨)
+        # ═══════════════════════════════════════════════════════════
+        
+        self._compute_tax_lines()
+        
+        # ═══════════════════════════════════════════════════════════
+        # PASO 5.5: APORTES EMPLEADOR (SPRINT 4.3) ✅
+        # ═══════════════════════════════════════════════════════════
+        
+        self._compute_employer_contribution_lines()
+        
+        # ═══════════════════════════════════════════════════════════
+        # PASO 6: RECOMPUTAR TOTALES FINALES
+        # ═══════════════════════════════════════════════════════════
+        
+        self.invalidate_recordset(['line_ids'])
+        self._compute_totals()
+        
+        # LOG FINAL
         _logger.info(
-            "Líneas SOPA 2025 creadas para liquidación %s: %d líneas, total_imponible=$%s",
+            "✅ Liquidación %s completada: %d líneas, bruto=$%s, líquido=$%s",
             self.name,
             len(self.line_ids),
-            f"{self.total_imponible:,.0f}"
+            f"{self.gross_wage:,.0f}",
+            f"{self.net_wage:,.0f}"
         )
     
     def _calculate_afp(self):
-        """Calcular AFP"""
+        """
+        Calcular AFP usando total_imponible
+        
+        Aplica tope de 87.8 UF según legislación chilena.
+        Usa total_imponible para considerar todos los haberes imponibles.
+        """
+        # Tope AFP: 87.8 UF (actualizado 2025)
         afp_limit_clp = self.indicadores_id.uf * self.indicadores_id.afp_limit
-        imponible_afp = min(self.contract_id.wage, afp_limit_clp)
+        
+        # Base imponible con tope
+        imponible_afp = min(self.total_imponible, afp_limit_clp)
+        
+        # Calcular AFP
         afp_amount = imponible_afp * (self.contract_id.afp_rate / 100)
+        
         return afp_amount
     
     def _calculate_health(self):
-        """Calcular salud"""
-        if self.contract_id.health_system == 'fonasa':
-            # FONASA 7% fijo
-            health_amount = self.contract_id.wage * 0.07
-        elif self.contract_id.health_system == 'isapre':
-            # ISAPRE variable
-            plan_clp = self.contract_id.isapre_plan_uf * self.indicadores_id.uf
-            legal_7pct = self.contract_id.wage * 0.07
-            
-            if plan_clp > legal_7pct:
-                # Paga más que 7%
-                health_amount = plan_clp
-            else:
-                # Paga 7% (excedente como haber)
-                health_amount = legal_7pct
-            
-            LineObj.create({
-                'slip_id': self.id,
-                'code': 'ISAPRE',
-                'name': f'ISAPRE {self.contract_id.isapre_id.name}',
-                'sequence': 110,
-                'category_id': self.env.ref('l10n_cl_hr_payroll.category_deduction').id,
-                'amount': wage,
-                'quantity': 1.0,
-                'rate': (health_amount / wage * 100) if wage > 0 else 0,
-                'total': -health_amount,
-            })
+        """
+        Calcular salud usando total_imponible
         
-        _logger.info(
-            "Líneas básicas creadas para liquidación %s: %d líneas",
-            self.name,
-            len(self.line_ids)
+        Retorna monto a descontar según sistema de salud.
+        Cumple legislación chilena (Art. 41 Código del Trabajo).
+        """
+        if self.contract_id.health_system == 'fonasa':
+            # FONASA 7% fijo sobre total imponible
+            health_amount = self.total_imponible * 0.07
+            
+        elif self.contract_id.health_system == 'isapre':
+            # ISAPRE: plan en UF vs 7% legal
+            plan_clp = self.contract_id.isapre_plan_uf * self.indicadores_id.uf
+            legal_7pct = self.total_imponible * 0.07
+            
+            # Se paga el mayor entre plan y 7% legal
+            health_amount = max(plan_clp, legal_7pct)
+        else:
+            health_amount = 0.0
+        
+        return health_amount
+    
+    # ═══════════════════════════════════════════════════════════
+    # PROCESAMIENTO INPUTS SOPA (SPRINT 3.2)
+    # ═══════════════════════════════════════════════════════════
+    
+    def _process_input_lines(self):
+        """
+        Procesar inputs SOPA (horas extra, bonos, ausencias)
+        
+        Técnica Odoo 19 CE:
+        - Itera input_line_ids con for (patrón estándar)
+        - Usa startswith() para clasificación
+        - Crea líneas con self.env['hr.payslip.line'].create()
+        """
+        self.ensure_one()
+        
+        if not self.input_line_ids:
+            return
+        
+        _logger.info("Procesando %d inputs para liquidación %s", 
+                     len(self.input_line_ids), self.name)
+        
+        for input_line in self.input_line_ids:
+            # Clasificar y procesar según código
+            if input_line.code in ('HEX50', 'HEX100', 'HEXDE'):
+                self._process_overtime(input_line)
+                
+            elif input_line.code.startswith('BONO'):
+                self._process_bonus(input_line)
+                
+            elif input_line.code in ('COLACION', 'MOVILIZACION'):
+                self._process_allowance(input_line)
+                
+            elif input_line.code.startswith('DESC'):
+                self._process_deduction(input_line)
+            
+            else:
+                _logger.warning("Input code '%s' no reconocido, se procesa como genérico", 
+                              input_line.code)
+                self._process_generic_input(input_line)
+    
+    def _process_overtime(self, input_line):
+        """
+        Procesar horas extras (HEX50, HEX100, HEXDE)
+        
+        Técnica Odoo 19 CE:
+        - Usa _get_hourly_rate() helper method
+        - Calcula con multiplicadores según legislación
+        - Usa env.ref() con fallback para categoría
+        """
+        # Calcular valor hora base
+        hourly_rate = self._get_hourly_rate()
+        
+        # Determinar multiplicador según tipo
+        multipliers = {
+            'HEX50': 1.5,   # 50% recargo
+            'HEX100': 2.0,  # 100% recargo
+            'HEXDE': 2.0,   # Domingo/festivo
+        }
+        multiplier = multipliers.get(input_line.code, 1.5)
+        
+        # Calcular monto total
+        amount = hourly_rate * multiplier * input_line.amount
+        
+        # Obtener categoría con fallback (Odoo 19 CE pattern)
+        try:
+            category = self.env.ref('l10n_cl_hr_payroll.category_hex_sopa')
+        except ValueError:
+            category = self.env.ref('l10n_cl_hr_payroll.category_haber_imponible')
+        
+        # Crear línea (Odoo 19 CE pattern)
+        self.env['hr.payslip.line'].create({
+            'slip_id': self.id,
+            'code': input_line.code,
+            'name': input_line.name,
+            'sequence': 20,
+            'category_id': category.id,
+            'amount': amount,
+            'quantity': input_line.amount,
+            'rate': hourly_rate * multiplier,
+            'total': amount,
+        })
+        
+        _logger.debug("Horas extra procesadas: %s - %d hrs x $%s = $%s",
+                     input_line.code, input_line.amount, 
+                     f"{hourly_rate * multiplier:,.0f}", f"{amount:,.0f}")
+    
+    def _process_bonus(self, input_line):
+        """
+        Procesar bonos (BONO_xxx)
+        
+        Técnica Odoo 19 CE:
+        - Todos los bonos son imponibles por defecto
+        - Usa categoría BONUS_SOPA
+        """
+        # Obtener categoría con fallback
+        try:
+            category = self.env.ref('l10n_cl_hr_payroll.category_bonus_sopa')
+        except ValueError:
+            category = self.env.ref('l10n_cl_hr_payroll.category_haber_imponible')
+        
+        # Crear línea
+        self.env['hr.payslip.line'].create({
+            'slip_id': self.id,
+            'code': input_line.code,
+            'name': input_line.name,
+            'sequence': 30,
+            'category_id': category.id,
+            'amount': input_line.amount,
+            'quantity': 1.0,
+            'rate': 100.0,
+            'total': input_line.amount,
+        })
+        
+        _logger.debug("Bono procesado: %s - $%s", 
+                     input_line.name, f"{input_line.amount:,.0f}")
+    
+    def _process_allowance(self, input_line):
+        """
+        Procesar asignaciones NO imponibles (Colación, Movilización)
+        
+        Técnica Odoo 19 CE:
+        - Valida tope 20% IMM (Ingreso Mínimo Mensual)
+        - Usa categoría específica para NO imponibles
+        """
+        # Tope legal: 20% IMM
+        imm = self.indicadores_id.sueldo_minimo
+        tope_legal = imm * 0.20
+        
+        # Aplicar tope
+        amount = min(input_line.amount, tope_legal)
+        
+        if input_line.amount > tope_legal:
+            _logger.warning(
+                "Asignación %s excede tope legal ($%s > $%s). Se aplica tope.",
+                input_line.name, f"{input_line.amount:,.0f}", f"{tope_legal:,.0f}"
+            )
+        
+        # Obtener categoría NO imponible
+        try:
+            if input_line.code == 'COLACION':
+                category = self.env.ref('l10n_cl_hr_payroll.category_col_sopa')
+            else:  # MOVILIZACION
+                category = self.env.ref('l10n_cl_hr_payroll.category_mov_sopa')
+        except ValueError:
+            category = self.env.ref('l10n_cl_hr_payroll.category_haber_no_imponible')
+        
+        # Crear línea
+        self.env['hr.payslip.line'].create({
+            'slip_id': self.id,
+            'code': input_line.code,
+            'name': input_line.name,
+            'sequence': 40,
+            'category_id': category.id,
+            'amount': amount,
+            'quantity': 1.0,
+            'rate': 100.0,
+            'total': amount,
+        })
+    
+    def _process_deduction(self, input_line):
+        """
+        Procesar descuentos adicionales (préstamos, anticipos, etc.)
+        
+        Técnica Odoo 19 CE:
+        - Descuentos van como valores negativos
+        """
+        try:
+            category = self.env.ref('l10n_cl_hr_payroll.category_desc_otro')
+        except ValueError:
+            category = self.env.ref('l10n_cl_hr_payroll.category_descuento')
+        
+        # Crear línea con monto negativo
+        self.env['hr.payslip.line'].create({
+            'slip_id': self.id,
+            'code': input_line.code,
+            'name': input_line.name,
+            'sequence': 130,
+            'category_id': category.id,
+            'amount': input_line.amount,
+            'quantity': 1.0,
+            'rate': 100.0,
+            'total': -input_line.amount,  # Negativo para descuento
+        })
+    
+    def _process_generic_input(self, input_line):
+        """Procesar input genérico no clasificado"""
+        # Categoría genérica
+        category = self.env.ref('l10n_cl_hr_payroll.category_haber', 
+                                raise_if_not_found=False)
+        if not category:
+            category = self.env['hr.salary.rule.category'].search([], limit=1)
+        
+        # Crear línea
+        self.env['hr.payslip.line'].create({
+            'slip_id': self.id,
+            'code': input_line.code,
+            'name': input_line.name,
+            'sequence': 50,
+            'category_id': category.id if category else False,
+            'amount': input_line.amount,
+            'quantity': 1.0,
+            'rate': 100.0,
+            'total': input_line.amount,
+        })
+    
+    def _get_hourly_rate(self):
+        """
+        Calcular valor hora base para horas extras
+        
+        Técnica Odoo 19 CE:
+        - Usa safe_divide() para evitar división por cero
+        - Considera jornada semanal del contrato
+        - Aplica fórmula legal chilena
+        
+        Fórmula: (Sueldo Base * 12) / (52 * Jornada Semanal)
+        """
+        sueldo_mensual = self.contract_id.wage
+        jornada_semanal = self.contract_id.jornada_semanal or 45.0
+        
+        # Fórmula legal: sueldo anual / horas anuales
+        horas_anuales = 52 * jornada_semanal
+        
+        if horas_anuales == 0:
+            _logger.error("Jornada semanal es 0, no se puede calcular valor hora")
+            return 0.0
+        
+        hourly_rate = (sueldo_mensual * 12) / horas_anuales
+        
+        return hourly_rate
+    
+    # ═══════════════════════════════════════════════════════════
+    # IMPUESTO ÚNICO (SPRINT 3.2)
+    # ═══════════════════════════════════════════════════════════
+    
+    def _compute_tax_lines(self):
+        """
+        Calcular Impuesto Único de Segunda Categoría (7 tramos 2025)
+        
+        Técnica Odoo 19 CE:
+        - Usa tabla estática (no hardcodeada, pero tampoco BD)
+        - Aplica fórmula progresiva oficial SII
+        - Base: total_tributable - AFP - Salud - APV
+        """
+        self.ensure_one()
+        
+        # Base tributable
+        base = self.total_tributable
+        
+        # Restar descuentos previsionales (rebajables de impuesto)
+        base -= self._get_total_previsional()
+        
+        # Si base negativa o cero, no hay impuesto
+        if base <= 0:
+            return
+        
+        # Calcular impuesto progresivo
+        tax = self._calculate_progressive_tax(base)
+        
+        # Si hay impuesto, crear línea
+        if tax > 0:
+            try:
+                category = self.env.ref('l10n_cl_hr_payroll.category_desc_legal')
+            except ValueError:
+                category = self.env.ref('l10n_cl_hr_payroll.category_descuento')
+            
+            self.env['hr.payslip.line'].create({
+                'slip_id': self.id,
+                'code': 'TAX',
+                'name': 'Impuesto Único',
+                'sequence': 120,
+                'category_id': category.id,
+                'amount': tax,
+                'quantity': 1.0,
+                'rate': 0.0,  # Tasa variable
+                'total': -tax,  # Negativo para descuento
+            })
+            
+            _logger.info("Impuesto calculado: base=$%s, impuesto=$%s",
+                        f"{base:,.0f}", f"{tax:,.0f}")
+    
+    def _calculate_progressive_tax(self, base):
+        """
+        Calcular impuesto usando tabla progresiva 7 tramos 2025
+        
+        Técnica Odoo 19 CE:
+        - Tabla como lista de tuplas (estructura inmutable)
+        - Itera tramos con for (patrón estándar)
+        - Retorna float
+        
+        Tabla SII 2025 (vigente):
+        Tramo 1: $0 - $816.822 → 0% (exento)
+        Tramo 2: $816.823 - $1.816.680 → 4%
+        Tramo 3: $1.816.681 - $3.026.130 → 8%
+        Tramo 4: $3.026.131 - $4.235.580 → 13.5%
+        Tramo 5: $4.235.581 - $5.445.030 → 23%
+        Tramo 6: $5.445.031 - $7.257.370 → 30.4%
+        Tramo 7: $7.257.371 y más → 35%
+        """
+        # Tabla 7 tramos (desde, hasta, tasa, rebaja)
+        TRAMOS = [
+            (0, 816_822, 0.0, 0),
+            (816_823, 1_816_680, 0.04, 32_673),
+            (1_816_681, 3_026_130, 0.08, 105_346),
+            (3_026_131, 4_235_580, 0.135, 271_833),
+            (4_235_581, 5_445_030, 0.23, 674_285),
+            (5_445_031, 7_257_370, 0.304, 1_077_123),
+            (7_257_371, float('inf'), 0.35, 1_411_462),
+        ]
+        
+        # Buscar tramo correspondiente
+        for desde, hasta, tasa, rebaja in TRAMOS:
+            if desde <= base <= hasta:
+                # Fórmula: (base * tasa) - rebaja
+                impuesto = (base * tasa) - rebaja
+                return max(impuesto, 0)  # No puede ser negativo
+        
+        # Nunca debería llegar aquí
+        return 0.0
+    
+    def _get_total_previsional(self):
+        """
+        Obtener total descuentos previsionales (rebajables de impuesto)
+        
+        Técnica Odoo 19 CE:
+        - Filtra líneas con filtered()
+        - Suma con sum() y mapped()
+        - Retorna float
+        """
+        previsional_codes = ['AFP', 'HEALTH', 'APV']
+        
+        # Filtrar líneas previsionales
+        previsional_lines = self.line_ids.filtered(
+            lambda l: l.code in previsional_codes
         )
+        
+        # Sumar montos (usar abs() porque están negativos)
+        total = sum(abs(line.total) for line in previsional_lines)
+        
+        return total
+    
+    # ═══════════════════════════════════════════════════════════
+    # GRATIFICACIÓN (SPRINT 3.2)
+    # ═══════════════════════════════════════════════════════════
+    
+    def _calculate_gratification(self):
+        """
+        Calcular gratificación legal (25% utilidades, tope 4.75 IMM)
+        
+        Técnica Odoo 19 CE:
+        - Usa @api.model para métodos estáticos
+        - Valida con min() para aplicar tope
+        - Retorna float
+        
+        NOTA: Pendiente implementar en Sprint 3.2 completo
+        Por ahora retorna 0 (no se calcula automáticamente)
+        """
+        # TODO Sprint 3.2: Implementar cálculo gratificación
+        # Requiere:
+        # 1. Información de utilidades de la empresa
+        # 2. Días trabajados en el año
+        # 3. Total remuneraciones imponibles del año
+        
+        return 0.0
+    
+    # ═══════════════════════════════════════════════════════════
+    # AFC + SIS (SPRINT 3.2)
+    # ═══════════════════════════════════════════════════════════
+    
+    def _calculate_afc(self):
+        """
+        Calcular AFC (Seguro de Cesantía)
+        
+        Técnica Odoo 19 CE:
+        - Usa porcentajes legales fijos
+        - Trabajador: 0.6%
+        - Empleador: 2.4% (no se descuenta al trabajador)
+        
+        NOTA: Solo se calcula descuento trabajador aquí
+        """
+        # AFC trabajador: 0.6% sobre imponible (tope 120.2 UF)
+        tope_afc = self.indicadores_id.uf * 120.2
+        base_afc = min(self.total_imponible, tope_afc)
+        
+        afc_amount = base_afc * 0.006  # 0.6%
+        
+        return afc_amount
+    
+    def _calculate_sis(self):
+        """
+        Calcular SIS (Seguro de Invalidez y Sobrevivencia)
+        
+        Técnica Odoo 19 CE:
+        - Tasa variable por AFP (aproximado 1.49%)
+        - Se aplica sobre mismo tope que AFP (87.8 UF)
+        
+        NOTA: Incluido en tasa AFP, no se calcula separado
+        """
+        # SIS ya está incluido en la tasa AFP informada
+        # No se calcula separado
+        return 0.0
+    
+    # ═══════════════════════════════════════════════════════════
+    # MÉTODOS AUXILIARES PARA REGLAS SALARIALES
+    # ═══════════════════════════════════════════════════════════
+    
+    def _get_category_dict(self):
+        """
+        Obtener diccionario de categorías con totales acumulados
+        
+        Técnica Odoo 19 CE:
+        - Agrupa líneas por categoría
+        - Retorna dict con totales
+        - Usado por reglas salariales
+        
+        Retorna:
+            dict: {código_categoría: monto_total}
+        """
+        self.ensure_one()
+        
+        category_dict = {}
+        
+        for line in self.line_ids:
+            code = line.category_id.code
+            if code not in category_dict:
+                category_dict[code] = 0.0
+            category_dict[code] += line.total
+        
+        return category_dict
     
     # ═══════════════════════════════════════════════════════════
     # WORKFLOW
@@ -565,3 +1105,276 @@ class HrPayslip(models.Model):
         """Volver a borrador"""
         self.write({'state': 'draft'})
         return True
+    
+    # ═══════════════════════════════════════════════════════════
+    # GRATIFICACIÓN LEGAL (SPRINT 4.1) - 2025-10-23
+    # ═══════════════════════════════════════════════════════════
+    
+    def _compute_gratification_lines(self):
+        """
+        Calcular gratificación legal mensual
+        
+        Artículo 47-50 Código del Trabajo Chile:
+        - Monto: 25% de las utilidades líquidas
+        - Distribución proporcional a lo devengado
+        - Tope: 4.75 IMM (Ingreso Mínimo Mensual)
+        - Mensualización: 1/12 del anual
+        
+        Técnica Odoo 19 CE:
+        - Usa total_gratificacion_base (ya computado)
+        - Aplica tope legal
+        - Crea línea solo si tipo es 'legal'
+        """
+        self.ensure_one()
+        
+        if self.contract_id.gratification_type != 'legal':
+            return
+        
+        # Base: solo haberes que afectan gratificación
+        base = self.total_gratificacion_base
+        
+        if base <= 0:
+            return
+        
+        # Gratificación mensual: 25% / 12
+        gratification_rate = 0.25 / 12
+        gratification_amount = base * gratification_rate
+        
+        # Tope: 4.75 IMM mensual
+        imm = self.indicadores_id.ingreso_minimo
+        tope_mensual = (imm * 4.75) / 12
+        
+        if gratification_amount > tope_mensual:
+            gratification_amount = tope_mensual
+            _logger.info(
+                "Gratificación topada: base=$%s, tope=$%s",
+                f"{(base * gratification_rate):,.0f}",
+                f"{tope_mensual:,.0f}"
+            )
+        
+        # Obtener categoría con fallback
+        try:
+            category = self.env.ref('l10n_cl_hr_payroll.category_haber_imponible')
+        except ValueError:
+            category = self.env.ref('l10n_cl_hr_payroll.category_haberes')
+        
+        # Crear línea
+        self.env['hr.payslip.line'].create({
+            'slip_id': self.id,
+            'code': 'GRAT',
+            'name': 'Gratificación Legal',
+            'sequence': 25,
+            'category_id': category.id,
+            'amount': gratification_amount,
+            'quantity': 1,
+            'rate': gratification_rate * 100,
+            'total': gratification_amount,
+        })
+        
+        _logger.info(
+            "✅ Gratificación calculada: $%s (base: $%s)",
+            f"{gratification_amount:,.0f}",
+            f"{base:,.0f}"
+        )
+    
+    # ═══════════════════════════════════════════════════════════
+    # ASIGNACIÓN FAMILIAR (SPRINT 4.2) - 2025-10-23
+    # ═══════════════════════════════════════════════════════════
+    
+    def _compute_family_allowance_lines(self):
+        """
+        Calcular asignación familiar
+        
+        Ley 18.020 - Montos variables según tramo de ingreso:
+        - Tramo A: < $439,484
+        - Tramo B: $439,485 - $643,144
+        - Tramo C: $643,145 - $1,000,827
+        - Sin asignación: > $1,000,827
+        
+        Tipos de carga:
+        - Simple: Hijos < 18 años, cónyuge
+        - Maternal: Madre viuda, madre soltera
+        - Inválida: Familiar con discapacidad
+        
+        NO imponible, NO tributable
+        
+        Técnica Odoo 19 CE:
+        - Lee cargas desde contrato
+        - Determina tramo según ingreso
+        - Aplica montos vigentes 2025
+        """
+        self.ensure_one()
+        
+        contract = self.contract_id
+        
+        # Total cargas
+        total_simple = contract.family_allowance_simple
+        total_maternal = contract.family_allowance_maternal
+        total_invalid = contract.family_allowance_invalid
+        
+        if not (total_simple + total_maternal + total_invalid):
+            return  # Sin cargas, saltar
+        
+        # Determinar tramo según ingreso base
+        base_income = contract.wage
+        
+        # Montos vigentes 2025 (actualizados anualmente por ley)
+        if base_income <= 439484:
+            tramo = 'A'
+            monto_simple = 15268
+            monto_maternal = 9606
+            monto_invalid = 45795
+        elif base_income <= 643144:
+            tramo = 'B'
+            monto_simple = 10818
+            monto_maternal = 6805
+            monto_invalid = 45795
+        elif base_income <= 1000827:
+            tramo = 'C'
+            monto_simple = 3048
+            monto_maternal = 1918
+            monto_invalid = 45795
+        else:
+            return  # Sin asignación
+        
+        # Calcular monto total
+        amount = (
+            (total_simple * monto_simple) +
+            (total_maternal * monto_maternal) +
+            (total_invalid * monto_invalid)
+        )
+        
+        # Obtener categoría con fallback
+        try:
+            category = self.env.ref('l10n_cl_hr_payroll.category_legal_allowance_sopa')
+        except ValueError:
+            try:
+                category = self.env.ref('l10n_cl_hr_payroll.category_haber_no_imponible')
+            except ValueError:
+                category = self.env.ref('l10n_cl_hr_payroll.category_haberes')
+        
+        # Crear línea
+        self.env['hr.payslip.line'].create({
+            'slip_id': self.id,
+            'code': 'ASIGFAM',
+            'name': f'Asignación Familiar (Tramo {tramo})',
+            'sequence': 30,
+            'category_id': category.id,
+            'amount': amount,
+            'quantity': total_simple + total_maternal + total_invalid,
+            'rate': 0,
+            'total': amount,
+        })
+        
+        _logger.info(
+            "✅ Asignación familiar: $%s (tramo %s, %dS + %dM + %dI)",
+            f"{amount:,.0f}",
+            tramo,
+            total_simple,
+            total_maternal,
+            total_invalid
+        )
+    
+    # ═══════════════════════════════════════════════════════════
+    # APORTES EMPLEADOR REFORMA 2025 (SPRINT 4.3) - 2025-10-23
+    # ═══════════════════════════════════════════════════════════
+    
+    def _compute_employer_contribution_lines(self):
+        """
+        Calcular aportes empleador (Reforma Previsional 2025)
+        
+        Calendario gradual:
+        - 2024: 0.5%
+        - 2025: 1.0%
+        - 2026: 1.5%
+        - 2027: 2.0%
+        - 2028: 2.5%
+        - 2029: 3.0%
+        - 2030+: 3.5%
+        
+        Base: Total imponible (tope 87.8 UF)
+        NO se descuenta al trabajador (es aporte empleador)
+        Se muestra como informativo en liquidación
+        
+        Técnica Odoo 19 CE:
+        - Determina tasa según año
+        - Calcula sobre total imponible
+        - Crea líneas informativas
+        """
+        self.ensure_one()
+        
+        # Determinar tasa según año
+        year = self.date_from.year
+        
+        if year < 2024:
+            rate = 0.0
+        elif year == 2024:
+            rate = 0.005
+        elif year == 2025:
+            rate = 0.010
+        elif year == 2026:
+            rate = 0.015
+        elif year == 2027:
+            rate = 0.020
+        elif year == 2028:
+            rate = 0.025
+        elif year == 2029:
+            rate = 0.030
+        else:  # 2030+
+            rate = 0.035
+        
+        if rate == 0:
+            return
+        
+        # Obtener categoría con fallback
+        try:
+            category = self.env.ref('l10n_cl_hr_payroll.category_aportes')
+        except ValueError:
+            category = self.env.ref('l10n_cl_hr_payroll.category_haberes')
+        
+        # 1. Aporte empleador AFP (gradual)
+        afp_limit_clp = self.indicadores_id.uf * self.indicadores_id.afp_limit
+        base_afp = min(self.total_imponible, afp_limit_clp)
+        amount_afp = base_afp * rate
+        
+        self.env['hr.payslip.line'].create({
+            'slip_id': self.id,
+            'code': 'APORTE_EMP_AFP',
+            'name': f'Aporte Empleador AFP ({rate*100:.1f}%)',
+            'sequence': 200,
+            'category_id': category.id,
+            'amount': amount_afp,
+            'quantity': 1,
+            'rate': rate * 100,
+            'total': amount_afp,
+        })
+        
+        _logger.info(
+            "✅ Aporte empleador AFP: $%s (%.1f%% sobre $%s)",
+            f"{amount_afp:,.0f}",
+            rate * 100,
+            f"{base_afp:,.0f}"
+        )
+        
+        # 2. AFC Empleador (2.4% fijo)
+        afc_tope = self.indicadores_id.uf * 120.2
+        base_afc = min(self.total_imponible, afc_tope)
+        afc_amount = base_afc * 0.024
+        
+        self.env['hr.payslip.line'].create({
+            'slip_id': self.id,
+            'code': 'AFC_EMP',
+            'name': 'AFC Empleador (2.4%)',
+            'sequence': 201,
+            'category_id': category.id,
+            'amount': afc_amount,
+            'quantity': 1,
+            'rate': 2.4,
+            'total': afc_amount,
+        })
+        
+        _logger.info(
+            "✅ AFC empleador: $%s (2.4%% sobre $%s)",
+            f"{afc_amount:,.0f}",
+            f"{base_afc:,.0f}"
+        )

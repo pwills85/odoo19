@@ -30,7 +30,7 @@ class DTEApiClient:
         """Obtiene URL del DTE Service desde configuración"""
         return self.env['ir.config_parameter'].sudo().get_param(
             'l10n_cl_dte.dte_service_url',
-            'http://dte-service:8001'
+            'http://odoo-eergy-services:8001'
         )
     
     def _get_api_key(self) -> str:

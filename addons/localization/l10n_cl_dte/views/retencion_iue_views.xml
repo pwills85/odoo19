@@ -7,9 +7,9 @@
         <field name="arch" type="xml">
             <form string="Retención IUE">
                 <header>
-                    <button name="action_generar_reporte_mensual" string="Generar Reporte SII" 
-                            type="object" class="btn-primary" 
-                            attrs="{'invisible': [('state', '!=', 'confirmed')]}"/>
+                    <button name="action_generar_reporte_mensual" string="Generar Reporte SII"
+                            type="object" class="btn-primary"
+                            invisible="state != 'confirmed'"/>
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>
@@ -35,14 +35,14 @@
                     <notebook>
                         <page string="Liquidaciones de Honorarios" name="purchase_orders">
                             <field name="purchase_order_ids" readonly="1">
-                                <tree>
+                                <list>
                                     <field name="name"/>
                                     <field name="date_order"/>
                                     <field name="monto_bruto_honorarios"/>
                                     <field name="monto_retencion_iue"/>
                                     <field name="monto_neto_a_pagar"/>
                                     <field name="dte_34_status"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
@@ -61,7 +61,7 @@
         <field name="name">retencion.iue.tree</field>
         <field name="model">retencion.iue</field>
         <field name="arch" type="xml">
-            <tree string="Retenciones IUE">
+            <list string="Retenciones IUE">
                 <field name="name"/>
                 <field name="periodo_mes"/>
                 <field name="profesional_rut"/>
@@ -69,7 +69,7 @@
                 <field name="monto_bruto_total"/>
                 <field name="monto_retenido_total"/>
                 <field name="state" widget="badge"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -79,12 +79,4 @@
         <field name="res_model">retencion.iue</field>
         <field name="view_mode">tree,form</field>
     </record>
-    
-    <!-- Menú: Retenciones -->
-    <menuitem
-        id="menu_retencion_iue"
-        name="Retenciones IUE"
-        parent="menu_dte_root"
-        action="action_retencion_iue"
-        sequence="50"/>
 </odoo>

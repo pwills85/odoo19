@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- MENÚS PRINCIPALES -->
+    <!-- Patrón Odoo 19 CE: Usar parent correcto de hr module -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    
+    <!-- Menú Principal: Nóminas -->
+    <menuitem id="menu_hr_payroll_root"
+              name="Nóminas"
+              parent="hr.menu_hr_root"
+              sequence="20"/>
+    
+    <!-- Submenú: Liquidaciones -->
+    <menuitem id="menu_hr_payslip"
+              name="Liquidaciones"
+              parent="menu_hr_payroll_root"
+              action="action_hr_payslip"
+              sequence="10"/>
+    
+    <!-- Submenú: Configuración -->
+    <menuitem id="menu_hr_payroll_configuration"
+              name="Configuración"
+              parent="menu_hr_payroll_root"
+              sequence="100"/>
+    
+    <!-- Configuración: Indicadores Económicos -->
+    <menuitem id="menu_hr_economic_indicators"
+              name="Indicadores Económicos"
+              parent="menu_hr_payroll_configuration"
+              action="action_hr_economic_indicators"
+              sequence="10"/>
+    
+    <!-- Configuración: AFPs -->
+    <menuitem id="menu_hr_afp"
+              name="AFPs"
+              parent="menu_hr_payroll_configuration"
+              action="action_hr_afp"
+              sequence="20"/>
+    
+    <!-- Configuración: ISAPREs -->
+    <menuitem id="menu_hr_isapre"
+              name="ISAPREs"
+              parent="menu_hr_payroll_configuration"
+              action="action_hr_isapre"
+              sequence="30"/>
+    
+</odoo>

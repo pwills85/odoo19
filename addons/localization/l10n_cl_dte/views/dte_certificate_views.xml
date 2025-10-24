@@ -7,25 +7,18 @@
         <field name="arch" type="xml">
             <form string="Certificado Digital DTE">
                 <header>
-                    <button name="action_validate" string="Validar Certificado" type="object" 
-                            class="btn-primary" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                    <button name="action_revoke" string="Revocar" type="object" 
-                            class="btn-danger" attrs="{'invisible': [('state', '=', 'revoked')]}"/>
-                    <field name="state" widget="statusbar" 
+                    <button name="action_validate" string="Validar Certificado" type="object"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_revoke" string="Revocar" type="object"
+                            class="btn-danger" invisible="state == 'revoked'"/>
+                    <field name="state" widget="statusbar"
                            statusbar_visible="draft,valid,expiring_soon,expired"/>
                 </header>
                 <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button name="%(action_account_journal_dte)d" type="action" 
-                                class="oe_stat_button" icon="fa-book">
-                            <field name="journal_ids" widget="statinfo" string="Diarios"/>
-                        </button>
-                    </div>
-                    
-                    <widget name="web_ribbon" title="Vencido" bg_color="bg-danger" 
-                            attrs="{'invisible': [('state', '!=', 'expired')]}"/>
-                    <widget name="web_ribbon" title="Por Vencer" bg_color="bg-warning" 
-                            attrs="{'invisible': [('state', '!=', 'expiring_soon')]}"/>
+                    <widget name="web_ribbon" title="Vencido" bg_color="bg-danger"
+                            invisible="state != 'expired'"/>
+                    <widget name="web_ribbon" title="Por Vencer" bg_color="bg-warning"
+                            invisible="state != 'expiring_soon'"/>
                     
                     <div class="oe_title">
                         <h1>
@@ -48,11 +41,11 @@
                         <page string="Certificado" name="certificate">
                             <group>
                                 <group>
-                                    <field name="cert_file" filename="cert_filename" 
-                                           attrs="{'readonly': [('state', 'in', ['valid', 'expiring_soon'])]}"/>
+                                    <field name="cert_file" filename="cert_filename"
+                                           readonly="state in ('valid', 'expiring_soon')"/>
                                     <field name="cert_filename" invisible="1"/>
-                                    <field name="cert_password" password="True" 
-                                           attrs="{'readonly': [('state', 'in', ['valid', 'expiring_soon'])]}"/>
+                                    <field name="cert_password" password="True"
+                                           readonly="state in ('valid', 'expiring_soon')"/>
                                 </group>
                                 <group>
                                     <field name="validity_from" readonly="1"/>
@@ -81,12 +74,12 @@
         </field>
     </record>
     
-    <!-- Vista Tree: Certificados -->
+    <!-- Vista List: Certificados (Odoo 19: tree → list) -->
     <record id="view_dte_certificate_tree" model="ir.ui.view">
-        <field name="name">dte.certificate.tree</field>
+        <field name="name">dte.certificate.list</field>
         <field name="model">dte.certificate</field>
         <field name="arch" type="xml">
-            <tree string="Certificados Digitales" decoration-danger="state == 'expired'" 
+            <list string="Certificados Digitales" decoration-danger="state == 'expired'"
                   decoration-warning="state == 'expiring_soon'" decoration-success="state == 'valid'">
                 <field name="name"/>
                 <field name="company_id" groups="base.group_multi_company"/>
@@ -94,11 +87,11 @@
                 <field name="validity_from"/>
                 <field name="validity_to"/>
                 <field name="days_until_expiry"/>
-                <field name="state" widget="badge" 
+                <field name="state" widget="badge"
                        decoration-success="state == 'valid'"
                        decoration-warning="state == 'expiring_soon'"
                        decoration-danger="state == 'expired'"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -108,19 +101,19 @@
         <field name="model">dte.certificate</field>
         <field name="arch" type="xml">
             <search string="Buscar Certificados">
-                <field name="name"/>
-                <field name="cert_rut"/>
-                <field name="company_id"/>
+                <field name="name" string="Nombre" filter_domain="[('name', 'ilike', self)]"/>
+                <field name="cert_rut" string="RUT" filter_domain="[('cert_rut', 'ilike', self)]"/>
+                <field name="company_id" string="Compañía"/>
+                <separator/>
                 <filter string="Válidos" name="valid" domain="[('state', '=', 'valid')]"/>
                 <filter string="Por Vencer" name="expiring_soon" domain="[('state', '=', 'expiring_soon')]"/>
                 <filter string="Vencidos" name="expired" domain="[('state', '=', 'expired')]"/>
                 <separator/>
                 <filter string="Activos" name="active" domain="[('active', '=', True)]"/>
                 <filter string="Archivados" name="inactive" domain="[('active', '=', False)]"/>
-                <group expand="0" string="Agrupar por">
-                    <filter string="Compañía" name="group_company" context="{'group_by': 'company_id'}"/>
-                    <filter string="Estado" name="group_state" context="{'group_by': 'state'}"/>
-                </group>
+                <separator/>
+                <filter string="Por Compañía" name="group_company" context="{'group_by': 'company_id'}"/>
+                <filter string="Por Estado" name="group_state" context="{'group_by': 'state'}"/>
             </search>
         </field>
     </record>
