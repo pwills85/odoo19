@@ -114,7 +114,15 @@ class DTEApiClient:
                 timeout=5
             )
             return response.status_code == 200
-        except:
+        except (requests.RequestException, requests.Timeout, ConnectionError) as e:
+            # Health check failed - service unavailable
+            _logger.debug(
+                f"[API Client] Health check failed: {e}",
+                extra={
+                    'base_url': self.base_url,
+                    'error_type': type(e).__name__
+                }
+            )
             return False
 
 
@@ -240,6 +248,14 @@ class AIApiClient:
                 timeout=5
             )
             return response.status_code == 200
-        except:
+        except (requests.RequestException, requests.Timeout, ConnectionError) as e:
+            # Health check failed - service unavailable
+            _logger.debug(
+                f"[API Client] Health check failed: {e}",
+                extra={
+                    'base_url': self.base_url,
+                    'error_type': type(e).__name__
+                }
+            )
             return False
 

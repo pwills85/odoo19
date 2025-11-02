@@ -140,7 +140,12 @@ class AIChatUniversalWizard(models.TransientModel):
                 try:
                     record = self.env[wizard.context_active_model].browse(wizard.context_active_id)
                     wizard.context_active_record_name = record.display_name
-                except:
+                except (KeyError, AttributeError, ValueError) as e:
+                    # Failed to get display_name - use ID fallback
+                    _logger.debug(
+                        f"[AI Chat Wizard] Failed to get display_name for {wizard.context_active_model}:{wizard.context_active_id}: {e}",
+                        extra={'error_type': type(e).__name__}
+                    )
                     wizard.context_active_record_name = f"ID {wizard.context_active_id}"
             else:
                 wizard.context_active_record_name = ''
@@ -213,7 +218,14 @@ class AIChatUniversalWizard(models.TransientModel):
                         timeout=2
                     )
                     wizard.ai_service_available = (response.status_code == 200)
-                except:
+                except (requests.RequestException, requests.Timeout, ConnectionError) as e:
+                    _logger.debug(
+                        f"[AI Chat Wizard] AI service health check failed: {e}",
+                        extra={
+                            'ai_service_url': wizard.ai_service_url,
+                            'error_type': type(e).__name__
+                        }
+                    )
                     wizard.ai_service_available = False
 
             except Exception as e:
@@ -388,7 +400,15 @@ class AIChatUniversalWizard(models.TransientModel):
                         # Simple types
                         elif field.type in ('char', 'text', 'integer', 'float', 'monetary', 'selection'):
                             record_data[field_name] = value
-                    except:
+                    except (KeyError, AttributeError, ValueError) as e:
+                        # Failed to extract field data - skip this field
+                        _logger.debug(
+                            f"[AI Chat Wizard] Failed to extract field data: {e}",
+                            extra={
+                                'field_name': field_name,
+                                'error_type': type(e).__name__
+                            }
+                        )
                         pass
 
                 context['active_record_data'] = record_data

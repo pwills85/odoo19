@@ -233,11 +233,22 @@ class XMLSigner:
 
             finally:
                 # Clean up temporary files
-                try:
-                    os.unlink(cert_path)
-                    os.unlink(xml_path)
-                except:
-                    pass
+                for temp_file in [cert_path, xml_path]:
+                    try:
+                        if os.path.exists(temp_file):
+                            os.unlink(temp_file)
+                            _logger.debug(f"[XMLSigner] Cleaned up temp file: {temp_file}")
+                    except OSError as e:
+                        # Log but don't raise (cleanup is not critical)
+                        _logger.warning(
+                            f"[XMLSigner] Failed to delete temp file {temp_file}: {e}. "
+                            f"Check filesystem permissions and disk space.",
+                            extra={
+                                'temp_file': temp_file,
+                                'error_type': type(e).__name__,
+                                'errno': getattr(e, 'errno', None)
+                            }
+                        )
 
     # ═══════════════════════════════════════════════════════════
     # SPECIALIZED SIGNATURE METHODS (PEER REVIEW GAP CLOSURE)
@@ -468,12 +479,23 @@ class XMLSigner:
                 return signed_xml
 
             finally:
-                # Clean up
-                try:
-                    os.unlink(cert_path)
-                    os.unlink(xml_path)
-                except:
-                    pass
+                # Clean up temporary files
+                for temp_file in [cert_path, xml_path]:
+                    try:
+                        if os.path.exists(temp_file):
+                            os.unlink(temp_file)
+                            _logger.debug(f"[XMLSigner] Cleaned up temp file: {temp_file}")
+                    except OSError as e:
+                        # Log but don't raise (cleanup is not critical)
+                        _logger.warning(
+                            f"[XMLSigner] Failed to delete temp file {temp_file}: {e}. "
+                            f"Check filesystem permissions and disk space.",
+                            extra={
+                                'temp_file': temp_file,
+                                'error_type': type(e).__name__,
+                                'errno': getattr(e, 'errno', None)
+                            }
+                        )
 
     # ═══════════════════════════════════════════════════════════
     # HELPER METHODS
