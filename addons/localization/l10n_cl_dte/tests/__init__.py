@@ -1,7 +1,17 @@
 # -*- coding: utf-8 -*-
+"""
+Test Suite for l10n_cl_dte module
 
-from . import test_rut_validator
-from . import test_dte_certificate
-from . import test_account_move_dte
-from . import test_dte_submission  # NEW: Complete submission flow tests (Phase 2)
+This module contains comprehensive tests for Chilean electronic invoicing (DTE) functionality.
+"""
+
+# Core DTE tests
+from . import test_integration_l10n_cl  # Integration tests with l10n_cl base
+from . import test_dte_workflow  # DTE workflow tests
+from . import test_dte_validations  # DTE validation tests
+from . import test_dte_submission  # Complete submission flow tests (Phase 2)
+
+# Specific feature tests
+from . import test_bhe_historical_rates  # BHE historical retention rates
+from . import test_historical_signatures  # Historical DTE signature preservation
 
