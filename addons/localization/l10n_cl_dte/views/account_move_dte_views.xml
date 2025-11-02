@@ -7,6 +7,19 @@
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
             
+            <!-- S-009: Visual Indicator - SII Environment Ribbon -->
+            <xpath expr="//form/sheet" position="before">
+                <!-- PRODUCTION MODE WARNING (Red Ribbon) -->
+                <widget name="web_ribbon" title="MODO PRODUCCIÓN - PALENA"
+                        bg_color="bg-danger"
+                        invisible="dte_environment != 'production' or not dte_code"/>
+
+                <!-- SANDBOX MODE INDICATOR (Blue Ribbon) -->
+                <widget name="web_ribbon" title="MODO SANDBOX - MAULLIN"
+                        bg_color="bg-info"
+                        invisible="dte_environment != 'sandbox' or not dte_code"/>
+            </xpath>
+
             <!-- Agregar botones en header -->
             <xpath expr="//header/button[@name='action_post']" position="after">
                 <!-- ✅ ACTIVADO ETAPA 2: Botón Professional Wizard -->

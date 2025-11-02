@@ -1543,11 +1543,18 @@ class AccountMoveDTE(models.Model):
         
         # Actualizar según estado
         if status == 'sent':
+            # S-009: Capture SII environment from ir.config_parameter
+            sii_environment = self.env['ir.config_parameter'].sudo().get_param(
+                'l10n_cl_dte.sii_environment',
+                'sandbox'
+            )
+
             values.update({
                 'dte_track_id': kwargs.get('track_id'),
                 'dte_xml': kwargs.get('xml_b64'),
                 'dte_timestamp': fields.Datetime.now(),
-                'dte_status': 'sent'  # Sincronizar con estado principal
+                'dte_status': 'sent',  # Sincronizar con estado principal
+                'dte_environment': sii_environment,  # S-009: Record environment
             })
             message = _('DTE enviado al SII exitosamente. Track ID: %s') % kwargs.get('track_id')
             
@@ -1604,6 +1611,12 @@ class AccountMoveDTE(models.Model):
         self.ensure_one()
         
         if result.get('success'):
+            # S-009: Capture SII environment
+            sii_environment = self.env['ir.config_parameter'].sudo().get_param(
+                'l10n_cl_dte.sii_environment',
+                'sandbox'
+            )
+
             self.write({
                 'dte_status': 'accepted',
                 'dte_folio': result.get('folio'),
@@ -1612,6 +1625,7 @@ class AccountMoveDTE(models.Model):
                 'dte_qr_image': result.get('qr_image_b64'),  # ⭐ NUEVO: QR code
                 'dte_response_xml': result.get('response_xml'),
                 'dte_timestamp': fields.Datetime.now(),
+                'dte_environment': sii_environment,  # S-009: Record environment
             })
         else:
             self.write({
