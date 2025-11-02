@@ -14,6 +14,11 @@ import requests
 import json
 import logging
 from datetime import datetime
+import base64
+from lxml import etree
+
+# S-005: Protección XXE (Gap Closure P0)
+from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
 
 # SPRINT 4 (2025-10-24): Import native validators
 from ..libs.dte_structure_validator import DTEStructureValidator
@@ -212,6 +217,47 @@ class DTEInbox(models.Model):
 
     processed_date = fields.Datetime('Processed Date')
 
+    fecha_recepcion_sii = fields.Datetime(
+        string='Fecha Recepción SII',
+        default=fields.Datetime.now,
+        required=True,
+        help='Fecha y hora en que se recibió el DTE desde el SII (plazo legal 8 días).'
+    )
+
+    digest_value = fields.Char(
+        string='Digest XML',
+        help='Valor Digest del Documento (Referencia/ DigestValue) para respuesta comercial.'
+    )
+
+    envio_dte_id = fields.Char(
+        string='ID EnvioDTE',
+        help='Identificador del SetDTE/EnvioDTE recibido.'
+    )
+
+    documento_signature = fields.Text(
+        string='Firma Digital Documento',
+        help='Nodo <ds:Signature> del Documento DTE para verificación criptográfica.'
+    )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            raw_xml = vals.get('raw_xml')
+            if raw_xml and not vals.get('digest_value'):
+                try:
+                    parsed = self._parse_dte_xml(raw_xml)
+                except Exception as exc:
+                    _logger.warning("Failed to enrich DTE metadata during create: %s", exc)
+                else:
+                    vals.setdefault('digest_value', parsed.get('digest_value'))
+                    vals.setdefault('envio_dte_id', parsed.get('envio_dte_id'))
+                    vals.setdefault('documento_signature', parsed.get('documento_signature'))
+                    vals.setdefault(
+                        'fecha_recepcion_sii',
+                        fields.Datetime.to_string(fields.Datetime.now())
+                    )
+        return super().create(vals_list)
+
     validation_errors = fields.Text('Validation Errors')
     validation_warnings = fields.Text('Validation Warnings')
 
@@ -275,6 +321,373 @@ class DTEInbox(models.Model):
                 record.name = "New DTE"
 
     # ═══════════════════════════════════════════════════════════
+    # EMAIL PROCESSING (SPRINT 4 - 2025-10-25)
+    # ═══════════════════════════════════════════════════════════
+
+    @api.model
+    def message_process(self, msg_dict, custom_values=None):
+        """
+        Process incoming email from fetchmail_server.
+
+        Called automatically by Odoo's native fetchmail when email arrives from dte@sii.cl.
+
+        This method implements the Odoo standard pattern for email-enabled models
+        (models inheriting from mail.thread).
+
+        Flow:
+        1. Extract XML attachments from email
+        2. Parse XML to extract DTE data
+        3. Search for supplier by RUT
+        4. Create dte.inbox record in 'new' state
+        5. Post message in chatter
+
+        Args:
+            msg_dict (dict): Email message dictionary with keys:
+                - subject (str): Email subject
+                - from (str): Sender email
+                - to (str): Recipient email
+                - date (datetime): Email date
+                - body (str): Email body (HTML or plain text)
+                - attachments (list): List of tuples (filename, content_base64)
+                - message_id (str): Email message ID
+
+            custom_values (dict, optional): Additional values to set on record
+
+        Returns:
+            int: ID of created dte.inbox record (required by fetchmail)
+                 Returns False if processing failed
+
+        Raises:
+            Does NOT raise exceptions - creates error record instead to prevent
+            email from being lost.
+
+        References:
+            - Odoo fetchmail: odoo/addons/fetchmail/models/fetchmail.py
+            - mail.thread: odoo/addons/mail/models/mail_thread.py
+            - Architecture doc: ROUTING_EMAIL_TO_AI_MICROSERVICE_COMPLETE_FLOW.md
+        """
+        _logger.info(f"📧 Processing incoming DTE email: {msg_dict.get('subject', 'No subject')}")
+
+        # 1. Extract XML attachments
+        xml_attachments = []
+        for attachment_tuple in msg_dict.get('attachments', []):
+            # attachment_tuple can be (filename, content) or just content
+            if isinstance(attachment_tuple, tuple):
+                filename, content_base64 = attachment_tuple
+            else:
+                # Fallback if format is different
+                _logger.warning(f"Unexpected attachment format: {type(attachment_tuple)}")
+                continue
+
+            # Check if it's an XML file
+            if filename and filename.lower().endswith('.xml'):
+                try:
+                    # Decode base64 content
+                    xml_string = base64.b64decode(content_base64).decode('ISO-8859-1')
+                    xml_attachments.append({
+                        'filename': filename,
+                        'content': xml_string
+                    })
+                    _logger.info(f"✅ Extracted XML attachment: {filename} ({len(xml_string)} bytes)")
+                except Exception as e:
+                    _logger.error(f"Failed to decode attachment {filename}: {e}")
+                    continue
+
+        if not xml_attachments:
+            _logger.warning(f"❌ No XML attachments found in email from {msg_dict.get('from')}")
+            # Create error record to track this email
+            error_record = self.create({
+                'name': f"Error: {msg_dict.get('subject', 'Sin XML adjunto')}",
+                'folio': 'ERROR',
+                'dte_type': '33',  # Default
+                'emisor_rut': '00000000-0',
+                'emisor_name': msg_dict.get('from', 'Unknown'),
+                'fecha_emision': fields.Date.today(),
+                'monto_total': 0,
+                'monto_neto': 0,
+                'monto_iva': 0,
+                'state': 'error',
+                'validation_errors': f"No XML attachments found in email\n\nSubject: {msg_dict.get('subject')}\nFrom: {msg_dict.get('from')}",
+                'received_date': fields.Datetime.now(),
+                'received_via': 'email'
+            })
+            return error_record.id
+
+        # 2. Parse first XML (normally only one DTE per email)
+        xml_data = xml_attachments[0]
+
+        try:
+            email_date = msg_dict.get('date')
+            if isinstance(email_date, datetime):
+                reception_dt = email_date
+            else:
+                try:
+                    reception_dt = fields.Datetime.from_string(email_date) if email_date else None
+                except Exception:
+                    reception_dt = None
+            if not reception_dt:
+                reception_dt = fields.Datetime.now()
+            reception_dt_str = fields.Datetime.to_string(reception_dt)
+
+            # Parse DTE XML
+            parsed_data = self._parse_dte_xml(xml_data['content'])
+
+            # 3. Search for supplier by RUT
+            partner = self.env['res.partner'].search([
+                ('vat', '=', parsed_data['rut_emisor'])
+            ], limit=1)
+
+            if not partner:
+                _logger.warning(f"⚠️ Supplier not found for RUT {parsed_data['rut_emisor']}, creating without partner")
+
+            # 4. Check if DTE already exists (avoid duplicates)
+            existing = self.search([
+                ('emisor_rut', '=', parsed_data['rut_emisor']),
+                ('dte_type', '=', str(parsed_data['tipo_dte'])),
+                ('folio', '=', parsed_data['folio']),
+            ], limit=1)
+
+            if existing:
+                _logger.info(f"ℹ️ DTE already exists: {existing.name}, updating from email")
+                # Update raw_xml if it was missing
+                write_vals = {}
+                if not existing.raw_xml:
+                    write_vals['raw_xml'] = xml_data['content']
+                if parsed_data.get('digest_value') and not existing.digest_value:
+                    write_vals['digest_value'] = parsed_data['digest_value']
+                if parsed_data.get('envio_dte_id') and not existing.envio_dte_id:
+                    write_vals['envio_dte_id'] = parsed_data['envio_dte_id']
+                if parsed_data.get('documento_signature') and not existing.documento_signature:
+                    write_vals['documento_signature'] = parsed_data['documento_signature']
+                if reception_dt_str and not existing.fecha_recepcion_sii:
+                    write_vals['fecha_recepcion_sii'] = reception_dt_str
+                if write_vals:
+                    existing.write(write_vals)
+                return existing.id
+
+            # 5. Create dte.inbox record
+            vals = {
+                'folio': parsed_data['folio'],
+                'dte_type': str(parsed_data['tipo_dte']),
+                'fecha_emision': parsed_data['fecha_emision'],
+                'emisor_rut': parsed_data['rut_emisor'],
+                'emisor_name': parsed_data['razon_social_emisor'],
+                'emisor_address': parsed_data.get('direccion_emisor', ''),
+                'emisor_city': parsed_data.get('ciudad_emisor', ''),
+                'emisor_email': parsed_data.get('email_emisor', ''),
+                'partner_id': partner.id if partner else False,
+                'monto_total': parsed_data['monto_total'],
+                'monto_neto': parsed_data['monto_neto'],
+                'monto_iva': parsed_data['monto_iva'],
+                'monto_exento': parsed_data.get('monto_exento', 0.0),
+                'raw_xml': xml_data['content'],
+                'parsed_data': json.dumps(parsed_data, ensure_ascii=False),
+                'state': 'new',
+                'received_date': fields.Datetime.now(),
+                'fecha_recepcion_sii': reception_dt_str,
+                'received_via': 'email',
+                'native_validation_passed': False,
+                'ai_validated': False,
+                'digest_value': parsed_data.get('digest_value'),
+                'envio_dte_id': parsed_data.get('envio_dte_id'),
+                'documento_signature': parsed_data.get('documento_signature'),
+            }
+
+            # Merge custom_values if provided
+            if custom_values:
+                vals.update(custom_values)
+
+            # Create record
+            inbox_record = self.create(vals)
+
+            # 6. Post message in chatter
+            inbox_record.message_post(
+                body=_(
+                    '<p><strong>DTE received via email</strong></p>'
+                    '<ul>'
+                    '<li><strong>From:</strong> %(from)s</li>'
+                    '<li><strong>Subject:</strong> %(subject)s</li>'
+                    '<li><strong>Attachment:</strong> %(filename)s</li>'
+                    '<li><strong>Supplier:</strong> %(supplier)s</li>'
+                    '</ul>'
+                ) % {
+                    'from': msg_dict.get('from', 'Unknown'),
+                    'subject': msg_dict.get('subject', 'No subject'),
+                    'filename': xml_data['filename'],
+                    'supplier': partner.name if partner else 'Not found (RUT: %s)' % parsed_data['rut_emisor']
+                },
+                subject=msg_dict.get('subject'),
+                message_type='comment'
+            )
+
+            _logger.info(
+                f"✅ DTE inbox record created: ID={inbox_record.id}, "
+                f"Type={inbox_record.dte_type}, Folio={inbox_record.folio}, "
+                f"Supplier={partner.name if partner else 'Unknown'}, "
+                f"Amount=${inbox_record.monto_total:,.0f}"
+            )
+
+            return inbox_record.id
+
+        except Exception as e:
+            _logger.error(f"❌ Error processing DTE email: {e}", exc_info=True)
+
+            # Create error record to preserve the email data
+            error_record = self.create({
+                'name': f"Parse Error: {msg_dict.get('subject', 'Unknown')}",
+                'folio': 'PARSE_ERROR',
+                'dte_type': '33',  # Default
+                'emisor_rut': '00000000-0',
+                'emisor_name': msg_dict.get('from', 'Unknown'),
+                'fecha_emision': fields.Date.today(),
+                'monto_total': 0,
+                'monto_neto': 0,
+                'monto_iva': 0,
+                'state': 'error',
+                'validation_errors': f"XML parsing failed: {str(e)}\n\nSee server logs for details.",
+                'raw_xml': xml_data['content'],  # Preserve XML for manual review
+                'received_date': fields.Datetime.now(),
+                'received_via': 'email'
+            })
+
+            return error_record.id
+
+    def _parse_dte_xml(self, xml_string):
+        """
+        Parse DTE XML and extract relevant data.
+
+        Uses lxml to parse Chilean SII DTE XML format.
+
+        Args:
+            xml_string (str): XML content in ISO-8859-1 encoding
+
+        Returns:
+            dict: Parsed DTE data with keys:
+                - tipo_dte (str): DTE type code (33, 34, etc.)
+                - folio (str): DTE folio number
+                - fecha_emision (date): Emission date
+                - rut_emisor (str): Supplier RUT (formatted XX.XXX.XXX-X)
+                - razon_social_emisor (str): Supplier name
+                - giro_emisor (str): Supplier business activity
+                - direccion_emisor (str): Supplier address
+                - ciudad_emisor (str): Supplier city
+                - monto_neto (float): Net amount
+                - monto_iva (float): VAT amount
+                - monto_total (float): Total amount
+                - monto_exento (float): Exempt amount
+                - lineas (list): Detail lines
+
+        Raises:
+            Exception: If XML parsing fails
+        """
+        try:
+            # S-005: Parse XML con protección XXE (DTE recibido de proveedor - fuente no confiable)
+            root = fromstring_safe(xml_string.encode('ISO-8859-1'))
+
+            namespaces = {k if k else 'sii': v for k, v in root.nsmap.items() if v}
+            if 'ds' not in namespaces:
+                namespaces['ds'] = 'http://www.w3.org/2000/09/xmldsig#'
+
+            # Helper function to extract text
+            def extract_text(xpath, default=''):
+                element = root.find(xpath)
+                return element.text.strip() if element is not None and element.text else default
+
+            # Extract header data
+            tipo_dte = extract_text('.//IdDoc/TipoDTE')
+            folio = extract_text('.//IdDoc/Folio')
+            fecha_str = extract_text('.//IdDoc/FchEmis')
+
+            # Parse date (format: YYYY-MM-DD)
+            fecha_emision = datetime.strptime(fecha_str, '%Y-%m-%d').date() if fecha_str else fields.Date.today()
+
+            # Extract supplier (emisor) data
+            rut_emisor = extract_text('.//Emisor/RUTEmisor')
+            razon_social_emisor = extract_text('.//Emisor/RznSoc')
+            giro_emisor = extract_text('.//Emisor/GiroEmis')
+            direccion_emisor = extract_text('.//Emisor/DirOrigen')
+            ciudad_emisor = extract_text('.//Emisor/CmnaOrigen')
+
+            # Extract envelope metadata
+            envio_dte_id = None
+            setdte_element = None
+            documento_element = root.find('.//sii:Documento', namespaces) or root.find('.//Documento')
+
+            if root.tag.endswith('EnvioDTE'):
+                envio_dte_id = root.get('ID')
+                setdte_element = root.find('.//sii:SetDTE', namespaces) or root.find('.//SetDTE')
+            else:
+                setdte_element = root.find('.//sii:SetDTE', namespaces) or root.find('.//SetDTE')
+
+            if setdte_element is not None and not envio_dte_id:
+                envio_dte_id = setdte_element.get('ID')
+
+            # Extract digital signature info
+            signature_element = None
+            if documento_element is not None:
+                signature_element = documento_element.find('.//ds:Signature', namespaces) or documento_element.find(
+                    './/{http://www.w3.org/2000/09/xmldsig#}Signature'
+                )
+            if signature_element is None:
+                signature_element = root.find('.//ds:Signature', namespaces) or root.find(
+                    './/{http://www.w3.org/2000/09/xmldsig#}Signature'
+                )
+            digest_value = None
+            signature_xml = None
+
+            if signature_element is not None:
+                digest_element = signature_element.find('.//ds:DigestValue', namespaces) or signature_element.find(
+                    './/{http://www.w3.org/2000/09/xmldsig#}DigestValue'
+                )
+                if digest_element is not None and digest_element.text:
+                    digest_value = digest_element.text.strip()
+                signature_xml = etree.tostring(signature_element, encoding='unicode')
+
+            # Extract amounts
+            monto_neto = float(extract_text('.//Totales/MntNeto', '0'))
+            monto_iva = float(extract_text('.//Totales/IVA', '0'))
+            monto_total = float(extract_text('.//Totales/MntTotal', '0'))
+            monto_exento = float(extract_text('.//Totales/MntExe', '0'))
+
+            # Extract detail lines
+            lineas = []
+            detalle_elements = root.findall('.//Detalle')
+            for detalle in detalle_elements:
+                linea = {
+                    'numero': detalle.findtext('NroLinDet', ''),
+                    'nombre': detalle.findtext('NmbItem', ''),
+                    'descripcion': detalle.findtext('DscItem', ''),
+                    'cantidad': float(detalle.findtext('QtyItem', '0')),
+                    'precio_unitario': float(detalle.findtext('PrcItem', '0')),
+                    'monto_total': float(detalle.findtext('MontoItem', '0')),
+                }
+                lineas.append(linea)
+
+            return {
+                'tipo_dte': tipo_dte,
+                'folio': folio,
+                'fecha_emision': fecha_emision,
+                'rut_emisor': rut_emisor,
+                'razon_social_emisor': razon_social_emisor,
+                'giro_emisor': giro_emisor,
+                'direccion_emisor': direccion_emisor,
+                'ciudad_emisor': ciudad_emisor,
+                'monto_neto': monto_neto,
+                'monto_iva': monto_iva,
+                'monto_total': monto_total,
+                'monto_exento': monto_exento,
+                'lineas': lineas,
+                'items': lineas,
+                'digest_value': digest_value,
+                'envio_dte_id': envio_dte_id,
+                'documento_signature': signature_xml,
+            }
+
+        except Exception as e:
+            _logger.error(f"XML parsing failed: {e}", exc_info=True)
+            raise Exception(f"Failed to parse DTE XML: {str(e)}")
+
+    # ═══════════════════════════════════════════════════════════
     # ACTIONS
     # ═══════════════════════════════════════════════════════════
 
@@ -335,16 +748,17 @@ class DTEInbox(models.Model):
 
             warnings.extend(structure_result.get('warnings', []))
 
-            # 1.2. TED validation
+            # 1.2. TED validation (SPRINT 2A: Ahora incluye validación firma RSA)
             if self.raw_xml:
                 ted_result = TEDValidator.validate_ted(
                     xml_string=self.raw_xml,
-                    dte_data=dte_data
+                    dte_data=dte_data,
+                    env=self.env  # SPRINT 2A: Pasar env para validación firma
                 )
 
                 if ted_result['valid']:
                     self.ted_validated = True
-                    _logger.info("✅ TED validation PASSED")
+                    _logger.info("✅ TED validation PASSED (including RSA signature)")
                 else:
                     errors.extend(ted_result['errors'])
                     _logger.warning(f"❌ TED validation FAILED")
@@ -769,60 +1183,8 @@ class DTEInbox(models.Model):
         return None
 
     # ═══════════════════════════════════════════════════════════
-    # CRON JOB
+    # HELPER METHODS
     # ═══════════════════════════════════════════════════════════
-
-    @api.model
-    def cron_check_inbox(self):
-        """
-        Cron job to check email inbox for new DTEs.
-
-        Runs every 1 hour.
-        """
-        _logger.info("Running DTE inbox cron job")
-
-        try:
-            # Get IMAP configuration from company
-            company = self.env.company
-
-            imap_config = {
-                'host': company.dte_imap_host or 'imap.gmail.com',
-                'port': company.dte_imap_port or 993,
-                'user': company.dte_imap_user,
-                'password': company.dte_imap_password,
-                'use_ssl': company.dte_imap_ssl if hasattr(company, 'dte_imap_ssl') else True,
-                'sender_filter': 'dte@sii.cl',
-                'unread_only': True,
-            }
-
-            if not imap_config['user'] or not imap_config['password']:
-                _logger.warning("IMAP credentials not configured")
-                return
-
-            # Call DTE Service to check inbox
-            dte_service_url = self.env['ir.config_parameter'].sudo().get_param(
-                'l10n_cl_dte.dte_service_url',
-                'http://odoo-eergy-services:8001'
-            )
-
-            response = requests.post(
-                f"{dte_service_url}/api/v1/reception/check_inbox",
-                json=imap_config,
-                params={'company_rut': company.vat},
-                timeout=120
-            )
-
-            if response.status_code == 200:
-                result = response.json()
-
-                # Create DTE inbox records
-                for dte_data in result.get('dtes', []):
-                    self._create_inbox_record(dte_data)
-
-                _logger.info(f"Inbox check complete: {result['count']} DTEs processed")
-
-        except Exception as e:
-            _logger.error(f"Inbox cron job failed: {e}")
 
     def _create_inbox_record(self, dte_data):
         """Create DTE inbox record from parsed data."""
@@ -840,6 +1202,10 @@ class DTEInbox(models.Model):
         # Create new record
         totales = dte_data.get('totales', {})
         emisor = dte_data.get('emisor', {})
+        fecha_recepcion = dte_data.get('fecha_recepcion_sii')
+
+        if isinstance(fecha_recepcion, datetime):
+            fecha_recepcion = fields.Datetime.to_string(fecha_recepcion)
 
         vals = {
             'folio': dte_data.get('folio'),
@@ -859,6 +1225,10 @@ class DTEInbox(models.Model):
             'parsed_data': json.dumps(dte_data),
             'received_via': 'email' if dte_data.get('email_id') else 'sii',
             'state': 'new',
+            'fecha_recepcion_sii': fecha_recepcion or fields.Datetime.to_string(fields.Datetime.now()),
+            'digest_value': dte_data.get('digest_value'),
+            'envio_dte_id': dte_data.get('envio_dte_id'),
+            'documento_signature': dte_data.get('documento_signature'),
         }
 
         record = self.create(vals)

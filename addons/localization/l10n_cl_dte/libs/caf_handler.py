@@ -29,6 +29,9 @@ from datetime import datetime, date
 import base64
 import logging
 
+# S-005: Protección XXE (Gap Closure P0)
+from .safe_xml_parser import fromstring_safe
+
 _logger = logging.getLogger(__name__)
 
 
@@ -88,11 +91,11 @@ class CAFHandler:
             }
         """
         try:
-            # Parse XML
+            # S-005: Parse XML con protección XXE
             if isinstance(caf_xml, bytes):
-                root = etree.fromstring(caf_xml)
+                root = fromstring_safe(caf_xml)
             else:
-                root = etree.fromstring(caf_xml.encode('ISO-8859-1'))
+                root = fromstring_safe(caf_xml.encode('ISO-8859-1'))
 
             # Buscar elemento CAF
             caf_element = root.find('.//CAF')
