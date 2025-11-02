@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Chilean Localization - Electronic Invoicing (DTE)',
-    'version': '19.0.1.0.0',
+    'version': '19.0.3.0.0',  # SPRINT 2A: TED Validation + Performance (Security + DB Indexes)
     'category': 'Accounting/Localizations',
     'summary': 'Facturación Electrónica Chilena - Sistema DTE Enterprise-Grade para SII',
     'description': """
@@ -166,19 +166,21 @@ Es un desarrollo independiente para localización chilena.
 
         # Datos base
         'data/dte_document_types.xml',
-        'data/sii_activity_codes.xml',
+        'data/sii_activity_codes_full.xml',  # ⭐ 700 códigos oficiales completos SII
+        'data/l10n_cl_comunas_data.xml',     # ⭐ NEW (2025-10-24): 347 comunas oficiales SII
         'data/retencion_iue_tasa_data.xml',  # ⭐ Tasas históricas IUE 2018-2025
         'data/l10n_cl_bhe_retention_rate_data.xml',  # ⭐ Tasas retención BHE
         'data/cron_jobs.xml',  # ⭐ Cron jobs automáticos
         'data/ir_cron_disaster_recovery.xml',  # ⭐ NEW (2025-10-24): Disaster Recovery schedulers
         'data/ir_cron_dte_status_poller.xml',  # ⭐ NEW (2025-10-24): DTE Status Poller (Sprint 2)
+        'data/ir_cron_rcv_sync.xml',  # ⭐ NEW (Sprint 1 - 2025-11-01): RCV Daily Sync (Res. 61/2017)
 
         # ⭐ WIZARDS PRIMERO (definen actions referenciadas por vistas)
         'wizards/dte_generate_wizard_views.xml',  # ✅ REACTIVADO ETAPA 2
         'wizards/contingency_wizard_views.xml',  # ⭐ NEW (Sprint 3 - 2025-10-24): Contingency Mode Wizard
         'wizards/ai_chat_universal_wizard_views.xml',  # ⭐ NEW (Phase 2 - 2025-10-24): Universal AI Chat
 
-        # ⭐ VISTAS (referencian wizard actions ya definidos arriba)
+        # ⭐ VISTAS (definen actions que serán referenciadas por menus.xml)
         'views/dte_certificate_views.xml',
         'views/dte_caf_views.xml',
         'views/account_move_dte_views.xml',
@@ -198,9 +200,17 @@ Es un desarrollo independiente para localización chilena.
         'views/analytic_dashboard_views.xml',   # ⭐ NUEVO: Dashboard Cuentas Analíticas
         'views/boleta_honorarios_views.xml',    # ⭐ NUEVO Sprint D: Boletas de Honorarios (loaded first - referenced by retencion_iue_tasa)
         'views/retencion_iue_tasa_views.xml',   # ⭐ NUEVO Sprint D: Tasas de Retención IUE
+        'views/l10n_cl_rcv_entry_views.xml',    # ⭐ NEW (Sprint 1 - 2025-11-01): RCV Entries (Res. 61/2017)
+        'views/l10n_cl_rcv_period_views.xml',   # ⭐ NEW (Sprint 1 - 2025-11-01): RCV Periods (Res. 61/2017)
 
-        # ⭐ MENÚS AL FINAL (referencian actions ya definidas)
+        # ⭐ MENÚS (referencian actions ya definidas arriba)
         'views/menus.xml',
+
+        # ⭐ VISTAS QUE DEPENDEN DE MENÚS (referencian menuitems definidos en menus.xml)
+        'views/sii_activity_code_views.xml',  # ⭐ NEW (2025-10-24): Catálogo códigos actividad económica
+        'views/l10n_cl_comuna_views.xml',    # ⭐ NEW (2025-10-24): Catálogo 347 comunas oficiales SII (referencia menu_dte_configuration)
+        'views/res_partner_views.xml',       # ⭐ NEW (2025-10-24): Comuna Many2one en contactos
+        'views/res_company_views.xml',  # ⭐ NEW (2025-10-24): Razón Social + Acteco en formulario empresa
 
         # ⭐ Wizards adicionales desactivados temporalmente
         # 'wizards/ai_chat_wizard_views.xml',       # ⭐ DESACTIVADO: depende de ai_chat_integration
