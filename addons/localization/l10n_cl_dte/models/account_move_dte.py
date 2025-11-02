@@ -1657,15 +1657,21 @@ class AccountMoveDTE(models.Model):
     # ═══════════════════════════════════════════════════════════
     
     def button_draft(self):
-        """Override para resetear estado DTE al volver a borrador"""
+        """
+        Override para resetear estado DTE al volver a borrador.
+
+        PERFORMANCE (US-1.2): Bulk write to eliminate N+1 query pattern.
+        """
         result = super().button_draft()
-        
+
+        # Validate all moves first (fail fast)
         for move in self:
             if move.dte_status in ['sent', 'accepted']:
                 raise UserError(_('No se puede volver a borrador un DTE que ya fue enviado al SII.'))
-            
-            move.write({'dte_status': 'draft'})
-        
+
+        # Bulk write after validation (1 query instead of N)
+        self.write({'dte_status': 'draft'})
+
         return result
     
     def action_post(self):
@@ -1673,16 +1679,21 @@ class AccountMoveDTE(models.Model):
         Override para marcar DTE como 'por enviar' al confirmar.
 
         SPRINT 1 (2025-11-01): Añadido auto-registro en RCV (Resolución SII 61/2017)
+        PERFORMANCE (US-1.2): Bulk write to eliminate N+1 query pattern.
         """
         result = super().action_post()
 
-        for move in self:
-            # Marcar DTE como 'por enviar'
-            if move.dte_code and move.move_type in ['out_invoice', 'out_refund']:
-                move.write({'dte_status': 'to_send'})
+        # PERFORMANCE: Bulk update DTE status (1 query instead of N)
+        dtes_to_send = self.filtered(
+            lambda m: m.dte_code and m.move_type in ['out_invoice', 'out_refund']
+        )
+        if dtes_to_send:
+            dtes_to_send.write({'dte_status': 'to_send'})
 
-            # ⭐ SPRINT 1: Auto-registro en RCV (Res. 61/2017)
-            # Registrar TODOS los DTEs (ventas y compras) en el RCV
+        # ⭐ SPRINT 1: Auto-registro en RCV (Res. 61/2017)
+        # Registrar TODOS los DTEs (ventas y compras) en el RCV
+        # NOTE: Must stay in loop - creates individual RCV entries
+        for move in self:
             if move.is_dte and move.invoice_date:
                 try:
                     # Crear entrada RCV automáticamente
@@ -1753,6 +1764,11 @@ class AccountMoveDTE(models.Model):
         updated_count = 0
         error_count = 0
 
+        # PERFORMANCE (US-1.2): Collect updates to enable bulk writes
+        moves_accepted = self.env['account.move']
+        moves_repaired = self.env['account.move']
+        moves_rejected = []  # List of (move, error_message) tuples
+
         for move in moves:
             try:
                 _logger.info(f"Polling DTE {move.dte_code} {move.dte_folio} (track_id: {move.dte_track_id})")
@@ -1763,23 +1779,18 @@ class AccountMoveDTE(models.Model):
                 if result.get('success'):
                     sii_status = result.get('status', '').upper()
 
-                    # Map SII status to Odoo status
+                    # Collect moves by status for bulk update
                     if sii_status == 'ACEPTADO':
-                        move.write({'dte_status': 'accepted'})
-                        updated_count += 1
+                        moves_accepted |= move
                         _logger.info(f"✅ DTE {move.dte_code} {move.dte_folio} ACCEPTED by SII")
 
                     elif sii_status == 'RECHAZADO':
-                        move.write({
-                            'dte_status': 'rejected',
-                            'dte_error_message': result.get('error_message', 'Rechazado por SII')
-                        })
-                        updated_count += 1
+                        error_msg = result.get('error_message', 'Rechazado por SII')
+                        moves_rejected.append((move, error_msg))
                         _logger.warning(f"❌ DTE {move.dte_code} {move.dte_folio} REJECTED by SII")
 
                     elif sii_status == 'REPARADO':
-                        move.write({'dte_status': 'repaired'})
-                        updated_count += 1
+                        moves_repaired |= move
                         _logger.info(f"🔧 DTE {move.dte_code} {move.dte_folio} REPAIRED by SII")
 
                     else:
@@ -1798,6 +1809,24 @@ class AccountMoveDTE(models.Model):
                 _logger.error(f"Exception polling DTE {move.id}: {e}", exc_info=True)
                 error_count += 1
                 continue
+
+        # PERFORMANCE (US-1.2): Bulk writes (much faster than N individual writes)
+        if moves_accepted:
+            moves_accepted.write({'dte_status': 'accepted'})
+            updated_count += len(moves_accepted)
+
+        if moves_repaired:
+            moves_repaired.write({'dte_status': 'repaired'})
+            updated_count += len(moves_repaired)
+
+        # Rejected DTEs: Individual writes needed for custom error messages
+        # NOTE: Could be optimized further by grouping by error_message
+        for move, error_msg in moves_rejected:
+            move.write({
+                'dte_status': 'rejected',
+                'dte_error_message': error_msg
+            })
+            updated_count += 1
 
         _logger.info("=" * 70)
         _logger.info(f"✅ DTE Status Poller completed:")
