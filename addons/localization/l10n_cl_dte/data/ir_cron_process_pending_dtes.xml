@@ -29,8 +29,6 @@
             <field name="code">model._cron_process_pending_dtes()</field>
             <field name="interval_number">5</field>
             <field name="interval_type">minutes</field>
-            <field name="numbercall">-1</field>
-            <field name="doall" eval="False"/>
             <field name="active">True</field>
             <field name="priority">5</field>
             <field name="user_id" ref="base.user_root"/>
