@@ -20,3 +20,7 @@ from . import test_caf_signature_validator  # F-002: CAF signature validation (R
 from . import test_rsask_encryption  # F-005: RSASK encryption (Fernet AES-128)
 from . import test_xxe_protection  # S-005: XXE protection (OWASP Top 10)
 
+# Sprint 1 tests
+from . import test_exception_handling  # US-1.1: Bare exception handling
+from . import test_computed_fields_cache  # US-1.4: @api.depends cache invalidation
+
