@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Chilean Localization - Electronic Invoicing (DTE)',
-    'version': '19.0.3.0.0',  # SPRINT 2A: TED Validation + Performance (Security + DB Indexes)
+    'version': '19.0.4.0.0',  # SPRINT 1 US-1.3: Database Indexes for Performance
     'category': 'Accounting/Localizations',
     'summary': 'Facturación Electrónica Chilena - Sistema DTE Enterprise-Grade para SII',
     'description': """
