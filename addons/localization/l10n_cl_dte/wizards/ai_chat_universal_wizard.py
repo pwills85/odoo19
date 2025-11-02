@@ -174,15 +174,27 @@ class AIChatUniversalWizard(models.TransientModel):
             else:
                 wizard.active_module = 'general'
 
+    @api.depends()  # No field dependencies - queries external service
     def _compute_allowed_plugins(self):
-        """Get plugins user can access"""
+        """
+        Get plugins user can access.
+
+        US-1.4: Added @api.depends() for external service query.
+        No field dependencies (queries ai.agent.selector service).
+        """
         for wizard in self:
             selector = self.env['ai.agent.selector']
             allowed = selector.get_allowed_plugins()
             wizard.allowed_plugins = ', '.join(allowed)
 
+    @api.depends('user_message', 'context_active_model', 'context_active_id')
     def _compute_selected_plugin(self):
-        """Determine which plugin will be used"""
+        """
+        Determine which plugin will be used.
+
+        US-1.4: Added @api.depends() to cache plugin selection.
+        Recomputes when message or context changes.
+        """
         for wizard in self:
             try:
                 selector = self.env['ai.agent.selector']
@@ -200,8 +212,14 @@ class AIChatUniversalWizard(models.TransientModel):
                 _logger.error("Error selecting plugin: %s", e)
                 wizard.selected_plugin = 'unknown'
 
+    @api.depends()  # No field dependencies - queries ir.config_parameter
     def _compute_ai_service_config(self):
-        """Get AI Service configuration"""
+        """
+        Get AI Service configuration.
+
+        US-1.4: Added @api.depends() for system config query.
+        No field dependencies (queries ir.config_parameter + health check).
+        """
         for wizard in self:
             try:
                 config = self.env['ir.config_parameter'].sudo()
