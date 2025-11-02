@@ -20,6 +20,7 @@ Author: EERGYGROUP - Security Enhancement 2025-10-24
 
 from cryptography.fernet import Fernet, InvalidToken
 import base64
+import binascii
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -181,7 +182,12 @@ class EncryptionHelper:
             # Fernet tokens start with version byte (0x80)
             # After base64 encoding, this typically starts with 'gA'
             return value.startswith('gA') and len(decoded) > 50
-        except:
+        except (ValueError, TypeError, binascii.Error) as e:
+            # Base64 decode failed - not a valid Fernet token
+            _logger.debug(
+                f"[Encryption] Value is not a valid Fernet token: {e}",
+                extra={'error_type': type(e).__name__}
+            )
             return False
 
 
