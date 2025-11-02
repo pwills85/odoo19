@@ -17,4 +17,5 @@ from . import test_historical_signatures  # Historical DTE signature preservatio
 
 # Gap Closure P0 tests
 from . import test_caf_signature_validator  # F-002: CAF signature validation (Res. SII N°11)
+from . import test_rsask_encryption  # F-005: RSASK encryption (Fernet AES-128)
 

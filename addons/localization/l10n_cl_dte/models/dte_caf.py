@@ -9,6 +9,9 @@ import logging
 # F-002: Validación firma digital CAF (Gap Closure P0)
 from odoo.addons.l10n_cl_dte.libs.caf_signature_validator import get_validator
 
+# F-005: Encriptación RSASK (Gap Closure P0)
+from odoo.addons.l10n_cl_dte.tools.encryption_helper import get_encryption_helper
+
 _logger = logging.getLogger(__name__)
 
 
@@ -136,6 +139,21 @@ class DTECAF(models.Model):
         help='Indica si la firma digital FRMA del SII fue verificada criptográficamente según Resolución Ex. SII N°11'
     )
 
+    # F-005: Encriptación RSASK (Gap Closure P0)
+    rsask_encrypted = fields.Binary(
+        string='RSASK Encriptado',
+        attachment=True,
+        help='Llave privada RSA del CAF encriptada con Fernet AES-128. Nunca se almacena en texto plano.'
+    )
+
+    rsask = fields.Text(
+        string='RSASK (Temporal)',
+        compute='_compute_rsask',
+        inverse='_inverse_rsask',
+        store=False,
+        help='Llave privada RSA del CAF (solo en memoria, nunca almacenada en base de datos)'
+    )
+
     # ═══════════════════════════════════════════════════════════
     # ESTADO
     # ═══════════════════════════════════════════════════════════
@@ -242,7 +260,71 @@ class DTECAF(models.Model):
                 record.folios_disponibles = max(0, record.folio_hasta - record.folio_desde + 1 - folios_usados)
             else:
                 record.folios_disponibles = record.folio_hasta - record.folio_desde + 1 if record.folio_hasta and record.folio_desde else 0
-    
+
+    # F-005: Encriptación RSASK (Gap Closure P0)
+    @api.depends('rsask_encrypted')
+    def _compute_rsask(self):
+        """
+        Desencripta RSASK en memoria bajo demanda.
+
+        Este campo computed NUNCA se almacena en base de datos (store=False).
+        La desencriptación ocurre solo cuando se accede al campo.
+
+        Sprint: Gap Closure P0 - F-005
+        Date: 2025-11-02
+        """
+        encryption_helper = get_encryption_helper(self.env)
+
+        for record in self:
+            if record.rsask_encrypted:
+                try:
+                    # Desencriptar desde Binary
+                    encrypted_b64 = base64.b64encode(record.rsask_encrypted).decode('utf-8')
+                    record.rsask = encryption_helper.decrypt(encrypted_b64)
+                    _logger.debug(f'[DTE_CAF] RSASK desencriptado para CAF ID {record.id}')
+                except Exception as e:
+                    _logger.error(f'[DTE_CAF] Error desencriptando RSASK ID {record.id}: {e}', exc_info=True)
+                    record.rsask = False
+            else:
+                record.rsask = False
+
+    def _inverse_rsask(self):
+        """
+        Encripta RSASK antes de almacenar en base de datos.
+
+        Cuando se asigna un valor a record.rsask, este método se ejecuta
+        automáticamente para encriptar y almacenar en rsask_encrypted.
+
+        Raises:
+            ValidationError: Si no se puede encriptar RSASK
+
+        Sprint: Gap Closure P0 - F-005
+        Date: 2025-11-02
+        """
+        encryption_helper = get_encryption_helper(self.env)
+
+        for record in self:
+            if record.rsask:
+                try:
+                    # Encriptar
+                    encrypted_b64 = encryption_helper.encrypt(record.rsask)
+
+                    # Convertir de base64 string a Binary
+                    encrypted_bytes = base64.b64decode(encrypted_b64)
+                    record.rsask_encrypted = encrypted_bytes
+
+                    _logger.info(f'[DTE_CAF] ✅ RSASK encriptado para CAF ID {record.id}')
+                except Exception as e:
+                    _logger.error(f'[DTE_CAF] ❌ Error encriptando RSASK ID {record.id}: {e}', exc_info=True)
+                    raise ValidationError(
+                        _('No se pudo encriptar la llave privada RSA (RSASK).\n\n'
+                          'Error: %s\n\n'
+                          'Contacte al administrador del sistema.') % str(e)
+                    )
+            else:
+                # Si rsask es False/None, limpiar encrypted
+                record.rsask_encrypted = False
+
     # ═══════════════════════════════════════════════════════════
     # CRUD METHODS
     # ═══════════════════════════════════════════════════════════
@@ -302,12 +384,14 @@ class DTECAF(models.Model):
     def _extract_caf_metadata(self, caf_file_b64):
         """
         Extrae metadata del archivo CAF (XML)
-        
+
+        F-005: Ahora extrae y encripta RSASK automáticamente.
+
         Args:
             caf_file_b64: Archivo CAF en base64
-        
+
         Returns:
-            Dict con metadata extraída
+            Dict con metadata extraída (incluye rsask_encrypted)
         """
         try:
             # Decodificar base64
@@ -315,28 +399,55 @@ class DTECAF(models.Model):
                 caf_data = base64.b64decode(caf_file_b64)
             else:
                 caf_data = caf_file_b64
-            
+
             # Parsear XML
             root = etree.fromstring(caf_data)
-            
+
             # Extraer datos (estructura aproximada del CAF del SII)
             # Nota: La estructura exacta puede variar
             folio_desde = root.findtext('.//RNG/D') or root.findtext('.//CAF/DA/RNG/D')
             folio_hasta = root.findtext('.//RNG/H') or root.findtext('.//CAF/DA/RNG/H')
             fecha_aut = root.findtext('.//FA') or root.findtext('.//CAF/DA/FA')
             rut = root.findtext('.//RE') or root.findtext('.//CAF/DA/RE')
-            
+
+            # F-005: Extraer RSASK (llave privada RSA) y encriptar
+            rsask_element = root.find('.//RSASK') or root.find('.//CAF/DA/RSASK')
+            rsask_encrypted_bytes = None
+
+            if rsask_element is not None and rsask_element.text:
+                rsask_plaintext = rsask_element.text.strip()
+
+                # Encriptar RSASK antes de almacenar
+                try:
+                    encryption_helper = get_encryption_helper(self.env)
+                    encrypted_b64 = encryption_helper.encrypt(rsask_plaintext)
+
+                    # Convertir de base64 string a Binary
+                    rsask_encrypted_bytes = base64.b64decode(encrypted_b64)
+
+                    _logger.info('[DTE_CAF] ✅ RSASK encriptado durante extracción de metadata')
+                except Exception as e:
+                    _logger.error(f'[DTE_CAF] ❌ Error encriptando RSASK: {e}', exc_info=True)
+                    raise ValidationError(
+                        _('No se pudo encriptar la llave privada RSA del CAF.\n\n'
+                          'Error: %s\n\n'
+                          'El CAF no puede ser procesado sin encriptación segura de RSASK.') % str(e)
+                    )
+            else:
+                _logger.warning('[DTE_CAF] ⚠️ RSASK no encontrado en CAF - CAF puede ser inválido')
+
             # Guardar XML completo para incluir en DTEs
             caf_xml_str = etree.tostring(root, encoding='unicode')
-            
+
             return {
                 'caf_xml_content': caf_xml_str,
                 'folio_desde': int(folio_desde) if folio_desde else None,
                 'folio_hasta': int(folio_hasta) if folio_hasta else None,
                 'fecha_autorizacion': fecha_aut,
                 'rut_empresa': rut,
+                'rsask_encrypted': rsask_encrypted_bytes,  # F-005: RSASK encriptado
             }
-            
+
         except Exception as e:
             _logger.error(f'Error al extraer metadata del CAF: {str(e)}')
             raise ValidationError(_('Error al procesar archivo CAF: %s') % str(e))
