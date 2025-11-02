@@ -46,6 +46,9 @@
                         <group>
                             <field name="fecha_autorizacion" readonly="1"/>
                             <field name="rut_empresa" readonly="1"/>
+                            <field name="firma_validada" readonly="1" widget="boolean_toggle"
+                                   decoration-success="firma_validada == True"
+                                   decoration-danger="firma_validada == False"/>
                             <field name="active" widget="boolean_toggle"/>
                         </group>
                     </group>
@@ -68,8 +71,8 @@
         <field name="name">dte.caf.tree</field>
         <field name="model">dte.caf</field>
         <field name="arch" type="xml">
-            <list string="Códigos de Autorización de Folios" 
-                  decoration-success="state == 'valid'" 
+            <list string="Códigos de Autorización de Folios"
+                  decoration-success="state == 'valid'"
                   decoration-info="state == 'in_use'"
                   decoration-danger="state == 'exhausted'">
                 <field name="name"/>
@@ -79,6 +82,7 @@
                 <field name="folio_hasta"/>
                 <field name="folios_disponibles"/>
                 <field name="fecha_autorizacion"/>
+                <field name="firma_validada" widget="boolean" decoration-success="firma_validada == True"/>
                 <field name="state" widget="badge"/>
             </list>
         </field>

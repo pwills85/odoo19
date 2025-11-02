@@ -87,6 +87,7 @@ Instead of inheriting from models.AbstractModel, classes now use:
 - 2025-10-24: Migrated from odoo-eergy-services microservice
 - 2025-10-29: P0-P1 Gap Closure (signature, TED, authentication)
 - 2025-11-02: Refactored to Pure Python (Odoo 19 compliance)
+- 2025-11-02: Gap Closure P0 - F-002 CAF signature validation (Resolución Ex. SII N°11)
 
 **Files in this package:**
 
@@ -103,6 +104,7 @@ Additional validators (Sprint 4-5):
 - ted_validator.py           → TED signature validation
 - libro_guias_generator.py   → Libro Guías SII
 - caf_handler.py             → CAF management
+- caf_signature_validator.py → CAF signature validation (F-002 Gap Closure P0)
 - sii_authenticator.py       → SII authentication token
 - envio_dte_generator.py     → EnvioDTE wrapper
 

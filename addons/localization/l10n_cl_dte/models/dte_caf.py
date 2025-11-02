@@ -6,6 +6,9 @@ from lxml import etree
 import base64
 import logging
 
+# F-002: Validación firma digital CAF (Gap Closure P0)
+from odoo.addons.l10n_cl_dte.libs.caf_signature_validator import get_validator
+
 _logger = logging.getLogger(__name__)
 
 
@@ -124,7 +127,15 @@ class DTECAF(models.Model):
         readonly=True,
         help='RUT de la empresa autorizada (debe coincidir)'
     )
-    
+
+    # F-002: Validación firma digital CAF (Gap Closure P0)
+    firma_validada = fields.Boolean(
+        string='Firma SII Validada',
+        readonly=True,
+        default=False,
+        help='Indica si la firma digital FRMA del SII fue verificada criptográficamente según Resolución Ex. SII N°11'
+    )
+
     # ═══════════════════════════════════════════════════════════
     # ESTADO
     # ═══════════════════════════════════════════════════════════
@@ -154,7 +165,60 @@ class DTECAF(models.Model):
                 raise ValidationError(
                     _('El folio inicial debe ser menor o igual al folio final')
                 )
-    
+
+    @api.constrains('caf_xml_content')
+    def _validate_caf_signature_on_upload(self):
+        """
+        F-002: Valida la firma digital FRMA del SII al cargar un CAF.
+
+        Esta validación es OBLIGATORIA según Resolución Ex. SII N°11.
+        Verifica que la firma digital FRMA fue emitida por el SII de Chile
+        usando validación criptográfica RSA SHA1.
+
+        Raises:
+            ValidationError: Si la firma no es válida o no puede ser verificada
+
+        Sprint: Gap Closure P0 - F-002
+        Date: 2025-11-02
+        """
+        for record in self:
+            if not record.caf_xml_content:
+                continue
+
+            _logger.info(f'[DTE_CAF] Validando firma digital CAF ID {record.id}')
+
+            try:
+                validator = get_validator()
+                is_valid, message = validator.validate_caf_signature(record.caf_xml_content)
+
+                if not is_valid:
+                    _logger.error(f'[DTE_CAF] ❌ Firma CAF inválida ID {record.id}: {message}')
+                    raise ValidationError(
+                        _('Firma digital del CAF no es válida.\n\n'
+                          'Motivo: %s\n\n'
+                          'El archivo CAF debe ser emitido por el SII de Chile y '
+                          'tener una firma digital FRMA válida.\n\n'
+                          'Verifique que:\n'
+                          '1. El archivo CAF fue descargado correctamente del portal SII\n'
+                          '2. El archivo no ha sido modificado\n'
+                          '3. El archivo corresponde a su empresa (RUT emisor correcto)') % message
+                    )
+
+                # Marcar como validado
+                # Usar write() en vez de asignación directa para evitar recursión
+                record.sudo().write({'firma_validada': True})
+                _logger.info(f'[DTE_CAF] ✅ Firma CAF validada correctamente ID {record.id}')
+
+            except ValidationError:
+                # Re-raise ValidationError para que Odoo la muestre al usuario
+                raise
+            except Exception as e:
+                _logger.error(f'[DTE_CAF] Error inesperado validando firma CAF ID {record.id}: {e}', exc_info=True)
+                raise ValidationError(
+                    _('Error técnico al validar firma digital del CAF: %s\n\n'
+                      'Contacte al administrador del sistema.') % str(e)
+                )
+
     # ═══════════════════════════════════════════════════════════
     # CAMPOS COMPUTADOS
     # ═══════════════════════════════════════════════════════════

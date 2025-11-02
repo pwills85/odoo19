@@ -15,3 +15,6 @@ from . import test_dte_submission  # Complete submission flow tests (Phase 2)
 from . import test_bhe_historical_rates  # BHE historical retention rates
 from . import test_historical_signatures  # Historical DTE signature preservation
 
+# Gap Closure P0 tests
+from . import test_caf_signature_validator  # F-002: CAF signature validation (Res. SII N°11)
+
