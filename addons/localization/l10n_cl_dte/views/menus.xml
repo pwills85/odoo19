@@ -112,15 +112,6 @@
         parent="menu_dte_reportes"
         action="action_l10n_cl_rcv_entry"
         sequence="6"/>
-
-    <!-- ⭐ NEW (Sprint 2 - 2025-11-02): Wizard Importar CSV RCV -->
-    <menuitem
-        id="menu_rcv_csv_import_wizard"
-        name="Importar CSV RCV"
-        parent="menu_dte_reportes"
-        action="action_rcv_csv_import_wizard"
-        sequence="7"/>
-
     <!-- Libro de Compra/Venta (OBSOLETO - reemplazado por RCV desde Aug 2017) -->
     <menuitem
         id="menu_dte_libro_compra_venta"
