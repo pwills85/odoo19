@@ -140,7 +140,12 @@ class AIChatUniversalWizard(models.TransientModel):
                 try:
                     record = self.env[wizard.context_active_model].browse(wizard.context_active_id)
                     wizard.context_active_record_name = record.display_name
-                except:
+                except (KeyError, AttributeError, ValueError) as e:
+                    # Failed to get display_name - use ID fallback
+                    _logger.debug(
+                        f"[AI Chat Wizard] Failed to get display_name for {wizard.context_active_model}:{wizard.context_active_id}: {e}",
+                        extra={'error_type': type(e).__name__}
+                    )
                     wizard.context_active_record_name = f"ID {wizard.context_active_id}"
             else:
                 wizard.context_active_record_name = ''
@@ -169,15 +174,27 @@ class AIChatUniversalWizard(models.TransientModel):
             else:
                 wizard.active_module = 'general'
 
+    @api.depends()  # No field dependencies - queries external service
     def _compute_allowed_plugins(self):
-        """Get plugins user can access"""
+        """
+        Get plugins user can access.
+
+        US-1.4: Added @api.depends() for external service query.
+        No field dependencies (queries ai.agent.selector service).
+        """
         for wizard in self:
             selector = self.env['ai.agent.selector']
             allowed = selector.get_allowed_plugins()
             wizard.allowed_plugins = ', '.join(allowed)
 
+    @api.depends('user_message', 'context_active_model', 'context_active_id')
     def _compute_selected_plugin(self):
-        """Determine which plugin will be used"""
+        """
+        Determine which plugin will be used.
+
+        US-1.4: Added @api.depends() to cache plugin selection.
+        Recomputes when message or context changes.
+        """
         for wizard in self:
             try:
                 selector = self.env['ai.agent.selector']
@@ -195,8 +212,14 @@ class AIChatUniversalWizard(models.TransientModel):
                 _logger.error("Error selecting plugin: %s", e)
                 wizard.selected_plugin = 'unknown'
 
+    @api.depends()  # No field dependencies - queries ir.config_parameter
     def _compute_ai_service_config(self):
-        """Get AI Service configuration"""
+        """
+        Get AI Service configuration.
+
+        US-1.4: Added @api.depends() for system config query.
+        No field dependencies (queries ir.config_parameter + health check).
+        """
         for wizard in self:
             try:
                 config = self.env['ir.config_parameter'].sudo()
@@ -213,7 +236,14 @@ class AIChatUniversalWizard(models.TransientModel):
                         timeout=2
                     )
                     wizard.ai_service_available = (response.status_code == 200)
-                except:
+                except (requests.RequestException, requests.Timeout, ConnectionError) as e:
+                    _logger.debug(
+                        f"[AI Chat Wizard] AI service health check failed: {e}",
+                        extra={
+                            'ai_service_url': wizard.ai_service_url,
+                            'error_type': type(e).__name__
+                        }
+                    )
                     wizard.ai_service_available = False
 
             except Exception as e:
@@ -388,7 +418,15 @@ class AIChatUniversalWizard(models.TransientModel):
                         # Simple types
                         elif field.type in ('char', 'text', 'integer', 'float', 'monetary', 'selection'):
                             record_data[field_name] = value
-                    except:
+                    except (KeyError, AttributeError, ValueError) as e:
+                        # Failed to extract field data - skip this field
+                        _logger.debug(
+                            f"[AI Chat Wizard] Failed to extract field data: {e}",
+                            extra={
+                                'field_name': field_name,
+                                'error_type': type(e).__name__
+                            }
+                        )
                         pass
 
                 context['active_record_data'] = record_data
