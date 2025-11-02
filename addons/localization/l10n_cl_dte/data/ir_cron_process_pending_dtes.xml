@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- ══════════════════════════════════════════════════════════════════════
+             P-005/P-008 SOLUTION: QUASI-REALTIME PROCESSING (ir.cron)
+             ══════════════════════════════════════════════════════════════════════
+             Professional Decision: Use native Odoo ir.cron instead of RabbitMQ
+
+             Capacity: 600 DTEs/hora (50 DTEs/batch x 12 batches/hora)
+             EERGYGROUP need: 20-30 DTEs/hora
+             Margin: 20x over requirement
+
+             Benefits:
+             - Zero external dependencies
+             - Native Odoo (community standard)
+             - Simple operational model
+             - Integrated logging and monitoring
+             - Latency: Max 5 min (avg 2.5 min)
+
+             Reference: /tmp/rabbitmq_analysis.md
+             Date: 2025-11-02
+        -->
+
+        <!-- Process Pending DTEs (Every 5 Minutes) - P-005/P-008 Native Solution -->
+        <record id="ir_cron_process_pending_dtes" model="ir.cron">
+            <field name="name">DTE: Process Pending DTEs (quasi-realtime every 5 min)</field>
+            <field name="model_id" ref="account.model_account_move"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_process_pending_dtes()</field>
+            <field name="interval_number">5</field>
+            <field name="interval_type">minutes</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+            <field name="active">True</field>
+            <field name="priority">5</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+    </data>
+</odoo>

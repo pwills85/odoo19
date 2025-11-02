@@ -174,6 +174,7 @@ Es un desarrollo independiente para localización chilena.
         'data/ir_cron_disaster_recovery.xml',  # ⭐ NEW (2025-10-24): Disaster Recovery schedulers
         'data/ir_cron_dte_status_poller.xml',  # ⭐ NEW (2025-10-24): DTE Status Poller (Sprint 2)
         'data/ir_cron_rcv_sync.xml',  # ⭐ NEW (Sprint 1 - 2025-11-01): RCV Daily Sync (Res. 61/2017)
+        'data/ir_cron_process_pending_dtes.xml',  # ⭐ NEW (2025-11-02): P-005/P-008 Native Solution - Quasi-realtime (every 5 min)
 
         # ⭐ WIZARDS PRIMERO (definen actions referenciadas por vistas)
         'wizards/dte_generate_wizard_views.xml',  # ✅ REACTIVADO ETAPA 2

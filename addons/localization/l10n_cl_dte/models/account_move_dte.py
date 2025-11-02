@@ -1850,6 +1850,85 @@ class AccountMoveDTE(models.Model):
         _logger.info(f"   Errors: {error_count}")
         _logger.info("=" * 70)
 
+    @api.model
+    def _cron_process_pending_dtes(self):
+        """
+        P-005/P-008 SOLUTION: Quasi-realtime DTE processing using native Odoo ir.cron.
+
+        Scheduled action (ir.cron): Process pending DTEs every 5 minutes.
+
+        Professional Decision: Use native Odoo instead of RabbitMQ + Celery.
+        Reference: /tmp/rabbitmq_analysis.md (2025-11-02)
+
+        Workflow:
+        1. Search DTEs with status='to_send' and state='posted'
+        2. Process up to 50 DTEs per batch (to avoid blocking > 60 seconds)
+        3. Call action_send_to_sii() for each DTE
+        4. Continue processing even if individual DTEs fail
+
+        Performance:
+        - Capacity: 600 DTEs/hora (50 DTEs/batch x 12 batches/hora)
+        - EERGYGROUP need: 20-30 DTEs/hora
+        - Margin: 20x over requirement
+        - Latency: Max 5 min (avg 2.5 min)
+
+        Benefits vs RabbitMQ:
+        - Zero external dependencies (no RabbitMQ, Celery, Redis)
+        - Native Odoo (community standard pattern)
+        - Simple operational model
+        - Integrated logging and monitoring
+        - Easy debugging (all in one place)
+        """
+        _logger.info("=" * 70)
+        _logger.info("🚀 DTE QUASI-REALTIME PROCESSOR - Starting (every 5 min)...")
+        _logger.info("=" * 70)
+
+        # Search pending DTEs (status='to_send', state='posted')
+        # Order by create_date ASC (oldest first - FIFO queue)
+        pending_dtes = self.search([
+            ('dte_status', '=', 'to_send'),
+            ('state', '=', 'posted'),
+            ('dte_code', '!=', False)  # Must have DTE type assigned
+        ], limit=50, order='create_date asc')
+
+        total_count = len(pending_dtes)
+        _logger.info(f"Found {total_count} pending DTEs to process")
+
+        if total_count == 0:
+            _logger.info("No pending DTEs. Exiting.")
+            return True
+
+        success_count = 0
+        error_count = 0
+
+        for dte in pending_dtes:
+            try:
+                _logger.info(f"Processing DTE {dte.dte_code}-{dte.dte_folio} (ID: {dte.id}, Invoice: {dte.name})")
+
+                # Call action_send_to_sii() to process DTE
+                # This handles: validation, XML generation, signing, SII submission
+                dte.action_send_to_sii()
+
+                success_count += 1
+                _logger.info(f"✅ DTE {dte.dte_code}-{dte.dte_folio} processed successfully")
+
+            except Exception as e:
+                error_count += 1
+                _logger.error(f"❌ Error processing DTE {dte.id} ({dte.name}): {e}", exc_info=True)
+
+                # Continue to next DTE (don't let one failure stop the batch)
+                continue
+
+        _logger.info("=" * 70)
+        _logger.info(f"✅ DTE Quasi-Realtime Processor completed:")
+        _logger.info(f"   Total pending: {total_count}")
+        _logger.info(f"   Successfully processed: {success_count}")
+        _logger.info(f"   Errors: {error_count}")
+        _logger.info(f"   Success rate: {(success_count/total_count*100):.1f}%" if total_count > 0 else "   Success rate: N/A")
+        _logger.info("=" * 70)
+
+        return True
+
     def query_dte_status(self, track_id, rut_emisor):
         """
         Query DTE status from SII using SOAP client.
