@@ -64,7 +64,7 @@ class AccountMoveDTE(models.Model):
         ('rejected', 'Rechazado por SII'),
         ('contingency', 'Modo Contingencia'),  # SPRINT 3: Contingency mode
         ('voided', 'Anulado'),
-    ], string='Estado DTE', default='draft', tracking=True, copy=False)
+    ], string='Estado DTE', default='draft', tracking=True, copy=False, index=True)  # US-1.3: Index for frequent queries
     
     # Campo relacionado con l10n_latam_document_type para integración Odoo base
     dte_code = fields.Char(
@@ -96,6 +96,7 @@ class AccountMoveDTE(models.Model):
         string='Track ID SII',
         readonly=True,
         copy=False,
+        index=True,  # US-1.3: Index for SII track ID queries
         help='ID de seguimiento del SII'
     )
     
@@ -204,7 +205,7 @@ class AccountMoveDTE(models.Model):
     dte_environment = fields.Selection([
         ('sandbox', 'Sandbox (Maullin)'),
         ('production', 'Producción (Palena)')
-    ], string='Ambiente SII', default='sandbox',
+    ], string='Ambiente SII', default='sandbox', index=True,  # US-1.3: Index for environment filtering
        help='Ambiente del SII donde se envió el DTE')
 
     is_contingency = fields.Boolean(
