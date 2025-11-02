@@ -37,12 +37,10 @@ except ImportError:
     qrcode = None
 
 try:
-    from reportlab.graphics import renderPM
-    from reportlab.graphics.barcode import createBarcodeDrawing
-    from reportlab.lib.units import mm
+    import pdf417gen
 except ImportError:
-    _logger.warning('ReportLab library not available. Install: pip install reportlab')
-    renderPM = None
+    _logger.warning('pdf417gen library not available. Install: pip install pdf417gen')
+    pdf417gen = None
 
 
 class AccountMoveReportDTE(models.AbstractModel):
@@ -147,9 +145,17 @@ class AccountMoveReportDTE(models.AbstractModel):
         """
         Generate PDF417 barcode for TED (Timbre Electrónico).
 
+        **SII COMPLIANCE:** PDF417 with ECL Level 5 is MANDATORY for printed DTEs.
+
         PDF417 is the official barcode format required by SII for
-        printed invoices. It contains the same TED XML as the QR code
-        but in a different format optimized for scanning.
+        printed invoices. It contains the TED XML encoded with Error
+        Correction Level 5 as per SII specifications.
+
+        **Technical Requirements (SII):**
+        - Format: PDF417 with Error Correction Level 5
+        - Minimum size: 2x5 cm
+        - Maximum size: 4x9 cm
+        - Location: Lower part of document, 2cm from left side
 
         Args:
             invoice (account.move): Invoice record
@@ -157,9 +163,11 @@ class AccountMoveReportDTE(models.AbstractModel):
         Returns:
             str: Base64 encoded PNG image of PDF417 barcode
         """
-        if not renderPM:
-            _logger.error('ReportLab library not installed. Cannot generate PDF417.')
-            return False
+        if not pdf417gen:
+            _logger.error('pdf417gen library not installed. Cannot generate PDF417.')
+            # Fallback to QR code if PDF417 not available
+            _logger.info('Falling back to QR code for invoice %s', invoice.name)
+            return self._generate_ted_qrcode(invoice)
 
         try:
             # Get TED XML from invoice
@@ -177,21 +185,34 @@ class AccountMoveReportDTE(models.AbstractModel):
                 )
                 ted_string = ted_string[:max_length]
 
-            # Generate PDF417 barcode using ReportLab
-            # Note: PDF417 is supported by reportlab.graphics.barcode
-            barcode_drawing = createBarcodeDrawing(
-                'PDF417',
-                value=ted_string,
-                width=90 * mm,  # 90mm width for A4 page
-                height=30 * mm,  # 30mm height
-                barHeight=30 * mm,
-                barWidth=0.8,
+            # Generate PDF417 barcode with SII-compliant ECL Level 5
+            # security_level=5 provides ~40% error correction capacity
+            # This is the SII-mandated error correction level for Chilean DTEs
+            pdf417_code = pdf417gen.encode(
+                ted_string,
+                security_level=5,  # ⭐ SII REQUIREMENT: ECL Level 5
+                columns=10,        # Optimal column count for readability
             )
 
-            # Render to PNG
+            # Render to PIL Image
+            # Scale up for better print quality (300 DPI equivalent)
+            scale = 3  # Each module = 3 pixels
+            image = pdf417gen.render_image(
+                pdf417_code,
+                scale=scale,
+                ratio=3,  # Height-to-width ratio of modules
+                padding=10,  # Quiet zone around barcode
+            )
+
+            # Convert PIL Image to PNG base64
             buffer = BytesIO()
-            renderPM.drawToFile(barcode_drawing, buffer, fmt='PNG')
+            image.save(buffer, format='PNG')
             buffer.seek(0)
+
+            _logger.info(
+                'PDF417 generated for invoice %s: %d bytes, ECL-5, %dx%d pixels',
+                invoice.name, len(ted_string), image.width, image.height
+            )
 
             return base64.b64encode(buffer.read()).decode('utf-8')
 

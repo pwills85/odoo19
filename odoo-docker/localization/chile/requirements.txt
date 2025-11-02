@@ -31,9 +31,11 @@ tenacity>=8.0.0
 # RabbitMQ Client (CRÍTICO - Para integración con dte-service)
 pika>=1.3.0
 
-# Códigos QR (CRÍTICO)
-qrcode[pil]>=7.3.0
-pillow>=9.0.0
+# Códigos QR y Códigos de Barras (CRÍTICO)
+# Actualizado 2025-11-02: PDF417 ECL-5 compliance (Gap Closure T-009)
+qrcode[pil]>=7.4.2
+pillow>=10.0.0
+pdf417gen>=0.7.1  # SII-compliant PDF417 with ECL Level 5 support
 
 # ══════════════════════════════════════════════════════════════════════════════
 # MÓDULO: l10n_cl_financial_reports (Reportes Financieros)
@@ -68,8 +70,9 @@ PyJWT>=2.6.0
 phonenumbers>=8.12.0
 email-validator>=1.1.5
 
-# Generación de PDFs (RECOMENDADO)
-reportlab>=3.6.0
+# Generación de PDFs y Códigos de Barras (CRÍTICO)
+# Actualizado 2025-10-29: PDF417 barcode support para DTEs (SII compliance)
+reportlab>=4.0.4
 # PyPDF2>=3.0.0  # Ya incluido en Odoo base (2.12.1)
 weasyprint>=54.0
 
