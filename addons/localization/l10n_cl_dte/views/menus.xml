@@ -1,5 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!--
+    ═══════════════════════════════════════════════════════════════════════════
+    ARQUITECTURA DE MENÚS: l10n_cl_dte + Odoo 19 CE Base
+    ═══════════════════════════════════════════════════════════════════════════
+
+    PATRÓN DE INTEGRACIÓN (Odoo Best Practices):
+
+    1. MODELOS BASE DE ODOO (account.move, stock.picking, purchase.order):
+       ✅ NO creamos menús duplicados
+       ✅ Usuarios acceden mediante menús estándar de Odoo:
+          - Facturas: Contabilidad > Clientes > Invoices
+          - Notas de Crédito: Contabilidad > Clientes > Credit Notes
+          - Guías de Despacho: Inventario > Operaciones > Transfers
+          - Órdenes de Compra: Compras > Órdenes > Purchase Orders
+       ✅ Campos DTE aparecen automáticamente (herencia de vistas)
+       ✅ Botones DTE disponibles en vistas heredadas
+
+    2. FUNCIONALIDAD ESPECÍFICA DTE (este archivo):
+       ✅ SÍ creamos menús para funcionalidad NUEVA no presente en Odoo base:
+          - Recepción de DTEs (dte.inbox)
+          - RCV - Registro de Compras y Ventas (l10n_cl_rcv_period/entry)
+          - Libros tributarios (dte.libro, dte.libro.guias)
+          - Comunicaciones SII (dte.communication)
+          - Disaster Recovery (dte.backup, dte.failed.queue, dte.contingency)
+          - Documentos Especiales (retenciones IUE, boletas honorarios)
+          - Configuración DTE (certificados, CAF, tasas)
+
+    BENEFICIOS:
+    - Consistente con módulos de otros países (l10n_mx_edi, l10n_co_edi)
+    - Navegación intuitiva (usuarios encuentran facturas donde siempre están)
+    - Sin duplicación (DRY principle)
+    - Curva de aprendizaje reducida
+    - Mantenimiento simplificado
+
+    Ref: AUDITORIA_INTEGRACION_MENUS_VISTAS_ODOO19.md (2025-11-02)
+    ═══════════════════════════════════════════════════════════════════════════
+    -->
+
     <!-- ══════════════════════════════════════════════════════════════════
          MENÚ PRINCIPAL DTE CHILE
          Ubicación: Contabilidad > DTE Chile
@@ -12,62 +50,32 @@
         sequence="10"/>
 
     <!-- ══════════════════════════════════════════════════════════════════
-         OPERACIONES DTE (Submenú principal)
+         DOCUMENTOS ESPECIALES CHILENOS
+         Documentos tributarios específicos de legislación chilena que NO
+         tienen equivalente directo en modelos base de Odoo
          ══════════════════════════════════════════════════════════════════ -->
 
     <menuitem
         id="menu_dte_operations"
-        name="Operaciones"
+        name="Documentos Especiales"
         parent="menu_dte_root"
-        sequence="10"/>
+        sequence="15"/>
 
-    <!-- Facturas DTE (heredan de account.move) -->
-    <menuitem
-        id="menu_dte_invoices"
-        name="Facturas Electrónicas"
-        parent="menu_dte_operations"
-        action="account.action_move_out_invoice_type"
-        sequence="10"/>
-
-    <!-- Notas de Crédito DTE -->
-    <menuitem
-        id="menu_dte_credit_notes"
-        name="Notas de Crédito"
-        parent="menu_dte_operations"
-        action="account.action_move_out_refund_type"
-        sequence="20"/>
-
-    <!-- Guías de Despacho (stock.picking) -->
-    <menuitem
-        id="menu_dte_guias_despacho"
-        name="Guías de Despacho"
-        parent="menu_dte_operations"
-        action="stock.action_picking_tree_all"
-        sequence="30"/>
-
-    <!-- Liquidaciones Honorarios (purchase.order) -->
-    <menuitem
-        id="menu_dte_honorarios"
-        name="Liquidaciones Honorarios"
-        parent="menu_dte_operations"
-        action="purchase.purchase_form_action"
-        sequence="40"/>
-
-    <!-- Retenciones IUE -->
+    <!-- Retenciones IUE (Impuesto Único Electrónico) - DTE específico chileno -->
     <menuitem
         id="menu_retencion_iue"
         name="Retenciones IUE"
         parent="menu_dte_operations"
         action="action_retencion_iue"
-        sequence="50"/>
+        sequence="10"/>
 
-    <!-- Boletas de Honorarios -->
+    <!-- Boletas de Honorarios - Documento tributario específico chileno -->
     <menuitem
         id="menu_boleta_honorarios"
         name="Boletas de Honorarios"
         parent="menu_dte_operations"
         action="action_boleta_honorarios"
-        sequence="45"/>
+        sequence="20"/>
 
     <!-- ══════════════════════════════════════════════════════════════════
          RECEPCIÓN DE COMPRAS
@@ -90,10 +98,33 @@
         parent="menu_dte_root"
         sequence="30"/>
 
-    <!-- Libro de Compra/Venta -->
+    <!-- ⭐ NEW (Sprint 1 - 2025-11-01): RCV - Registro de Compras y Ventas (Res. SII 61/2017) -->
+    <menuitem
+        id="menu_l10n_cl_rcv_periods"
+        name="RCV - Períodos Mensuales"
+        parent="menu_dte_reportes"
+        action="action_l10n_cl_rcv_period"
+        sequence="5"/>
+
+    <menuitem
+        id="menu_l10n_cl_rcv_entries"
+        name="RCV - Entradas"
+        parent="menu_dte_reportes"
+        action="action_l10n_cl_rcv_entry"
+        sequence="6"/>
+
+    <!-- ⭐ NEW (Sprint 2 - 2025-11-02): Wizard Importar CSV RCV -->
+    <menuitem
+        id="menu_rcv_csv_import_wizard"
+        name="Importar CSV RCV"
+        parent="menu_dte_reportes"
+        action="action_rcv_csv_import_wizard"
+        sequence="7"/>
+
+    <!-- Libro de Compra/Venta (OBSOLETO - reemplazado por RCV desde Aug 2017) -->
     <menuitem
         id="menu_dte_libro_compra_venta"
-        name="Libro Compra/Venta"
+        name="Libro Compra/Venta (Legacy)"
         parent="menu_dte_reportes"
         action="action_dte_libro"
         sequence="10"/>
