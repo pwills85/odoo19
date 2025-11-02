@@ -574,7 +574,16 @@ class AIChatIntegration(models.AbstractModel):
         try:
             error_data = response.json()
             return error_data.get('detail', f'HTTP {response.status_code}')
-        except:
+        except (ValueError, KeyError, TypeError) as e:
+            # JSON parsing failed or invalid structure
+            _logger.warning(
+                f"[AI Service] Failed to parse error response: {e}",
+                extra={
+                    'status_code': response.status_code,
+                    'error_type': type(e).__name__,
+                    'response_preview': response.text[:200]
+                }
+            )
             return f'HTTP {response.status_code}: {response.text[:100]}'
 
 
