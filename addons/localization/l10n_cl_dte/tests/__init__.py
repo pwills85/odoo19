@@ -24,3 +24,6 @@ from . import test_xxe_protection  # S-005: XXE protection (OWASP Top 10)
 from . import test_exception_handling  # US-1.1: Bare exception handling
 from . import test_computed_fields_cache  # US-1.4: @api.depends cache invalidation
 
+# Gap Closure Dashboard features
+from . import test_analytic_dashboard_kanban  # Dashboard Kanban drag & drop functionality
+

@@ -58,6 +58,9 @@
                             type="object" class="btn-secondary" icon="fa-shopping-cart"/>
                     <button name="action_view_analytic_lines" string="Ver Líneas Analíticas"
                             type="object" class="btn-secondary" icon="fa-list"/>
+                    <button name="action_export_excel" string="Export Excel"
+                            type="object" class="btn-success" icon="fa-file-excel-o"
+                            help="Export dashboard to Excel with multiple sheets (Summary, Invoices, Purchases)"/>
 
                     <!-- Estado Cuenta Analítica -->
                     <field name="analytic_status" widget="statusbar"
@@ -147,25 +150,25 @@
                     <!-- Alertas -->
                     <notebook>
                         <page string="Alertas &amp; Recomendaciones" name="alerts">
-                            <div class="alert alert-danger"
+                            <div class="alert alert-danger" role="status"
                                  invisible="analytic_status != 'over_budget'">
                                 <strong>⚠️ PRESUPUESTO EXCEDIDO</strong><br/>
                                 El cuenta analítica ha superado el presupuesto original.
                                 Se recomienda revisión inmediata de costos.
                             </div>
-                            <div class="alert alert-warning"
+                            <div class="alert alert-warning" role="status"
                                  invisible="analytic_status != 'at_risk'">
                                 <strong>⚠️ PRESUPUESTO EN RIESGO</strong><br/>
                                 El cuenta analítica está consumiendo presupuesto más rápido que lo planeado.
                                 Considerar medidas de control de costos.
                             </div>
-                            <div class="alert alert-success"
+                            <div class="alert alert-success" role="status"
                                  invisible="analytic_status != 'on_budget'">
                                 <strong>✅ PROYECTO EN PRESUPUESTO</strong><br/>
                                 El cuenta analítica se encuentra dentro del presupuesto asignado.
                             </div>
 
-                            <div class="alert alert-info"
+                            <div class="alert alert-info" role="status"
                                  invisible="margin_percentage >= 15">
                                 <strong>💡 MARGEN BAJO</strong><br/>
                                 El margen actual (<field name="margin_percentage" widget="percentage" readonly="1"/>)
@@ -223,20 +226,25 @@
     </record>
 
     <!-- ══════════════════════════════════════════════════════════════
-         KANBAN VIEW - Vista Tarjetas
+         KANBAN VIEW - Vista Tarjetas CON DRAG & DROP
          ══════════════════════════════════════════════════════════════ -->
     <record id="view_analytic_dashboard_kanban" model="ir.ui.view">
         <field name="name">analytic.dashboard.kanban</field>
         <field name="model">analytic.dashboard</field>
         <field name="arch" type="xml">
-            <kanban class="o_kanban_mobile">
+            <kanban class="o_kanban_mobile"
+                    default_group_by="analytic_status"
+                    records_draggable="true"
+                    quick_create="false">
+                <!-- Fields necesarios para drag & drop y agrupación -->
+                <field name="sequence"/>
+                <field name="analytic_status"/>
                 <field name="analytic_account_id"/>
                 <field name="total_invoiced"/>
                 <field name="total_costs"/>
                 <field name="gross_margin"/>
                 <field name="margin_percentage"/>
                 <field name="budget_consumed_percentage"/>
-                <field name="analytic_status"/>
                 <field name="currency_id"/>
 
                 <templates>
@@ -290,6 +298,35 @@
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+
+                    <!-- Template personalizado para grupos kanban -->
+                    <t t-name="kanban-group">
+                        <div class="o_kanban_group" t-att-data-id="group.value">
+                            <div class="o_kanban_header">
+                                <div class="o_kanban_header_title">
+                                    <span class="o_column_title">
+                                        <t t-if="group.value == 'on_budget'">
+                                            <span class="badge badge-success">✅ On Budget</span>
+                                        </t>
+                                        <t t-if="group.value == 'at_risk'">
+                                            <span class="badge badge-warning">⚠️ At Risk</span>
+                                        </t>
+                                        <t t-if="group.value == 'over_budget'">
+                                            <span class="badge badge-danger">🔴 Over Budget</span>
+                                        </t>
+                                    </span>
+                                    <span class="o_column_unfold ms-auto">
+                                        <i class="fa fa-minus" title="Fold"/>
+                                    </span>
+                                </div>
+                                <div class="o_kanban_counter">
+                                    <span class="o_kanban_counter_side">
+                                        <b><t t-esc="group.count"/></b> Projects
+                                    </span>
                                 </div>
                             </div>
                         </div>
