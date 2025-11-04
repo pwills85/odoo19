@@ -330,11 +330,21 @@ class AnalyticDashboard(models.Model):
             # INGRESOS: Contadores
             # ══════════════════════════════════════════════
 
-            invoices_out = self.env['account.move'].search([
+            # NOTA: No podemos buscar directamente por analytic_distribution con LIKE
+            # porque el campo tiene una restricción "Operation not supported" en búsquedas.
+            # En su lugar, obtenemos todas las facturas y filtramos en Python.
+            all_invoices_out = self.env['account.move'].search([
                 ('move_type', '=', 'out_invoice'),
                 ('state', '=', 'posted'),
-                ('invoice_line_ids.analytic_distribution', 'like', f'"{analytic_id_str}"')
             ])
+
+            # Filtrar en Python chequeando analytic_distribution en las líneas
+            invoices_out = all_invoices_out.filtered(
+                lambda m: any(
+                    analytic_id_str in str(line.analytic_distribution or {})
+                    for line in m.invoice_line_ids
+                )
+            )
 
             dashboard.dtes_emitted_count = len(invoices_out)
 
@@ -347,11 +357,18 @@ class AnalyticDashboard(models.Model):
                 ('analytic_account_id', '=', dashboard.analytic_account_id.id)
             ])
 
-            invoices_in = self.env['account.move'].search([
+            # Similar para facturas de proveedor
+            all_invoices_in = self.env['account.move'].search([
                 ('move_type', '=', 'in_invoice'),
                 ('state', '=', 'posted'),
-                ('invoice_line_ids.analytic_distribution', 'like', f'"{analytic_id_str}"')
             ])
+
+            invoices_in = all_invoices_in.filtered(
+                lambda m: any(
+                    analytic_id_str in str(line.analytic_distribution or {})
+                    for line in m.invoice_line_ids
+                )
+            )
 
             dashboard.total_purchases = sum(purchases.mapped('amount_total'))
             dashboard.purchases_count = len(purchases)
@@ -538,11 +555,18 @@ class AnalyticDashboard(models.Model):
 
         analytic_id_str = str(self.analytic_account_id.id)
 
-        invoices = self.env['account.move'].search([
+        # Obtener todas y filtrar en Python (analytic_distribution no soporta búsqueda)
+        all_invoices = self.env['account.move'].search([
             ('move_type', '=', 'out_invoice'),
             ('state', '=', 'posted'),
-            ('invoice_line_ids.analytic_distribution', 'like', f'"{analytic_id_str}"')
         ], order='invoice_date desc')
+
+        invoices = all_invoices.filtered(
+            lambda m: any(
+                analytic_id_str in str(line.analytic_distribution or {})
+                for line in m.invoice_line_ids
+            )
+        )
 
         return [
             {
@@ -568,11 +592,18 @@ class AnalyticDashboard(models.Model):
 
         analytic_id_str = str(self.analytic_account_id.id)
 
-        invoices = self.env['account.move'].search([
+        # Obtener todas y filtrar en Python (analytic_distribution no soporta búsqueda)
+        all_invoices = self.env['account.move'].search([
             ('move_type', '=', 'in_invoice'),
             ('state', '=', 'posted'),
-            ('invoice_line_ids.analytic_distribution', 'like', f'"{analytic_id_str}"')
         ], order='invoice_date desc')
+
+        invoices = all_invoices.filtered(
+            lambda m: any(
+                analytic_id_str in str(line.analytic_distribution or {})
+                for line in m.invoice_line_ids
+            )
+        )
 
         return [
             {
