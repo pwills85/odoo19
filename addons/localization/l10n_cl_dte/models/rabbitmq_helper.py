@@ -33,18 +33,35 @@ class RabbitMQHelper(models.AbstractModel):
     def _get_connection_params(self):
         """
         Obtiene parámetros de conexión desde ir.config_parameter
-        
+
+        ⭐ P0-6 SECURITY FIX: Password sin default value
+        - Antes: password default 'changeme' (inseguro)
+        - Después: password obligatorio desde config (seguro)
+        - Falla explícitamente si no está configurado
+
         Returns:
             dict: Parámetros para pika.ConnectionParameters
+
+        Raises:
+            UserError: Si rabbitmq.password no está configurado
         """
         ICP = self.env['ir.config_parameter'].sudo()
-        
+
         host = ICP.get_param('rabbitmq.host', 'rabbitmq')
         port = int(ICP.get_param('rabbitmq.port', '5672'))
         vhost = ICP.get_param('rabbitmq.vhost', '/odoo')
         user = ICP.get_param('rabbitmq.user', 'admin')
-        password = ICP.get_param('rabbitmq.password', 'changeme')
-        
+
+        # P0-6: NO default password - forzar configuración explícita
+        password = ICP.get_param('rabbitmq.password')
+        if not password:
+            raise UserError(_(
+                "RabbitMQ password not configured.\n\n"
+                "Please set 'rabbitmq.password' in System Parameters:\n"
+                "Settings → Technical → Parameters → System Parameters\n\n"
+                "Or set RABBITMQ_PASSWORD environment variable."
+            ))
+
         return {
             'host': host,
             'port': port,
