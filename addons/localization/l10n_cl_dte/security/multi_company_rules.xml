@@ -119,13 +119,8 @@
         <field name="global" eval="True"/>
     </record>
 
-    <!-- BHE Retention Rate -->
-    <record id="rule_l10n_cl_bhe_retention_rate_company" model="ir.rule">
-        <field name="name">BHE Retention Rate: multi-company</field>
-        <field name="model_id" ref="model_l10n_cl_bhe_retention_rate"/>
-        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
-        <field name="global" eval="True"/>
-    </record>
+    <!-- BHE Retention Rate: NO company_id (datos maestros compartidos) -->
+    <!-- Removed: model has no company_id field - historical rates are shared across companies -->
 
     <!-- RCV Entry -->
     <record id="rule_l10n_cl_rcv_entry_company" model="ir.rule">
@@ -151,13 +146,8 @@
         <field name="global" eval="True"/>
     </record>
 
-    <!-- Retencion IUE Tasa -->
-    <record id="rule_retencion_iue_tasa_company" model="ir.rule">
-        <field name="name">Retencion IUE Tasa: multi-company</field>
-        <field name="model_id" ref="model_l10n_cl_retencion_iue_tasa"/>
-        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
-        <field name="global" eval="True"/>
-    </record>
+    <!-- Retencion IUE Tasa: NO company_id (datos maestros compartidos) -->
+    <!-- Removed: model has no company_id field - tax rates catalog is shared across companies -->
 
     <!-- AI Chat Session (optional - if needed) -->
     <!-- <record id="rule_ai_chat_session_company" model="ir.rule">
