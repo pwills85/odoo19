@@ -2,9 +2,15 @@
 # Multi-Stage Dockerfile - Odoo 19 CE + Chile Localization
 # ══════════════════════════════════════════════════════════════════════════════
 # Maintainer: EERGYGROUP <info@eergygroup.com>
-# Version: 19.0.1.0.0
+# Version: 19.0.1.0.3
 # Description: Professional multi-stage build for Odoo 19 with Chile localization
 # Based on: Official Odoo Docker (https://github.com/odoo/docker)
+#
+# Changelog:
+#   - 2025-10-29 (v1.0.3): Updated PDF libraries for PDF417 barcode support
+#     * reportlab 3.6.0 → 4.0.4 (PDF417 barcode for TED)
+#     * qrcode 7.3.0 → 7.4.2 (improved QR generation)
+#     * pillow 9.0.0 → 10.0.0 (image processing)
 # ══════════════════════════════════════════════════════════════════════════════
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -140,9 +146,10 @@ CMD ["odoo"]
 FROM base AS chile
 
 LABEL maintainer="EERGYGROUP <info@eergygroup.com>"
-LABEL version="19.0.1.0.0"
-LABEL description="Odoo 19 CE + Chile Localization (DTE, Financial Reports, Payroll)"
+LABEL version="19.0.1.0.3"
+LABEL description="Odoo 19 CE + Chile Localization (DTE, Financial Reports, Payroll) + PDF417"
 LABEL stage="chile"
+LABEL changelog="2025-10-29: PDF417 support (reportlab 4.0.4, qrcode 7.4.2, pillow 10.0.0)"
 
 USER root
 
@@ -184,7 +191,7 @@ RUN apt-get update && \
 # Instalar dependencias Python para módulos de localización Chile
 # Ver: localization/chile/requirements.txt para detalles
 COPY localization/chile/requirements.txt /tmp/requirements-chile.txt
-RUN pip3 install --no-cache-dir --break-system-packages -r /tmp/requirements-chile.txt \
+RUN pip3 install --no-cache-dir --break-system-packages --ignore-installed -r /tmp/requirements-chile.txt \
     && rm /tmp/requirements-chile.txt
 
 # ────────────────────────────────────────────────────────────────────────────

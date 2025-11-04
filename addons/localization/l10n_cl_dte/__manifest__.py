@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Chilean Localization - Electronic Invoicing (DTE)',
-    'version': '19.0.5.0.0',  # SPRINT 1 US-1.3: Database Indexes for Performance (Completed)
+    'version': '19.0.6.0.0',  # CONSOLIDATION: Merged l10n_cl_dte_enhanced features (Breaking Change)
     'category': 'Accounting/Localizations',
-    'summary': 'Facturación Electrónica Chilena - Sistema DTE Enterprise-Grade para SII',
+    'summary': 'Facturación Electrónica Chilena - Complete DTE Solution with Enhanced Features',
     'description': """
 Chilean Electronic Invoicing - DTE System
 ==========================================
@@ -45,6 +45,14 @@ normativa oficial del SII (Servicio de Impuestos Internos).
   • Tasas históricas de retención IUE 2018-2025 (migración desde Odoo 11)
   • Validación RUT chileno con algoritmo módulo 11
   • Multi-company support con segregación datos
+
+✅ **Enhanced Features (v19.0.6.0.0 - Consolidated):**
+  • SII Document References (mandatory for NC/ND - Resolución 80/2014)
+  • CEDIBLE support for invoice factoring (Ley 19.983)
+  • Contact person tracking on invoices
+  • Custom payment terms descriptions
+  • Bank information management for companies
+  • Professional PDF reports with enhanced UX
 
 ✅ **Arquitectura Moderna (2025-10-24 - Nativa):**
   • Native Python libraries (libs/) para DTE: lxml, xmlsec, zeep
@@ -187,6 +195,15 @@ Es un desarrollo independiente para localización chilena.
         'views/dte_caf_views.xml',
         'views/account_move_dte_views.xml',
         'views/account_move_menu_fix.xml',  # ⭐ NEW (2025-11-03): Fix duplicidad menús facturación (extend standard views + hide l10n_cl duplicates)
+
+        # ⭐ REPORTES (must load BEFORE enhanced views to define report actions)
+        'report/report_invoice_dte_document.xml',  # ⭐ P0-1: PDF Reports profesionales
+
+        # ⭐ ENHANCED FEATURES (v19.0.6.0.0 - ex-l10n_cl_dte_enhanced)
+        'views/account_move_enhanced_views.xml',      # Contact, forma_pago, cedible, references
+        'views/account_move_reference_views.xml',     # SII document references (NC/ND mandatory)
+        'views/res_company_bank_info_views.xml',      # Bank information for companies
+
         'views/account_journal_dte_views.xml',
         'views/purchase_order_dte_views.xml',
         'views/stock_picking_dte_views.xml',
@@ -222,9 +239,6 @@ Es un desarrollo independiente para localización chilena.
         # 'wizards/send_dte_batch_views.xml',
         # 'wizards/generate_consumo_folios_views.xml',
         # 'wizards/generate_libro_views.xml',
-
-        # Reportes
-        'report/report_invoice_dte_document.xml',  # ⭐ P0-1: PDF Reports profesionales
     ],
     'demo': [
         # ⭐ Archivo demo no existe

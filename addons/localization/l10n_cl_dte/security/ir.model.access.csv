@@ -56,4 +56,6 @@ access_l10n_cl_rcv_entry_manager,l10n_cl.rcv.entry.manager,model_l10n_cl_rcv_ent
 access_l10n_cl_rcv_period_user,l10n_cl.rcv.period.user,model_l10n_cl_rcv_period,account.group_account_user,1,0,0,0
 access_l10n_cl_rcv_period_manager,l10n_cl.rcv.period.manager,model_l10n_cl_rcv_period,account.group_account_manager,1,1,1,1
 access_rcv_csv_import_wizard,rcv.csv.import.wizard,model_rcv_csv_import_wizard,account.group_account_user,1,1,1,1
-
+access_account_move_reference_user,access_account_move_reference_user,model_account_move_reference,account.group_account_invoice,1,1,1,1
+access_account_move_reference_manager,access_account_move_reference_manager,model_account_move_reference,account.group_account_manager,1,1,1,1
+access_account_move_reference_readonly,access_account_move_reference_readonly,model_account_move_reference,account.group_account_readonly,1,0,0,0

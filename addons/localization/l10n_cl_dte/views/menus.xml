@@ -231,4 +231,14 @@
         sequence="100"/>
     -->
 
+    <!-- ================================================================ -->
+    <!-- SII Document References (Consolidated from l10n_cl_dte_enhanced) -->
+    <!-- ================================================================ -->
+    <menuitem id="menu_account_move_reference"
+              name="SII Document References"
+              parent="menu_dte_configuration"
+              action="action_account_move_reference"
+              sequence="40"
+              groups="l10n_cl_dte.group_dte_user"/>
+
 </odoo>

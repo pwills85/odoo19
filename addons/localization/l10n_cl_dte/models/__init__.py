@@ -69,3 +69,11 @@ from . import res_company_dte
 from . import res_config_settings
 from . import l10n_cl_bhe_book  # BHE: Libro mensual (DESPUÉS de retention_rate)
 
+# ═══════════════════════════════════════════════════════════
+# ENHANCED FEATURES (v19.0.6.0.0 - ex-l10n_cl_dte_enhanced)
+# ═══════════════════════════════════════════════════════════
+from . import account_move_enhanced  # Contact, forma_pago, cedible, reference_ids
+from . import account_move_reference  # SII document references (NC/ND mandatory)
+from . import res_company_bank_info  # Bank information management
+from . import report_helper  # PDF report helper utilities
+

@@ -1,110 +1,43 @@
-# ══════════════════════════════════════════════════════════════════════════════
-# Requirements - Módulos de Localización Chile
-# ══════════════════════════════════════════════════════════════════════════════
-# Autor: EERGYGROUP - Ing. Pedro Troncoso Willz
-# Fecha: 2025-10-24
-# Descripción: Dependencias Python consolidadas para todos los módulos de
-#              localización chilena en desarrollo
-# ══════════════════════════════════════════════════════════════════════════════
+# Chilean Localization Requirements - Odoo 19 CE
+# Version: 19.0.1.0.3
+# Last Updated: 2025-11-04
 
-# ══════════════════════════════════════════════════════════════════════════════
-# MÓDULO: l10n_cl_dte (Facturación Electrónica)
-# ══════════════════════════════════════════════════════════════════════════════
+# PDF417 Barcode Generation (TED)
+# NOTE: pdf417 1.1.0 doesn't exist - using latest available 0.8.1
+pdf417==0.8.1
+Pillow>=10.0.0
+qrcode>=7.4.2
 
-# Firma Digital y Certificados PKI (CRÍTICO)
-pyOpenSSL>=21.0.0
-cryptography>=3.4.8
-asn1crypto>=1.5.1
+# XML Digital Signature (DTE/SII)
+lxml>=4.9.0
+xmlsec>=1.3.13
 
-# Procesamiento XML (CRÍTICO)
-# Versiones específicas para compatibilidad lxml/xmlsec (2025-10-24)
-lxml==5.3.0
-xmlsec==1.3.14
-defusedxml>=0.0.1
+# SOAP Client (SII Web Services)
+zeep>=4.2.1
+requests>=2.31.0
 
-# SOAP y Comunicación HTTP (CRÍTICO)
-zeep>=4.2.0
-requests>=2.28.0
-urllib3>=1.26.0
-tenacity>=8.0.0
-
-# RabbitMQ Client (CRÍTICO - Para integración con dte-service)
+# Message Queue (RabbitMQ for async DTE processing)
 pika>=1.3.0
 
-# Códigos QR y Códigos de Barras (CRÍTICO)
-# Actualizado 2025-11-02: PDF417 ECL-5 compliance (Gap Closure T-009)
-qrcode[pil]>=7.4.2
-pillow>=10.0.0
-pdf417gen>=0.7.1  # SII-compliant PDF417 with ECL Level 5 support
+# Cryptography (Certificates)
+cryptography>=41.0.0
+pyOpenSSL>=23.2.0
 
-# ══════════════════════════════════════════════════════════════════════════════
-# MÓDULO: l10n_cl_financial_reports (Reportes Financieros)
-# ══════════════════════════════════════════════════════════════════════════════
-
-# Excel report generation (CRÍTICO)
-xlsxwriter>=3.0.0
-
-# Date calculations with relativedelta (CRÍTICO)
-python-dateutil>=2.8.2
-
-# Machine Learning para predicciones (RECOMENDADO)
-numpy>=1.24.0
-scikit-learn>=1.2.0
-joblib>=1.2.0
-
-# JWT authentication para API (RECOMENDADO)
-PyJWT>=2.6.0
-
-# ══════════════════════════════════════════════════════════════════════════════
-# MÓDULO: l10n_cl_hr_payroll (Nómina y Previred)
-# ══════════════════════════════════════════════════════════════════════════════
-
-# HTTP client para microservicios (CRÍTICO)
-# requests>=2.28.0  # Ya incluido arriba
-
-# ══════════════════════════════════════════════════════════════════════════════
-# DEPENDENCIAS COMPARTIDAS (Todos los módulos)
-# ══════════════════════════════════════════════════════════════════════════════
-
-# Validación de Datos (RECOMENDADO)
-phonenumbers>=8.12.0
-email-validator>=1.1.5
-
-# Generación de PDFs y Códigos de Barras (CRÍTICO)
-# Actualizado 2025-10-29: PDF417 barcode support para DTEs (SII compliance)
+# PDF Generation
 reportlab>=4.0.4
-# PyPDF2>=3.0.0  # Ya incluido en Odoo base (2.12.1)
-weasyprint>=54.0
 
-# Fecha/Hora (RECOMENDADO)
-pytz>=2022.1
+# Utilities
+python-dateutil>=2.8.2
+pytz
+num2words>=0.5.12
+tenacity>=8.0.0  # Retry logic for SII API calls
 
-# Encriptación (RECOMENDADO)
-pycryptodome>=3.15.0
-bcrypt>=4.0.0
+# Excel Export
+openpyxl>=3.1.2
+xlrd>=2.0.1
+xlwt>=1.3.0
+xlsxwriter>=3.1.9
 
-# Logging (RECOMENDADO)
-structlog>=22.1.0
-
-# Testing (RECOMENDADO)
-pytest>=7.0.0
-pytest-mock>=3.10.0
-responses>=0.20.0
-
-# ══════════════════════════════════════════════════════════════════════════════
-# NOTAS DE INSTALACIÓN
-# ══════════════════════════════════════════════════════════════════════════════
-# 
-# Este archivo debe ser instalado en el Dockerfile de Odoo con:
-#   pip install --no-cache-dir --break-system-packages -r requirements-localization.txt
-#
-# Dependencias del sistema (apt) requeridas:
-#   - libssl-dev (para pyOpenSSL, cryptography)
-#   - libffi-dev (para cryptography)
-#   - libxmlsec1-dev (para xmlsec)
-#   - libxmlsec1-openssl (para xmlsec)
-#   - libjpeg-dev (para pillow)
-#   - zlib1g-dev (para pillow)
-#   - build-essential (para compilación)
-#
-# ══════════════════════════════════════════════════════════════════════════════
+# API Clients
+httpx>=0.24.0
+pydantic>=2.0.0
