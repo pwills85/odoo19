@@ -56,23 +56,25 @@
                     
                     <!-- Datos Tributarios Empresa -->
                     <div class="row mt16 o_settings_container">
+                        <!-- Actividades Económicas (Many2many - Odoo 19) -->
                         <div class="col-12 col-lg-6 o_setting_box">
                             <div class="o_setting_left_pane"/>
                             <div class="o_setting_right_pane">
-                                <label string="Código Actividad Económica (Acteco)" for="company_id"/>
+                                <label string="Actividades Económicas SII" for="l10n_cl_activity_ids"/>
                                 <div class="text-muted">
-                                    Código SII de 6 dígitos (OBLIGATORIO en XML DTE)
+                                    Códigos CIIU Rev. 4 CL (OBLIGATORIO en DTEs, hasta 4 códigos)
                                 </div>
                                 <div class="content-group">
                                     <div class="mt16">
                                         <field name="company_id" invisible="1"/>
-                                        <field name="l10n_cl_activity_code"
-                                               required="company_id"
-                                               placeholder="Ej: 421000"/>
+                                        <field name="l10n_cl_activity_ids"
+                                               widget="many2many_tags"
+                                               options="{'no_create': True, 'color_field': 'code'}"
+                                               placeholder="Seleccione una o más actividades económicas..."/>
                                         <div class="text-muted mt8">
                                             <a href="https://www.sii.cl/destacados/codigos_actividades/"
                                                target="_blank">
-                                                Ver catálogo oficial de códigos SII
+                                                📋 Ver catálogo oficial de códigos SII
                                             </a>
                                         </div>
                                     </div>
@@ -80,6 +82,56 @@
                             </div>
                         </div>
 
+                        <!-- Giro de la Empresa -->
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label string="Giro de la Empresa" for="l10n_cl_activity_description"/>
+                                <div class="text-muted">
+                                    Descripción textual de la actividad (máx 80 caracteres, OBLIGATORIO en DTEs)
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="l10n_cl_activity_description"
+                                               placeholder="Ej: CONSULTORIAS INFORMATICAS, DESARROLLO DE SISTEMAS"/>
+                                        <div class="text-muted mt8">
+                                            <small>Se usa en XML DTE como elemento &lt;GiroEmis&gt;</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ubicación Tributaria -->
+                    <div class="row mt16 o_settings_container">
+                        <!-- Comuna SII -->
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label string="Ubicación Tributaria" for="partner_id"/>
+                                <div class="text-muted">
+                                    Región y comuna según catálogo oficial SII (OBLIGATORIO en DTEs)
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="partner_id" invisible="1"/>
+                                        <label for="partner_id" string="Región" class="o_form_label"/>
+                                        <field name="partner_id"
+                                               options="{'no_open': True, 'no_create': True}"
+                                               context="{'show_address': 0, 'show_vat': 0}"
+                                               class="o_field_widget o_field_many2one"
+                                               readonly="1"
+                                               nolabel="1"/>
+                                        <div class="text-muted mt8">
+                                            <small>Configure la ubicación en: Configuración → Empresas → Mi Empresa</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resolución DTE -->
                         <div class="col-12 col-lg-6 o_setting_box">
                             <div class="o_setting_left_pane"/>
                             <div class="o_setting_right_pane">

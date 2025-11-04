@@ -177,16 +177,13 @@ class DTEFailedQueue(models.Model):
             )
 
     # ═══════════════════════════════════════════════════════════
-    # CONSTRAINTS
+    # CONSTRAINTS (Odoo 19 CE format)
     # ═══════════════════════════════════════════════════════════
 
-    _sql_constraints = [
-        (
-            'dte_folio_company_uniq',
-            'unique(dte_type, folio, company_id)',
-            'Failed DTE already in queue for this DTE type and folio'
-        )
-    ]
+    _dte_folio_company_uniq = models.Constraint(
+        'unique(dte_type, folio, company_id)',
+        'Failed DTE already in queue for this DTE type and folio'
+    )
 
     # ═══════════════════════════════════════════════════════════
     # DEFAULTS & COMPUTE

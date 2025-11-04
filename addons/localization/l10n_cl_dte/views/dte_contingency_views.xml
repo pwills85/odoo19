@@ -105,7 +105,7 @@
 
                 <filter name="filter_enabled" string="Active Contingency" domain="[('enabled', '=', True)]"/>
                 <filter name="filter_disabled" string="Disabled" domain="[('enabled', '=', False)]"/>
-                <!-- filter_with_pending removed: pending_dtes_count is computed non-stored field -->
+                <filter name="filter_with_pending" string="With Pending DTEs" domain="[('pending_dtes_count', '>', 0)]"/>
 
                 <separator/>
 

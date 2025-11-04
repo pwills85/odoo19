@@ -83,20 +83,18 @@ class DTEContingency(models.Model):
     # Statistics
     pending_dtes_count = fields.Integer(
         string='Pending DTEs',
-        compute='_compute_pending_dtes_count'
+        compute='_compute_pending_dtes_count',
+        store=True  # Required for domain filters in views
     )
 
     # ═══════════════════════════════════════════════════════════
-    # CONSTRAINTS
+    # CONSTRAINTS (Odoo 19 CE format)
     # ═══════════════════════════════════════════════════════════
 
-    _sql_constraints = [
-        (
-            'company_uniq',
-            'unique(company_id)',
-            'Only one contingency record per company is allowed'
-        )
-    ]
+    _company_uniq = models.Constraint(
+        'unique(company_id)',
+        'Only one contingency record per company is allowed'
+    )
 
     # ═══════════════════════════════════════════════════════════
     # COMPUTED FIELDS

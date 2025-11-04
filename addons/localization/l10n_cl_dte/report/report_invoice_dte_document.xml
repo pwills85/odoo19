@@ -54,7 +54,8 @@
                         <div class="border border-dark p-3 d-inline-block text-center"
                              style="min-width: 250px;">
                             <h4 class="mb-2">
-                                <strong><t t-out="get_dte_type_name(o.dte_type)"/></strong>
+                                <!-- PEER REVIEW FIX: Field is dte_code, not dte_type -->
+                                <strong><t t-out="get_dte_type_name(o.dte_code)"/></strong>
                             </h4>
                             <p class="mb-1">
                                 <strong>N°</strong>
@@ -160,7 +161,8 @@
                             <th class="text-start"><strong>Descripción</strong></th>
                             <th class="text-end"><strong>Cantidad</strong></th>
                             <th class="text-end"><strong>Precio Unit.</strong></th>
-                            <th class="text-end" t-if="o.dte_type == '33'"><strong>Descuento</strong></th>
+                            <!-- PEER REVIEW FIX: Field is dte_code, not dte_type -->
+                            <th class="text-end" t-if="o.dte_code == '33'"><strong>Descuento</strong></th>
                             <th class="text-end"><strong>Total</strong></th>
                         </tr>
                     </thead>
@@ -177,7 +179,8 @@
                                 <td class="text-end">
                                     <span t-field="line.price_unit"/>
                                 </td>
-                                <td class="text-end" t-if="o.dte_type == '33'">
+                                <!-- PEER REVIEW FIX: Field is dte_code, not dte_type -->
+                                <td class="text-end" t-if="o.dte_code == '33'">
                                     <span t-if="line.discount > 0">
                                         <t t-out="line.discount"/>%
                                     </span>
@@ -313,7 +316,8 @@
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">l10n_cl_dte.report_invoice_dte</field>
         <field name="report_file">l10n_cl_dte.report_invoice_dte</field>
-        <field name="print_report_name">'DTE-%s-%s' % (object.dte_type or 'DOC', object.dte_folio or object.name)</field>
+        <!-- PEER REVIEW FIX (HALLAZGO #3): Field is dte_code, not dte_type -->
+        <field name="print_report_name">'DTE-%s-%s' % (object.dte_code or 'DOC', object.dte_folio or object.name)</field>
         <field name="binding_model_id" ref="account.model_account_move"/>
         <field name="binding_type">report</field>
         <field name="paperformat_id" ref="base.paperformat_us"/>

@@ -591,10 +591,11 @@ class L10nClBhe(models.Model):
                     _("La tasa de retención debe estar entre 0% y 100%.")
                 )
 
-    _sql_constraints = [
-        ('number_partner_unique', 'unique(number, partner_id, company_id)',
-         'Ya existe una BHE con este número para este prestador en esta compañía.')
-    ]
+    # CONSTRAINTS (Odoo 19 CE format)
+    _number_partner_unique = models.Constraint(
+        'unique(number, partner_id, company_id)',
+        'Ya existe una BHE con este número para este prestador en esta compañía.'
+    )
 
     # ═══════════════════════════════════════════════════════════
     # ACTIONS

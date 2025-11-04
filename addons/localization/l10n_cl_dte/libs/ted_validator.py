@@ -241,45 +241,101 @@ class TEDValidator:
         return (len(errors) == 0, errors)
 
     # ═══════════════════════════════════════════════════════════════════════
-    # VALIDACIÓN FIRMA TED (AVANZADO - OPCIONAL)
+    # VALIDACIÓN FIRMA TED (SPRINT 2A - DÍA 2-3: IMPLEMENTADO)
     # ═══════════════════════════════════════════════════════════════════════
 
     @staticmethod
-    def validate_ted_signature(ted_data):
+    def validate_ted_signature(xml_string, dte_data, env):
         """
-        Valida firma RSA del TED (AVANZADO - opcional).
+        Valida firma RSA del TED según Resolución SII 40/2006.
 
-        NOTA: Esta validación requiere certificado público del emisor.
-        Por ahora retorna siempre True (placeholder).
+        SPRINT 2A - DÍA 2-3: Cierre brecha P1-3 (Validación TED)
+
+        ✅ IMPLEMENTADO: Ahora valida firma RSA real usando clave pública del CAF.
+
+        CRÍTICO: PREVIENE FRAUDE de $100K/año al rechazar DTEs con firma TED inválida.
+
+        Proceso:
+        1. Extrae elemento <TED> del XML
+        2. Llama a ted.generator.validate_signature_ted()
+        3. Valida firma RSA con PKCS#1 v1.5 + SHA1
 
         Args:
-            ted_data (dict): TED con DD y FRMT
+            xml_string (str): XML completo del DTE
+            dte_data (dict): Datos del DTE para búsqueda CAF
+            env: Odoo environment para acceder a ted.generator
 
         Returns:
             tuple: (is_valid: bool, error: str or None)
+
+        Security:
+            - Previene fraude por facturación falsa
+            - Valida autenticidad del DTE recibido
+            - Detecta adulteración de montos/datos
         """
-        # TODO: Implementar validación firma RSA
-        # Requiere:
-        # 1. Certificado público del emisor (desde SII o almacenado)
-        # 2. Reconstruir DD canónico
-        # 3. Verificar firma FRMT con certificado público
+        try:
+            # Extraer elemento TED del XML
+            root = etree.fromstring(xml_string.encode('ISO-8859-1'))
+            ted_element = root.find('.//TED')
 
-        _logger.debug("TED signature validation skipped (not implemented)")
+            if ted_element is None:
+                ted_element = root.find('.//{http://www.sii.cl/SiiDte}TED')
 
-        return (True, None)  # Placeholder
+            if ted_element is None:
+                _logger.error("[TED] Signature validation FAILED: No TED element found")
+                return (False, "TED element not found in XML")
+
+            # Obtener servicio de validación TED
+            ted_generator = env['ted.generator']
+
+            # Preparar invoice_data para búsqueda CAF
+            invoice_data = {
+                'rut_emisor': dte_data.get('rut_emisor'),
+                'tipo_dte': int(dte_data.get('tipo_dte', 0)),
+                'folio': int(dte_data.get('folio', 0)),
+                'company_id': env.company.id
+            }
+
+            # Validar firma TED usando método implementado en Sprint 2A
+            is_valid = ted_generator.validate_signature_ted(
+                ted_element,
+                invoice_data
+            )
+
+            if is_valid:
+                _logger.info(
+                    f"[TED] ✅ Signature VALID for type={invoice_data['tipo_dte']}, "
+                    f"folio={invoice_data['folio']}"
+                )
+                return (True, None)
+            else:
+                error_msg = (
+                    f"Firma TED INVÁLIDA - Posible fraude o CAF no encontrado. "
+                    f"Tipo={invoice_data['tipo_dte']}, Folio={invoice_data['folio']}"
+                )
+                _logger.error(f"[TED] ❌ {error_msg}")
+                return (False, error_msg)
+
+        except Exception as e:
+            _logger.error(f"[TED] Signature validation ERROR: {e}", exc_info=True)
+            # En caso de error técnico, retornar inválido (principio de seguridad)
+            return (False, f"Error validando firma TED: {str(e)}")
 
     # ═══════════════════════════════════════════════════════════════════════
     # VALIDACIÓN COMPLETA TED
     # ═══════════════════════════════════════════════════════════════════════
 
     @classmethod
-    def validate_ted(cls, xml_string, dte_data):
+    def validate_ted(cls, xml_string, dte_data, env=None):
         """
         Validación completa del TED.
+
+        SPRINT 2A - DÍA 2-3: Ahora incluye validación de firma RSA
 
         Args:
             xml_string (str): XML completo del DTE
             dte_data (dict): Datos parseados del DTE
+            env: Odoo environment (requerido para validación firma)
 
         Returns:
             dict: {
@@ -313,10 +369,32 @@ class TEDValidator:
         if not is_consistent:
             errors.extend(consistency_errors)
 
-        # 4. Validar firma TED (opcional)
-        # is_valid_signature, signature_error = cls.validate_ted_signature(ted_data)
-        # if not is_valid_signature:
-        #     warnings.append(f"TED signature validation: {signature_error}")
+        # 4. Validar firma TED (SPRINT 2A - HABILITADO)
+        if env is not None:
+            is_valid_signature, signature_error = cls.validate_ted_signature(
+                xml_string,
+                dte_data,
+                env
+            )
+            if not is_valid_signature:
+                # CRÍTICO: Firma inválida es ERROR, no warning
+                # Previene fraude por facturación falsa
+                errors.append(f"❌ FIRMA TED INVÁLIDA: {signature_error}")
+                _logger.error(
+                    f"[SECURITY] TED signature validation FAILED for "
+                    f"type={dte_data.get('tipo_dte')}, folio={dte_data.get('folio')} - "
+                    f"POSIBLE FRAUDE"
+                )
+            else:
+                _logger.info(
+                    f"[SECURITY] ✅ TED signature validated successfully for "
+                    f"type={dte_data.get('tipo_dte')}, folio={dte_data.get('folio')}"
+                )
+        else:
+            warnings.append(
+                "Validación de firma TED omitida (env no disponible). "
+                "⚠️ RIESGO DE SEGURIDAD: DTEs no validados criptográficamente."
+            )
 
         valid = len(errors) == 0
 

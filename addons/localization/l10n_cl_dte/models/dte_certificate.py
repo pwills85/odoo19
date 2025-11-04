@@ -636,7 +636,7 @@ class DTECertificate(models.Model):
     def _get_encryption_key():
         """
         Obtiene clave de encriptación.
-        
+
         En producción:
         - Almacenar en variable de entorno
         - O en secrets manager
@@ -645,11 +645,125 @@ class DTECertificate(models.Model):
         # Por ahora, obtener de config
         # En producción: usar secrets manager
         key = os.environ.get('CERTIFICATE_ENCRYPTION_KEY')
-        
+
         if not key:
             # Generar clave temporal (solo desarrollo)
             # En producción esto DEBE venir de secrets
             key = Fernet.generate_key()
-        
+
         return key
+
+    # ═══════════════════════════════════════════════════════════
+    # CONVERSIÓN PKCS#12 → PEM (Sprint 2 - 2025-11-02)
+    # Para uso con requests/urllib3 (mTLS authentication)
+    # ═══════════════════════════════════════════════════════════
+
+    def convert_to_pem_files(self):
+        """
+        Convierte certificado PKCS#12 (.p12/.pfx) a archivos PEM temporales.
+
+        PROPÓSITO:
+        - El certificado SII se almacena en formato PKCS#12 (firma DTEs)
+        - Para mTLS con requests, se requiere formato PEM separado
+        - Este método permite reutilizar el mismo certificado
+
+        SEGURIDAD:
+        - Archivos PEM son temporales (se borran después de uso)
+        - Se crean con permisos 0600 (solo lectura owner)
+        - Password NO se almacena en archivos
+
+        USO:
+        >>> certificate = self.env['dte.certificate'].browse(1)
+        >>> cert_path, key_path = certificate.convert_to_pem_files()
+        >>> session = requests.Session()
+        >>> session.cert = (cert_path, key_path)
+        >>> # ... usar sesión mTLS ...
+        >>> os.remove(cert_path)
+        >>> os.remove(key_path)
+
+        Returns:
+            tuple: (cert_pem_path, key_pem_path) - Rutas archivos temporales
+
+        Raises:
+            ValidationError: Si certificado inválido o vencido
+        """
+        import tempfile
+        from OpenSSL import crypto
+
+        self.ensure_one()
+
+        # Validar certificado activo
+        if self.state not in ('valid', 'expiring_soon'):
+            raise ValidationError(_(
+                'Certificado no está en estado válido.\n'
+                'Estado actual: %s\n'
+                'Configure un certificado válido.'
+            ) % self.state)
+
+        try:
+            # PASO 1: Cargar PKCS#12
+            # =====================
+            cert_data = base64.b64decode(self.cert_file) if isinstance(self.cert_file, str) else self.cert_file
+            password = self.cert_password  # Auto-desencriptado por compute field
+
+            p12 = crypto.load_pkcs12(cert_data, password.encode())
+
+            # PASO 2: Extraer componentes
+            # ===========================
+            certificate = p12.get_certificate()
+            private_key = p12.get_privatekey()
+
+            # PASO 3: Convertir a formato PEM
+            # ================================
+            cert_pem = crypto.dump_certificate(crypto.FILETYPE_PEM, certificate)
+            key_pem = crypto.dump_privatekey(crypto.FILETYPE_PEM, private_key)
+
+            # PASO 4: Guardar en archivos temporales
+            # =======================================
+            # Crear archivos con permisos restrictivos (0600)
+            cert_fd, cert_path = tempfile.mkstemp(
+                suffix='.pem',
+                prefix='sii_cert_',
+                text=False
+            )
+            key_fd, key_path = tempfile.mkstemp(
+                suffix='.pem',
+                prefix='sii_key_',
+                text=False
+            )
+
+            # Escribir certificado público
+            with os.fdopen(cert_fd, 'wb') as f:
+                f.write(cert_pem)
+
+            # Escribir clave privada
+            with os.fdopen(key_fd, 'wb') as f:
+                f.write(key_pem)
+
+            # Asegurar permisos restrictivos (solo lectura owner)
+            os.chmod(cert_path, 0o600)
+            os.chmod(key_path, 0o600)
+
+            _logger.info(
+                "✅ Certificate %s converted to PEM: cert=%s, key=%s",
+                self.name,
+                cert_path,
+                key_path
+            )
+
+            return cert_path, key_path
+
+        except Exception as e:
+            _logger.error(
+                "❌ Error converting certificate %s to PEM: %s",
+                self.name,
+                str(e)
+            )
+            raise ValidationError(_(
+                'Error convirtiendo certificado a formato PEM:\n%s\n\n'
+                'Verifique:\n'
+                '- Certificado no corrupto\n'
+                '- Password correcta\n'
+                '- Certificado no vencido'
+            ) % str(e))
 

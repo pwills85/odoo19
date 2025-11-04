@@ -71,7 +71,7 @@ class RetencionIUETasa(models.Model):
     es_vigente = fields.Boolean(
         string='Es Vigente Actual',
         compute='_compute_es_vigente',
-        store=False,
+        store=True,
         help='Indica si esta tasa es la vigente a la fecha actual'
     )
 

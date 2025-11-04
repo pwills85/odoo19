@@ -50,11 +50,38 @@ class ResConfigSettings(models.TransientModel):
     # DATOS TRIBUTARIOS EMPRESA (desde res.company)
     # ═══════════════════════════════════════════════════════════
 
+    # DEPRECADO: Usar l10n_cl_activity_ids (multiple selection)
     l10n_cl_activity_code = fields.Char(
         related='company_id.l10n_cl_activity_code',
-        string='Código Actividad Económica',
+        string='Código Actividad Económica (DEPRECADO)',
         readonly=False,
-        help='Código SII de 6 dígitos (OBLIGATORIO en XML DTE)'
+        help='Campo DEPRECADO: Usar l10n_cl_activity_ids (selección múltiple)'
+    )
+
+    # NUEVO: Actividades Económicas (selección múltiple)
+    l10n_cl_activity_ids = fields.Many2many(
+        related='company_id.l10n_cl_activity_ids',
+        string='Actividades Económicas SII',
+        readonly=False,
+        help='Códigos de Actividad Económica SII (CIIU Rev. 4 CL 2012).\n'
+             'Puede seleccionar múltiples actividades (hasta 4 en DTEs).'
+    )
+
+    # Giro de la Empresa
+    l10n_cl_activity_description = fields.Char(
+        related='company_id.l10n_cl_activity_description',
+        string='Giro de la Empresa',
+        readonly=False,
+        help='Descripción textual de la actividad económica (máx 80 caracteres).\n'
+             'Se usa en XML DTE como elemento <GiroEmis> (OBLIGATORIO).'
+    )
+
+    # Ubicación Tributaria (para referencia visual)
+    partner_id = fields.Many2one(
+        related='company_id.partner_id',
+        string='Partner Empresa',
+        readonly=True,
+        help='Partner asociado a la empresa (para mostrar ubicación)'
     )
 
     dte_resolution_number = fields.Char(

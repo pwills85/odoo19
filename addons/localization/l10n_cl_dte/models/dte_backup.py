@@ -151,16 +151,13 @@ class DTEBackup(models.Model):
                 record.file_size = 0
 
     # ═══════════════════════════════════════════════════════════
-    # CONSTRAINTS
+    # CONSTRAINTS (Odoo 19 CE format)
     # ═══════════════════════════════════════════════════════════
 
-    _sql_constraints = [
-        (
-            'dte_folio_company_uniq',
-            'unique(dte_type, folio, company_id)',
-            'DTE backup already exists for this DTE type and folio in this company'
-        )
-    ]
+    _dte_folio_company_uniq = models.Constraint(
+        'unique(dte_type, folio, company_id)',
+        'DTE backup already exists for this DTE type and folio in this company'
+    )
 
     # ═══════════════════════════════════════════════════════════
     # MÉTODOS PÚBLICOS

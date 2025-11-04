@@ -32,6 +32,20 @@ from . import dte_failed_queue  # ⭐ NEW: Failed DTEs retry queue (exponential 
 from . import dte_contingency  # ⭐ NEW: Contingency mode (OBLIGATORIO normativa SII)
 
 # ═══════════════════════════════════════════════════════════
+# RCV - REGISTRO DE COMPRAS Y VENTAS (Sprint 1 - 2025-11-01)
+# Resolución SII 61/2017, 68/2017 - OBLIGATORIO
+# ═══════════════════════════════════════════════════════════
+from . import l10n_cl_rcv_entry  # ⭐ NEW: Entradas RCV individuales
+from . import l10n_cl_rcv_period  # ⭐ NEW: Períodos mensuales RCV
+from . import l10n_cl_rcv_integration  # ⭐ NEW: Sincronización con SII
+
+# ═══════════════════════════════════════════════════════════
+# CATÁLOGOS SII (2025-10-24)
+# ═══════════════════════════════════════════════════════════
+from . import sii_activity_code  # ⭐ NEW: Catálogo CIIU Rev. 4 CL (códigos actividad económica)
+from . import l10n_cl_comuna  # ⭐ NEW: Catálogo oficial 345 comunas de Chile
+
+# ═══════════════════════════════════════════════════════════
 # MODELOS EXISTENTES
 # ═══════════════════════════════════════════════════════════
 from . import dte_certificate

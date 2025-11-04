@@ -47,4 +47,13 @@ access_dte_contingency_pending_manager,dte.contingency.pending.manager,model_dte
 access_contingency_wizard_user,contingency.wizard.user,model_contingency_wizard,account.group_account_user,1,1,1,0
 access_contingency_wizard_manager,contingency.wizard.manager,model_contingency_wizard,account.group_account_manager,1,1,1,1
 access_ai_chat_universal_wizard_user,ai.chat.universal.wizard.user,model_ai_chat_universal_wizard,base.group_user,1,1,1,1
+access_sii_activity_code_user,sii.activity.code.user,model_sii_activity_code,base.group_user,1,0,0,0
+access_sii_activity_code_manager,sii.activity.code.manager,model_sii_activity_code,account.group_account_manager,1,1,1,1
+access_l10n_cl_comuna_user,l10n.cl.comuna.user,model_l10n_cl_comuna,base.group_user,1,0,0,0
+access_l10n_cl_comuna_manager,l10n.cl.comuna.manager,model_l10n_cl_comuna,account.group_account_manager,1,1,1,1
+access_l10n_cl_rcv_entry_user,l10n_cl.rcv.entry.user,model_l10n_cl_rcv_entry,account.group_account_user,1,0,0,0
+access_l10n_cl_rcv_entry_manager,l10n_cl.rcv.entry.manager,model_l10n_cl_rcv_entry,account.group_account_manager,1,1,1,1
+access_l10n_cl_rcv_period_user,l10n_cl.rcv.period.user,model_l10n_cl_rcv_period,account.group_account_user,1,0,0,0
+access_l10n_cl_rcv_period_manager,l10n_cl.rcv.period.manager,model_l10n_cl_rcv_period,account.group_account_manager,1,1,1,1
+access_rcv_csv_import_wizard,rcv.csv.import.wizard,model_rcv_csv_import_wizard,account.group_account_user,1,1,1,1
 

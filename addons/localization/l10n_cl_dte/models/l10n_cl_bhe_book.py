@@ -287,10 +287,11 @@ class L10nClBheBook(models.Model):
                     _("El año debe estar entre 2018 y 2099.")
                 )
 
-    _sql_constraints = [
-        ('period_unique', 'unique(period_year, period_month, company_id)',
-         'Ya existe un Libro BHE para este período en esta compañía.')
-    ]
+    # CONSTRAINTS (Odoo 19 CE format)
+    _period_unique = models.Constraint(
+        'unique(period_year, period_month, company_id)',
+        'Ya existe un Libro BHE para este período en esta compañía.'
+    )
 
     # ═══════════════════════════════════════════════════════════
     # ACTIONS
