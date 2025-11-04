@@ -163,6 +163,7 @@ Es un desarrollo independiente para localización chilena.
         # Seguridad (SIEMPRE PRIMERO)
         'security/ir.model.access.csv',
         'security/security_groups.xml',
+        'security/multi_company_rules.xml',  # ⭐ P0-3: Multi-company record rules (data isolation)
 
         # Datos base
         'data/dte_document_types.xml',
@@ -185,6 +186,7 @@ Es un desarrollo independiente para localización chilena.
         'views/dte_certificate_views.xml',
         'views/dte_caf_views.xml',
         'views/account_move_dte_views.xml',
+        'views/account_move_menu_fix.xml',  # ⭐ NEW (2025-11-03): Fix duplicidad menús facturación (extend standard views + hide l10n_cl duplicates)
         'views/account_journal_dte_views.xml',
         'views/purchase_order_dte_views.xml',
         'views/stock_picking_dte_views.xml',
