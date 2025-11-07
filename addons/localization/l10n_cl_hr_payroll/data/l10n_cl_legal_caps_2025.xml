@@ -44,10 +44,12 @@
             <field name="valid_until" eval="False"/>
         </record>
         
-        <!-- AFP - Tope Imponible (81.6 UF) -->
+        <!-- AFP - Tope Imponible (83.1 UF) -->
+        <!-- Ley 20.255 Art. 17 - Vigencia 2025 -->
+        <!-- Fuente: Superintendencia de Pensiones 2025 -->
         <record id="legal_cap_afp_imponible_2025" model="l10n_cl.legal.caps">
             <field name="code">AFP_IMPONIBLE_CAP</field>
-            <field name="amount">81.6</field>
+            <field name="amount">83.1</field>
             <field name="unit">uf</field>
             <field name="valid_from">2025-01-01</field>
             <field name="valid_until" eval="False"/>
