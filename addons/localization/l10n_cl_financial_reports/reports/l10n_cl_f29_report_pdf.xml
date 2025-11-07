@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Report Definition -->
+    <record id="action_report_l10n_cl_f29" model="ir.actions.report">
+        <field name="name">Declaración Mensual IVA (F29)</field>
+        <field name="model">l10n_cl.f29</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">l10n_cl_financial_reports.report_l10n_cl_f29_document</field>
+        <field name="report_file">l10n_cl_financial_reports.report_l10n_cl_f29_document</field>
+        <field name="binding_model_id" ref="model_l10n_cl_f29"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'F29_%s_%s' % (object.period_date.strftime('%Y_%m'), object.company_id.name)</field>
+    </record>
+
+    <!-- QWeb Template -->
+    <template id="report_l10n_cl_f29_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <!-- Header -->
+                        <div class="row mb-4">
+                            <div class="col-12 text-center">
+                                <h2>DECLARACIÓN MENSUAL Y PAGO SIMULTÁNEO</h2>
+                                <h3>FORMULARIO 29 - SERVICIO DE IMPUESTOS INTERNOS</h3>
+                            </div>
+                        </div>
+
+                        <!-- Company Info -->
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <strong>RUT:</strong> <span t-field="o.company_id.partner_id.vat"/><br/>
+                                <strong>Razón Social:</strong> <span t-field="o.company_id.name"/>
+                            </div>
+                            <div class="col-6 text-end">
+                                <strong>Período:</strong> <span t-field="o.period_date"/><br/>
+                                <strong>Estado:</strong>
+                                <span t-if="o.state == 'draft'" class="badge bg-secondary">Borrador</span>
+                                <span t-if="o.state == 'confirmed'" class="badge bg-primary">Confirmado</span>
+                                <span t-if="o.state == 'sent'" class="badge bg-info">Enviado</span>
+                                <span t-if="o.state == 'accepted'" class="badge bg-success">Aceptado</span>
+                            </div>
+                        </div>
+
+                        <hr/>
+
+                        <!-- Section 1: Débito Fiscal IVA -->
+                        <div class="mb-4">
+                            <h4 class="bg-primary text-white p-2">1. DÉBITO FISCAL IVA</h4>
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 10%;">Código</th>
+                                        <th style="width: 60%;">Concepto</th>
+                                        <th style="width: 30%;" class="text-end">Monto (CLP)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>14</td>
+                                        <td>Ventas y Servicios Gravados</td>
+                                        <td class="text-end"><span t-field="o.ventas_afectas" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>15</td>
+                                        <td>Ventas Exportación</td>
+                                        <td class="text-end"><span t-field="o.ventas_exportacion" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>09</td>
+                                        <td>Ventas Exentas</td>
+                                        <td class="text-end"><span t-field="o.ventas_exentas" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    </tr>
+                                    <tr class="table-primary fw-bold">
+                                        <td colspan="2">DÉBITO FISCAL TOTAL</td>
+                                        <td class="text-end"><span t-field="o.debito_fiscal" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Section 2: Crédito Fiscal IVA -->
+                        <div class="mb-4">
+                            <h4 class="bg-success text-white p-2">2. CRÉDITO FISCAL IVA</h4>
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 10%;">Código</th>
+                                        <th style="width: 60%;">Concepto</th>
+                                        <th style="width: 30%;" class="text-end">Monto (CLP)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>23</td>
+                                        <td>Compras Gravadas Nacionales</td>
+                                        <td class="text-end"><span t-field="o.compras_afectas" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>25</td>
+                                        <td>Compras Activo Fijo</td>
+                                        <td class="text-end"><span t-field="o.compras_activo_fijo" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>27</td>
+                                        <td>Compras Exentas</td>
+                                        <td class="text-end"><span t-field="o.compras_exentas" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    </tr>
+                                    <tr class="table-success fw-bold">
+                                        <td colspan="2">CRÉDITO FISCAL TOTAL</td>
+                                        <td class="text-end"><span t-field="o.credito_fiscal" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Section 3: PPM -->
+                        <div class="mb-4">
+                            <h4 class="bg-info text-white p-2">3. PAGOS PROVISIONALES MENSUALES (PPM)</h4>
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 10%;">Código</th>
+                                        <th style="width: 60%;">Concepto</th>
+                                        <th style="width: 30%;" class="text-end">Monto (CLP)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>34</td>
+                                        <td>PPM Obligatorio (mes)</td>
+                                        <td class="text-end"><span t-field="o.ppm_mes" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>37</td>
+                                        <td>PPM Voluntario</td>
+                                        <td class="text-end"><span t-field="o.ppm_voluntario" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    </tr>
+                                    <tr class="table-info fw-bold">
+                                        <td colspan="2">PPM TOTAL</td>
+                                        <td class="text-end"><span t-field="o.total_ppm" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Section 4: Resultado -->
+                        <div class="mb-4">
+                            <h4 class="bg-warning p-2">4. RESULTADO FINAL</h4>
+                            <table class="table table-sm table-bordered">
+                                <tbody>
+                                    <tr class="table-warning">
+                                        <td style="width: 70%;" class="fw-bold">Determinación IVA (Débito - Crédito)</td>
+                                        <td style="width: 30%;" class="text-end fw-bold">
+                                            <span t-field="o.determinacion_iva" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                    <tr t-if="o.iva_a_pagar > 0" class="table-danger">
+                                        <td class="fw-bold">IVA A PAGAR</td>
+                                        <td class="text-end fw-bold">
+                                            <span t-field="o.iva_a_pagar" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                    <tr t-if="o.saldo_favor > 0" class="table-success">
+                                        <td class="fw-bold">SALDO A FAVOR</td>
+                                        <td class="text-end fw-bold">
+                                            <span t-field="o.saldo_favor" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Footer Notes -->
+                        <div class="mt-5">
+                            <p class="text-muted small">
+                                <strong>Nota:</strong> Este documento es una representación electrónica de la Declaración Mensual y Pago Simultáneo (Formulario 29).
+                                Para efectos legales y tributarios, debe presentarse formalmente ante el Servicio de Impuestos Internos (SII).
+                            </p>
+                            <p class="text-muted small">
+                                Generado el: <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y %H:%M')"/> | Sistema: Odoo 19 - EERGYGROUP
+                            </p>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

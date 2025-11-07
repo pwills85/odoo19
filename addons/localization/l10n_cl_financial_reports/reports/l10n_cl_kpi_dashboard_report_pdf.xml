@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Report Definition -->
+    <record id="action_report_l10n_cl_kpi_dashboard" model="ir.actions.report">
+        <field name="name">Dashboard KPIs Financieros</field>
+        <field name="model">l10n_cl.kpi.dashboard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">l10n_cl_financial_reports.report_l10n_cl_kpi_dashboard_document</field>
+        <field name="report_file">l10n_cl_financial_reports.report_l10n_cl_kpi_dashboard_document</field>
+        <field name="binding_model_id" ref="model_l10n_cl_kpi_dashboard"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Dashboard_KPI_%s_%s' % (object.date_from.strftime('%Y_%m'), object.company_id.name)</field>
+    </record>
+
+    <!-- QWeb Template -->
+    <template id="report_l10n_cl_kpi_dashboard_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <!-- Header -->
+                        <div class="row mb-4">
+                            <div class="col-12 text-center">
+                                <h2>DASHBOARD DE INDICADORES FINANCIEROS (KPI)</h2>
+                                <h3>REPORTE EJECUTIVO - ANÁLISIS TRIBUTARIO</h3>
+                            </div>
+                        </div>
+
+                        <!-- Company and Period Info -->
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <strong>Compañía:</strong> <span t-field="o.company_id.name"/><br/>
+                                <strong>RUT:</strong> <span t-field="o.company_id.partner_id.vat"/>
+                            </div>
+                            <div class="col-6 text-end">
+                                <strong>Período:</strong> <span t-field="o.date_from"/> - <span t-field="o.date_to"/><br/>
+                                <strong>Generado:</strong> <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y %H:%M')"/>
+                            </div>
+                        </div>
+
+                        <hr/>
+
+                        <!-- KPI Cards Summary -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h4 class="bg-primary text-white p-2">📊 RESUMEN EJECUTIVO DE KPIs</h4>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <!-- IVA Débito Fiscal -->
+                            <div class="col-6 mb-3">
+                                <div class="card border-danger">
+                                    <div class="card-header bg-danger text-white text-center">
+                                        <h5 class="mb-0">IVA DÉBITO FISCAL</h5>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <h2 class="fw-bold text-danger">
+                                            <span t-field="o.iva_debito_fiscal" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </h2>
+                                        <p class="text-muted mb-0">Código 14 SII</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- IVA Crédito Fiscal -->
+                            <div class="col-6 mb-3">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white text-center">
+                                        <h5 class="mb-0">IVA CRÉDITO FISCAL</h5>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <h2 class="fw-bold text-success">
+                                            <span t-field="o.iva_credito_fiscal" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </h2>
+                                        <p class="text-muted mb-0">Códigos 23, 25 SII</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ventas Netas -->
+                            <div class="col-6 mb-3">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white text-center">
+                                        <h5 class="mb-0">VENTAS NETAS</h5>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <h2 class="fw-bold text-info">
+                                            <span t-field="o.ventas_netas" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </h2>
+                                        <p class="text-muted mb-0">Ingresos Operacionales</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Compras Netas -->
+                            <div class="col-6 mb-3">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-dark text-center">
+                                        <h5 class="mb-0">COMPRAS NETAS</h5>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <h2 class="fw-bold text-warning">
+                                            <span t-field="o.compras_netas" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </h2>
+                                        <p class="text-muted mb-0">Costos Operacionales</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- PPM Pagado -->
+                            <div class="col-12 mb-3">
+                                <div class="card border-secondary">
+                                    <div class="card-header bg-secondary text-white text-center">
+                                        <h5 class="mb-0">PPM PAGADO (Pagos Provisionales Mensuales)</h5>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <h2 class="fw-bold">
+                                            <span t-field="o.ppm_pagado" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </h2>
+                                        <p class="text-muted mb-0">Código 34, 37 SII</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detailed KPI Table -->
+                        <div class="mb-4">
+                            <h4 class="bg-primary text-white p-2">📈 TABLA DETALLADA DE KPIs</h4>
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 50%;">Indicador</th>
+                                        <th style="width: 30%;" class="text-end">Valor</th>
+                                        <th style="width: 20%;">Categoría</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>IVA Débito Fiscal</td>
+                                        <td class="text-end">
+                                            <span t-field="o.iva_debito_fiscal" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </td>
+                                        <td><span class="badge bg-danger">Impuesto</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>IVA Crédito Fiscal</td>
+                                        <td class="text-end">
+                                            <span t-field="o.iva_credito_fiscal" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </td>
+                                        <td><span class="badge bg-success">Crédito</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Ventas Netas</td>
+                                        <td class="text-end">
+                                            <span t-field="o.ventas_netas" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </td>
+                                        <td><span class="badge bg-info">Ingresos</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Compras Netas</td>
+                                        <td class="text-end">
+                                            <span t-field="o.compras_netas" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </td>
+                                        <td><span class="badge bg-warning text-dark">Costos</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>PPM Pagado</td>
+                                        <td class="text-end">
+                                            <span t-field="o.ppm_pagado" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </td>
+                                        <td><span class="badge bg-secondary">PPM</span></td>
+                                    </tr>
+                                    <tr class="table-primary fw-bold">
+                                        <td>DETERMINACIÓN IVA (Débito - Crédito)</td>
+                                        <td class="text-end">
+                                            <t t-set="determinacion_iva" t-value="o.iva_debito_fiscal - o.iva_credito_fiscal"/>
+                                            <span t-esc="o.currency_id.format(determinacion_iva)"/>
+                                        </td>
+                                        <td><span class="badge bg-primary">Resultado</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Performance Metrics -->
+                        <div class="mb-4">
+                            <h4 class="bg-secondary text-white p-2">⚡ MÉTRICAS DE RENDIMIENTO</h4>
+                            <table class="table table-sm table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <td style="width: 50%;"><strong>Fuente de Datos:</strong></td>
+                                        <td style="width: 50%;">
+                                            <span t-if="o.cache_hit" class="badge bg-success">✓ Caché (Alta Velocidad)</span>
+                                            <span t-if="not o.cache_hit" class="badge bg-warning">⚙️ Cálculo en Tiempo Real</span>
+                                        </td>
+                                    </tr>
+                                    <tr t-if="o.cache_hit">
+                                        <td><strong>Tiempo de Respuesta:</strong></td>
+                                        <td>&lt; 200ms (Caché Hit)</td>
+                                    </tr>
+                                    <tr t-if="not o.cache_hit">
+                                        <td><strong>Tiempo de Respuesta:</strong></td>
+                                        <td>&lt; 1.5s (Cálculo Directo)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Analysis Notes -->
+                        <div class="mb-4">
+                            <h4 class="bg-info p-2">💡 NOTAS DE ANÁLISIS</h4>
+                            <div class="card">
+                                <div class="card-body">
+                                    <p><strong>IVA Neto a Pagar/Favor:</strong></p>
+                                    <t t-set="iva_neto" t-value="o.iva_debito_fiscal - o.iva_credito_fiscal"/>
+                                    <ul>
+                                        <li t-if="iva_neto > 0">
+                                            La empresa debe pagar <strong t-esc="o.currency_id.format(iva_neto)"/> en concepto de IVA.
+                                        </li>
+                                        <li t-if="iva_neto &lt; 0">
+                                            La empresa tiene un crédito fiscal de <strong t-esc="o.currency_id.format(abs(iva_neto))"/> a favor.
+                                        </li>
+                                        <li t-if="iva_neto == 0">
+                                            El IVA está equilibrado (débito = crédito).
+                                        </li>
+                                    </ul>
+
+                                    <p><strong>Ratio Compras/Ventas:</strong></p>
+                                    <t t-if="o.ventas_netas > 0">
+                                        <t t-set="ratio_compras_ventas" t-value="(o.compras_netas / o.ventas_netas) * 100"/>
+                                        <ul>
+                                            <li>
+                                                Las compras representan el <strong><span t-esc="'%.2f' % ratio_compras_ventas"/>%</strong> de las ventas netas.
+                                            </li>
+                                            <li t-if="ratio_compras_ventas &lt; 50">
+                                                <span class="text-success">✓ Margen saludable (compras &lt; 50% ventas)</span>
+                                            </li>
+                                            <li t-if="ratio_compras_ventas >= 50 and ratio_compras_ventas &lt; 80">
+                                                <span class="text-warning">⚠️ Margen moderado (compras 50-80% ventas)</span>
+                                            </li>
+                                            <li t-if="ratio_compras_ventas >= 80">
+                                                <span class="text-danger">⚠️ Margen ajustado (compras &gt; 80% ventas)</span>
+                                            </li>
+                                        </ul>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="mt-5">
+                            <p class="text-muted small">
+                                <strong>Nota:</strong> Este reporte es generado automáticamente a partir de las declaraciones F29 confirmadas en el período seleccionado.
+                                Los KPIs se calculan utilizando datos oficiales del Servicio de Impuestos Internos (SII).
+                            </p>
+                            <p class="text-muted small">
+                                Sistema: Odoo 19 - EERGYGROUP | Módulo: l10n_cl_financial_reports | Versión: 19.0.1.0.0
+                            </p>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

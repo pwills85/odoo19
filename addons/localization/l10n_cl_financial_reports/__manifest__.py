@@ -191,6 +191,10 @@ For technical support and customizations, contact EERGYGROUP.
         # All menu items after views that define actions
         "views/menu_items.xml",
         "views/menu_items_sub.xml",  # Sub-menu items that reference parent menus
+
+        # PDF Reports (QWeb)
+        "reports/l10n_cl_f29_report_pdf.xml",  # FASE 2: F29 PDF report
+        "reports/l10n_cl_kpi_dashboard_report_pdf.xml",  # FASE 2: KPI Dashboard PDF report
         "views/financial_services_menu.xml",
         "views/financial_dashboard_menu.xml",
         "views/analytic_report_menu.xml",

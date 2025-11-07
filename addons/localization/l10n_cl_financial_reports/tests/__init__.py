@@ -25,6 +25,9 @@ from . import test_report_comparison_wizard
 # FASE 2 - KPI Alert System Tests
 from . import test_kpi_alerts
 
+# FASE 2 - PDF Reports Smoke Tests
+from . import test_pdf_reports
+
 # FASE 3 Coverage Validation
 
 # FASE 3 New Tests - High Quality Odoo 18 Compatible

@@ -222,20 +222,19 @@ class L10nClRCVEntry(models.Model):
     # ========================
     @api.constrains('partner_vat')
     def _check_rut_format(self):
-        """Valida formato RUT chileno"""
+        """
+        Valida formato RUT chileno.
+
+        P3.2 GAP CLOSURE: Uses centralized stdnum-based validation.
+        """
+        from odoo.addons.l10n_cl_dte.tools.rut_validator import validate_rut
+
         for rec in self:
             if rec.partner_vat:
-                # Remover puntos y guiones
-                rut = rec.partner_vat.replace('.', '').replace('-', '')
-
-                if not rut:
-                    raise ValidationError(_('RUT no puede estar vacío'))
-
-                # Validar que tenga al menos 2 caracteres (número + dígito verificador)
-                if len(rut) < 2:
+                if not validate_rut(rec.partner_vat):
                     raise ValidationError(_(
                         'RUT inválido: %s\n'
-                        'Debe tener formato: 12345678-9'
+                        'El RUT debe tener formato válido (ej: 12345678-9)'
                     ) % rec.partner_vat)
 
     @api.constrains('amount_total', 'amount_untaxed', 'amount_tax', 'amount_exempt')

@@ -1296,15 +1296,11 @@ class AccountMoveDTE(models.Model):
         """
         self.ensure_one()
 
-        # Utilidades
+        # P3.2 GAP CLOSURE: Use centralized RUT validation
+        from odoo.addons.l10n_cl_dte.tools.rut_validator import validate_rut
+
         def _rut_valido(value):
-            try:
-                from stdnum.cl import rut as rutlib
-                return rutlib.is_valid(value or '')
-            except Exception:
-                # Fallback simple si no está stdnum
-                import re
-                return bool(re.match(r"^[0-9]{1,8}-[0-9kK]$", (value or '').strip()))
+            return validate_rut(value)
 
         # 1) tipo_traslado (1..8) - OBLIGATORIO
         has_tipo_traslado_attr = hasattr(self, 'l10n_cl_dte_tipo_traslado')
