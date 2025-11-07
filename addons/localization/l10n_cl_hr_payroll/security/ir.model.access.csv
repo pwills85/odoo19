@@ -31,3 +31,5 @@ access_hr_payslip_run_user,hr.payslip.run.user,model_hr_payslip_run,group_hr_pay
 access_hr_payslip_run_manager,hr.payslip.run.manager,model_hr_payslip_run,group_hr_payroll_manager,1,1,1,1
 access_hr_economic_indicators_import_wizard_user,hr.economic.indicators.import.wizard.user,model_hr_economic_indicators_import_wizard,group_hr_payroll_user,1,1,1,1
 access_hr_economic_indicators_import_wizard_manager,hr.economic.indicators.import.wizard.manager,model_hr_economic_indicators_import_wizard,group_hr_payroll_manager,1,1,1,1
+access_hr_lre_wizard_user,hr.lre.wizard.user,model_hr_lre_wizard,group_hr_payroll_user,1,1,1,1
+access_hr_lre_wizard_manager,hr.lre.wizard.manager,model_hr_lre_wizard,group_hr_payroll_manager,1,1,1,1
