@@ -33,11 +33,10 @@ class TestPayrollCalculationsSprint32(TransactionCase):
         
         # Crear indicadores económicos
         self.indicators = self.env['hr.economic.indicators'].create({
-            'year': 2025,
-            'month': 10,
+            'period': date(2025, 10, 1),
             'uf': 39383.07,
             'utm': 68647,
-            'sueldo_minimo': 500000,
+            'minimum_wage': 500000,
             'afp_limit': 87.8,
         })
         
@@ -62,7 +61,7 @@ class TestPayrollCalculationsSprint32(TransactionCase):
             'afp_id': self.afp.id,
             'afp_rate': 11.44,
             'health_system': 'fonasa',
-            'jornada_semanal': 45.0,
+            'weekly_hours': 45,
             'state': 'open',
             'date_start': date(2025, 1, 1),
         })
@@ -204,7 +203,7 @@ class TestPayrollCalculationsSprint32(TransactionCase):
         
         # Verificar se aplicó tope
         col_line = self.payslip.line_ids.filtered(lambda l: l.code == 'COLACION')
-        tope = self.indicators.sueldo_minimo * 0.20
+        tope = self.indicators.minimum_wage * 0.20
         self.assertEqual(col_line.total, tope,
                         "Debe aplicarse tope 20% IMM")
     

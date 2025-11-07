@@ -584,6 +584,31 @@ class HrPayslip(models.Model):
             })
             _logger.debug("AFC: $%s", f"{afc_amount:,.0f}")
         
+        # 4.4 APV (Ahorro Previsional Voluntario - P0-2) 🆕
+        apv_amount, apv_regime = self._calculate_apv()
+        if apv_amount > 0 and apv_regime:
+            apv_code = f'APV_{apv_regime}'  # APV_A o APV_B
+            apv_name = f'APV {self.contract_id.l10n_cl_apv_institution_id.name} (Régimen {apv_regime})'
+            
+            LineObj.create({
+                'slip_id': self.id,
+                'code': apv_code,
+                'name': apv_name,
+                'sequence': 116,
+                'category_id': CategoryLegal.id,
+                'amount': apv_amount,
+                'quantity': 1.0,
+                'rate': 0.0,
+                'total': -apv_amount,
+            })
+            
+            _logger.info(
+                "APV: $%s (Régimen %s) - %s",
+                f"{apv_amount:,.0f}",
+                apv_regime,
+                "Rebaja tributaria" if apv_regime == 'A' else "Sin rebaja"
+            )
+        
         # ═══════════════════════════════════════════════════════════
         # PASO 5: IMPUESTO ÚNICO (SPRINT 3.2 ✨)
         # ═══════════════════════════════════════════════════════════
@@ -870,10 +895,10 @@ class HrPayslip(models.Model):
         Fórmula: (Sueldo Base * 12) / (52 * Jornada Semanal)
         """
         sueldo_mensual = self.contract_id.wage
-        jornada_semanal = self.contract_id.jornada_semanal or 45.0
+        weekly_hours = self.contract_id.weekly_hours or 45
         
         # Fórmula legal: sueldo anual / horas anuales
-        horas_anuales = 52 * jornada_semanal
+        horas_anuales = 52 * weekly_hours
         
         if horas_anuales == 0:
             _logger.error("Jornada semanal es 0, no se puede calcular valor hora")
@@ -935,42 +960,37 @@ class HrPayslip(models.Model):
     
     def _calculate_progressive_tax(self, base):
         """
-        Calcular impuesto usando tabla progresiva 7 tramos 2025
+        Calcular impuesto usando modelo hr.tax.bracket (NO hardcoded)
         
-        Técnica Odoo 19 CE:
-        - Tabla como lista de tuplas (estructura inmutable)
-        - Itera tramos con for (patrón estándar)
-        - Retorna float
+        Técnica Odoo 19 CE REFACTORIZADA:
+        - Usa hr.tax.bracket.calculate_tax() para delegación
+        - Permite versionamiento sin tocar código
+        - Considera zona extrema del contrato
         
-        Tabla SII 2025 (vigente):
-        Tramo 1: $0 - $816.822 → 0% (exento)
-        Tramo 2: $816.823 - $1.816.680 → 4%
-        Tramo 3: $1.816.681 - $3.026.130 → 8%
-        Tramo 4: $3.026.131 - $4.235.580 → 13.5%
-        Tramo 5: $4.235.581 - $5.445.030 → 23%
-        Tramo 6: $5.445.031 - $7.257.370 → 30.4%
-        Tramo 7: $7.257.371 y más → 35%
+        Args:
+            base: Base tributable en CLP
+            
+        Returns:
+            float: Monto de impuesto calculado
         """
-        # Tabla 7 tramos (desde, hasta, tasa, rebaja)
-        TRAMOS = [
-            (0, 816_822, 0.0, 0),
-            (816_823, 1_816_680, 0.04, 32_673),
-            (1_816_681, 3_026_130, 0.08, 105_346),
-            (3_026_131, 4_235_580, 0.135, 271_833),
-            (4_235_581, 5_445_030, 0.23, 674_285),
-            (5_445_031, 7_257_370, 0.304, 1_077_123),
-            (7_257_371, float('inf'), 0.35, 1_411_462),
-        ]
+        TaxBracket = self.env['hr.tax.bracket']
         
-        # Buscar tramo correspondiente
-        for desde, hasta, tasa, rebaja in TRAMOS:
-            if desde <= base <= hasta:
-                # Fórmula: (base * tasa) - rebaja
-                impuesto = (base * tasa) - rebaja
-                return max(impuesto, 0)  # No puede ser negativo
-        
-        # Nunca debería llegar aquí
-        return 0.0
+        try:
+            impuesto = TaxBracket.calculate_tax(
+                base_tributable=base,
+                target_date=self.date_from,
+                extreme_zone=self.contract_id.extreme_zone or False
+            )
+            return impuesto
+            
+        except Exception as e:
+            _logger.error(
+                "Error calculando impuesto único para payslip %s: %s",
+                self.number,
+                str(e)
+            )
+            # Si falla, retornar 0 pero loguear warning
+            return 0.0
     
     def _get_total_previsional(self):
         """
@@ -980,8 +1000,10 @@ class HrPayslip(models.Model):
         - Filtra líneas con filtered()
         - Suma con sum() y mapped()
         - Retorna float
+        
+        IMPORTANTE: Incluye APV Régimen A para rebaja tributaria
         """
-        previsional_codes = ['AFP', 'HEALTH', 'APV']
+        previsional_codes = ['AFP', 'HEALTH', 'APV_A']  # APV_A = Régimen A
         
         # Filtrar líneas previsionales
         previsional_lines = self.line_ids.filtered(
@@ -1033,12 +1055,98 @@ class HrPayslip(models.Model):
         NOTA: Solo se calcula descuento trabajador aquí
         """
         # AFC trabajador: 0.6% sobre imponible (tope 120.2 UF)
-        tope_afc = self.indicadores_id.uf * 120.2
+        try:
+            cap_amount, cap_unit = self.env['l10n_cl.legal.caps'].get_cap(
+                'AFC_CAP',
+                self.date_from
+            )
+            tope_afc = self.indicadores_id.uf * cap_amount
+        except:
+            # Fallback si no encuentra tope
+            tope_afc = self.indicadores_id.uf * 120.2
+        
         base_afc = min(self.total_imponible, tope_afc)
         
         afc_amount = base_afc * 0.006  # 0.6%
         
         return afc_amount
+    
+    # ═══════════════════════════════════════════════════════════
+    # APV (AHORRO PREVISIONAL VOLUNTARIO) - P0-2
+    # ═══════════════════════════════════════════════════════════
+    
+    def _calculate_apv(self):
+        """
+        Calcular APV (Ahorro Previsional Voluntario)
+        
+        Técnica Odoo 19 CE - P0-2:
+        - Convierte UF → CLP usando indicadores del período
+        - Aplica tope mensual según modelo l10n_cl.legal.caps
+        - Diferencia Régimen A (rebaja tributaria) vs B (sin rebaja)
+        
+        Returns:
+            tuple: (apv_amount, apv_regime)
+                - apv_amount (float): Monto calculado en CLP
+                - apv_regime (str): 'A' o 'B'
+        """
+        contract = self.contract_id
+        
+        # Verificar si tiene APV configurado
+        if not contract.l10n_cl_apv_institution_id or not contract.l10n_cl_apv_amount:
+            return 0.0, None
+        
+        # Calcular monto según tipo
+        apv_amount_clp = 0.0
+        
+        if contract.l10n_cl_apv_amount_type == 'fixed':
+            # Monto fijo en CLP
+            apv_amount_clp = contract.l10n_cl_apv_amount
+            
+        elif contract.l10n_cl_apv_amount_type == 'percent':
+            # Porcentaje sobre Renta Líquida Imponible (RLI)
+            rli = self.total_imponible
+            apv_amount_clp = rli * (contract.l10n_cl_apv_amount / 100.0)
+            
+        elif contract.l10n_cl_apv_amount_type == 'uf':
+            # Monto en UF → convertir a CLP
+            uf_value = self.indicadores_id.uf
+            apv_amount_clp = contract.l10n_cl_apv_amount * uf_value
+        
+        # Aplicar tope mensual (solo para rebaja tributaria Régimen A)
+        if contract.l10n_cl_apv_regime == 'A':
+            try:
+                cap_monthly, cap_unit = self.env['l10n_cl.legal.caps'].get_cap(
+                    'APV_CAP_MONTHLY',
+                    self.date_from
+                )
+                
+                # Convertir tope a CLP
+                if cap_unit == 'uf':
+                    tope_mensual_clp = cap_monthly * self.indicadores_id.uf
+                else:
+                    tope_mensual_clp = cap_monthly
+                
+                # Limitar rebaja tributaria al tope
+                apv_deductible = min(apv_amount_clp, tope_mensual_clp)
+                
+                _logger.info(
+                    "APV Régimen A: monto=$%s, tope=$%s, deducible=$%s",
+                    f"{apv_amount_clp:,.0f}",
+                    f"{tope_mensual_clp:,.0f}",
+                    f"{apv_deductible:,.0f}"
+                )
+                
+                return apv_deductible, 'A'
+                
+            except Exception as e:
+                _logger.warning(
+                    "No se pudo obtener tope APV mensual: %s. Usando monto sin tope.",
+                    str(e)
+                )
+                return apv_amount_clp, 'A'
+        
+        # Régimen B: sin rebaja tributaria, monto completo
+        return apv_amount_clp, 'B'
     
     def _calculate_sis(self):
         """
@@ -1141,8 +1249,8 @@ class HrPayslip(models.Model):
         gratification_amount = base * gratification_rate
         
         # Tope: 4.75 IMM mensual
-        imm = self.indicadores_id.ingreso_minimo
-        tope_mensual = (imm * 4.75) / 12
+        minimum_wage = self.indicadores_id.minimum_wage
+        tope_mensual = (minimum_wage * 4.75) / 12
         
         if gratification_amount > tope_mensual:
             gratification_amount = tope_mensual

@@ -190,10 +190,10 @@ class HrEconomicIndicators(models.Model):
             data = result['indicators']
             
             # Crear registro
-            period = date(year, month, 1)
+            period_date = date(year, month, 1)
             
             indicator = self.create({
-                'period': period,
+                'period': period_date,
                 'uf': data.get('uf', 0),
                 'utm': data.get('utm', 0),
                 'uta': data.get('uta', 0),
@@ -206,7 +206,7 @@ class HrEconomicIndicators(models.Model):
             
             _logger.info(
                 "✅ Indicadores %s creados desde AI-Service (ID: %d)",
-                period.strftime('%Y-%m'),
+                period_date.strftime('%Y-%m'),
                 indicator.id
             )
             
@@ -226,3 +226,132 @@ class HrEconomicIndicators(models.Model):
                 "• Cargar indicadores manualmente\n"
                 "• Contactar soporte técnico"
             ) % (year, month, str(e)))
+    
+    @api.model
+    def _run_fetch_indicators_cron(self):
+        """
+        Cron automático: obtener indicadores del mes siguiente - P0-4
+        
+        Ejecuta día 1 de cada mes a las 05:00 AM
+        Idempotente: si registro existe, no duplica
+        
+        Reintentos: 3 intentos con backoff exponencial
+        """
+        import logging
+        import time
+        from datetime import timedelta
+        
+        _logger = logging.getLogger(__name__)
+        
+        today = date.today()
+        # Mes siguiente
+        next_month = (today.replace(day=1) + timedelta(days=32)).replace(day=1)
+        
+        year = next_month.year
+        month = next_month.month
+        
+        _logger.info(
+            "🔄 Cron indicadores: obteniendo %s-%02d",
+            year, month
+        )
+        
+        # Verificar si ya existe (idempotencia)
+        existing = self.search([('period', '=', next_month)], limit=1)
+        if existing:
+            _logger.info(
+                "ℹ️  Indicadores %s-%02d ya existen (ID: %d), skip",
+                year, month, existing.id
+            )
+            return existing
+        
+        # Intentar fetch con reintentos
+        max_retries = 3
+        for attempt in range(1, max_retries + 1):
+            try:
+                _logger.info(
+                    "Intento %d/%d: obteniendo indicadores desde AI-Service...",
+                    attempt, max_retries
+                )
+                
+                indicator = self.fetch_from_ai_service(year, month)
+                
+                _logger.info(
+                    "✅ Indicadores %s-%02d creados en intento %d",
+                    year, month, attempt
+                )
+                
+                return indicator
+                
+            except Exception as e:
+                _logger.warning(
+                    "⚠️  Intento %d/%d falló: %s",
+                    attempt, max_retries, str(e)
+                )
+                
+                if attempt < max_retries:
+                    # Backoff exponencial: 5s, 10s, 15s
+                    sleep_time = 5 * attempt
+                    _logger.info("Reintentando en %ds...", sleep_time)
+                    time.sleep(sleep_time)
+                else:
+                    # Último intento falló
+                    _logger.error(
+                        "❌ Todos los intentos fallaron para %s-%02d. "
+                        "Se requiere carga manual.",
+                        year, month
+                    )
+                    
+                    # Notificar a admin
+                    self._notify_indicators_failure(year, month)
+                    
+                    raise
+    
+    def _notify_indicators_failure(self, year, month):
+        """
+        Notificar a administradores que debe cargar indicadores manualmente - P0-4
+        
+        Crea una actividad para el grupo de administradores de nómina.
+        """
+        import logging
+        _logger = logging.getLogger(__name__)
+        
+        try:
+            # Buscar usuarios administradores de nómina
+            admin_group = self.env.ref('l10n_cl_hr_payroll.group_hr_payroll_manager')
+            admin_users = admin_group.users
+            
+            if not admin_users:
+                _logger.warning("No hay usuarios administradores de nómina")
+                return
+            
+            # Crear actividad para cada admin
+            for user in admin_users:
+                self.env['mail.activity'].create({
+                    'res_model_id': self.env.ref('l10n_cl_hr_payroll.model_hr_economic_indicators').id,
+                    'res_id': 0,
+                    'activity_type_id': self.env.ref('mail.mail_activity_data_todo').id,
+                    'summary': f'Cargar indicadores económicos {year}-{month:02d} manualmente',
+                    'note': f'''
+                        <p>El cron automático de indicadores económicos falló.</p>
+                        <p><b>Mes:</b> {year}-{month:02d}</p>
+                        <p><b>Acción requerida:</b></p>
+                        <ul>
+                            <li>Ir a Nómina > Configuración > Indicadores Económicos</li>
+                            <li>Usar el wizard de carga manual (CSV)</li>
+                            <li>O crear el registro manualmente</li>
+                        </ul>
+                    ''',
+                    'date_deadline': date.today(),
+                    'user_id': user.id,
+                })
+            
+            _logger.info(
+                "📧 Notificaciones enviadas a %d administradores",
+                len(admin_users)
+            )
+            
+        except Exception as e:
+            _logger.error(
+                "Error enviando notificaciones: %s",
+                str(e)
+            )

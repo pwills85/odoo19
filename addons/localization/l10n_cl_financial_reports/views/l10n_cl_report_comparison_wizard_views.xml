@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Form View - Configuration (Draft State) -->
+    <record id="view_l10n_cl_report_comparison_wizard_form" model="ir.ui.view">
+        <field name="name">l10n_cl.report.comparison.wizard.form</field>
+        <field name="model">l10n_cl.report.comparison.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Comparación F22 vs F29">
+                <header>
+                    <button name="action_compare" string="Ejecutar Comparación" type="object"
+                            class="btn-primary" invisible="state == 'compared'"/>
+                    <button name="action_close" string="Cerrar" type="object"
+                            class="btn-secondary" invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,compared"/>
+                </header>
+                <sheet>
+                    <!-- Configuration Section (Draft State) -->
+                    <group invisible="state == 'compared'">
+                        <group>
+                            <field name="year" required="1"/>
+                            <field name="company_id" required="1" options="{'no_create': True}"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Results Section (Compared State) -->
+                    <div invisible="state == 'draft'">
+                        <!-- Summary Stats Card -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card border-info mb-3">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="mb-0">📊 Año Fiscal</h6>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <h3 class="fw-bold"><field name="year"/></h3>
+                                        <p class="text-muted mb-0"><field name="company_id"/></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-warning mb-3">
+                                    <div class="card-header bg-warning text-white">
+                                        <h6 class="mb-0">⚠️ Discrepancias Detectadas</h6>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <h3 class="fw-bold">
+                                            <field name="total_discrepancies"/>
+                                        </h3>
+                                        <p class="text-muted mb-0">
+                                            Mayor Discrepancia: <field name="max_discrepancy_amount" widget="monetary"/>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Comparison Lines -->
+                        <group string="📋 Resultados de Comparación">
+                            <field name="comparison_line_ids" nolabel="1">
+                                <tree string="Comparación Detallada"
+                                      decoration-danger="has_discrepancy"
+                                      decoration-success="not has_discrepancy"
+                                      create="0" delete="0" edit="0">
+                                    <field name="sequence" column_invisible="1"/>
+                                    <field name="concept" string="Concepto"/>
+                                    <field name="total_f29" string="Total F29 (Suma Mensual)" widget="monetary"/>
+                                    <field name="total_f22" string="Total F22 (Declaración Anual)" widget="monetary"/>
+                                    <field name="difference" string="Diferencia (F29 - F22)" widget="monetary"/>
+                                    <field name="has_discrepancy" string="⚠️" widget="boolean"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                </tree>
+                            </field>
+                        </group>
+
+                        <!-- Help Text -->
+                        <div class="alert alert-info mt-3" role="alert">
+                            <strong>ℹ️ Nota:</strong> Las diferencias superiores a $100 se resaltan en <span class="text-danger">rojo</span>
+                            para indicar discrepancias significativas entre las declaraciones mensuales (F29) y la anual (F22).
+                            Las diferencias menores pueden deberse a ajustes de redondeo.
+                        </div>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to Open Wizard -->
+    <record id="action_l10n_cl_report_comparison_wizard" model="ir.actions.act_window">
+        <field name="name">Comparación F22 vs F29</field>
+        <field name="res_model">l10n_cl.report.comparison.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{}</field>
+    </record>
+
+    <!-- Menu Item under Financial Reports -->
+    <menuitem id="menu_l10n_cl_report_comparison_wizard"
+              name="Comparación Anual F22/F29"
+              parent="l10n_cl_financial_reports.menu_l10n_cl_financial_reports_root"
+              action="action_l10n_cl_report_comparison_wizard"
+              sequence="30"
+              groups="account.group_account_user"/>
+
+</odoo>

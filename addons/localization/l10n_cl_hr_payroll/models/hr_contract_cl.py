@@ -67,16 +67,27 @@ class HrContractCL(models.Model):
             contract.is_fonasa = (contract.health_system == 'fonasa')
     
     # APV (Ahorro Previsional Voluntario)
-    apv_id = fields.Many2one('hr.apv', string='APV')
-    apv_amount_uf = fields.Float(
-        string='APV (UF)',
-        digits=(6, 4),
-        help='Ahorro Previsional Voluntario en UF'
+    l10n_cl_apv_institution_id = fields.Many2one(
+        'l10n_cl.apv.institution',
+        string='APV Institution',
+        help='Institución receptora del APV'
     )
-    apv_type = fields.Selection([
-        ('direct', 'Directa (Régimen A)'),
-        ('indirect', 'Indirecta (Régimen B)')
-    ], string='Tipo APV', default='direct')
+    l10n_cl_apv_regime = fields.Selection([
+        ('A', 'Régimen A (Rebaja tributaria)'),
+        ('B', 'Régimen B (Sin rebaja)')
+    ], string='APV Regime', help='Régimen tributario del APV')
+    
+    l10n_cl_apv_amount = fields.Monetary(
+        string='APV Amount',
+        currency_field='currency_id',
+        help='Monto del aporte APV'
+    )
+    l10n_cl_apv_amount_type = fields.Selection([
+        ('fixed', 'Monto Fijo CLP'),
+        ('percent', 'Porcentaje RLI'),
+        ('uf', 'Monto en UF')
+    ], string='APV Amount Type', default='fixed',
+       help='Tipo de cotización APV')
     
     # Asignaciones Art. 41 CT
     colacion = fields.Monetary(

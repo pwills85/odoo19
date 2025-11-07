@@ -39,11 +39,11 @@ class TestPayslipTotals(common.TransactionCase):
         
         # Crear indicadores económicos
         self.indicators = self.env['hr.economic.indicators'].create({
-            'year': 2025,
-            'month': 10,
+            'period': date(2025, 10, 1),
             'uf': 39383.07,
             'utm': 68647,
             'uta': 823764,
+            'minimum_wage': 500000,
             'afp_limit': 87.8,
         })
     

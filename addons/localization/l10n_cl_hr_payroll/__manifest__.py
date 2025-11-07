@@ -78,8 +78,12 @@ Licencia: LGPL-3
         
         # Datos base (SEGUNDO) - SOPA 2025
         'data/ir_sequence.xml',                      # Secuencias
+        'data/ir_cron_data.xml',                     # Cron automático indicadores
         'data/hr_salary_rule_category_base.xml',     # 13 categorías base
         'data/hr_salary_rule_category_sopa.xml',     # 9 categorías SOPA
+        'data/hr_tax_bracket_2025.xml',              # Tramos impuesto 2025
+        'data/l10n_cl_legal_caps_2025.xml',          # Topes legales APV/AFC
+        'data/l10n_cl_apv_institutions.xml',         # Instituciones APV
         
         # Vistas
         'views/hr_payroll_structure_views.xml',
@@ -91,6 +95,9 @@ Licencia: LGPL-3
         'views/hr_isapre_views.xml',
         'views/hr_economic_indicators_views.xml',
         'views/menus.xml',
+        
+        # Wizards
+        'wizards/hr_economic_indicators_import_wizard_views.xml',
     ],
     'installable': True,
     'application': True,

@@ -15,6 +15,12 @@ access_hr_apv_user,hr.apv.user,model_hr_apv,group_hr_payroll_user,1,0,0,0
 access_hr_apv_manager,hr.apv.manager,model_hr_apv,group_hr_payroll_manager,1,1,1,1
 access_hr_economic_indicators_user,hr.economic.indicators.user,model_hr_economic_indicators,group_hr_payroll_user,1,0,0,0
 access_hr_economic_indicators_manager,hr.economic.indicators.manager,model_hr_economic_indicators,group_hr_payroll_manager,1,1,1,1
+access_hr_tax_bracket_user,hr.tax.bracket.user,model_hr_tax_bracket,group_hr_payroll_user,1,0,0,0
+access_hr_tax_bracket_manager,hr.tax.bracket.manager,model_hr_tax_bracket,group_hr_payroll_manager,1,1,1,1
+access_l10n_cl_apv_institution_user,l10n_cl.apv.institution.user,model_l10n_cl_apv_institution,group_hr_payroll_user,1,0,0,0
+access_l10n_cl_apv_institution_manager,l10n_cl.apv.institution.manager,model_l10n_cl_apv_institution,group_hr_payroll_manager,1,1,1,1
+access_l10n_cl_legal_caps_user,l10n_cl.legal.caps.user,model_l10n_cl_legal_caps,group_hr_payroll_user,1,0,0,0
+access_l10n_cl_legal_caps_manager,l10n_cl.legal.caps.manager,model_l10n_cl_legal_caps,group_hr_payroll_manager,1,1,1,1
 access_hr_payroll_structure_user,hr.payroll.structure.user,model_hr_payroll_structure,group_hr_payroll_user,1,0,0,0
 access_hr_payroll_structure_manager,hr.payroll.structure.manager,model_hr_payroll_structure,group_hr_payroll_manager,1,1,1,1
 access_hr_salary_rule_user,hr.salary.rule.user,model_hr_salary_rule,group_hr_payroll_user,1,0,0,0
@@ -23,3 +29,5 @@ access_hr_rule_input_user,hr.rule.input.user,model_hr_rule_input,group_hr_payrol
 access_hr_rule_input_manager,hr.rule.input.manager,model_hr_rule_input,group_hr_payroll_manager,1,1,1,1
 access_hr_payslip_run_user,hr.payslip.run.user,model_hr_payslip_run,group_hr_payroll_user,1,1,1,0
 access_hr_payslip_run_manager,hr.payslip.run.manager,model_hr_payslip_run,group_hr_payroll_manager,1,1,1,1
+access_hr_economic_indicators_import_wizard_user,hr.economic.indicators.import.wizard.user,model_hr_economic_indicators_import_wizard,group_hr_payroll_user,1,1,1,1
+access_hr_economic_indicators_import_wizard_manager,hr.economic.indicators.import.wizard.manager,model_hr_economic_indicators_import_wizard,group_hr_payroll_manager,1,1,1,1

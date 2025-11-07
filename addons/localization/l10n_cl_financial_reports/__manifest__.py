@@ -177,6 +177,7 @@ For technical support and customizations, contact EERGYGROUP.
         # Wizard views - Now enabled with complete implementation
         "wizards/financial_dashboard_add_widget_wizard_view.xml",
         "wizards/l10n_cl_f22_config_wizard_views.xml",  # F22 configuration wizard
+        "wizards/l10n_cl_report_comparison_wizard_views.xml",  # FASE 2: F22 vs F29 comparison
         # Chilean Tax Forms
         "views/l10n_cl_f29_views.xml",
         "views/l10n_cl_f22_views.xml",
