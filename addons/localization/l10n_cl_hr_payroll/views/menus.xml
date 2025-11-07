@@ -75,4 +75,13 @@
               action="action_hr_isapre"
               sequence="30"/>
     
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- SUBMENÚS: REPORTES -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    
+    <menuitem id="menu_hr_payroll_reports"
+              name="Reportes"
+              parent="menu_hr_payroll_root"
+              sequence="50"/>
+
 </odoo>

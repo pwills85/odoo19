@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- ========================================== -->
+        <!-- REGLAS SALARIALES P1 - MOTOR DE CÁLCULO -->
+        <!-- Sistema Chileno de Liquidación de Sueldos -->
+        <!-- ========================================== -->
+        
+        <!-- ==================== HABERES ==================== -->
+        
+        <!-- RULE 1: Sueldo Base -->
+        <record id="rule_basic_salary" model="hr.salary.rule">
+            <field name="name">Sueldo Base</field>
+            <field name="code">BASIC</field>
+            <field name="sequence">10</field>
+            <field name="category_id" ref="category_base_sopa"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = contract.wage</field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- RULE 2: Total Haberes Imponibles -->
+        <record id="rule_total_haberes_imponibles" model="hr.salary.rule">
+            <field name="name">Total Haberes Imponibles</field>
+            <field name="code">HABERES_IMPONIBLES</field>
+            <field name="sequence">100</field>
+            <field name="category_id" ref="category_haber_imponible"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Suma de todos los haberes imponibles
+result = sum([line.total for line in payslip.line_ids if line.category_id.imponible and line.total &gt; 0])
+            </field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- RULE 3: Total Haberes No Imponibles -->
+        <record id="rule_total_haberes_no_imponibles" model="hr.salary.rule">
+            <field name="name">Total Haberes No Imponibles</field>
+            <field name="code">HABERES_NO_IMPONIBLES</field>
+            <field name="sequence">101</field>
+            <field name="category_id" ref="category_haber_no_imponible"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Suma de haberes no imponibles
+result = sum([line.total for line in payslip.line_ids if line.category_id and not line.category_id.imponible and line.total &gt; 0])
+            </field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- ==================== BASES DE CÁLCULO ==================== -->
+        
+        <!-- RULE 4: Total Imponible -->
+        <record id="rule_total_imponible" model="hr.salary.rule">
+            <field name="name">Total Imponible</field>
+            <field name="code">TOTAL_IMPONIBLE</field>
+            <field name="sequence">200</field>
+            <field name="category_id" ref="category_base"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Total Imponible = HABERES_IMPONIBLES
+result = categories.HABERES_IMPONIBLES
+            </field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- RULE 5: Tope Imponible UF -->
+        <record id="rule_tope_imponible_uf" model="hr.salary.rule">
+            <field name="name">Tope Imponible (UF)</field>
+            <field name="code">TOPE_IMPONIBLE_UF</field>
+            <field name="sequence">201</field>
+            <field name="category_id" ref="category_base"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Obtener tope legal en UF y convertir a CLP
+legal_cap = env['l10n_cl.legal_caps'].search([('year', '=', payslip.date_to.year)], limit=1)
+if legal_cap and payslip.indicadores_id:
+    tope_uf = legal_cap.tope_imponible_afp_uf
+    uf_value = payslip.indicadores_id.uf
+    result = tope_uf * uf_value
+else:
+    # Valor por defecto 2025: 81.6 UF
+    result = 81.6 * 38000  # aproximado
+            </field>
+            <field name="appears_on_payslip" eval="False"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- RULE 6: Base Tributable (con tope) -->
+        <record id="rule_base_tributable" model="hr.salary.rule">
+            <field name="name">Base Tributable</field>
+            <field name="code">BASE_TRIBUTABLE</field>
+            <field name="sequence">202</field>
+            <field name="category_id" ref="category_base"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Base Tributable = min(TOTAL_IMPONIBLE, TOPE_IMPONIBLE_UF)
+total_imp = categories.TOTAL_IMPONIBLE
+tope_imp = categories.TOPE_IMPONIBLE_UF
+result = min(total_imp, tope_imp) if tope_imp > 0 else total_imp
+            </field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- ==================== DESCUENTOS PREVISIONALES ==================== -->
+        
+        <!-- RULE 7: AFP (10% + comisión) -->
+        <record id="rule_afp" model="hr.salary.rule">
+            <field name="name">AFP (Pensión)</field>
+            <field name="code">AFP</field>
+            <field name="sequence">300</field>
+            <field name="category_id" ref="category_afp_sopa"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# AFP = 10% + comisión sobre BASE_TRIBUTABLE
+base = categories.BASE_TRIBUTABLE
+tasa_afp = 0.10  # 10% obligatorio
+comision = 0.0
+
+# Obtener comisión de la AFP del empleado
+if contract.afp_id:
+    comision = contract.afp_id.rate / 100.0
+
+result = -(base * (tasa_afp + comision))
+            </field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- RULE 8: Salud (FONASA 7% / ISAPRE variable) -->
+        <record id="rule_salud" model="hr.salary.rule">
+            <field name="name">Salud</field>
+            <field name="code">SALUD</field>
+            <field name="sequence">301</field>
+            <field name="category_id" ref="category_salud_sopa"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Salud = 7% FONASA o plan ISAPRE sobre BASE_TRIBUTABLE
+base = categories.BASE_TRIBUTABLE
+tasa_salud = 0.07  # 7% legal mínimo
+
+# Si tiene ISAPRE, usar tasa del plan
+if contract.isapre_id and contract.isapre_plan_id:
+    tasa_salud = contract.isapre_plan_id.cotizacion_pactada / 100.0
+
+result = -(base * tasa_salud)
+            </field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- RULE 9: Seguro de Cesantía (AFC) -->
+        <record id="rule_afc" model="hr.salary.rule">
+            <field name="name">Seguro Cesantía (AFC)</field>
+            <field name="code">AFC</field>
+            <field name="sequence">302</field>
+            <field name="category_id" ref="category_desc_legal"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# AFC Trabajador = 0.6% sobre BASE_TRIBUTABLE
+base = categories.BASE_TRIBUTABLE
+tasa_afc = 0.006  # 0.6%
+result = -(base * tasa_afc)
+            </field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- ==================== BASE IMPUESTO ==================== -->
+        
+        <!-- RULE 10: Base Impuesto Único -->
+        <record id="rule_base_impuesto" model="hr.salary.rule">
+            <field name="name">Base Impuesto Único</field>
+            <field name="code">BASE_IMPUESTO_UNICO</field>
+            <field name="sequence">400</field>
+            <field name="category_id" ref="category_base"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Base Impuesto = BASE_TRIBUTABLE - descuentos previsionales
+base_trib = categories.BASE_TRIBUTABLE
+afp = abs(categories.AFP)
+salud = abs(categories.SALUD)
+afc = abs(categories.AFC)
+
+result = base_trib - afp - salud - afc
+            </field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- RULE 11: Impuesto Único de Segunda Categoría -->
+        <record id="rule_impuesto_unico" model="hr.salary.rule">
+            <field name="name">Impuesto Único 2da Cat.</field>
+            <field name="code">IMPUESTO_UNICO</field>
+            <field name="sequence">401</field>
+            <field name="category_id" ref="category_desc_legal"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Aplicar tabla de tramos impositivos
+base_impuesto = categories.BASE_IMPUESTO_UNICO
+result = 0.0
+
+if base_impuesto > 0:
+    # Buscar tramo aplicable
+    tramo = env['hr.tax.bracket'].search([
+        ('year', '=', payslip.date_to.year),
+        ('from_amount', '&lt;=', base_impuesto),
+        ('to_amount', '&gt;=', base_impuesto)
+    ], limit=1)
+    
+    if tramo:
+        # Impuesto = (base - desde) * tasa + factor
+        excedente = base_impuesto - tramo.from_amount
+        result = -((excedente * tramo.rate / 100.0) + tramo.fixed_amount)
+            </field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- ==================== TOTALES FINALES ==================== -->
+        
+        <!-- RULE 12: Total Haberes -->
+        <record id="rule_total_haberes" model="hr.salary.rule">
+            <field name="name">TOTAL HABERES</field>
+            <field name="code">TOTAL_HABERES</field>
+            <field name="sequence">900</field>
+            <field name="category_id" ref="category_haber"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Total Haberes = Imponibles + No Imponibles
+result = categories.HABERES_IMPONIBLES + categories.HABERES_NO_IMPONIBLES
+            </field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- RULE 13: Total Descuentos -->
+        <record id="rule_total_descuentos" model="hr.salary.rule">
+            <field name="name">TOTAL DESCUENTOS</field>
+            <field name="code">TOTAL_DESCUENTOS</field>
+            <field name="sequence">901</field>
+            <field name="category_id" ref="category_desc"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Total Descuentos = AFP + Salud + AFC + Impuesto + APV
+total = 0.0
+total += abs(categories.AFP)
+total += abs(categories.SALUD)
+total += abs(categories.AFC)
+total += abs(categories.IMPUESTO_UNICO)
+
+# APV si existe
+if hasattr(categories, 'APV'):
+    total += abs(categories.APV)
+
+result = -total
+            </field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- RULE 14: Alcance Líquido (Sueldo Líquido) -->
+        <record id="rule_net_salary" model="hr.salary.rule">
+            <field name="name">ALCANCE LÍQUIDO</field>
+            <field name="code">NET</field>
+            <field name="sequence">902</field>
+            <field name="category_id" ref="category_net"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Líquido = Total Haberes + Total Descuentos (descuentos son negativos)
+result = categories.TOTAL_HABERES + categories.TOTAL_DESCUENTOS
+            </field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+    </data>
+</odoo>

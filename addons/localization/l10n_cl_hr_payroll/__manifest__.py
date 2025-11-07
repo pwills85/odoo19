@@ -84,6 +84,7 @@ Licencia: LGPL-3
         'data/hr_tax_bracket_2025.xml',              # Tramos impuesto 2025
         'data/l10n_cl_legal_caps_2025.xml',          # Topes legales APV/AFC
         'data/l10n_cl_apv_institutions.xml',         # Instituciones APV
+        'data/hr_salary_rules_p1.xml',               # Reglas salariales P1
         
         # Vistas
         'views/hr_payroll_structure_views.xml',
@@ -98,6 +99,7 @@ Licencia: LGPL-3
         
         # Wizards
         'wizards/hr_economic_indicators_import_wizard_views.xml',
+        'wizards/hr_lre_wizard_views.xml',
     ],
     'installable': True,
     'application': True,
