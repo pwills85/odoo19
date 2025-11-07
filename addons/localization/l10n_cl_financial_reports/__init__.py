@@ -7,8 +7,8 @@
 # Import specific hook functions for Odoo
 
 # Subpaquetes Odoo convencionales
-
-
+from . import utils
+from . import wizards
 
 
 

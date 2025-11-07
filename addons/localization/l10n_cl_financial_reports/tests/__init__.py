@@ -3,6 +3,13 @@
 # FASE 0 - Smoke Tests (Wiring & Sanity)
 from . import smoke
 
+# FASE 1 - F29 Extended Fields Tests
+from . import test_f29_extended_fields
+
+# FASE 1 - F22 Wizard and RUT Utils Tests
+from . import test_rut_utils
+from . import test_f22_config_wizard
+
 # FASE 3 Coverage Validation
 
 # FASE 3 New Tests - High Quality Odoo 18 Compatible
