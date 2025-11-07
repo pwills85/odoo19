@@ -55,7 +55,8 @@ from . import dte_consumo_folios
 from . import dte_libro
 from . import dte_libro_guias  # ⭐ Libro de Guías de Despacho
 from . import dte_inbox  # ⭐ DTE Reception (Gap #1)
-from . import rabbitmq_helper
+# P2.2 GAP CLOSURE: RabbitMQ removed - standardized on ir.cron
+# from . import rabbitmq_helper  # REMOVED
 from . import account_move_dte
 from . import account_journal_dte
 from . import account_tax_dte

@@ -34,11 +34,8 @@
                         class="btn-secondary"
                         invisible="dte_status not in ('draft', 'to_send', 'rejected') or state != 'posted'"/>
 
-                <!-- Botón Envío Asíncrono (RabbitMQ) -->
-                <button name="action_send_dte_async" string="Enviar DTE (Async)" type="object"
-                        class="oe_highlight"
-                        icon="fa-paper-plane"
-                        invisible="state != 'posted' or not dte_code or dte_async_status in ('queued', 'processing')"/>
+                <!-- P2.2 GAP CLOSURE: RabbitMQ async button removed -->
+                <!-- For async processing, use ir.cron with action_send_to_sii -->
 
                 <button name="action_download_dte_xml" string="Descargar XML" type="object"
                         class="btn-secondary"
