@@ -9,7 +9,6 @@ Author: EERGYGROUP - Based on technical audit specifications
 """
 
 import logging
-from odoo import api, SUPERUSER_ID
 
 _logger = logging.getLogger(__name__)
 

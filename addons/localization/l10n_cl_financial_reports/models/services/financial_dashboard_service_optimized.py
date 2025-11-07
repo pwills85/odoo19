@@ -7,8 +7,6 @@ Siguiendo PROMPT_AGENT_IA.md y arquitectura de l10n_cl_base
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
-from datetime import datetime, timedelta
-import json
 import logging
 from functools import wraps
 import hashlib
@@ -479,8 +477,6 @@ class FinancialDashboardServiceOptimized(models.AbstractModel):
 
         return large_tables
 
-import asyncio
-from odoo.addons.bus.models.bus import dispatch
 
 class DashboardWebSocketService:
     '''WebSocket service for real-time dashboard updates'''

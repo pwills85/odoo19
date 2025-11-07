@@ -7,7 +7,6 @@ Provides advanced financial ratio calculations and analysis
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 import logging
-from datetime import datetime, timedelta
 
 _logger = logging.getLogger(__name__)
 

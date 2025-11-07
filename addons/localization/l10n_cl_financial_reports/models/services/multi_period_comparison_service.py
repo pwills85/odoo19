@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, _
+from odoo import fields, _
 from odoo.exceptions import UserError
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
 import logging
 import base64
 import io
-import json
 from collections import defaultdict
 import statistics
 import numpy as np

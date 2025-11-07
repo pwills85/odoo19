@@ -107,7 +107,6 @@ For technical support and customizations, contact EERGYGROUP.
     "author": "EERGYGROUP - Ing. Pedro Troncoso Willz",
     "website": "https://github.com/pwills85",
     "license": "AGPL-3",
-    "category": "Accounting/Reporting",
     "maintainers": ["pwills85"],
     "support": "support@eergygroup.cl",
     "contributors": [

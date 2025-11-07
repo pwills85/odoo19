@@ -3,7 +3,6 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
 from odoo.tests import tagged, TransactionCase
-from datetime import date
 from odoo.tools import mute_logger
 
 

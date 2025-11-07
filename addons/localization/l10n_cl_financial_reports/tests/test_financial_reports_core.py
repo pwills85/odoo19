@@ -8,7 +8,6 @@ FASE 3: TESTING EXHAUSTIVO - Tests principales
 from odoo.tests import TransactionCase, tagged
 from odoo import fields
 from dateutil.relativedelta import relativedelta
-from datetime import date, datetime
 
 
 @tagged('post_install', 'account_financial_report', 'main')  
@@ -117,8 +116,6 @@ FASE 3: TESTING EXHAUSTIVO - Tests principales
 """
 
 from odoo.tests import TransactionCase, tagged
-from odoo import fields
-from dateutil.relativedelta import relativedelta
 
 
 @tagged('post_install', 'account_financial_report', 'main')  

@@ -2,7 +2,6 @@
 from odoo import models, fields, api, _
 from odoo import tools
 from odoo.exceptions import UserError
-from datetime import datetime
 import json
 import logging
 

@@ -2,7 +2,6 @@
 
 from odoo.tests.common import TransactionCase
 from datetime import date
-from dateutil.relativedelta import relativedelta
 
 
 class TestKPIDashboardViews(TransactionCase):

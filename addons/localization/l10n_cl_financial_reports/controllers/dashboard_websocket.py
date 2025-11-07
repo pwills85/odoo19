@@ -13,9 +13,7 @@ from datetime import datetime
 from collections import defaultdict
 from odoo import http
 from odoo.http import request
-import websocket
 
-from .security_middleware import SecurityUtils, rate_limit
 
 _logger = logging.getLogger(__name__)
 

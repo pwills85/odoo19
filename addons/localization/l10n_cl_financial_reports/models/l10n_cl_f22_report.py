@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
-from odoo.tools import format_date
-from dateutil.relativedelta import relativedelta
 import logging
 
 _logger = logging.getLogger(__name__)

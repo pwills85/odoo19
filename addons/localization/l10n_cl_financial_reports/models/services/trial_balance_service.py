@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, _
+from odoo import _
 from odoo.exceptions import UserError
-from datetime import datetime, timedelta
 import logging
 import base64
 import io
@@ -508,7 +507,7 @@ class TrialBalanceService:
 
         # Título principal
         worksheet.merge_range(0, 0, 0, 11, 
-            f"BALANCE DE COMPROBACIÓN Y SALDOS", 
+            "BALANCE DE COMPROBACIÓN Y SALDOS", 
             formats['header'])
         
         # Información de la empresa

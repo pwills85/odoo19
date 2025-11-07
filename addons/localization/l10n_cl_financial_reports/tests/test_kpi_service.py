@@ -2,7 +2,7 @@
 
 from odoo.tests.common import TransactionCase
 from odoo.exceptions import UserError
-from datetime import date, timedelta
+from datetime import date
 import time
 
 

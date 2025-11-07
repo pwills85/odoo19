@@ -4,7 +4,7 @@ Performance Optimization Mixin
 Implementa optimizaciones de performance basadas en los 594 módulos oficiales
 """
 
-from odoo import models, api, fields, _
+from odoo import models, api, fields
 from functools import lru_cache, wraps
 from datetime import datetime, timedelta
 import hashlib

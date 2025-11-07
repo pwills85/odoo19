@@ -12,7 +12,6 @@ import time
 import json
 import logging
 import functools
-from odoo import sql_db
 
 _logger = logging.getLogger(__name__)
 

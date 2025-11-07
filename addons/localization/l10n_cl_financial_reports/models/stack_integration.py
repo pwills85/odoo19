@@ -12,7 +12,6 @@ Integración con:
 """
 
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
 import logging
 
 _logger = logging.getLogger(__name__)

@@ -16,7 +16,7 @@ Criterios de éxito Fase 0:
 
 from odoo.tests.common import TransactionCase
 from odoo.exceptions import ValidationError
-from datetime import date, datetime
+from datetime import date
 import logging
 import time
 

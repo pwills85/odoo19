@@ -5,7 +5,7 @@ Servicio de exportación multi-formato para dashboards financieros
 Siguiendo PROMPT_AGENT_IA.md y arquitectura de servicios
 """
 
-from odoo import models, fields, api, _
+from odoo import models, api, _
 from odoo.exceptions import UserError
 import base64
 import io
@@ -567,11 +567,323 @@ class DashboardExportService(models.AbstractModel):
             'data': data,
             'exported_at': datetime.now().isoformat()
         }
-        
+
         json_str = json.dumps(json_data, indent=2, default=str)
-        
+
         return {
             'data': base64.b64encode(json_str.encode('utf-8')).decode('utf-8'),
             'filename': f"{widget.name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
             'mimetype': 'application/json'
+        }
+
+    @api.model
+    def export_analytic_dashboard(self, dashboard_id, data):
+        """
+        Exporta dashboard analítico a Excel profesional.
+
+        Método específico para analytic.dashboard que genera Excel con:
+        - Hoja 1: Resumen ejecutivo (KPIs)
+        - Hoja 2: Facturas emitidas
+        - Hoja 3: Facturas proveedores
+        - Hoja 4: Órdenes de compra
+
+        Args:
+            dashboard_id: ID del dashboard analítico
+            data: Datos preparados por dashboard._prepare_export_data()
+
+        Returns:
+            dict: {filename, data (base64), mimetype}
+        """
+        if not xlsxwriter:
+            raise UserError(_('XlsxWriter is required for Excel export. Install: pip install xlsxwriter'))
+
+        # Crear workbook
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+
+        # ========================================
+        # FORMATOS PROFESIONALES
+        # ========================================
+
+        title_format = workbook.add_format({
+            'bold': True,
+            'font_size': 18,
+            'font_color': '#2c3e50',
+            'align': 'left',
+        })
+
+        subtitle_format = workbook.add_format({
+            'bold': True,
+            'font_size': 12,
+            'font_color': '#34495e',
+            'align': 'left',
+        })
+
+        header_format = workbook.add_format({
+            'bold': True,
+            'bg_color': '#2c3e50',
+            'font_color': 'white',
+            'align': 'center',
+            'valign': 'vcenter',
+            'border': 1,
+            'text_wrap': True,
+        })
+
+        currency_format = workbook.add_format({
+            'num_format': '$#,##0',
+            'align': 'right',
+        })
+
+        percent_format = workbook.add_format({
+            'num_format': '0.00%',
+            'align': 'right',
+        })
+
+        date_format = workbook.add_format({
+            'num_format': 'yyyy-mm-dd',
+            'align': 'center',
+        })
+
+        kpi_label_format = workbook.add_format({
+            'bold': True,
+            'font_color': '#2c3e50',
+            'align': 'left',
+            'border': 1,
+            'bg_color': '#ecf0f1',
+        })
+
+        kpi_value_format = workbook.add_format({
+            'align': 'right',
+            'border': 1,
+            'num_format': '$#,##0',
+        })
+
+        # ========================================
+        # HOJA 1: RESUMEN EJECUTIVO
+        # ========================================
+
+        summary_sheet = workbook.add_worksheet('Resumen Ejecutivo')
+
+        # Título principal
+        summary_sheet.merge_range('A1:D1', f"Dashboard Rentabilidad: {data['summary']['project_name']}", title_format)
+
+        # Información del reporte
+        summary_sheet.write(2, 0, 'Generado:', subtitle_format)
+        summary_sheet.write(2, 1, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        summary_sheet.write(3, 0, 'Empresa:', subtitle_format)
+        summary_sheet.write(3, 1, data['summary']['company_name'])
+        summary_sheet.write(4, 0, 'Código Proyecto:', subtitle_format)
+        summary_sheet.write(4, 1, data['summary']['project_code'])
+
+        # Sección KPIs Financieros
+        row = 6
+        summary_sheet.merge_range(f'A{row+1}:B{row+1}', 'KPIs FINANCIEROS', subtitle_format)
+        row += 2
+
+        summary_sheet.write(row, 0, 'Total Facturado', kpi_label_format)
+        summary_sheet.write(row, 1, data['summary']['total_invoiced'], kpi_value_format)
+        summary_sheet.write(row, 2, '# DTEs Emitidos', kpi_label_format)
+        summary_sheet.write(row, 3, data['summary']['dtes_emitted_count'])
+
+        row += 1
+        summary_sheet.write(row, 0, 'Costos Totales', kpi_label_format)
+        summary_sheet.write(row, 1, data['summary']['total_costs'], kpi_value_format)
+        summary_sheet.write(row, 2, '# Órdenes Compra', kpi_label_format)
+        summary_sheet.write(row, 3, data['summary']['purchases_count'])
+
+        row += 1
+        summary_sheet.write(row, 0, 'Margen Bruto', kpi_label_format)
+        summary_sheet.write(row, 1, data['summary']['gross_margin'], kpi_value_format)
+        summary_sheet.write(row, 2, '# Fact. Proveedores', kpi_label_format)
+        summary_sheet.write(row, 3, data['summary']['vendor_invoices_count'])
+
+        row += 1
+        percent_kpi_format = workbook.add_format({
+            'align': 'right',
+            'border': 1,
+            'num_format': '0.00%',
+        })
+        summary_sheet.write(row, 0, '% Margen', kpi_label_format)
+        summary_sheet.write(row, 1, data['summary']['margin_percentage'] / 100, percent_kpi_format)
+
+        # Sección Presupuesto
+        row += 2
+        summary_sheet.merge_range(f'A{row+1}:B{row+1}', 'CONTROL PRESUPUESTARIO', subtitle_format)
+        row += 2
+
+        summary_sheet.write(row, 0, 'Presupuesto Original', kpi_label_format)
+        summary_sheet.write(row, 1, data['summary']['budget_original'], kpi_value_format)
+
+        row += 1
+        summary_sheet.write(row, 0, '% Consumido', kpi_label_format)
+        summary_sheet.write(row, 1, data['summary']['budget_consumed_percentage'] / 100, percent_kpi_format)
+
+        row += 1
+        summary_sheet.write(row, 0, 'Presupuesto Restante', kpi_label_format)
+        summary_sheet.write(row, 1, data['summary']['budget_remaining'], kpi_value_format)
+
+        row += 1
+        status_format = workbook.add_format({
+            'bold': True,
+            'font_size': 12,
+            'align': 'center',
+            'border': 1,
+        })
+        if data['summary']['analytic_status'] == 'On Budget':
+            status_format.set_bg_color('#27ae60')
+            status_format.set_font_color('white')
+        elif data['summary']['analytic_status'] == 'At Risk':
+            status_format.set_bg_color('#f39c12')
+            status_format.set_font_color('white')
+        else:  # Over Budget
+            status_format.set_bg_color('#e74c3c')
+            status_format.set_font_color('white')
+
+        summary_sheet.write(row, 0, 'Estado', kpi_label_format)
+        summary_sheet.write(row, 1, data['summary']['analytic_status'], status_format)
+
+        # Ajustar anchos de columnas
+        summary_sheet.set_column('A:A', 25)
+        summary_sheet.set_column('B:B', 18)
+        summary_sheet.set_column('C:C', 20)
+        summary_sheet.set_column('D:D', 15)
+
+        # ========================================
+        # HOJA 2: FACTURAS EMITIDAS
+        # ========================================
+
+        invoices_out_sheet = workbook.add_worksheet('Facturas Emitidas')
+
+        # Título
+        invoices_out_sheet.merge_range('A1:G1', 'FACTURAS EMITIDAS', title_format)
+
+        # Headers
+        headers = ['Fecha', 'Número', 'Cliente', 'Monto', 'Moneda', 'Estado', 'DTE']
+        for col_idx, header in enumerate(headers):
+            invoices_out_sheet.write(2, col_idx, header, header_format)
+
+        # Datos
+        for row_idx, inv in enumerate(data['invoices_out'], start=3):
+            invoices_out_sheet.write_datetime(row_idx, 0, inv['date'], date_format) if inv['date'] else invoices_out_sheet.write(row_idx, 0, 'N/A')
+            invoices_out_sheet.write(row_idx, 1, inv['number'])
+            invoices_out_sheet.write(row_idx, 2, inv['partner'])
+            invoices_out_sheet.write(row_idx, 3, inv['amount'], currency_format)
+            invoices_out_sheet.write(row_idx, 4, inv['currency'])
+            invoices_out_sheet.write(row_idx, 5, inv['state'])
+            invoices_out_sheet.write(row_idx, 6, inv['dte_code'])
+
+        # Totales
+        if data['invoices_out']:
+            total_row = 3 + len(data['invoices_out'])
+            total_format = workbook.add_format({
+                'bold': True,
+                'bg_color': '#ecf0f1',
+                'border': 1,
+            })
+            invoices_out_sheet.write(total_row, 2, 'TOTAL', total_format)
+            invoices_out_sheet.write_formula(
+                total_row, 3,
+                f'=SUM(D4:D{total_row})',
+                workbook.add_format({'bold': True, 'num_format': '$#,##0', 'border': 1, 'bg_color': '#ecf0f1'})
+            )
+
+        # Ajustar anchos
+        invoices_out_sheet.set_column('A:A', 12)
+        invoices_out_sheet.set_column('B:B', 15)
+        invoices_out_sheet.set_column('C:C', 35)
+        invoices_out_sheet.set_column('D:D', 15)
+        invoices_out_sheet.set_column('E:E', 10)
+        invoices_out_sheet.set_column('F:F', 12)
+        invoices_out_sheet.set_column('G:G', 10)
+
+        # ========================================
+        # HOJA 3: FACTURAS PROVEEDORES
+        # ========================================
+
+        invoices_in_sheet = workbook.add_worksheet('Facturas Proveedores')
+
+        # Título
+        invoices_in_sheet.merge_range('A1:F1', 'FACTURAS PROVEEDORES', title_format)
+
+        # Headers
+        headers_in = ['Fecha', 'Número', 'Proveedor', 'Monto', 'Moneda', 'Estado']
+        for col_idx, header in enumerate(headers_in):
+            invoices_in_sheet.write(2, col_idx, header, header_format)
+
+        # Datos
+        for row_idx, inv in enumerate(data['invoices_in'], start=3):
+            invoices_in_sheet.write_datetime(row_idx, 0, inv['date'], date_format) if inv['date'] else invoices_in_sheet.write(row_idx, 0, 'N/A')
+            invoices_in_sheet.write(row_idx, 1, inv['number'])
+            invoices_in_sheet.write(row_idx, 2, inv['partner'])
+            invoices_in_sheet.write(row_idx, 3, inv['amount'], currency_format)
+            invoices_in_sheet.write(row_idx, 4, inv['currency'])
+            invoices_in_sheet.write(row_idx, 5, inv['state'])
+
+        # Totales
+        if data['invoices_in']:
+            total_row = 3 + len(data['invoices_in'])
+            invoices_in_sheet.write(total_row, 2, 'TOTAL', total_format)
+            invoices_in_sheet.write_formula(
+                total_row, 3,
+                f'=SUM(D4:D{total_row})',
+                workbook.add_format({'bold': True, 'num_format': '$#,##0', 'border': 1, 'bg_color': '#ecf0f1'})
+            )
+
+        # Ajustar anchos
+        invoices_in_sheet.set_column('A:A', 12)
+        invoices_in_sheet.set_column('B:B', 15)
+        invoices_in_sheet.set_column('C:C', 35)
+        invoices_in_sheet.set_column('D:D', 15)
+        invoices_in_sheet.set_column('E:E', 10)
+        invoices_in_sheet.set_column('F:F', 12)
+
+        # ========================================
+        # HOJA 4: ÓRDENES DE COMPRA
+        # ========================================
+
+        purchases_sheet = workbook.add_worksheet('Órdenes Compra')
+
+        # Título
+        purchases_sheet.merge_range('A1:F1', 'ÓRDENES DE COMPRA', title_format)
+
+        # Headers
+        headers_po = ['Fecha', 'Número', 'Proveedor', 'Monto', 'Moneda', 'Estado']
+        for col_idx, header in enumerate(headers_po):
+            purchases_sheet.write(2, col_idx, header, header_format)
+
+        # Datos
+        for row_idx, po in enumerate(data['purchases'], start=3):
+            purchases_sheet.write_datetime(row_idx, 0, po['date'], date_format) if po['date'] else purchases_sheet.write(row_idx, 0, 'N/A')
+            purchases_sheet.write(row_idx, 1, po['number'])
+            purchases_sheet.write(row_idx, 2, po['partner'])
+            purchases_sheet.write(row_idx, 3, po['amount'], currency_format)
+            purchases_sheet.write(row_idx, 4, po['currency'])
+            purchases_sheet.write(row_idx, 5, po['state'])
+
+        # Totales
+        if data['purchases']:
+            total_row = 3 + len(data['purchases'])
+            purchases_sheet.write(total_row, 2, 'TOTAL', total_format)
+            purchases_sheet.write_formula(
+                total_row, 3,
+                f'=SUM(D4:D{total_row})',
+                workbook.add_format({'bold': True, 'num_format': '$#,##0', 'border': 1, 'bg_color': '#ecf0f1'})
+            )
+
+        # Ajustar anchos
+        purchases_sheet.set_column('A:A', 12)
+        purchases_sheet.set_column('B:B', 15)
+        purchases_sheet.set_column('C:C', 35)
+        purchases_sheet.set_column('D:D', 15)
+        purchases_sheet.set_column('E:E', 10)
+        purchases_sheet.set_column('F:F', 12)
+
+        # Cerrar workbook
+        workbook.close()
+        output.seek(0)
+
+        return {
+            'data': base64.b64encode(output.read()).decode('utf-8'),
+            'filename': f"Dashboard_{data['summary']['project_name'].replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+            'mimetype': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         }

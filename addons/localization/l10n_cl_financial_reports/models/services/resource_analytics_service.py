@@ -12,13 +12,11 @@ Compatible with Odoo 18 and OCA guidelines.
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
-from dateutil.relativedelta import relativedelta
+from datetime import timedelta
+from typing import Dict, List
 
-from odoo import api, fields, models, _
-from odoo.exceptions import UserError
-from odoo.tools import float_round, date_utils
+from odoo import api, fields, models
+from odoo.tools import date_utils
 
 _logger = logging.getLogger(__name__)
 

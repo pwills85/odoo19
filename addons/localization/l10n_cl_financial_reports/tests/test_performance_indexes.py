@@ -6,7 +6,7 @@ Verifica mejoras en tiempo de ejecución de queries críticas
 
 import time
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 from odoo.tests import common, tagged
 from odoo import fields
 

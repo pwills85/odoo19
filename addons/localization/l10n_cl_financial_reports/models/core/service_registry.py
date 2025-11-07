@@ -11,10 +11,9 @@ Author: EERGYGROUP - Based on technical audit specifications
 
 import logging
 from collections import defaultdict
-from datetime import datetime
 
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import ValidationError
 
 _logger = logging.getLogger(__name__)
 

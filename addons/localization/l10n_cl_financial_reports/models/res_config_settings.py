@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import ValidationError
 
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'

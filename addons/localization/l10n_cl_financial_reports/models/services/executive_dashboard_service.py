@@ -6,8 +6,6 @@ Provides comprehensive business intelligence metrics and KPIs
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
-import json
-from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import logging
 

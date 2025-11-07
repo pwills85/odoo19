@@ -32,6 +32,15 @@ from . import test_pdf_reports
 from . import test_balance_sheet_report
 from . import test_income_statement_report
 
+# FASE 3 - Preflight Sprint 1→2: Performance & Stress Tests
+from . import perf
+
+# FASE 3 - Preflight Sprint 1→2: Dynamic PDF Content Tests
+from . import test_pdf_dynamic_content
+
+# FASE 3 - Preflight Sprint 1→2: Edge Cases Tests
+from . import test_reports_edge_cases
+
 # FASE 3 Coverage Validation
 
 # FASE 3 New Tests - High Quality Odoo 18 Compatible
@@ -53,3 +62,6 @@ from . import test_income_statement_report
 
 # Imports automáticos generados por Claude Code
 from . import FASE3_COVERAGE_VALIDATION
+
+# PR-3 - F29 Cron Tests (REP-C006)
+from . import test_f29_cron

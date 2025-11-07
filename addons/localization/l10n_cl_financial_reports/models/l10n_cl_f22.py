@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
-from .services.cache_service import get_cache_service
 
 from odoo.exceptions import ValidationError, UserError
-from dateutil.relativedelta import relativedelta
 from datetime import datetime
 import logging
 import os

@@ -12,12 +12,10 @@ Compatible with Odoo 18 and OCA guidelines.
 
 import json
 import logging
-from datetime import datetime, timedelta
 
 from odoo import api, fields, models, _
 from odoo import tools
 from odoo.exceptions import UserError
-from odoo.tools import float_round, date_utils
 
 _logger = logging.getLogger(__name__)
 

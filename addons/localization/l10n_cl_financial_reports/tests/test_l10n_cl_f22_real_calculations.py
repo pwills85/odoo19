@@ -12,8 +12,6 @@ Caraterísticas:
 
 from odoo.tests import tagged, TransactionCase
 from odoo.exceptions import UserError
-from datetime import date
-from dateutil.relativedelta import relativedelta
 import time
 import logging
 

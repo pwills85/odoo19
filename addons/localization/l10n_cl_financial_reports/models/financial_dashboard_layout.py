@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
-from .services.cache_service import get_cache_service
 
 import json
 import logging

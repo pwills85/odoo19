@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from odoo.tests.common import TransactionCase
-from datetime import date, timedelta
 
 
 class TestPdfReports(TransactionCase):

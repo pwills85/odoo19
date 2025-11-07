@@ -11,7 +11,7 @@ Fecha: 2025-07-15
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
-from datetime import datetime, date, timedelta
+from datetime import date
 import logging
 
 _logger = logging.getLogger(__name__)

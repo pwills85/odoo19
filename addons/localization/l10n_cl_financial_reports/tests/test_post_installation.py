@@ -7,8 +7,6 @@ Tests basic functionality of all major components
 
 import subprocess
 import sys
-import json
-import time
 from datetime import datetime
 
 

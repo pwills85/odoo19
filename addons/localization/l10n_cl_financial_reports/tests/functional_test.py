@@ -5,7 +5,6 @@ Functional Test for account_financial_report
 """
 
 import subprocess
-from datetime import datetime
 
 
 def run_functional_test():

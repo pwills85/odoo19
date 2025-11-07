@@ -25,7 +25,6 @@ FASE 3 - Sprint 1
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 from datetime import date, timedelta
-from odoo.exceptions import UserError
 import logging
 
 _logger = logging.getLogger(__name__)

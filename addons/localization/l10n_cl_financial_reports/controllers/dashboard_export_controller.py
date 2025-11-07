@@ -7,7 +7,6 @@ Siguiendo PROMPT_AGENT_IA.md
 
 from odoo import http
 from odoo.http import request, content_disposition
-import json
 import base64
 import logging
 

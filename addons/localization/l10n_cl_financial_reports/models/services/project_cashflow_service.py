@@ -9,13 +9,11 @@ Handles milestone-based billing, retention management, and cash flow forecasting
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
-from dateutil.relativedelta import relativedelta
+from datetime import timedelta
+from typing import Dict, List
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
-from odoo.tools import float_round, date_utils
 
 _logger = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@
 
 from odoo.tests.common import TransactionCase
 from odoo.exceptions import ValidationError
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from datetime import datetime, timedelta
 
 

@@ -4,18 +4,15 @@ REST API Controller for Financial Ratio Analysis
 Provides external API access to ratio analysis functionality
 """
 
-from odoo import http, _
+from odoo import http
 from odoo.http import request
 import json
 import logging
-from datetime import datetime, date
-from functools import wraps
-import jwt
+from datetime import datetime
 from werkzeug.exceptions import Unauthorized, BadRequest
 
 from .security_middleware import (
-    secure_api_endpoint, SecurityUtils, validate_jwt_token,
-    rate_limit, sanitize_input, audit_log
+    secure_api_endpoint, validate_jwt_token
 )
 
 _logger = logging.getLogger(__name__)

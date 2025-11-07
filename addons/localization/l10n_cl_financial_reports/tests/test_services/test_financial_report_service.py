@@ -2,8 +2,8 @@
 
 from odoo.tests.common import TransactionCase
 from odoo.exceptions import ValidationError, UserError
-from datetime import date, datetime
-from unittest.mock import patch, MagicMock
+from datetime import datetime
+from unittest.mock import patch
 
 
 class TestFinancialReportService(TransactionCase):

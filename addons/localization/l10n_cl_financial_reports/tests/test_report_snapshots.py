@@ -5,12 +5,10 @@ Garantizan que los cambios no rompan los reportes existentes
 """
 
 import json
-import os
 from datetime import date, datetime
 from pathlib import Path
 
 from odoo.tests import TransactionCase, tagged
-from odoo import fields
 
 
 @tagged('post_install', '-at_install', 'financial_snapshot')
@@ -692,7 +690,7 @@ class TestReportSnapshots(TransactionCase):
         
         if differences:
             self._save_snapshot(f"{report_name}_failed", current_data)
-            self.fail(f"Estado de Resultados cambió:\n" + "\n".join(differences[:10]))
+            self.fail("Estado de Resultados cambió:\n" + "\n".join(differences[:10]))
     
     def test_03_trial_balance_snapshot(self):
         """Test snapshot para Balance de Comprobación"""
@@ -710,7 +708,7 @@ class TestReportSnapshots(TransactionCase):
         
         if differences:
             self._save_snapshot(f"{report_name}_failed", current_data)
-            self.fail(f"Balance de Comprobación cambió:\n" + "\n".join(differences[:10]))
+            self.fail("Balance de Comprobación cambió:\n" + "\n".join(differences[:10]))
     
     def test_04_multi_period_comparison(self):
         """Test snapshot con comparación de períodos"""
@@ -754,7 +752,7 @@ class TestReportSnapshots(TransactionCase):
         
         if structural_differences:
             self._save_snapshot(f"{report_name}_failed", current_data)
-            self.fail(f"Estructura del reporte cambió:\n" + "\n".join(structural_differences))
+            self.fail("Estructura del reporte cambió:\n" + "\n".join(structural_differences))
     
     def test_05_snapshot_update_workflow(self):
         """Test el flujo de actualización de snapshots"""

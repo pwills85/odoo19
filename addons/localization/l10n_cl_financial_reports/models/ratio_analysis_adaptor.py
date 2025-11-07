@@ -7,7 +7,6 @@ Bridges pure Python service with Odoo ORM
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 import logging
-from datetime import datetime, timedelta
 
 # Import pure Python service
 try:

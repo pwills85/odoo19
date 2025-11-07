@@ -87,6 +87,6 @@ class DynamicStatesMixin(models.AbstractModel):
             # Convert back to string
             view_result['arch'] = ET.tostring(arch, encoding='unicode')
 
-        except Exception as e:
+        except Exception:
             # If injection fails, continue without modification
             pass

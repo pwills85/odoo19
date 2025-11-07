@@ -5,7 +5,7 @@ Proporciona campos computados para fechas en vistas XML
 Compatible con Odoo 18 que no permite expresiones complejas en dominios
 """
 from odoo import models, fields, api
-from datetime import datetime, timedelta
+from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 
 

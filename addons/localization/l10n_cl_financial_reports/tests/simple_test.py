@@ -6,7 +6,6 @@ Simple Post-Installation Test for account_financial_report
 
 import subprocess
 import sys
-from datetime import datetime
 
 
 def run_test():

@@ -7,7 +7,6 @@ Clase base para todos los servicios financieros con funcionalidad común
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 import logging
-from datetime import datetime, timedelta
 from collections import defaultdict
 
 _logger = logging.getLogger(__name__)

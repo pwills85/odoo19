@@ -6,9 +6,8 @@ Compatible with Odoo 18 CE
 """
 
 import logging
-from datetime import datetime, date
-from typing import Dict, List, Optional, Any
-import json
+from datetime import datetime
+from typing import Dict, List, Any
 
 _logger = logging.getLogger(__name__)
 

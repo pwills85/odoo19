@@ -2,7 +2,7 @@
 """
 Extensión del servicio de reportes financieros con métodos de datos reales
 """
-from odoo import api, models, _
+from odoo import api, models
 from datetime import datetime, timedelta
 import logging
 

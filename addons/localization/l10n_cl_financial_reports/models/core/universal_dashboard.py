@@ -10,7 +10,6 @@ Author: EERGYGROUP - Based on technical audit specifications
 """
 
 import logging
-from datetime import datetime, timedelta
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError

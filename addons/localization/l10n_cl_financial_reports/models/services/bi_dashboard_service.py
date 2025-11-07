@@ -11,14 +11,13 @@ Fecha: 2025-07-13
 """
 
 import logging
-from datetime import datetime, timedelta, date
+from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 import json
 from collections import defaultdict
 
 from odoo import api, models, fields, _
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools import float_round, float_compare
 from odoo.tools.misc import format_amount
 
 _logger = logging.getLogger(__name__)

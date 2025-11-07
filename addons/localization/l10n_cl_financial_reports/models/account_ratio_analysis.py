@@ -6,13 +6,9 @@ Comprehensive financial ratio analysis with ML capabilities
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools.safe_eval import safe_eval
 import json
 import logging
-from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-import numpy as np
-from collections import defaultdict
 
 _logger = logging.getLogger(__name__)
 

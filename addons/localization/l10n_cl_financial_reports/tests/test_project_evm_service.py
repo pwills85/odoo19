@@ -8,7 +8,7 @@ Tests the Earned Value Management calculations and business logic.
 Compatible with Odoo 18 testing framework.
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from unittest.mock import patch
 
 from odoo import fields

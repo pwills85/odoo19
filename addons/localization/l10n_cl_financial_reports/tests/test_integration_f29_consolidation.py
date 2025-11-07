@@ -16,11 +16,8 @@ Flujo Real Correcto:
 
 import logging
 from datetime import date, datetime, timedelta
-from dateutil.relativedelta import relativedelta
 
-from odoo import fields
 from odoo.tests.common import TransactionCase, tagged
-from odoo.exceptions import ValidationError, UserError
 
 _logger = logging.getLogger(__name__)
 

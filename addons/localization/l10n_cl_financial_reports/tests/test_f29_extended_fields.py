@@ -55,7 +55,7 @@ class TestF29ExtendedFields(TransactionCase):
         expected_debito = 1000000.0 * 0.19
         self.assertAlmostEqual(self.f29.debito_fiscal, expected_debito, places=2)
 
-        _logger.info(f"✓ Campos débito fiscal guardados y calculados correctamente")
+        _logger.info("✓ Campos débito fiscal guardados y calculados correctamente")
 
     def test_02_nuevos_campos_credito_fiscal(self):
         """Test que los campos de crédito fiscal se guardan correctamente"""
@@ -76,7 +76,7 @@ class TestF29ExtendedFields(TransactionCase):
         expected_credito = (800000.0 + 200000.0) * 0.19
         self.assertAlmostEqual(self.f29.credito_fiscal, expected_credito, places=2)
 
-        _logger.info(f"✓ Campos crédito fiscal guardados y calculados correctamente")
+        _logger.info("✓ Campos crédito fiscal guardados y calculados correctamente")
 
     def test_03_campos_ppm_y_retenciones(self):
         """Test que los campos de PPM y retenciones se guardan correctamente"""
@@ -91,7 +91,7 @@ class TestF29ExtendedFields(TransactionCase):
         self.assertEqual(self.f29.ppm_voluntario, 50000.0)
         self.assertEqual(self.f29.iva_retenido, 20000.0)
 
-        _logger.info(f"✓ Campos PPM y retenciones guardados correctamente")
+        _logger.info("✓ Campos PPM y retenciones guardados correctamente")
 
     def test_04_tipo_declaracion_y_rectificacion(self):
         """Test que tipo_declaracion y numero_rectificacion funcionan"""
@@ -107,7 +107,7 @@ class TestF29ExtendedFields(TransactionCase):
         self.assertEqual(self.f29.tipo_declaracion, 'rectificatoria')
         self.assertEqual(self.f29.numero_rectificacion, 1)
 
-        _logger.info(f"✓ Tipo declaración y número rectificación funcionan correctamente")
+        _logger.info("✓ Tipo declaración y número rectificación funcionan correctamente")
 
     def test_05_calculo_iva_determinado(self):
         """Test que el cálculo de IVA determinado es correcto"""
@@ -179,7 +179,7 @@ class TestF29ExtendedFields(TransactionCase):
         self.assertEqual(self.f29.total_iva_debito, self.f29.debito_fiscal)
         self.assertEqual(self.f29.total_iva_credito, self.f29.credito_fiscal)
 
-        _logger.info(f"✓ Campos legacy mantienen backward compatibility")
+        _logger.info("✓ Campos legacy mantienen backward compatibility")
 
 
 class TestF29Constraints(TransactionCase):
@@ -207,7 +207,7 @@ class TestF29Constraints(TransactionCase):
         # No debe levantar excepción
         try:
             self.f29._check_debito_fiscal_coherence()
-            _logger.info(f"✓ Constraint débito fiscal coherente (PASS)")
+            _logger.info("✓ Constraint débito fiscal coherente (PASS)")
         except ValidationError:
             self.fail("Constraint débito fiscal falló cuando debía pasar")
 
@@ -229,7 +229,7 @@ class TestF29Constraints(TransactionCase):
             # Forzar validación
             self.f29._check_debito_fiscal_coherence()
 
-        _logger.info(f"✓ Constraint débito fiscal incoherente (FAIL como esperado)")
+        _logger.info("✓ Constraint débito fiscal incoherente (FAIL como esperado)")
 
     def test_03_constraint_credito_fiscal_coherence_pass(self):
         """Test que constraint crédito fiscal pasa cuando es coherente"""
@@ -243,7 +243,7 @@ class TestF29Constraints(TransactionCase):
         # No debe levantar excepción
         try:
             self.f29._check_credito_fiscal_coherence()
-            _logger.info(f"✓ Constraint crédito fiscal coherente (PASS)")
+            _logger.info("✓ Constraint crédito fiscal coherente (PASS)")
         except ValidationError:
             self.fail("Constraint crédito fiscal falló cuando debía pasar")
 
@@ -259,7 +259,7 @@ class TestF29Constraints(TransactionCase):
             self.f29.refresh()
             self.f29._check_credito_fiscal_coherence()
 
-        _logger.info(f"✓ Constraint crédito fiscal incoherente (FAIL como esperado)")
+        _logger.info("✓ Constraint crédito fiscal incoherente (FAIL como esperado)")
 
     def test_05_constraint_unique_declaration_pass(self):
         """Test que constraint unicidad pasa cuando no hay duplicados"""
@@ -272,7 +272,7 @@ class TestF29Constraints(TransactionCase):
         # No debe levantar excepción
         try:
             f29_2._check_unique_declaration()
-            _logger.info(f"✓ Constraint unicidad sin duplicados (PASS)")
+            _logger.info("✓ Constraint unicidad sin duplicados (PASS)")
         except ValidationError:
             self.fail("Constraint unicidad falló cuando debía pasar")
 
@@ -286,7 +286,7 @@ class TestF29Constraints(TransactionCase):
                 'tipo_declaracion': 'original',  # Misma tipo
             })
 
-        _logger.info(f"✓ Constraint unicidad con duplicados (FAIL como esperado)")
+        _logger.info("✓ Constraint unicidad con duplicados (FAIL como esperado)")
 
     def test_07_constraint_unique_declaration_rectificatoria_allowed(self):
         """Test que rectificatorias NO están sujetas al constraint de unicidad"""
@@ -300,7 +300,7 @@ class TestF29Constraints(TransactionCase):
 
         # No debe levantar excepción
         self.assertTrue(f29_rect.id, "Rectificatoria debe permitir crear para mismo período")
-        _logger.info(f"✓ Rectificatorias permitidas para mismo período")
+        _logger.info("✓ Rectificatorias permitidas para mismo período")
 
 
 class TestF29ComputedFields(TransactionCase):
@@ -327,7 +327,7 @@ class TestF29ComputedFields(TransactionCase):
         # Validar crédito fiscal (19% de compras + activo fijo)
         self.assertAlmostEqual(f29.credito_fiscal, 190000.0, delta=1.0)
 
-        _logger.info(f"✓ _compute_iva_amounts funciona correctamente")
+        _logger.info("✓ _compute_iva_amounts funciona correctamente")
 
     def test_02_compute_iva_determinado(self):
         """Test del método _compute_iva_determinado"""
@@ -345,7 +345,7 @@ class TestF29ComputedFields(TransactionCase):
         expected = 200000.0
         self.assertAlmostEqual(f29.iva_determinado, expected, delta=1.0)
 
-        _logger.info(f"✓ _compute_iva_determinado funciona correctamente")
+        _logger.info("✓ _compute_iva_determinado funciona correctamente")
 
     def test_03_compute_resultado_final(self):
         """Test del método _compute_resultado_final"""
@@ -364,7 +364,7 @@ class TestF29ComputedFields(TransactionCase):
         self.assertAlmostEqual(f29.iva_a_pagar, 70000.0, delta=1.0)
         self.assertEqual(f29.saldo_favor, 0.0)
 
-        _logger.info(f"✓ _compute_resultado_final funciona correctamente")
+        _logger.info("✓ _compute_resultado_final funciona correctamente")
 
     def test_04_compute_legacy_fields(self):
         """Test del método _compute_legacy_fields"""
@@ -381,4 +381,4 @@ class TestF29ComputedFields(TransactionCase):
         self.assertEqual(f29.total_iva_debito, f29.debito_fiscal)
         self.assertEqual(f29.total_iva_credito, f29.credito_fiscal)
 
-        _logger.info(f"✓ _compute_legacy_fields funciona correctamente")
+        _logger.info("✓ _compute_legacy_fields funciona correctamente")

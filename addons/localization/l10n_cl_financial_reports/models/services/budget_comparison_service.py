@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, _
+from odoo import _
 from odoo.exceptions import UserError
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
+from datetime import datetime
 import logging
 import base64
 import io
-from collections import defaultdict
 
 _logger = logging.getLogger(__name__)
 

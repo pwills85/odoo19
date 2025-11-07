@@ -10,12 +10,10 @@ Author: EERGYGROUP - Based on technical audit specifications
 """
 
 import logging
-import json
 from datetime import datetime, date
 
 from odoo import http, fields, _
 from odoo.http import request
-from odoo.exceptions import UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 

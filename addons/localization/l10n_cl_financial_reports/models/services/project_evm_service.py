@@ -17,12 +17,12 @@ Compatible with Odoo 18 and OCA guidelines.
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from datetime import timedelta
+from typing import Dict, List, Optional
 
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError, ValidationError
-from odoo.tools import float_round, float_compare
+from odoo.exceptions import UserError
+from odoo.tools import float_round
 
 _logger = logging.getLogger(__name__)
 

@@ -9,11 +9,9 @@ and percentage calculations relative to total costs and sales.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError
-from odoo.tools import float_round
 
 _logger = logging.getLogger(__name__)
 

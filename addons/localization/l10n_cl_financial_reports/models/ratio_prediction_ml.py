@@ -9,7 +9,7 @@ from odoo.exceptions import UserError
 import json
 import logging
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
@@ -499,7 +499,7 @@ class RatioPredictionML(models.Model):
             start_date = end_date - relativedelta(months=1)
             
             latest_analysis = self.env['account.ratio.analysis.service'].create({
-                'name': f'ML Prediction Base Data',
+                'name': 'ML Prediction Base Data',
                 'company_id': self.company_id.id,
                 'date_from': start_date,
                 'date_to': end_date,

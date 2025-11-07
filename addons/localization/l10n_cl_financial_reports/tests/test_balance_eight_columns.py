@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from odoo.tests import TransactionCase, tagged
-from odoo.exceptions import UserError
 from datetime import date, timedelta
 
 

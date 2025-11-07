@@ -15,12 +15,9 @@ Flujo de Integración:
 """
 
 import logging
-from datetime import date, datetime, timedelta
-from dateutil.relativedelta import relativedelta
+from datetime import date
 
-from odoo import fields
 from odoo.tests.common import TransactionCase, tagged
-from odoo.exceptions import ValidationError
 
 _logger = logging.getLogger(__name__)
 
