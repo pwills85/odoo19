@@ -16,6 +16,9 @@ from . import test_kpi_service
 # FASE 1 - Dashboard Views Smoke Tests
 from . import test_kpi_dashboard_views
 
+# FASE 1 - Performance Decorators Tests
+from . import test_performance_decorators
+
 # FASE 3 Coverage Validation
 
 # FASE 3 New Tests - High Quality Odoo 18 Compatible

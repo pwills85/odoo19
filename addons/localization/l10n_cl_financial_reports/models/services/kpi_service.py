@@ -73,6 +73,7 @@ from odoo.exceptions import UserError
 from datetime import datetime, date
 import json
 import time
+from odoo.addons.l10n_cl_financial_reports.utils.performance_decorators import measure_sql_performance
 
 
 class FinancialReportKpiService(models.Model):
@@ -94,6 +95,7 @@ class FinancialReportKpiService(models.Model):
     _description = 'Servicio de Cálculo de KPIs Dashboard'
 
     @api.model
+    @measure_sql_performance
     def compute_kpis(self, company, period_start, period_end):
         """
         Calcula KPIs financieros para un período determinado con cache.
@@ -213,6 +215,7 @@ class FinancialReportKpiService(models.Model):
         return kpis
 
     @api.model
+    @measure_sql_performance
     def _calculate_kpis_from_f29(self, company, period_start, period_end):
         """
         Calcula KPIs desde registros F29 usando SQL optimizado.
