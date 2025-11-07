@@ -30,6 +30,9 @@ from ..libs.sii_soap_client import SIISoapClient
 from ..libs.ted_generator import TEDGenerator
 from ..libs.xsd_validator import XSDValidator
 
+# P1.3 GAP CLOSURE: Performance metrics instrumentation
+from ..libs.performance_metrics import measure_performance
+
 _logger = logging.getLogger(__name__)
 
 
@@ -48,7 +51,6 @@ class AccountMoveDTE(models.Model):
     Now uses pure Python classes from libs/ with Dependency Injection pattern.
     Methods like generate_dte_xml() now delegate to DTEXMLGenerator instance.
     """
-    _name = 'account.move'
     _inherit = 'account.move'
     
     # ═══════════════════════════════════════════════════════════
@@ -329,7 +331,17 @@ class AccountMoveDTE(models.Model):
         string='Comunicaciones SII',
         help='Historial de comunicaciones con el SII'
     )
-    
+
+    # ═══════════════════════════════════════════════════════════
+    # SQL CONSTRAINTS - Sprint 1.4 (B-009)
+    # ═══════════════════════════════════════════════════════════
+
+    _sql_constraints = [
+        ('dte_track_id_unique',
+         'UNIQUE(dte_track_id)',
+         'El Track ID del SII debe ser único. Este DTE ya fue enviado previamente.'),
+    ]
+
     # ═══════════════════════════════════════════════════════════
     # CAMPOS COMPUTADOS
     # ═══════════════════════════════════════════════════════════
@@ -366,8 +378,13 @@ class AccountMoveDTE(models.Model):
     # These methods delegate to pure Python classes from libs/
     # while maintaining the same interface for backward compatibility
 
+    @measure_performance('generar_xml')
     def generate_dte_xml(self, dte_type, invoice_data):
-        """Delegate to DTEXMLGenerator (pure Python)."""
+        """
+        Delegate to DTEXMLGenerator (pure Python).
+
+        P1.3 GAP CLOSURE: Instrumented with performance metrics.
+        """
         generator = DTEXMLGenerator()
         return generator.generate_dte_xml(dte_type, invoice_data)
 
@@ -381,23 +398,43 @@ class AccountMoveDTE(models.Model):
         validator = XSDValidator()
         return validator.validate_xml_against_xsd(xml_string, dte_type)
 
+    @measure_performance('firmar')
     def sign_dte_documento(self, xml_string, documento_id, certificate_id=None, algorithm='sha256'):
-        """Delegate to XMLSigner.sign_dte_documento (with env injection)."""
+        """
+        Delegate to XMLSigner.sign_dte_documento (with env injection).
+
+        P1.3 GAP CLOSURE: Instrumented with performance metrics.
+        """
         signer = XMLSigner(self.env)
         return signer.sign_dte_documento(xml_string, documento_id, certificate_id, algorithm)
 
+    @measure_performance('firmar')
     def sign_envio_setdte(self, xml_string, setdte_id='SetDTE', certificate_id=None, algorithm='sha256'):
-        """Delegate to XMLSigner.sign_envio_setdte (with env injection)."""
+        """
+        Delegate to XMLSigner.sign_envio_setdte (with env injection).
+
+        P1.3 GAP CLOSURE: Instrumented with performance metrics.
+        """
         signer = XMLSigner(self.env)
         return signer.sign_envio_setdte(xml_string, setdte_id, certificate_id, algorithm)
 
+    @measure_performance('enviar_soap')
     def send_dte_to_sii(self, signed_xml, rut_emisor, company=None):
-        """Delegate to SIISoapClient (with env injection)."""
+        """
+        Delegate to SIISoapClient (with env injection).
+
+        P1.3 GAP CLOSURE: Instrumented with performance metrics.
+        """
         client = SIISoapClient(self.env)
         return client.send_dte_to_sii(signed_xml, rut_emisor, company)
 
+    @measure_performance('consultar_estado')
     def query_dte_status(self, track_id, rut_emisor, company=None):
-        """Delegate to SIISoapClient (with env injection)."""
+        """
+        Delegate to SIISoapClient (with env injection).
+
+        P1.3 GAP CLOSURE: Instrumented with performance metrics.
+        """
         client = SIISoapClient(self.env)
         return client.query_dte_status(track_id, rut_emisor, company)
 
@@ -519,7 +556,43 @@ class AccountMoveDTE(models.Model):
         # Validaciones específicas para cada tipo de DTE
         if self.dte_code == '52':  # Guía de despacho
             self._validate_dte_52()
-    
+
+    def _check_idempotency_before_send(self):
+        """
+        Sprint 1.4 - B-009: Idempotency check for DTE sending.
+
+        Prevents duplicate DTE submissions on retry by checking if a track_id
+        already exists from a previous successful send.
+
+        Enterprise Pattern: Idempotent operations ensure safe retries without
+        side effects, critical for distributed systems and network failures.
+
+        Returns:
+            dict or None: If already sent (has track_id), returns success dict
+                         with existing track_id and idempotent flag.
+                         If not sent yet, returns None to proceed with sending.
+        """
+        self.ensure_one()
+
+        if self.dte_track_id:
+            _logger.info(
+                f"[B-009 Idempotency] DTE {self.id} already sent successfully. "
+                f"track_id={self.dte_track_id}. Preventing duplicate submission."
+            )
+
+            # Return existing success result - no need to regenerate/resend
+            return {
+                'success': True,
+                'idempotent': True,
+                'folio': self.dte_folio,
+                'track_id': self.dte_track_id,
+                'xml_b64': self.dte_xml,  # Already stored
+                'message': _('DTE already sent successfully (idempotent retry prevented)')
+            }
+
+        # No track_id = not sent yet, proceed with generation
+        return None
+
     def _generate_sign_and_send_dte(self):
         """
         Genera, firma y envía DTE al SII usando bibliotecas Python nativas.
@@ -530,10 +603,99 @@ class AccountMoveDTE(models.Model):
         P0-6 GAP CLOSURE: DTEs históricos NO se re-firman (certificado expirado).
         Se preserva XML firmado original para mantener validez legal.
 
+        P0-2 GAP CLOSURE: Redis lock SETNX prevents race condition on double-click.
+        Lock must be acquired BEFORE idempotency check to prevent duplicates.
+
         Returns:
             Dict con resultado de la operación
         """
         self.ensure_one()
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # P0-2 GAP CLOSURE: Redis Lock - Prevent race condition on double-click
+        # ═══════════════════════════════════════════════════════════════════════
+        # CRITICAL: Lock MUST be acquired BEFORE idempotency check.
+        #
+        # Problem: User double-clicks "Send DTE" button rapidly.
+        # Both requests arrive before track_id is assigned.
+        # Both pass idempotency check → both generate XML → both send → DUPLICATE!
+        #
+        # Solution: Redis SETNX lock with TTL 60s.
+        # First request acquires lock, second request gets "in_progress" response.
+        #
+        # Lock key pattern: dte:send:lock:{company_id}:{move_id}
+        # TTL: 60 seconds (enough for XML generation + signing + SII send)
+        #
+        # Security: FAIL-OPEN on Redis error (allow send without lock).
+        # Rationale: Better to risk rare duplicate than block legitimate sends.
+
+        try:
+            redis_url = self.env['ir.config_parameter'].sudo().get_param(
+                'l10n_cl_dte.redis_url',
+                'redis://redis:6379/1'
+            )
+            import redis
+            r = redis.from_url(redis_url, decode_responses=True)
+
+            # Lock key: dte:send:lock:{company_id}:{move_id}
+            lock_key = f"dte:send:lock:{self.company_id.id}:{self.id}"
+            lock_ttl = int(self.env['ir.config_parameter'].sudo().get_param(
+                'l10n_cl_dte.send_lock_ttl_seconds',
+                '60'
+            ))
+
+            # Try to acquire lock (SETNX: set if not exists - atomic operation)
+            acquired = r.set(lock_key, '1', ex=lock_ttl, nx=True)
+
+            if not acquired:
+                # Lock already held by another process → return "in_progress"
+                _logger.warning(
+                    "DTE send lock already held - another process is sending this DTE",
+                    extra={
+                        'event': 'dte_send_lock_blocked',
+                        'move_id': self.id,
+                        'company_id': self.company_id.id,
+                        'lock_key': lock_key,
+                        'outcome': 'in_progress'
+                    }
+                )
+                return {
+                    'success': False,
+                    'in_progress': True,
+                    'lock_held': True,
+                    'message': _('DTE en procesamiento por otro proceso. Espere unos segundos.')
+                }
+
+            _logger.debug(
+                "DTE send lock acquired successfully",
+                extra={
+                    'event': 'dte_send_lock_acquired',
+                    'move_id': self.id,
+                    'lock_key': lock_key,
+                    'ttl_seconds': lock_ttl
+                }
+            )
+
+        except redis.RedisError as e:
+            # FAIL-OPEN: If Redis unavailable, proceed without lock
+            # Better to risk duplicate than block legitimate sends
+            _logger.error(
+                "Redis lock failed - Proceeding without lock (fail-open policy)",
+                extra={
+                    'event': 'dte_send_lock_error',
+                    'error': str(e),
+                    'move_id': self.id,
+                    'policy': 'fail_open'
+                }
+            )
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # B-009: Idempotency Check - Prevent duplicate submissions on retry
+        # ═══════════════════════════════════════════════════════════════════════
+        # NOTE: Lock is acquired BEFORE this check to prevent race condition
+        idempotent_result = self._check_idempotency_before_send()
+        if idempotent_result:
+            return idempotent_result
 
         # ═══════════════════════════════════════════════════════════════════════
         # P0-6 GAP CLOSURE: Historical DTE - DO NOT RE-SIGN
@@ -1028,18 +1190,36 @@ class AccountMoveDTE(models.Model):
                 "Debe definir el Tipo de traslado para la Guía de despacho (1..8)."
             ))
 
-        if tipo_traslado not in (1, 2, 3, 4, 5, 6, 7, 8):
+        # P1.2 GAP CLOSURE: Convert Char field to int before comparison
+        # tipo_traslado is stored as Char, must convert to int
+        try:
+            tipo_traslado_int = int(tipo_traslado)
+        except (ValueError, TypeError):
             raise ValidationError(_(
-                "Tipo de traslado inválido: %s. Valores permitidos: 1..8" % tipo_traslado
+                "Tipo de traslado debe ser un número entero: %s" % tipo_traslado
+            ))
+
+        if tipo_traslado_int not in (1, 2, 3, 4, 5, 6, 7, 8):
+            raise ValidationError(_(
+                "Tipo de traslado inválido: %s. Valores permitidos: 1..8" % tipo_traslado_int
             ))
 
         # 2) tipo_despacho (1..3) - OPCIONAL, validar si viene
         if hasattr(self, 'l10n_cl_dte_tipo_despacho'):
             td = getattr(self, 'l10n_cl_dte_tipo_despacho')
-            if td and td not in (1, 2, 3):
-                raise ValidationError(_(
-                    "Tipo de despacho inválido: %s. Valores permitidos: 1..3" % td
-                ))
+            if td:
+                # P1.2 GAP CLOSURE: Convert Char field to int before comparison
+                try:
+                    td_int = int(td)
+                except (ValueError, TypeError):
+                    raise ValidationError(_(
+                        "Tipo de despacho debe ser un número entero: %s" % td
+                    ))
+
+                if td_int not in (1, 2, 3):
+                    raise ValidationError(_(
+                        "Tipo de despacho inválido: %s. Valores permitidos: 1..3" % td_int
+                    ))
 
         # 3) Transporte (si marcado) - validar datos mínimos
         transporte_flag = getattr(self, 'l10n_cl_dte_transporte', False)
