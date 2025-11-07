@@ -2,9 +2,8 @@
 
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError, UserError
-from datetime import datetime, timedelta
+from datetime import timedelta
 import logging
-import os
 
 _logger = logging.getLogger(__name__)
 
@@ -583,6 +582,79 @@ class L10nClF29(models.Model):
                 'sticky': False,
             }
         }
+
+    # ========== CRON METHODS ==========
+    @api.model
+    def create_monthly_f29(self):
+        """
+        Cron job: crea un F29 en borrador por compañía y período (mes anterior).
+
+        Reglas:
+        - Un F29 ORIGINAL por compañía y período (idempotente).
+        - Sólo para compañías con SII habilitado si el campo existe.
+        - Periodo objetivo: primer día del mes anterior a la fecha actual (TZ del server).
+
+        Returns: int (cantidad de F29 creados)
+        """
+        created = 0
+
+        # Determinar período objetivo: primer día del mes anterior
+        today = fields.Date.context_today(self)
+        period_first_day = today.replace(day=1)
+        # Restar un día para ir al mes anterior y volver al primer día
+        previous_month_last_day = period_first_day - timedelta(days=1)
+        target_period = previous_month_last_day.replace(day=1)
+
+        Company = self.env['res.company']
+        company_domain = []
+        # Filtrar por compañías con SII habilitado si el campo existe
+        if 'l10n_cl_sii_enabled' in Company._fields:
+            company_domain.append(('l10n_cl_sii_enabled', '=', True))
+
+        companies = Company.search(company_domain)
+
+        for company in companies:
+            # Idempotencia: verificar si ya existe F29 ORIGINAL para el período
+            existing = self.search([
+                ('company_id', '=', company.id),
+                ('period_date', '=', target_period),
+                ('tipo_declaracion', '=', 'original'),
+                ('state', '!=', 'cancel'),
+            ], limit=1)
+
+            if existing:
+                continue
+
+            vals = {
+                'company_id': company.id,
+                'period_date': target_period,
+                'tipo_declaracion': 'original',
+                'state': 'draft',
+            }
+            record = self.create(vals)
+
+            # Opcional: no ejecutar cálculos aquí para mantener rapidez del cron
+            # record.action_calculate()
+
+            created += 1
+
+        # Logging estructurado
+        try:
+            import json
+            _logger.info(json.dumps({
+                'module': 'l10n_cl_financial_reports',
+                'action': 'create_monthly_f29',
+                'target_period': target_period.strftime('%Y-%m-%d'),
+                'companies_considered': len(companies),
+                'created': created,
+            }))
+        except Exception:
+            _logger.info(
+                'create_monthly_f29 ejecutado para periodo %s - empresas: %s - creados: %s',
+                target_period, len(companies), created
+            )
+
+        return created
 
 
 class L10nClF29Line(models.Model):
