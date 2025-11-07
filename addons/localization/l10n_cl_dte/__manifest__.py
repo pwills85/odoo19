@@ -174,6 +174,7 @@ Es un desarrollo independiente para localización chilena.
         'security/multi_company_rules.xml',  # ⭐ P0-3: Multi-company record rules (data isolation)
 
         # Datos base
+        'data/config_parameters.xml',        # ⭐ P1-4: Configuration parameters (webhook, Redis, SOAP, etc.)
         'data/dte_document_types.xml',
         'data/sii_activity_codes_full.xml',  # ⭐ 700 códigos oficiales completos SII
         'data/l10n_cl_comunas_data.xml',     # ⭐ NEW (2025-10-24): 347 comunas oficiales SII
@@ -218,6 +219,7 @@ Es un desarrollo independiente para localización chilena.
         'views/dte_contingency_pending_views.xml',  # ⭐ NEW (Sprint 3 - 2025-10-24): Pending DTEs (Contingency)
         'views/res_config_settings_views.xml',
         'views/analytic_dashboard_views.xml',   # ⭐ NUEVO: Dashboard Cuentas Analíticas
+        'views/dte_dashboard_views.xml',        # ⭐ NEW (Fase 2.1 - 2025-11-07): Dashboard Central DTEs - Monitoreo SII
         'views/boleta_honorarios_views.xml',    # ⭐ NUEVO Sprint D: Boletas de Honorarios (loaded first - referenced by retencion_iue_tasa)
         'views/retencion_iue_tasa_views.xml',   # ⭐ NUEVO Sprint D: Tasas de Retención IUE
         'views/l10n_cl_rcv_entry_views.xml',    # ⭐ NEW (Sprint 1 - 2025-11-01): RCV Entries (Res. 61/2017)
@@ -247,6 +249,6 @@ Es un desarrollo independiente para localización chilena.
     'installable': True,
     'application': False,
     'auto_install': False,
-    # 'post_init_hook': 'post_init_hook',  # Removido - función no implementada
+    'post_init_hook': 'post_init_hook',  # Sprint 0.2: Genera webhook_key segura (B-003)
 }
 

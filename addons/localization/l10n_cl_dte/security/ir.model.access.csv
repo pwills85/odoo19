@@ -22,6 +22,8 @@ access_generate_libro_wizard,generate.libro.wizard,model_generate_libro_wizard,a
 access_dte_generate_wizard,dte.generate.wizard,model_dte_generate_wizard,account.group_account_user,1,1,1,0
 access_analytic_dashboard_user,analytic.dashboard.user,model_analytic_dashboard,account.group_account_user,1,0,0,0
 access_analytic_dashboard_manager,analytic.dashboard.manager,model_analytic_dashboard,account.group_account_manager,1,1,1,1
+access_dte_dashboard_user,l10n_cl.dte_dashboard.user,model_l10n_cl_dte_dashboard,account.group_account_user,1,0,0,0
+access_dte_dashboard_manager,l10n_cl.dte_dashboard.manager,model_l10n_cl_dte_dashboard,account.group_account_manager,1,1,1,1
 access_dte_ai_client_user,dte.ai.client.user,model_dte_ai_client,account.group_account_user,1,0,0,0
 access_dte_ai_client_manager,dte.ai.client.manager,model_dte_ai_client,account.group_account_manager,1,0,0,0
 access_l10n_cl_bhe_user,l10n_cl.bhe.user,model_l10n_cl_bhe,account.group_account_user,1,1,1,0

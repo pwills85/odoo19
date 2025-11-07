@@ -9,6 +9,7 @@
 # ═══════════════════════════════════════════════════════════
 from . import dte_ai_client  # Cliente AI Service (abstract model)
 from . import analytic_dashboard  # Dashboard rentabilidad cuentas analíticas
+from . import dte_dashboard  # ⭐ NEW (Fase 2.1 - 2025-11-07): Dashboard Central DTEs - Monitoreo SII
 
 # ═══════════════════════════════════════════════════════════
 # AI INTEGRATION - PHASE 2 (2025-10-24)

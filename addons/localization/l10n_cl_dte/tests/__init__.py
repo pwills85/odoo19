@@ -26,4 +26,5 @@ from . import test_computed_fields_cache  # US-1.4: @api.depends cache invalidat
 
 # Gap Closure Dashboard features
 from . import test_analytic_dashboard_kanban  # Dashboard Kanban drag & drop functionality
+from . import test_dte_dashboard  # ⭐ NEW (Fase 2.1 - 2025-11-07): Dashboard Central DTEs - Monitoreo SII
 
