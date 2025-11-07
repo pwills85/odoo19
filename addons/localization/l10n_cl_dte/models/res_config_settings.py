@@ -47,6 +47,30 @@ class ResConfigSettings(models.TransientModel):
     )
 
     # ═══════════════════════════════════════════════════════════
+    # PARÁMETROS CRÍTICOS (P2.4 GAP CLOSURE)
+    # ═══════════════════════════════════════════════════════════
+
+    redis_url = fields.Char(
+        string='URL Redis',
+        config_parameter='l10n_cl_dte.redis_url',
+        default='redis://redis:6379/1',
+        help='URL de conexión a Redis para métricas de rendimiento y rate limiting'
+    )
+
+    metrics_enabled = fields.Boolean(
+        string='Métricas de Rendimiento',
+        config_parameter='l10n_cl_dte.metrics_enabled',
+        default=True,
+        help='Activar/desactivar métricas de rendimiento (P50/P95/P99) para operaciones DTE'
+    )
+
+    webhook_key = fields.Char(
+        string='Webhook Key',
+        config_parameter='l10n_cl_dte.webhook_key',
+        help='Clave secreta para firmar webhooks (HMAC-SHA256). Generada automáticamente.'
+    )
+
+    # ═══════════════════════════════════════════════════════════
     # DATOS TRIBUTARIOS EMPRESA (desde res.company)
     # ═══════════════════════════════════════════════════════════
 
