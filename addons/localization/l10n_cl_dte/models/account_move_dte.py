@@ -937,7 +937,133 @@ class AccountMoveDTE(models.Model):
             else:
                 # ❌ FALLO - DISASTER RECOVERY: Agregar a failed queue
                 error_msg = sii_result.get('error_message', 'Unknown SII error')
-                _logger.warning(f"❌ DTE send failed: {error_msg}")
+                error_code = sii_result.get('error_code', '')
+                _logger.warning(f"❌ DTE send failed: {error_msg} (code: {error_code})")
+
+                # ═══════════════════════════════════════════════════════════════════════
+                # P2.1 GAP CLOSURE: SHA1 FALLBACK
+                # ═══════════════════════════════════════════════════════════════════════
+                # If SHA256 signature rejected by SII, retry with SHA1 (if enabled)
+                #
+                # SII error codes for signature algorithm issues:
+                # - "ALGORITMO_FIRMA" in error message
+                # - "SHA256" in error message (SII doesn't support SHA256 yet)
+                # - Error codes related to signature validation
+
+                enable_sha1_fallback = self.env['ir.config_parameter'].sudo().get_param(
+                    'l10n_cl_dte.enable_sha1_fallback',
+                    'False'
+                ).lower() in ('true', '1', 'yes')
+
+                # Check if error is signature algorithm related
+                is_signature_error = (
+                    'algoritmo' in error_msg.lower() or
+                    'sha256' in error_msg.lower() or
+                    'signature' in error_msg.lower() or
+                    'firma' in error_msg.lower()
+                )
+
+                if enable_sha1_fallback and is_signature_error:
+                    _logger.warning(
+                        "🔄 Signature algorithm error detected. Retrying with SHA1 fallback...",
+                        extra={
+                            'event': 'sha1_fallback_triggered',
+                            'original_error': error_msg,
+                            'folio': dte_data['folio']
+                        }
+                    )
+
+                    try:
+                        # Re-sign Documento with SHA1
+                        documento_id = f"DTE-{dte_data['folio']}"
+                        signed_xml_sha1 = self.sign_dte_documento(
+                            unsigned_xml,
+                            documento_id=documento_id,
+                            certificate_id=self.journal_id.dte_certificate_id.id,
+                            algorithm='sha1'  # Fallback to SHA1
+                        )
+
+                        _logger.info(f"DTE Documento re-signed with SHA1 (ID={documento_id})")
+
+                        # Re-wrap in EnvioDTE
+                        envio_xml_sha1 = envio_generator.generate_envio_dte(
+                            dtes=[signed_xml_sha1],
+                            caratula_data=caratula_data
+                        )
+
+                        # Re-sign SetDTE with SHA1
+                        signed_envio_xml_sha1 = self.sign_envio_setdte(
+                            envio_xml_sha1,
+                            setdte_id='SetDTE',
+                            certificate_id=self.journal_id.dte_certificate_id.id,
+                            algorithm='sha1'  # Fallback to SHA1
+                        )
+
+                        _logger.info("EnvioDTE SetDTE re-signed with SHA1")
+
+                        # Retry sending to SII with SHA1 signatures
+                        sii_result_sha1 = self.send_dte_to_sii(
+                            signed_envio_xml_sha1,
+                            self.company_id.vat
+                        )
+
+                        if sii_result_sha1.get('success'):
+                            _logger.info(
+                                "✅ SHA1 fallback successful! DTE accepted by SII",
+                                extra={
+                                    'event': 'sha1_fallback_success',
+                                    'track_id': sii_result_sha1.get('track_id'),
+                                    'folio': dte_data['folio']
+                                }
+                            )
+
+                            # Backup with SHA1 signatures
+                            self.env['dte.backup'].backup_dte(
+                                dte_type=self.dte_code,
+                                folio=dte_data['folio'],
+                                xml_content=signed_envio_xml_sha1,
+                                track_id=sii_result_sha1.get('track_id'),
+                                move_id=self.id,
+                                rut_emisor=self.company_id.vat
+                            )
+
+                            # Save XMLs
+                            self._save_dte_xml(signed_xml_sha1)
+                            self._save_envio_xml(signed_envio_xml_sha1, dte_data['folio'])
+
+                            return {
+                                'success': True,
+                                'folio': dte_data['folio'],
+                                'track_id': sii_result_sha1.get('track_id'),
+                                'xml_b64': base64.b64encode(signed_xml_sha1.encode('ISO-8859-1')).decode('ascii'),
+                                'envio_xml_b64': base64.b64encode(signed_envio_xml_sha1.encode('ISO-8859-1')).decode('ascii'),
+                                'response_xml': sii_result_sha1.get('response_xml'),
+                                'sha1_fallback_used': True,
+                                'message': _('DTE accepted by SII using SHA1 fallback')
+                            }
+                        else:
+                            _logger.warning(
+                                "❌ SHA1 fallback also failed",
+                                extra={
+                                    'event': 'sha1_fallback_failed',
+                                    'error': sii_result_sha1.get('error_message'),
+                                    'folio': dte_data['folio']
+                                }
+                            )
+                            # Continue to error handling below
+
+                    except Exception as e:
+                        _logger.error(
+                            f"❌ SHA1 fallback exception: {e}",
+                            extra={
+                                'event': 'sha1_fallback_exception',
+                                'error': str(e)
+                            },
+                            exc_info=True
+                        )
+                        # Continue to error handling below
+
+                # ═══════════════════════════════════════════════════════════════════════
 
                 # Clasificar tipo de error
                 error_type = 'unknown'
@@ -949,6 +1075,8 @@ class AccountMoveDTE(models.Model):
                     error_type = 'unavailable'
                 elif 'validacion' in error_msg.lower() or 'validation' in error_msg.lower():
                     error_type = 'validation'
+                elif is_signature_error:
+                    error_type = 'signature'
 
                 # Agregar a cola de reintentos
                 self.env['dte.failed.queue'].add_failed_dte(

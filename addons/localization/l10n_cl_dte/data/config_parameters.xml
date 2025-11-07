@@ -87,6 +87,12 @@
       <field name="value">2</field>
     </record>
 
+    <!-- P2.1 GAP CLOSURE: SHA1 fallback for SII signature algorithm compatibility -->
+    <record id="config_enable_sha1_fallback" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.enable_sha1_fallback</field>
+      <field name="value">False</field>
+    </record>
+
     <!-- ═══════════════════════════════════════════════════════════════════
          Logging Configuration
          ═══════════════════════════════════════════════════════════════════ -->
