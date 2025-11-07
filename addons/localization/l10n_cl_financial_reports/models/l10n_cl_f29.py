@@ -67,25 +67,180 @@ class L10nClF29(models.Model):
         ('cancel', 'Cancelado'),
     ], string='Estado', default='draft', tracking=True)
 
-    # ========== TOTALES CALCULADOS ==========
+    tipo_declaracion = fields.Selection([
+        ('original', 'Original'),
+        ('rectificatoria', 'Rectificatoria'),
+    ], string='Tipo Declaración', default='original', required=True, tracking=True)
+
+    numero_rectificacion = fields.Integer(
+        string='Número Rectificación',
+        help='Número de orden si es declaración rectificatoria',
+        tracking=True
+    )
+
+    # ========== DÉBITO FISCAL (VENTAS) ==========
+    ventas_afectas = fields.Monetary(
+        string='Ventas y Servicios Gravados (Código 14)',
+        currency_field='currency_id',
+        help='Ventas y servicios afectos a IVA',
+        tracking=True
+    )
+
+    ventas_exentas = fields.Monetary(
+        string='Ventas Exentas (Código 15)',
+        currency_field='currency_id',
+        help='Ventas y servicios exentos de IVA'
+    )
+
+    ventas_exportacion = fields.Monetary(
+        string='Exportaciones (Código 30)',
+        currency_field='currency_id',
+        help='Ventas de exportación (no gravadas con IVA)'
+    )
+
+    debito_fiscal = fields.Monetary(
+        string='Débito Fiscal IVA (Código 32)',
+        currency_field='currency_id',
+        compute='_compute_iva_amounts',
+        store=True,
+        help='IVA generado por ventas afectas',
+        tracking=True
+    )
+
+    creditos_especiales = fields.Monetary(
+        string='Créditos Especiales (Código 36)',
+        currency_field='currency_id',
+        help='Créditos especiales contra el IVA débito (ej: empresas constructoras)'
+    )
+
+    debito_remanente_mes_anterior = fields.Monetary(
+        string='Remanente Débito Mes Anterior (Código 37)',
+        currency_field='currency_id',
+        help='Remanente de débito fiscal del mes anterior'
+    )
+
+    # ========== CRÉDITO FISCAL (COMPRAS) ==========
+    compras_afectas = fields.Monetary(
+        string='Compras con IVA Recuperable (Código 40)',
+        currency_field='currency_id',
+        help='Compras y servicios con derecho a crédito fiscal IVA',
+        tracking=True
+    )
+
+    compras_exentas = fields.Monetary(
+        string='Compras Exentas (Código 41)',
+        currency_field='currency_id',
+        help='Compras de bienes y servicios exentos de IVA'
+    )
+
+    compras_activo_fijo = fields.Monetary(
+        string='Compras Activo Fijo (Código 43)',
+        currency_field='currency_id',
+        help='Compras de activo fijo con derecho a crédito fiscal'
+    )
+
+    credito_fiscal = fields.Monetary(
+        string='Crédito Fiscal IVA (Código 48)',
+        currency_field='currency_id',
+        compute='_compute_iva_amounts',
+        store=True,
+        help='IVA crédito por compras afectas y activo fijo',
+        tracking=True
+    )
+
+    remanente_credito_mes_anterior = fields.Monetary(
+        string='Remanente Crédito Mes Anterior (Código 47)',
+        currency_field='currency_id',
+        help='Remanente de crédito fiscal del mes anterior'
+    )
+
+    # ========== DETERMINACIÓN IVA ==========
+    iva_determinado = fields.Monetary(
+        string='IVA Determinado (Código 89)',
+        currency_field='currency_id',
+        compute='_compute_iva_determinado',
+        store=True,
+        help='Débito fiscal - Crédito fiscal',
+        tracking=True
+    )
+
+    iva_retenido = fields.Monetary(
+        string='IVA Retenido por Terceros (Código 105)',
+        currency_field='currency_id',
+        help='Retenciones de IVA efectuadas por terceros'
+    )
+
+    # ========== PPM (PAGOS PROVISIONALES MENSUALES) ==========
+    ppm_mes = fields.Monetary(
+        string='PPM del Mes (Código 152)',
+        currency_field='currency_id',
+        help='Pago Provisional Mensual obligatorio',
+        tracking=True
+    )
+
+    ppm_voluntario = fields.Monetary(
+        string='PPM Voluntario (Código 153)',
+        currency_field='currency_id',
+        help='Pago Provisional Mensual voluntario'
+    )
+
+    # ========== RESULTADO FINAL ==========
+    iva_a_pagar = fields.Monetary(
+        string='IVA a Pagar (Código 91)',
+        currency_field='currency_id',
+        compute='_compute_resultado_final',
+        store=True,
+        help='Monto total a pagar al SII',
+        tracking=True
+    )
+
+    saldo_favor = fields.Monetary(
+        string='Saldo a Favor (Código 92)',
+        currency_field='currency_id',
+        compute='_compute_resultado_final',
+        store=True,
+        help='Crédito a favor del contribuyente'
+    )
+
+    remanente_mes_siguiente = fields.Monetary(
+        string='Remanente para Mes Siguiente (Código 93)',
+        currency_field='currency_id',
+        compute='_compute_resultado_final',
+        store=True,
+        help='Saldo de crédito fiscal que pasa al mes siguiente'
+    )
+
+    # ========== CAMPOS LEGACY (Backward Compatibility) ==========
     total_ventas = fields.Monetary(
-        string='Total Ventas',
-        currency_field='currency_id'
+        string='Total Ventas (Legacy)',
+        currency_field='currency_id',
+        compute='_compute_legacy_fields',
+        store=True,
+        help='Campo legacy - usar ventas_afectas'
     )
 
     total_iva_credito = fields.Monetary(
-        string='IVA Crédito',
-        currency_field='currency_id'
+        string='IVA Crédito (Legacy)',
+        currency_field='currency_id',
+        compute='_compute_legacy_fields',
+        store=True,
+        help='Campo legacy - usar credito_fiscal'
     )
 
     total_compras = fields.Monetary(
-        string='Total Compras',
-        currency_field='currency_id'
+        string='Total Compras (Legacy)',
+        currency_field='currency_id',
+        compute='_compute_legacy_fields',
+        store=True,
+        help='Campo legacy - usar compras_afectas'
     )
 
     total_iva_debito = fields.Monetary(
-        string='IVA Débito',
-        currency_field='currency_id'
+        string='IVA Débito (Legacy)',
+        currency_field='currency_id',
+        compute='_compute_legacy_fields',
+        store=True,
+        help='Campo legacy - usar debito_fiscal'
     )
 
     @api.depends('name', 'period_date', 'company_id')
@@ -96,6 +251,79 @@ class L10nClF29(models.Model):
                 record.display_name = f"F29 {period} - {record.company_id.name}"
             else:
                 record.display_name = record.name or 'Nuevo F29'
+
+    @api.depends('ventas_afectas', 'compras_afectas', 'compras_activo_fijo')
+    def _compute_iva_amounts(self):
+        """Calcula IVA débito y crédito fiscal (tasa 19%)"""
+        for record in self:
+            # Débito Fiscal = Ventas Afectas * 19%
+            record.debito_fiscal = record.ventas_afectas * 0.19
+
+            # Crédito Fiscal = (Compras Afectas + Compras Activo Fijo) * 19%
+            record.credito_fiscal = (record.compras_afectas + record.compras_activo_fijo) * 0.19
+
+    @api.depends(
+        'debito_fiscal', 'credito_fiscal',
+        'creditos_especiales', 'debito_remanente_mes_anterior',
+        'remanente_credito_mes_anterior'
+    )
+    def _compute_iva_determinado(self):
+        """
+        Calcula IVA Determinado según normativa SII:
+        IVA Determinado = (Débito Fiscal + Remanente Débito Mes Anterior - Créditos Especiales)
+                         - (Crédito Fiscal + Remanente Crédito Mes Anterior)
+        """
+        for record in self:
+            debito_total = (
+                record.debito_fiscal +
+                record.debito_remanente_mes_anterior -
+                record.creditos_especiales
+            )
+
+            credito_total = (
+                record.credito_fiscal +
+                record.remanente_credito_mes_anterior
+            )
+
+            record.iva_determinado = debito_total - credito_total
+
+    @api.depends('iva_determinado', 'iva_retenido', 'ppm_mes', 'ppm_voluntario')
+    def _compute_resultado_final(self):
+        """
+        Calcula el resultado final del F29:
+        - IVA a Pagar: si el resultado es positivo
+        - Saldo a Favor: si el resultado es negativo
+        - Remanente Mes Siguiente: saldo de crédito que pasa al siguiente mes
+        """
+        for record in self:
+            # Resultado después de retenciones y PPM
+            resultado = (
+                record.iva_determinado -
+                record.iva_retenido -
+                record.ppm_mes -
+                record.ppm_voluntario
+            )
+
+            if resultado > 0:
+                record.iva_a_pagar = resultado
+                record.saldo_favor = 0.0
+                record.remanente_mes_siguiente = 0.0
+            else:
+                record.iva_a_pagar = 0.0
+                record.saldo_favor = abs(resultado)
+                # El remanente para el mes siguiente es el saldo a favor
+                record.remanente_mes_siguiente = abs(resultado)
+
+    @api.depends('ventas_afectas', 'compras_afectas', 'debito_fiscal', 'credito_fiscal')
+    def _compute_legacy_fields(self):
+        """Mantiene backward compatibility con campos legacy"""
+        for record in self:
+            record.total_ventas = record.ventas_afectas
+            record.total_compras = record.compras_afectas
+            record.total_iva_debito = record.debito_fiscal
+            record.total_iva_credito = record.credito_fiscal
+
+    # ========== CONSTRAINTS DE COHERENCIA ==========
 
     @api.constrains('period_date', 'company_id')
     def _validate_sii_format(self):
@@ -108,6 +336,101 @@ class L10nClF29(models.Model):
             # Validar período
             if not record.period_date:
                 raise ValidationError(_("Period is required for F29"))
+
+    @api.constrains('ventas_afectas', 'debito_fiscal')
+    def _check_debito_fiscal_coherence(self):
+        """
+        CONSTRAINT 1: Coherencia IVA Débito Fiscal
+
+        Verifica que el IVA débito fiscal sea coherente con las ventas afectas.
+        Si hay ventas afectas, debe existir débito fiscal proporcional (19%).
+
+        Permite margen de error del 1% por redondeos.
+        """
+        for record in self:
+            if record.ventas_afectas > 0:
+                expected_debito = record.ventas_afectas * 0.19
+                actual_debito = record.debito_fiscal
+
+                # Margen de error 1%
+                tolerance = expected_debito * 0.01
+
+                if abs(actual_debito - expected_debito) > tolerance:
+                    raise ValidationError(_(
+                        'Coherencia IVA Débito:\n'
+                        'El débito fiscal (${:,.0f}) no es coherente con las ventas afectas (${:,.0f}).\n'
+                        'Débito esperado: ${:,.0f} (19% de ventas afectas).\n'
+                        'Diferencia: ${:,.0f}'
+                    ).format(
+                        actual_debito,
+                        record.ventas_afectas,
+                        expected_debito,
+                        abs(actual_debito - expected_debito)
+                    ))
+
+    @api.constrains('compras_afectas', 'compras_activo_fijo', 'credito_fiscal')
+    def _check_credito_fiscal_coherence(self):
+        """
+        CONSTRAINT 2: Coherencia IVA Crédito Fiscal
+
+        Verifica que el IVA crédito fiscal sea coherente con las compras afectas y activo fijo.
+        Si hay compras con derecho a crédito, debe existir crédito fiscal proporcional (19%).
+
+        Permite margen de error del 1% por redondeos.
+        """
+        for record in self:
+            base_compras = record.compras_afectas + record.compras_activo_fijo
+
+            if base_compras > 0:
+                expected_credito = base_compras * 0.19
+                actual_credito = record.credito_fiscal
+
+                # Margen de error 1%
+                tolerance = expected_credito * 0.01
+
+                if abs(actual_credito - expected_credito) > tolerance:
+                    raise ValidationError(_(
+                        'Coherencia IVA Crédito:\n'
+                        'El crédito fiscal (${:,.0f}) no es coherente con las compras afectas (${:,.0f}) '
+                        'y activo fijo (${:,.0f}).\n'
+                        'Crédito esperado: ${:,.0f} (19% de base compras).\n'
+                        'Diferencia: ${:,.0f}'
+                    ).format(
+                        actual_credito,
+                        record.compras_afectas,
+                        record.compras_activo_fijo,
+                        expected_credito,
+                        abs(actual_credito - expected_credito)
+                    ))
+
+    @api.constrains('period_date', 'company_id', 'tipo_declaracion')
+    def _check_unique_declaration(self):
+        """
+        CONSTRAINT 3: Unicidad de Declaración por Período
+
+        Verifica que no existan declaraciones duplicadas para el mismo período y empresa.
+        Solo se permite una declaración original por período.
+        Las declaraciones rectificatorias no están sujetas a esta restricción.
+        """
+        for record in self:
+            # Solo validar declaraciones originales
+            if record.tipo_declaracion == 'original':
+                domain = [
+                    ('company_id', '=', record.company_id.id),
+                    ('period_date', '=', record.period_date),
+                    ('tipo_declaracion', '=', 'original'),
+                    ('id', '!=', record.id),
+                    ('state', '!=', 'cancel'),
+                ]
+
+                duplicates = self.search(domain, limit=1)
+
+                if duplicates:
+                    period_str = record.period_date.strftime('%m/%Y')
+                    raise ValidationError(_(
+                        'Ya existe una declaración original F29 para el período {} en la empresa {}.\n'
+                        'Si desea modificar la declaración original, márquela como "Rectificatoria".'
+                    ).format(period_str, record.company_id.name))
 
     def action_calculate(self):
         """
