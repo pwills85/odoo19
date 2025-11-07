@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ═════════════════════════════════════════════════════════════
+         DASHBOARD CENTRAL DE DTEs - VISTAS MEJORADAS (Enhanced)
+
+         Mejoras Fase 2.1 (Cierre de Brechas):
+         - KPIs regulatorios (CAF, certificados, envejecidos)
+         - Métricas netas de facturación
+         - Tasas de aceptación regulatoria vs operacional
+         - i18n completo
+         - CE-safe (no dependencia de <dashboard>)
+
+         Autor: EERGYGROUP - Ing. Pedro Troncoso Willz
+         Fecha: 2025-11-07
+         ═════════════════════════════════════════════════════════════ -->
+
+    <!-- ══════════════════════════════════════════════════════════════
+         KANBAN VIEW MEJORADA - Vista Principal (CE-safe)
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_dte_dashboard_kanban_enhanced" model="ir.ui.view">
+        <field name="name">l10n_cl.dte_dashboard.kanban.enhanced</field>
+        <field name="model">l10n_cl.dte_dashboard</field>
+        <field name="inherit_id" ref="l10n_cl_dte.view_dte_dashboard_kanban"/>
+        <field name="arch" type="xml">
+            <!-- Añadir campos nuevos a kanban -->
+            <field name="dtes_con_reparos" position="after">
+                <field name="monto_facturado_neto_mes"/>
+                <field name="pendientes_total"/>
+                <field name="dtes_enviados_sin_respuesta_6h"/>
+                <field name="folios_restantes_total"/>
+                <field name="dias_certificado_expira"/>
+                <field name="alerta_caf_bajo"/>
+                <field name="alerta_certificado"/>
+                <field name="tasa_aceptacion_regulatoria"/>
+                <field name="tasa_aceptacion_operacional"/>
+            </field>
+
+            <!-- Mejorar sección de KPIs -->
+            <xpath expr="//div[@class='row mt-2']" position="after">
+                <hr/>
+
+                <!-- KPIs Regulatorios -->
+                <div class="row">
+                    <div class="col-12">
+                        <strong class="text-info">
+                            <i class="fa fa-shield"/> KPIs Regulatorios SII
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="row mt-1">
+                    <div class="col-6">
+                        <button class="btn btn-sm" name="action_view_dtes_envejecidos" type="object"
+                                t-att-class="record.dtes_enviados_sin_respuesta_6h.raw_value > 0 ? 'btn-danger' : 'btn-secondary'">
+                            <span class="o_stat_value">
+                                <field name="dtes_enviados_sin_respuesta_6h"/>
+                            </span>
+                            <span class="o_stat_text" translate="True">Sin Resp +6h</span>
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-sm" name="action_view_cafs" type="object"
+                                t-att-class="record.alerta_caf_bajo.raw_value ? 'btn-warning' : 'btn-success'">
+                            <span class="o_stat_value">
+                                <field name="folios_restantes_total"/>
+                            </span>
+                            <span class="o_stat_text" translate="True">Folios CAF</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row mt-1">
+                    <div class="col-12">
+                        <button class="btn btn-sm btn-block" name="action_view_certificados" type="object"
+                                t-att-class="record.alerta_certificado.raw_value ? 'btn-danger' : 'btn-success'">
+                            <i class="fa fa-certificate"/>
+                            <span translate="True">Certificado:</span>
+                            <strong>
+                                <field name="dias_certificado_expira"/>
+                                <span translate="True">días</span>
+                            </strong>
+                        </button>
+                    </div>
+                </div>
+
+                <hr/>
+
+                <!-- Métricas Financieras Netas -->
+                <div class="row">
+                    <div class="col-12">
+                        <span class="text-muted" translate="True">Facturación Neta Mes:</span><br/>
+                        <strong class="text-success">
+                            <field name="monto_facturado_neto_mes" widget="monetary"/>
+                        </strong>
+                        <small class="text-muted" translate="True">(Incl. NC)</small>
+                    </div>
+                </div>
+
+                <div class="row mt-2">
+                    <div class="col-6">
+                        <span class="text-muted" translate="True">Tasa Regulatoria:</span><br/>
+                        <strong t-att-class="record.tasa_aceptacion_regulatoria.raw_value >= 95 ? 'text-success' : 'text-warning'">
+                            <field name="tasa_aceptacion_regulatoria" widget="percentage"/>
+                        </strong>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-muted" translate="True">Tasa Operacional:</span><br/>
+                        <strong t-att-class="record.tasa_aceptacion_operacional.raw_value >= 90 ? 'text-success' : 'text-warning'">
+                            <field name="tasa_aceptacion_operacional" widget="percentage"/>
+                        </strong>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         FORM VIEW MEJORADO
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_dte_dashboard_form_enhanced" model="ir.ui.view">
+        <field name="name">l10n_cl.dte_dashboard.form.enhanced</field>
+        <field name="model">l10n_cl.dte_dashboard</field>
+        <field name="inherit_id" ref="l10n_cl_dte.view_dte_dashboard_form"/>
+        <field name="arch" type="xml">
+            <!-- Añadir Smart Buttons Regulatorios -->
+            <button name="action_view_dtes_con_reparos" position="after">
+                <button name="action_view_dtes_envejecidos" type="object"
+                        class="oe_stat_button" icon="fa-clock-o"
+                        invisible="dtes_enviados_sin_respuesta_6h == 0">
+                    <div class="o_stat_info">
+                        <field name="dtes_enviados_sin_respuesta_6h" class="o_stat_value"/>
+                        <span class="o_stat_text" translate="True">Sin Resp +6h</span>
+                    </div>
+                </button>
+                <button name="action_view_cafs" type="object"
+                        class="oe_stat_button" icon="fa-file-text-o">
+                    <div class="o_stat_info">
+                        <field name="folios_restantes_total" class="o_stat_value"/>
+                        <span class="o_stat_text" translate="True">Folios CAF</span>
+                    </div>
+                </button>
+                <button name="action_view_certificados" type="object"
+                        class="oe_stat_button" icon="fa-certificate">
+                    <div class="o_stat_info">
+                        <field name="dias_certificado_expira" class="o_stat_value"/>
+                        <span class="o_stat_text" translate="True">Días Cert.</span>
+                    </div>
+                </button>
+            </button>
+
+            <!-- Añadir grupo de KPIs Regulatorios -->
+            <group string="Estado Actual" position="after">
+                <group string="KPIs Regulatorios SII" name="kpis_regulatory">
+                    <field name="pendientes_total"/>
+                    <field name="dtes_enviados_sin_respuesta_6h"/>
+                    <field name="folios_restantes_total"/>
+                    <field name="dias_certificado_expira"/>
+                </group>
+            </group>
+
+            <!-- Añadir grupo de Tasas Mejoradas -->
+            <group string="Facturación Mes Actual" position="replace">
+                <group string="Facturación Mes Actual" name="facturacion">
+                    <field name="monto_facturado_mes" widget="monetary"
+                           help="Monto bruto (solo facturas aceptadas)"/>
+                    <field name="monto_facturado_neto_mes" widget="monetary" class="fw-bold"
+                           help="Monto neto (facturas - NC aceptadas)"/>
+                    <field name="currency_id" invisible="1"/>
+                </group>
+                <group string="Tasas de Aceptación" name="tasas">
+                    <field name="tasa_aceptacion_regulatoria" widget="percentage"
+                           decoration-success="tasa_aceptacion_regulatoria >= 95"
+                           decoration-warning="tasa_aceptacion_regulatoria >= 80 and tasa_aceptacion_regulatoria &lt; 95"
+                           decoration-danger="tasa_aceptacion_regulatoria &lt; 80"
+                           help="Tasa SII: aceptados / (aceptados + rechazados)"/>
+                    <field name="tasa_aceptacion_operacional" widget="percentage"
+                           decoration-success="tasa_aceptacion_operacional >= 90"
+                           decoration-warning="tasa_aceptacion_operacional >= 75 and tasa_aceptacion_operacional &lt; 90"
+                           decoration-danger="tasa_aceptacion_operacional &lt; 75"
+                           help="Tasa operacional: aceptados / total emitidos (incl. pendientes)"/>
+                </group>
+            </group>
+
+            <!-- Añadir Alertas Regulatorias -->
+            <notebook>
+                <page string="Alertas Regulatorias" name="alertas_regulatory" position="before">
+                    <page string="Alertas Críticas" name="alertas_criticas">
+                        <group>
+                            <div class="alert alert-danger" role="alert"
+                                 invisible="not alerta_certificado">
+                                <strong translate="True">⚠️ ALERTA CERTIFICADO CRÍTICA</strong><br/>
+                                <span invisible="dias_certificado_expira &lt;= 0" translate="True">
+                                    El certificado digital expira en
+                                </span>
+                                <field name="dias_certificado_expira" readonly="1" class="oe_inline"/>
+                                <span translate="True">días.</span><br/>
+                                <span invisible="dias_certificado_expira > 0" translate="True">
+                                    No hay certificado digital válido configurado.
+                                </span><br/>
+                                <button name="action_view_certificados" string="Ver Certificados"
+                                        type="object" class="btn-danger" icon="fa-certificate"/>
+                            </div>
+
+                            <div class="alert alert-warning" role="alert"
+                                 invisible="not alerta_caf_bajo">
+                                <strong translate="True">⚠️ ALERTA CAF BAJO</strong><br/>
+                                <span translate="True">
+                                    Quedan menos del 10% de folios CAF disponibles.
+                                </span><br/>
+                                <span translate="True">Folios restantes:</span>
+                                <field name="folios_restantes_total" readonly="1" class="oe_inline"/><br/>
+                                <button name="action_view_cafs" string="Gestionar CAFs"
+                                        type="object" class="btn-warning" icon="fa-file-text-o"/>
+                            </div>
+
+                            <div class="alert alert-warning" role="alert"
+                                 invisible="dtes_enviados_sin_respuesta_6h == 0">
+                                <strong translate="True">⚠️ DTEs ENVEJECIDOS</strong><br/>
+                                <span translate="True">
+                                    Hay
+                                </span>
+                                <field name="dtes_enviados_sin_respuesta_6h" readonly="1" class="oe_inline"/>
+                                <span translate="True">
+                                    DTEs enviados hace más de 6 horas sin respuesta del SII.
+                                </span><br/>
+                                <button name="action_view_dtes_envejecidos" string="Ver DTEs Envejecidos"
+                                        type="object" class="btn-warning" icon="fa-clock-o"/>
+                            </div>
+
+                            <div class="alert alert-success" role="alert"
+                                 invisible="alerta_certificado or alerta_caf_bajo or dtes_enviados_sin_respuesta_6h > 0">
+                                <strong translate="True">✅ SIN ALERTAS CRÍTICAS</strong><br/>
+                                <span translate="True">
+                                    Todos los indicadores regulatorios están dentro de rangos normales.
+                                </span>
+                            </div>
+                        </group>
+                    </page>
+                </page>
+            </notebook>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TREE VIEW MEJORADO
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_dte_dashboard_tree_enhanced" model="ir.ui.view">
+        <field name="name">l10n_cl.dte_dashboard.list.enhanced</field>
+        <field name="model">l10n_cl.dte_dashboard</field>
+        <field name="inherit_id" ref="l10n_cl_dte.view_dte_dashboard_tree"/>
+        <field name="arch" type="xml">
+            <field name="monto_facturado_mes" position="after">
+                <field name="monto_facturado_neto_mes" sum="Total Neto"/>
+                <field name="pendientes_total"/>
+                <field name="dtes_enviados_sin_respuesta_6h"
+                       decoration-danger="dtes_enviados_sin_respuesta_6h > 0"/>
+                <field name="folios_restantes_total"
+                       decoration-warning="alerta_caf_bajo == True"/>
+                <field name="dias_certificado_expira"
+                       decoration-danger="alerta_certificado == True"/>
+                <field name="tasa_aceptacion_regulatoria" widget="percentage"
+                       decoration-success="tasa_aceptacion_regulatoria >= 95"
+                       decoration-warning="tasa_aceptacion_regulatoria >= 80 and tasa_aceptacion_regulatoria &lt; 95"
+                       decoration-danger="tasa_aceptacion_regulatoria &lt; 80"/>
+                <field name="alerta_caf_bajo" column_invisible="1"/>
+                <field name="alerta_certificado" column_invisible="1"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         SEARCH VIEW MEJORADO
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_dte_dashboard_search_enhanced" model="ir.ui.view">
+        <field name="name">l10n_cl.dte_dashboard.search.enhanced</field>
+        <field name="model">l10n_cl.dte_dashboard</field>
+        <field name="inherit_id" ref="l10n_cl_dte.view_dte_dashboard_search"/>
+        <field name="arch" type="xml">
+            <filter name="filter_con_reparos" position="after">
+                <separator/>
+                <filter name="filter_alerta_caf" string="Alerta CAF Bajo" translate="True"
+                        domain="[('alerta_caf_bajo', '=', True)]"/>
+                <filter name="filter_alerta_certificado" string="Alerta Certificado" translate="True"
+                        domain="[('alerta_certificado', '=', True)]"/>
+                <filter name="filter_envejecidos" string="Con DTEs Envejecidos (+6h)" translate="True"
+                        domain="[('dtes_enviados_sin_respuesta_6h', '>', 0)]"/>
+            </filter>
+        </field>
+    </record>
+
+</odoo>

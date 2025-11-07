@@ -220,6 +220,7 @@ Es un desarrollo independiente para localización chilena.
         'views/res_config_settings_views.xml',
         'views/analytic_dashboard_views.xml',   # ⭐ NUEVO: Dashboard Cuentas Analíticas
         'views/dte_dashboard_views.xml',        # ⭐ NEW (Fase 2.1 - 2025-11-07): Dashboard Central DTEs - Monitoreo SII
+        'views/dte_dashboard_views_enhanced.xml',  # ⭐ ENHANCED (Fase 2.1 Cierre Brechas): KPIs regulatorios, alertas
         'views/boleta_honorarios_views.xml',    # ⭐ NUEVO Sprint D: Boletas de Honorarios (loaded first - referenced by retencion_iue_tasa)
         'views/retencion_iue_tasa_views.xml',   # ⭐ NUEVO Sprint D: Tasas de Retención IUE
         'views/l10n_cl_rcv_entry_views.xml',    # ⭐ NEW (Sprint 1 - 2025-11-01): RCV Entries (Res. 61/2017)
