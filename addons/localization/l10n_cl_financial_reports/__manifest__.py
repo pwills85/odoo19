@@ -193,6 +193,8 @@ For technical support and customizations, contact EERGYGROUP.
         "views/menu_items_sub.xml",  # Sub-menu items that reference parent menus
 
         # PDF Reports (QWeb)
+        "reports/account_report_balance_sheet_cl_pdf.xml",  # FASE 3: Balance Sheet PDF
+        "reports/account_report_profit_loss_cl_pdf.xml",  # FASE 3: Income Statement PDF
         "reports/l10n_cl_f29_report_pdf.xml",  # FASE 2: F29 PDF report
         "reports/l10n_cl_kpi_dashboard_report_pdf.xml",  # FASE 2: KPI Dashboard PDF report
         "views/financial_services_menu.xml",

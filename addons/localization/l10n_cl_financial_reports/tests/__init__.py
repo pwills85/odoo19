@@ -28,6 +28,10 @@ from . import test_kpi_alerts
 # FASE 2 - PDF Reports Smoke Tests
 from . import test_pdf_reports
 
+# FASE 3 - Sprint 1: Core Financial Reports Tests
+from . import test_balance_sheet_report
+from . import test_income_statement_report
+
 # FASE 3 Coverage Validation
 
 # FASE 3 New Tests - High Quality Odoo 18 Compatible
