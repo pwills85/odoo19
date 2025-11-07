@@ -180,6 +180,7 @@ For technical support and customizations, contact EERGYGROUP.
         # Chilean Tax Forms
         "views/l10n_cl_f29_views.xml",
         "views/l10n_cl_f22_views.xml",
+        "views/l10n_cl_kpi_dashboard_views.xml",  # FASE 1: KPI Dashboard
         "views/l10n_cl_tax_forms_menu.xml",
         "views/res_config_settings_views.xml",  # Fixed: XPath corregido para Odoo 18
         "views/res_config_settings_performance_views.xml",  # Fixed: Implementación completa con monitoreo

@@ -39,6 +39,7 @@ from . import l10n_cl_f22_report
 from . import l10n_cl_f22
 from . import l10n_cl_f29_report
 from . import l10n_cl_f29
+from . import l10n_cl_kpi_dashboard
 from . import performance_mixin
 from . import l10n_cl_ppm
 from . import multi_period_comparison

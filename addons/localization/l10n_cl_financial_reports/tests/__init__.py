@@ -13,6 +13,9 @@ from . import test_f22_config_wizard
 # FASE 1 - KPI Service with Cache Tests
 from . import test_kpi_service
 
+# FASE 1 - Dashboard Views Smoke Tests
+from . import test_kpi_dashboard_views
+
 # FASE 3 Coverage Validation
 
 # FASE 3 New Tests - High Quality Odoo 18 Compatible

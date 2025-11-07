@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View (Filters) -->
+    <record id="view_l10n_cl_kpi_dashboard_form" model="ir.ui.view">
+        <field name="name">l10n_cl.kpi.dashboard.form</field>
+        <field name="model">l10n_cl.kpi.dashboard</field>
+        <field name="arch" type="xml">
+            <form string="Dashboard KPIs">
+                <header>
+                    <button name="action_refresh_kpis" type="object" string="Refrescar KPIs" class="btn-primary"/>
+                    <button name="action_view_f29_records" type="object" string="Ver F29" class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group name="filters">
+                            <field name="company_id" options="{'no_create': True}"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group name="kpis">
+                            <field name="currency_id" invisible="1"/>
+                            <field name="iva_debito_fiscal" widget="monetary"/>
+                            <field name="iva_credito_fiscal" widget="monetary"/>
+                            <field name="iva_neto" widget="monetary"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="ventas_netas" widget="monetary"/>
+                            <field name="compras_netas" widget="monetary"/>
+                            <field name="margen_ventas_pct" widget="percentage"/>
+                        </group>
+                        <group>
+                            <field name="ppm_pagado" widget="monetary"/>
+                            <field name="cache_hit" readonly="1"/>
+                            <field name="calculation_time_ms" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Kanban View -->
+    <record id="view_l10n_cl_kpi_dashboard_kanban" model="ir.ui.view">
+        <field name="name">l10n_cl.kpi.dashboard.kanban</field>
+        <field name="model">l10n_cl.kpi.dashboard</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_dashboard">
+                <field name="company_id"/>
+                <field name="iva_debito_fiscal"/>
+                <field name="iva_credito_fiscal"/>
+                <field name="ventas_netas"/>
+                <field name="compras_netas"/>
+                <field name="ppm_pagado"/>
+                <field name="currency_id"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <h3><field name="company_id"/></h3>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <strong>IVA Débito:</strong><br/>
+                                        <field name="iva_debito_fiscal" widget="monetary"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>IVA Crédito:</strong><br/>
+                                        <field name="iva_credito_fiscal" widget="monetary"/>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-6">
+                                        <strong>Ventas Netas:</strong><br/>
+                                        <field name="ventas_netas" widget="monetary"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>Compras Netas:</strong><br/>
+                                        <field name="compras_netas" widget="monetary"/>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <strong>PPM Pagado:</strong><br/>
+                                        <field name="ppm_pagado" widget="monetary"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Graph View -->
+    <record id="view_l10n_cl_kpi_dashboard_graph" model="ir.ui.view">
+        <field name="name">l10n_cl.kpi.dashboard.graph</field>
+        <field name="model">l10n_cl.kpi.dashboard</field>
+        <field name="arch" type="xml">
+            <graph string="KPIs Financieros" type="bar">
+                <field name="company_id"/>
+                <field name="iva_debito_fiscal" type="measure"/>
+                <field name="iva_credito_fiscal" type="measure"/>
+                <field name="ventas_netas" type="measure"/>
+                <field name="compras_netas" type="measure"/>
+                <field name="ppm_pagado" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Pivot View -->
+    <record id="view_l10n_cl_kpi_dashboard_pivot" model="ir.ui.view">
+        <field name="name">l10n_cl.kpi.dashboard.pivot</field>
+        <field name="model">l10n_cl.kpi.dashboard</field>
+        <field name="arch" type="xml">
+            <pivot string="Análisis KPIs">
+                <field name="company_id" type="row"/>
+                <field name="iva_debito_fiscal" type="measure"/>
+                <field name="iva_credito_fiscal" type="measure"/>
+                <field name="ventas_netas" type="measure"/>
+                <field name="compras_netas" type="measure"/>
+                <field name="ppm_pagado" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_l10n_cl_kpi_dashboard_tree" model="ir.ui.view">
+        <field name="name">l10n_cl.kpi.dashboard.tree</field>
+        <field name="model">l10n_cl.kpi.dashboard</field>
+        <field name="arch" type="xml">
+            <tree string="KPIs Financieros">
+                <field name="company_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="iva_debito_fiscal" sum="Total IVA Débito"/>
+                <field name="iva_credito_fiscal" sum="Total IVA Crédito"/>
+                <field name="ventas_netas" sum="Total Ventas"/>
+                <field name="compras_netas" sum="Total Compras"/>
+                <field name="ppm_pagado" sum="Total PPM"/>
+                <field name="currency_id" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_l10n_cl_kpi_dashboard" model="ir.actions.act_window">
+        <field name="name">Dashboard KPIs</field>
+        <field name="res_model">l10n_cl.kpi.dashboard</field>
+        <field name="view_mode">kanban,graph,pivot,tree,form</field>
+        <field name="context">{'create': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Dashboard de KPIs Financieros
+            </p>
+            <p>
+                Visualice indicadores clave basados en declaraciones F29 (IVA mensual).
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_l10n_cl_kpi_dashboard"
+              name="Dashboard KPIs"
+              parent="l10n_cl_tax_forms_menu"
+              action="action_l10n_cl_kpi_dashboard"
+              sequence="5"
+              groups="account.group_account_manager"/>
+</odoo>
