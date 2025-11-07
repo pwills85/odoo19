@@ -31,6 +31,7 @@ class L10nClLegalCaps(models.Model):
         ('APV_CAP_MONTHLY', 'APV - Tope Mensual'),
         ('APV_CAP_ANNUAL', 'APV - Tope Anual'),
         ('AFC_CAP', 'AFC - Tope Imponible'),
+        ('AFP_IMPONIBLE_CAP', 'AFP - Tope Imponible'),
         ('GRATIFICATION_CAP', 'Gratificación - Tope Legal'),
     ], string='Code', required=True)
     

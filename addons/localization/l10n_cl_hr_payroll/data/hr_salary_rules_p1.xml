@@ -81,15 +81,38 @@ result = categories.HABERES_IMPONIBLES
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
-# Obtener tope legal en UF y convertir a CLP
-legal_cap = env['l10n_cl.legal_caps'].search([('year', '=', payslip.date_to.year)], limit=1)
-if legal_cap and payslip.indicadores_id:
-    tope_uf = legal_cap.tope_imponible_afp_uf
-    uf_value = payslip.indicadores_id.uf
-    result = tope_uf * uf_value
-else:
-    # Valor por defecto 2025: 81.6 UF
-    result = 81.6 * 38000  # aproximado
+# Obtener tope legal AFP en UF usando vigencia por fecha
+from odoo.exceptions import UserError
+
+if not payslip.indicadores_id:
+    raise UserError(
+        'No se encontraron indicadores económicos para el período %s. '
+        'Por favor configure los indicadores en Configuración > Indicadores Económicos.'
+        % payslip.date_to.strftime('%Y-%m')
+    )
+
+# Buscar tope AFP vigente usando modelo l10n_cl.legal.caps
+# Nota: El código 'AFP_IMPONIBLE_CAP' debe estar configurado en datos de topes legales
+domain = [
+    ('code', '=', 'AFP_IMPONIBLE_CAP'),
+    ('valid_from', '&lt;=', payslip.date_to),
+    '|',
+    ('valid_until', '=', False),
+    ('valid_until', '&gt;', payslip.date_to)
+]
+legal_cap = env['l10n_cl.legal.caps'].search(domain, order='valid_from desc', limit=1)
+
+if not legal_cap:
+    raise UserError(
+        'No se encontró tope imponible AFP vigente para %s. '
+        'Por favor configure los topes en Configuración > Legal Caps (código: AFP_IMPONIBLE_CAP).'
+        % payslip.date_to.strftime('%Y-%m-%d')
+    )
+
+# Convertir UF a CLP
+tope_uf = legal_cap.amount
+uf_value = payslip.indicadores_id.uf
+result = tope_uf * uf_value
             </field>
             <field name="appears_on_payslip" eval="False"/>
             <field name="active" eval="True"/>
