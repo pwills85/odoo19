@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# FASE 0 - Smoke Tests (Wiring & Sanity)
+from . import smoke
+
 # FASE 3 Coverage Validation
 
 # FASE 3 New Tests - High Quality Odoo 18 Compatible

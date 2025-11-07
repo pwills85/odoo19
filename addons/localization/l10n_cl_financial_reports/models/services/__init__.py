@@ -2,6 +2,7 @@
 # Pure Python Services
 from . import ratio_analysis_service_pure
 from . import financial_report_service_pure
+from . import cache_service
 
 # Odoo-dependent Services (to be refactored)
 from . import kpi_service

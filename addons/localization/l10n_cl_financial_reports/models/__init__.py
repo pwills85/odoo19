@@ -2,7 +2,11 @@
 
 # Base models
 
-# Core models
+# Core models - Registro de servicios y arquitectura modular
+from . import core
+
+# Services - Servicios de negocio y integración SII
+from . import services
 
 # Report models
 

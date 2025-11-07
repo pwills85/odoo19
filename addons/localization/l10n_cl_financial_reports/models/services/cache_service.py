@@ -40,12 +40,20 @@ class CacheService:
             _logger.warning(f"Redis not available, using memory cache: {e}")
             return None
 
-    def get(self, key, default=None):
-        '''Get value from cache'''
+    def _build_key(self, key, company_id=None):
+        '''Build namespaced cache key'''
+        if company_id:
+            return f"finrep:{company_id}:{key}"
+        return f"finrep:global:{key}"
+
+    def get(self, key, company_id=None):
+        '''Get value from cache with company namespacing'''
+        namespaced_key = self._build_key(key, company_id)
+
         # Try Redis first
         if self.redis_client:
             try:
-                value = self.redis_client.get(key)
+                value = self.redis_client.get(namespaced_key)
                 if value:
                     self.cache_stats['hits'] += 1
                     return json.loads(value)
@@ -53,26 +61,27 @@ class CacheService:
                 _logger.debug(f"Redis get error: {e}")
 
         # Fallback to memory cache
-        if key in self.memory_cache:
-            entry = self.memory_cache[key]
+        if namespaced_key in self.memory_cache:
+            entry = self.memory_cache[namespaced_key]
             if entry['expires'] > datetime.now():
                 self.cache_stats['hits'] += 1
                 return entry['value']
             else:
-                del self.memory_cache[key]
+                del self.memory_cache[namespaced_key]
 
         self.cache_stats['misses'] += 1
-        return default
+        return None
 
-    def set(self, key, value, ttl=3600):
-        '''Set value in cache with TTL'''
+    def set(self, key, value, ttl=900, company_id=None):
+        '''Set value in cache with TTL and company namespacing (default TTL: 15min)'''
+        namespaced_key = self._build_key(key, company_id)
         self.cache_stats['writes'] += 1
 
         # Store in Redis
         if self.redis_client:
             try:
                 self.redis_client.setex(
-                    key,
+                    namespaced_key,
                     ttl,
                     json.dumps(value)
                 )
@@ -80,14 +89,18 @@ class CacheService:
                 _logger.debug(f"Redis set error: {e}")
 
         # Also store in memory cache
-        self.memory_cache[key] = {
+        self.memory_cache[namespaced_key] = {
             'value': value,
             'expires': datetime.now() + timedelta(seconds=ttl)
         }
 
     def invalidate(self, pattern=None):
-        '''Invalidate cache entries'''
+        '''Invalidate cache entries by pattern (e.g., "finrep:1:*" or "finrep:*:f29_*")'''
         if pattern:
+            # Ensure pattern includes finrep namespace
+            if not pattern.startswith('finrep:'):
+                pattern = f'finrep:*:{pattern}'
+
             # Pattern-based invalidation
             if self.redis_client:
                 try:
@@ -97,18 +110,22 @@ class CacheService:
                     _logger.debug(f"Redis invalidate error: {e}")
 
             # Memory cache invalidation
-            keys_to_delete = [k for k in self.memory_cache if pattern in k]
+            keys_to_delete = [k for k in self.memory_cache if pattern.replace('*', '') in k]
             for key in keys_to_delete:
                 del self.memory_cache[key]
         else:
-            # Clear all cache
+            # Clear all finrep cache
             if self.redis_client:
                 try:
-                    self.redis_client.flushdb()
+                    for key in self.redis_client.scan_iter('finrep:*'):
+                        self.redis_client.delete(key)
                 except Exception as e:
                     _logger.debug(f"Redis flush error: {e}")
 
-            self.memory_cache.clear()
+            # Clear only finrep entries in memory
+            keys_to_delete = [k for k in self.memory_cache if k.startswith('finrep:')]
+            for key in keys_to_delete:
+                del self.memory_cache[key]
 
     def get_stats(self):
         '''Get cache statistics'''

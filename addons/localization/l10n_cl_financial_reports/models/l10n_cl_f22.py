@@ -428,6 +428,10 @@ class L10nClF22(models.Model):
         Calcula/recalcula los valores del F22 desde los datos contables REALES
         Conecta con account.move.line para extraer datos contables del período
         """
+        import time
+        import json
+        start_time = time.time()
+
         self.ensure_one()
 
         if self.state not in ['draft', 'review']:
@@ -458,17 +462,38 @@ class L10nClF22(models.Model):
 
             # Los campos computed se recalcularán automáticamente
 
+            # Logging estructurado JSON
+            duration_ms = int((time.time() - start_time) * 1000)
+            log_data = {
+                "module": "l10n_cl_financial_reports",
+                "action": "f22_calculate",
+                "company_id": self.company_id.id,
+                "fiscal_year": self.fiscal_year,
+                "duration_ms": duration_ms,
+                "records_processed": f22_data.get('records_processed', 0),
+                "status": "success",
+                "totals": {
+                    "ingresos_totales": float(self.ingresos_totales),
+                    "gastos_totales": float(self.gastos_totales),
+                    "renta_liquida_imponible": float(self.renta_liquida_imponible),
+                    "impuesto_primera_categoria": float(self.impuesto_primera_categoria)
+                }
+            }
+            _logger.info(json.dumps(log_data))
+
             message = _(
                 'F22 calculado desde datos contables REALES:<br/>'
                 '• Ingresos Totales: {:,.0f}<br/>'
                 '• Gastos Totales: {:,.0f}<br/>'
                 '• Renta Líquida Imponible: {:,.0f}<br/>'
-                '• Impuesto Primera Categoría: {:,.0f}'
+                '• Impuesto Primera Categoría: {:,.0f}<br/>'
+                '• Tiempo: {}ms'
             ).format(
                 self.ingresos_totales,
                 self.gastos_totales,
                 self.renta_liquida_imponible,
-                self.impuesto_primera_categoria
+                self.impuesto_primera_categoria,
+                duration_ms
             )
 
             self.message_post(
@@ -477,7 +502,18 @@ class L10nClF22(models.Model):
             )
 
         except Exception as e:
-            _logger.error(f"Error calculando F22 desde datos reales: {str(e)}")
+            # Logging de error
+            duration_ms = int((time.time() - start_time) * 1000)
+            log_data = {
+                "module": "l10n_cl_financial_reports",
+                "action": "f22_calculate",
+                "company_id": self.company_id.id,
+                "fiscal_year": self.fiscal_year,
+                "duration_ms": duration_ms,
+                "status": "error",
+                "error": str(e)
+            }
+            _logger.error(json.dumps(log_data))
             raise UserError(_('Error al calcular F22 desde contabilidad: %s') % str(e))
 
     def action_to_review(self):

@@ -114,9 +114,20 @@ class L10nClF29(models.Model):
         Calcula/recalcula los valores del F29 desde los movimientos contables REALES
         Conecta directamente con account.tax y account.move.line para extraer datos IVA
 
+        Cálculos completos:
+        - total_ventas: suma base imponible de líneas con impuestos de venta
+        - total_compras: suma base imponible de líneas con impuestos de compra
+        - total_iva_debito: suma IVA de ventas
+        - total_iva_credito: suma IVA de compras
+        - Validación de coherencia: IVA ≈ base * tasa
+
         Referencias:
         - ORM Methods y API onchange patterns
         """
+        import time
+        import json
+        start_time = time.time()
+
         self.ensure_one()
 
         if self.state not in ['draft', 'review']:
@@ -136,34 +147,88 @@ class L10nClF29(models.Model):
 
         moves = self.env['account.move'].search(domain)
 
-        total_ventas = 0
-        total_iva_credito = 0
-        total_compras = 0
-        total_iva_debito = 0
+        # Inicializar contadores
+        total_ventas = 0.0
+        total_iva_debito = 0.0
+        total_compras = 0.0
+        total_iva_credito = 0.0
 
+        # Procesar movimientos
         for move in moves:
+            # Calcular base imponible y IVA de ventas
+            for line in move.line_ids.filtered(lambda l: l.tax_ids and not l.tax_line_id):
+                for tax in line.tax_ids:
+                    if tax.type_tax_use == 'sale' and tax.amount > 0:
+                        # Base imponible de ventas
+                        total_ventas += abs(line.balance)
+                    elif tax.type_tax_use == 'purchase' and tax.amount > 0:
+                        # Base imponible de compras
+                        total_compras += abs(line.balance)
+
+            # Calcular IVA (líneas de impuesto)
             for line in move.line_ids.filtered('tax_line_id'):
                 if line.tax_line_id.type_tax_use == 'sale':
                     total_iva_debito += abs(line.balance)
                 elif line.tax_line_id.type_tax_use == 'purchase':
                     total_iva_credito += abs(line.balance)
 
+        # Validar coherencia (IVA ≈ base * 0.19 con margen de error 5%)
+        expected_iva_debito = total_ventas * 0.19
+        expected_iva_credito = total_compras * 0.19
+
+        coherence_warning = ""
+        if total_ventas > 0 and abs(total_iva_debito - expected_iva_debito) > (expected_iva_debito * 0.05):
+            coherence_warning += f"⚠️ IVA Débito inconsistente: esperado {expected_iva_debito:.2f}, calculado {total_iva_debito:.2f}\n"
+
+        if total_compras > 0 and abs(total_iva_credito - expected_iva_credito) > (expected_iva_credito * 0.05):
+            coherence_warning += f"⚠️ IVA Crédito inconsistente: esperado {expected_iva_credito:.2f}, calculado {total_iva_credito:.2f}\n"
+
         # Actualizar valores
         self.write({
             'total_ventas': total_ventas,
-            'total_iva_credito': total_iva_credito,
-            'total_compras': total_compras,
             'total_iva_debito': total_iva_debito,
+            'total_compras': total_compras,
+            'total_iva_credito': total_iva_credito,
         })
+
+        # Logging estructurado JSON
+        duration_ms = int((time.time() - start_time) * 1000)
+        log_data = {
+            "module": "l10n_cl_financial_reports",
+            "action": "f29_calculate",
+            "company_id": self.company_id.id,
+            "period": self.period_date.strftime('%Y-%m'),
+            "duration_ms": duration_ms,
+            "records_processed": len(moves),
+            "status": "success",
+            "totals": {
+                "ventas": float(total_ventas),
+                "iva_debito": float(total_iva_debito),
+                "compras": float(total_compras),
+                "iva_credito": float(total_iva_credito)
+            }
+        }
+        _logger.info(json.dumps(log_data))
+
+        message = _('Cálculo Completado:\n'
+                   f'• Ventas: {total_ventas:,.0f}\n'
+                   f'• IVA Débito: {total_iva_debito:,.0f}\n'
+                   f'• Compras: {total_compras:,.0f}\n'
+                   f'• IVA Crédito: {total_iva_credito:,.0f}\n'
+                   f'• Registros procesados: {len(moves)}\n'
+                   f'• Tiempo: {duration_ms}ms')
+
+        if coherence_warning:
+            message += f'\n\n{coherence_warning}'
 
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'title': _('Cálculo Completado'),
-                'message': _('Los valores del F29 han sido calculados correctamente'),
-                'type': 'success',
-                'sticky': False,
+                'message': message,
+                'type': 'warning' if coherence_warning else 'success',
+                'sticky': bool(coherence_warning),
             }
         }
 
