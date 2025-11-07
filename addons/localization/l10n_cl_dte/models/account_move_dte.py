@@ -33,7 +33,10 @@ from ..libs.xsd_validator import XSDValidator
 # P1.3 GAP CLOSURE: Performance metrics instrumentation
 from ..libs.performance_metrics import measure_performance
 
-_logger = logging.getLogger(__name__)
+# P3.1 GAP CLOSURE: Structured logging with conditional JSON output
+from ..libs.structured_logging import get_dte_logger, log_dte_operation
+
+_logger = get_dte_logger(__name__)
 
 
 class AccountMoveDTE(models.Model):

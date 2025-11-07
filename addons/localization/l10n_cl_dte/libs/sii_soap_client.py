@@ -32,7 +32,10 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 import logging
 import time
 
-_logger = logging.getLogger(__name__)
+# P3.1 GAP CLOSURE: Structured logging with conditional JSON output
+from .structured_logging import get_dte_logger
+
+_logger = get_dte_logger(__name__)
 
 
 class SIISoapClient:
