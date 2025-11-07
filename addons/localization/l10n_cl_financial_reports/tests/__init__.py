@@ -22,6 +22,9 @@ from . import test_performance_decorators
 # FASE 2 - F22 vs F29 Comparison Wizard Tests
 from . import test_report_comparison_wizard
 
+# FASE 2 - KPI Alert System Tests
+from . import test_kpi_alerts
+
 # FASE 3 Coverage Validation
 
 # FASE 3 New Tests - High Quality Odoo 18 Compatible

@@ -154,6 +154,7 @@ For technical support and customizations, contact EERGYGROUP.
         "data/financial_dashboard_widget_data.xml",
         "data/sample_dashboard_widgets.xml",  # Sample widget templates for dashboard
         "data/l10n_cl_tax_forms_cron.xml",  # Fixed: referencias corregidas a modelos F29 y F22
+        "data/l10n_cl_kpi_alert_cron.xml",  # FASE 2: Cron job for KPI alerts
 
         # Views with actions and forms first
         "views/account_report_view.xml",
@@ -182,6 +183,7 @@ For technical support and customizations, contact EERGYGROUP.
         "views/l10n_cl_f29_views.xml",
         "views/l10n_cl_f22_views.xml",
         "views/l10n_cl_kpi_dashboard_views.xml",  # FASE 1: KPI Dashboard
+        "views/l10n_cl_kpi_alert_views.xml",  # FASE 2: KPI Alerts
         "views/l10n_cl_tax_forms_menu.xml",
         "views/res_config_settings_views.xml",  # Fixed: XPath corregido para Odoo 18
         "views/res_config_settings_performance_views.xml",  # Fixed: Implementación completa con monitoreo
