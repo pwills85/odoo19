@@ -74,6 +74,7 @@ Licencia: LGPL-3
     'data': [
         # Seguridad (PRIMERO)
         'security/security_groups.xml',
+        'security/multi_company_rules.xml',
         'security/ir.model.access.csv',
         
         # Datos base (SEGUNDO) - SOPA 2025
