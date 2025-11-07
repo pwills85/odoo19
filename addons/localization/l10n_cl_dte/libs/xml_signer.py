@@ -293,9 +293,11 @@ class XMLSigner:
             raise ValueError('Invalid or inactive certificate')
 
         try:
+            # P1.1 GAP CLOSURE: Use full SII namespace in XPath
+            # XPath must include namespace to correctly locate Documento node
             signed_xml = self._sign_xml_node_with_uri(
                 xml_string=xml_string,
-                node_xpath='.//Documento',
+                node_xpath='.//{http://www.sii.cl/SiiDte}Documento',
                 uri_reference=f"#{documento_id}",
                 cert_file_b64=certificate.cert_file,
                 password=certificate.cert_password,
