@@ -10,6 +10,9 @@ from . import test_f29_extended_fields
 from . import test_rut_utils
 from . import test_f22_config_wizard
 
+# FASE 1 - KPI Service with Cache Tests
+from . import test_kpi_service
+
 # FASE 3 Coverage Validation
 
 # FASE 3 New Tests - High Quality Odoo 18 Compatible
