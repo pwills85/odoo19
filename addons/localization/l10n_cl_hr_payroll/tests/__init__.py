@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 # P0 Critical Tests (Auditoría 2025-11-07)
+from . import test_hr_contract_stub_ce  # SPRINT 1 - CE compatibility stub
+from . import test_company_currency_id_fields  # SPRINT 1 - Monetary fields fix
 from . import test_p0_afp_cap_2025
 from . import test_p0_multi_company
 from . import test_p0_reforma_2025

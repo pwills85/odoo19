@@ -12,6 +12,9 @@ from . import hr_salary_rule_category
 from . import hr_payroll_structure
 from . import hr_salary_rule
 
+# CE Compatibility (debe cargarse ANTES de hr_contract_cl)
+from . import hr_contract_stub_ce  # CE stub - replaces hr_contract Enterprise dependency
+
 # Modelos base extendidos
 from . import hr_contract_cl
 

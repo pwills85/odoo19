@@ -60,11 +60,11 @@ Licencia: LGPL-3
     'license': 'LGPL-3',
     'depends': [
         'base',
-        'hr',                    # RRHH base Odoo
-        'hr_contract',           # Contratos
+        'hr',                    # ✅ CE base - RRHH
+        # 'hr_contract' REMOVED - stub created in models/hr_contract_stub_ce.py
         'hr_holidays',           # Vacaciones
-        'account',               # Contabilidad
-        'l10n_cl',               # Localización Chile (plan contable, RUT)
+        'account',               # ✅ CE base - Contabilidad
+        'l10n_cl',               # ✅ Localización Chile (plan contable, RUT)
     ],
     'external_dependencies': {
         'python': [

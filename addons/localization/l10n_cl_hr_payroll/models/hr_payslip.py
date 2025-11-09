@@ -472,6 +472,15 @@ class HrPayslip(models.Model):
         store=True,
         readonly=True
     )
+
+    company_currency_id = fields.Many2one(
+        'res.currency',
+        string='Moneda Compañía',
+        related='company_id.currency_id',
+        store=True,
+        readonly=True,
+        help='Moneda de la compañía para campos Monetary'
+    )
     
     notes = fields.Text(
         string='Notas Internas'
