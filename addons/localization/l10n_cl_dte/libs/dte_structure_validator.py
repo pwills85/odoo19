@@ -28,6 +28,7 @@ from lxml import etree
 from datetime import datetime, date
 import re
 import logging
+from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
 
 _logger = logging.getLogger(__name__)
 
@@ -77,7 +78,7 @@ class DTEStructureValidator:
 
         try:
             # Parse XML
-            root = etree.fromstring(xml_string.encode('ISO-8859-1'))
+            root = fromstring_safe(xml_string)
 
             # Verificar namespace SII
             if 'sii.cl' not in etree.tostring(root, encoding='unicode'):

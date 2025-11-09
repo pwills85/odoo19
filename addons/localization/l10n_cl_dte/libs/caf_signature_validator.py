@@ -26,6 +26,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.exceptions import InvalidSignature
+from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
 
 _logger = logging.getLogger(__name__)
 
@@ -178,7 +179,7 @@ class CAFSignatureValidator:
 
             # 1. Parse XML del CAF
             try:
-                caf_doc = etree.fromstring(caf_xml_string.encode('utf-8'))
+                caf_doc = fromstring_safe(caf_xml_string)
             except etree.XMLSyntaxError as e:
                 return False, f'XML del CAF inválido: {e}'
 
