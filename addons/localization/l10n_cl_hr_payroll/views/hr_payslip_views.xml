@@ -70,7 +70,7 @@
                     <notebook>
                         <page string="Líneas de Liquidación" name="lines">
                             <field name="line_ids" readonly="state != 'draft'">
-                                <tree editable="bottom" decoration-success="total > 0" decoration-danger="total &lt; 0">
+                                <list editable="bottom" decoration-success="total > 0" decoration-danger="total &lt; 0">
                                     <field name="sequence" widget="handle"/>
                                     <field name="code"/>
                                     <field name="name"/>
@@ -79,7 +79,7 @@
                                     <field name="quantity"/>
                                     <field name="rate"/>
                                     <field name="total" sum="Total"/>
-                                </tree>
+                                </list>
                             </field>
                             <group class="oe_subtotal_footer oe_right">
                                 <field name="basic_wage" widget="monetary"/>
@@ -91,12 +91,12 @@
                         
                         <page string="Inputs Adicionales" name="inputs">
                             <field name="input_line_ids" readonly="state != 'draft'">
-                                <tree editable="bottom">
+                                <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="code"/>
                                     <field name="name"/>
                                     <field name="amount"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         
@@ -131,7 +131,7 @@
         <field name="name">hr.payslip.tree</field>
         <field name="model">hr.payslip</field>
         <field name="arch" type="xml">
-            <tree string="Liquidaciones" 
+            <list string="Liquidaciones" 
                   decoration-info="state == 'draft'" 
                   decoration-warning="state == 'verify'"
                   decoration-success="state == 'done'"
@@ -149,7 +149,7 @@
                        decoration-muted="state == 'cancel'"
                        widget="badge"/>
                 <field name="company_id" groups="base.group_multi_company"/>
-            </tree>
+            </list>
         </field>
     </record>
     

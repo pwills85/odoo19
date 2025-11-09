@@ -5,21 +5,22 @@
     'category': 'Accounting/Localizations',
     'summary': 'Facturación Electrónica Chilena - Complete DTE Solution with Enhanced Features',
     'description': """
-Chilean Electronic Invoicing - DTE System
-==========================================
+Chilean Electronic Invoicing - DTE System (B2B)
+================================================
 
 Sistema enterprise-grade de facturación electrónica para Chile, desarrollado según
 normativa oficial del SII (Servicio de Impuestos Internos).
 
 🎯 Características Principales
 -------------------------------
-✅ **5 Tipos de DTE Certificados SII:**
+✅ **5 Tipos de DTE Certificados SII (B2B Scope EERGYGROUP):**
   • DTE 33: Factura Electrónica
-  • DTE 61: Nota de Crédito Electrónica
-  • DTE 56: Nota de Débito Electrónica
-  • DTE 52: Guía de Despacho Electrónica
   • DTE 34: Factura Exenta Electrónica
-  • Recepción Boletas Honorarios Electrónicas (BHE)
+  • DTE 52: Guía de Despacho Electrónica
+  • DTE 56: Nota de Débito Electrónica
+  • DTE 61: Nota de Crédito Electrónica
+
+Alcance EERGYGROUP B2B: Excluye Boletas (39,41,70) y Factura Compra (46)
 
 ✅ **Seguridad Enterprise:**
   • Firma digital XMLDSig PKCS#1 con certificados digitales SII

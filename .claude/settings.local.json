@@ -50,7 +50,8 @@
       "Bash(echo:*)",
       "Bash(git reset:*)",
       "Bash(tee:*)",
-      "Bash(1)"
+      "Bash(1)",
+      "Bash(\"$BACKUP_FILE\")"
     ],
     "deny": [],
     "ask": []

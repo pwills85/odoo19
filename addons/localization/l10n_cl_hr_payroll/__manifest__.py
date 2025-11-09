@@ -89,10 +89,11 @@ Licencia: LGPL-3
         'data/hr_salary_rules_ley21735.xml',         # Ley 21.735 Reforma Pensiones
         
         # Vistas
+        'views/hr_contract_stub_views.xml',         # CE stub views (PRIMERO)
         'views/hr_payroll_structure_views.xml',
         'views/hr_salary_rule_views.xml',
         'views/hr_payslip_run_views.xml',
-        'views/hr_contract_views.xml',
+        'views/hr_contract_views.xml',              # Chilean extensions (hereda de stub)
         'views/hr_payslip_views.xml',
         'views/hr_afp_views.xml',
         'views/hr_isapre_views.xml',

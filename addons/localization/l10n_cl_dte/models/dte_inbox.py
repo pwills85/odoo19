@@ -61,15 +61,13 @@ class DTEInbox(models.Model):
 
     dte_type = fields.Selection([
         ('33', 'Factura Electrónica'),
-        ('34', 'Liquidación Honorarios'),
-        ('39', 'Boleta Electrónica'),
-        ('41', 'Boleta Exenta'),
-        ('46', 'Factura Compra Electrónica'),
-        ('52', 'Guía de Despacho'),
-        ('56', 'Nota de Débito'),
-        ('61', 'Nota de Crédito'),
-        ('70', 'Boleta Honorarios Electrónica'),
-    ], string='DTE Type', required=True, tracking=True)
+        ('34', 'Factura Exenta Electrónica'),
+        ('52', 'Guía de Despacho Electrónica'),
+        ('56', 'Nota de Débito Electrónica'),
+        ('61', 'Nota de Crédito Electrónica'),
+    ], string='DTE Type', required=True, tracking=True,
+    help="EERGYGROUP B2B scope: Facturas, Guías y Notas asociadas. "
+         "Boletas (39,41,70) y Factura Compra (46) excluidas por contrato.")
 
     # ═══════════════════════════════════════════════════════════
     # FIELDS - EMISOR (SUPPLIER)

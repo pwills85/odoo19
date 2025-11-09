@@ -43,7 +43,16 @@ class DTEStructureValidator:
     # CONSTANTES
     # ═══════════════════════════════════════════════════════════════════════
 
-    DTE_TYPES_VALID = ['33', '34', '39', '41', '46', '52', '56', '61', '70']
+    # EERGYGROUP B2B Scope - SII authorized DTE types only
+    # Contract dated: 2024-Q4
+    # Excluded: 39,41,46,70 (Boletas Honorarios/Venta - out of scope)
+    DTE_TYPES_VALID = [
+        '33',  # Factura Electrónica
+        '34',  # Factura Exenta Electrónica
+        '52',  # Guía de Despacho Electrónica
+        '56',  # Nota de Débito Electrónica
+        '61',  # Nota de Crédito Electrónica
+    ]
 
     IVA_RATE_CHILE = 0.19  # 19% IVA Chile
 

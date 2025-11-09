@@ -6,13 +6,12 @@
         <field name="name">hr.payroll.structure.tree</field>
         <field name="model">hr.payroll.structure</field>
         <field name="arch" type="xml">
-            <tree string="Estructuras Salariales">
-                <field name="sequence" widget="handle"/>
+            <list string="Estructuras Salariales">
                 <field name="name"/>
                 <field name="code"/>
                 <field name="rule_count" string="Reglas"/>
                 <field name="parent_id"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -57,25 +56,25 @@
                     <notebook>
                         <page string="Reglas Salariales" name="rules">
                             <field name="rule_ids">
-                                <tree editable="bottom">
+                                <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="name"/>
                                     <field name="code"/>
                                     <field name="category_id"/>
                                     <field name="amount_select"/>
                                     <field name="active" widget="boolean_toggle"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         
                         <page string="Estructuras Hijas" name="children"
                               invisible="not children_ids">
                             <field name="children_ids">
-                                <tree>
+                                <list>
                                     <field name="name"/>
                                     <field name="code"/>
                                     <field name="rule_count"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         

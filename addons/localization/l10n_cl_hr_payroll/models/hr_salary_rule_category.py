@@ -138,7 +138,7 @@ class HrSalaryRuleCategory(models.Model):
     @api.constrains('parent_id')
     def _check_parent_recursion(self):
         """Evitar recursión infinita en jerarquía - Odoo 19 CE"""
-        if not self._check_recursion():
+        if self._has_cycle():
             raise ValidationError(_(
                 'Error: No puede crear una jerarquía recursiva de categorías.'
             ))

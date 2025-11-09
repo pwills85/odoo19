@@ -9,13 +9,13 @@
         <field name="name">hr.afp.tree</field>
         <field name="model">hr.afp</field>
         <field name="arch" type="xml">
-            <tree string="AFPs Chile" editable="bottom">
+            <list string="AFPs Chile" editable="bottom">
                 <field name="name"/>
                 <field name="code"/>
                 <field name="rate"/>
                 <field name="sis_rate"/>
                 <field name="active"/>
-            </tree>
+            </list>
         </field>
     </record>
     

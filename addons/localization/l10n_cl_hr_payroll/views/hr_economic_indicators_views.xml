@@ -57,14 +57,14 @@
         <field name="name">hr.economic.indicators.tree</field>
         <field name="model">hr.economic.indicators</field>
         <field name="arch" type="xml">
-            <tree string="Indicadores Económicos">
+            <list string="Indicadores Económicos">
                 <field name="period"/>
                 <field name="uf"/>
                 <field name="utm"/>
                 <field name="uta"/>
                 <field name="minimum_wage"/>
                 <field name="afp_limit"/>
-            </tree>
+            </list>
         </field>
     </record>
     

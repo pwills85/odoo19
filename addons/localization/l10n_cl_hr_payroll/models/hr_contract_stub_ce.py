@@ -276,6 +276,24 @@ class HrContract(models.Model):
         _logger.info(f"Contrato {self.name} cerrado para empleado {self.employee_id.name}")
         return True
 
+    def action_set_running(self):
+        """Activar contrato (alias para action_open)"""
+        self.ensure_one()
+        self.write({'state': 'running'})
+        _logger.info(f"Contrato {self.name} activado (running) para empleado {self.employee_id.name}")
+        return True
+
+    def action_set_close(self):
+        """Cerrar contrato (alias para action_close)"""
+        return self.action_close()
+
+    def action_set_draft(self):
+        """Volver contrato a borrador"""
+        self.ensure_one()
+        self.write({'state': 'draft'})
+        _logger.info(f"Contrato {self.name} vuelto a borrador para empleado {self.employee_id.name}")
+        return True
+
     @api.model_create_multi
     def create(self, vals_list):
         """Log creación contratos"""
