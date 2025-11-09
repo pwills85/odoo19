@@ -62,7 +62,10 @@
       "Bash(timeout 90 docker-compose run:*)",
       "Bash(git for-each-ref:*)",
       "Bash(timeout 120 pytest:*)",
-      "Bash(timeout 180 pytest:*)"
+      "Bash(timeout 180 pytest:*)",
+      "Bash(/tmp/ai_coverage_baseline.json)",
+      "Bash(/tmp/dte_h9_validation.txt)",
+      "Bash(/tmp/h9_status.txt)"
     ],
     "deny": [],
     "ask": []

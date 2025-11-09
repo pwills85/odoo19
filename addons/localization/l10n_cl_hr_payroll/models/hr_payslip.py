@@ -24,10 +24,14 @@ class BrowsableObject(object):
         self.env = env
 
     def __getattr__(self, attr):
-        return attr in self.dict and self.dict.__getitem__(attr) or 0.0
+        # Evitar recursión infinita para atributos especiales
+        if attr in ('employee_id', 'dict', 'env'):
+            return object.__getattribute__(self, attr)
+        # Retornar valor del dict o 0.0 si no existe
+        return self.dict.get(attr, 0.0)
 
     def __getitem__(self, attr):
-        return self.__getattr__(attr)
+        return self.dict.get(attr, 0.0)
 
 
 class HrPayslip(models.Model):
@@ -407,7 +411,7 @@ class HrPayslip(models.Model):
                     category_dict[line.code] = line.total
 
         # Retornar como BrowsableObject para acceso por atributo y por key
-        return BrowsableObject(self.env.uid, category_dict, category_dict)
+        return BrowsableObject(self.env.uid, category_dict, self.env)
 
     def _get_worked_days_dict(self):
         """
