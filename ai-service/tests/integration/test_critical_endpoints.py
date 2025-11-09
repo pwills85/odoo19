@@ -63,7 +63,7 @@ class TestDTEValidationEndpoint:
         assert isinstance(data["confidence"], (int, float))
         assert isinstance(data["warnings"], list)
         assert isinstance(data["errors"], list)
-        assert data["recommendation"] in ["send", "review"]
+        assert data["recommendation"] in ["send", "review", "reject"]  # Valid recommendations
     
     def test_validate_dte_invalid_tipo(self, client, auth_headers):
         """Test con tipo DTE inválido."""
@@ -236,13 +236,16 @@ class TestHealthEndpoint:
     def test_health_check(self, client):
         """Test health check sin autenticación."""
         response = client.get("/health")
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         assert "status" in data
         assert data["status"] == "healthy"
-        assert "anthropic_configured" in data
+        # Check anthropic is configured in dependencies
+        assert "dependencies" in data
+        assert "anthropic" in data["dependencies"]
+        assert data["dependencies"]["anthropic"]["status"] == "configured"
 
 
 class TestRateLimiting:
