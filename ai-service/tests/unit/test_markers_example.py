@@ -140,22 +140,24 @@ def test_api_with_auth_headers(client, auth_headers):
 
 @pytest.mark.unit
 @pytest.mark.parametrize("input_value,expected", [
-    ("12.345.678-9", True),
-    ("12.345.678-0", False),
-    ("invalid", False),
-    ("", False),
+    ("12.345.678-5", True),   # Valid RUT with correct format (8 digits + 1 digit)
+    ("123.456.78-0", False),  # Invalid format (wrong digit grouping)
+    ("invalid", False),       # Invalid format (no hyphen)
+    ("", False),              # Empty string
 ])
 def test_rut_validation_parametrized(input_value, expected):
     """
     Parametrized test runs multiple times with different inputs.
 
     This single test function creates 4 separate test cases:
-    1. test_rut_validation_parametrized[12.345.678-9-True]
-    2. test_rut_validation_parametrized[12.345.678-0-False]
+    1. test_rut_validation_parametrized[12.345.678-5-True]
+    2. test_rut_validation_parametrized[123.456.78-0-False]
     3. test_rut_validation_parametrized[invalid-False]
     4. test_rut_validation_parametrized[-False]
 
     Each case is counted separately in coverage reports.
+
+    Note: This validates format only (8 digits + 1 check digit), not checksum.
     """
     def validate_rut(rut: str) -> bool:
         parts = rut.split("-")
