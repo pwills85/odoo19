@@ -14,7 +14,7 @@ Costos laborales obligatorios del empleador (NO se descuentan al trabajador):
    - Contrato indefinido: 2.4% (2.2% empleador + 0.2% trabajador indemnización)
    - Contrato plazo fijo: 3.0% (trabajador 0.6% + empleador 2.4%)
    - Base: Remuneración imponible
-   - Tope: 120.2 UF
+   - Tope: 131.9 UF (Actualizado 2025 - SP)
 
 3. Caja de Compensación de Asignación Familiar (CCAF): 0.6%
    - Base: Remuneración imponible
@@ -111,7 +111,7 @@ class HrPayslipAportesEmpleador(models.Model):
         
         Contrato indefinido: 2.4%
         Contrato plazo fijo: 3.0%
-        Tope: 120.2 UF
+        Tope: 131.9 UF (Actualizado 2025 - SP)
         """
         for payslip in self:
             if not payslip.total_imponible or not payslip.contract_id:
@@ -121,7 +121,7 @@ class HrPayslipAportesEmpleador(models.Model):
             # Determinar tasa según tipo contrato
             tasa = payslip._get_tasa_seguro_cesantia_empleador()
             
-            # Aplicar tope seguro cesantía (120.2 UF)
+            # Aplicar tope seguro cesantía (131.9 UF - Actualizado 2025 - SP)
             tope_cesantia_clp = payslip._get_tope_cesantia_clp()
             base_imponible = min(payslip.total_imponible, tope_cesantia_clp)
             
@@ -205,7 +205,7 @@ class HrPayslipAportesEmpleador(models.Model):
     
     def _get_tope_cesantia_clp(self):
         """
-        Obtener tope Seguro Cesantía en pesos chilenos (120.2 UF)
+        Obtener tope Seguro Cesantía en pesos chilenos (131.9 UF - Actualizado 2025)
         
         Returns:
             float: Tope en CLP
@@ -215,8 +215,9 @@ class HrPayslipAportesEmpleador(models.Model):
         # Obtener UF del día
         uf_value = self._get_uf_value(self.date_to or fields.Date.today())
         
-        # Tope 120.2 UF
-        tope = 120.2 * uf_value
+        # Tope 131.9 UF (Actualizado 2025)
+        # Ref: Superintendencia de Pensiones
+        tope = 131.9 * uf_value
         
         return tope
     

@@ -285,19 +285,20 @@ class TestPayrollCalculationsSprint32(TransactionCase):
         self.assertAlmostEqual(abs(afc_line.total), expected_afc, delta=10)
     
     def test_afc_tope(self):
-        """Test tope AFC (120.2 UF)"""
+        """Test tope AFC (131.9 UF - Actualizado 2025)"""
         # Contrato con sueldo alto (excede tope AFC)
         self.contract.wage = 5000000
-        
+
         # Calcular liquidación
         self.payslip.action_compute_sheet()
-        
+
         # Verificar línea AFC
         afc_line = self.payslip.line_ids.filtered(lambda l: l.code == 'AFC')
-        
-        # Tope = 120.2 * 39.383,07 = 4.734.841
-        # AFC = 4.734.841 * 0.006 = 28.409
-        tope_clp = self.indicators.uf * 120.2
+
+        # Tope = 131.9 * 39.383,07 = 5.194.620
+        # AFC = 5.194.620 * 0.006 = 31.168
+        # Ref: Superintendencia de Pensiones - Límite máximo mensual AFC 2025
+        tope_clp = self.indicators.uf * 131.9
         expected_afc = tope_clp * 0.006
         self.assertAlmostEqual(abs(afc_line.total), expected_afc, delta=10)
     

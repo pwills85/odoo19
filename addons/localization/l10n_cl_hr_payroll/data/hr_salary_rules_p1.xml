@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="1">
+    <data noupdate="0">
         
         <!-- ========================================== -->
         <!-- REGLAS SALARIALES P1 - MOTOR DE CÁLCULO -->
@@ -26,7 +26,7 @@
             <field name="name">Total Haberes Imponibles</field>
             <field name="code">HABERES_IMPONIBLES</field>
             <field name="sequence">100</field>
-            <field name="category_id" ref="category_haber_imponible"/>
+            <field name="category_id" ref="category_total_imponible"/>
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
@@ -58,7 +58,7 @@ result = sum([line.total for line in payslip.line_ids if line.category_id and no
             <field name="name">Total Imponible</field>
             <field name="code">TOTAL_IMPONIBLE</field>
             <field name="sequence">200</field>
-            <field name="category_id" ref="category_base"/>
+            <field name="category_id" ref="category_total_imponible"/>
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
@@ -73,7 +73,7 @@ result = categories.HABERES_IMPONIBLES
             <field name="name">Tope Imponible (UF)</field>
             <field name="code">TOPE_IMPONIBLE_UF</field>
             <field name="sequence">201</field>
-            <field name="category_id" ref="category_base"/>
+            <field name="category_id" ref="category_total_imponible"/>
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
@@ -110,7 +110,7 @@ result = tope_uf * uf_value
             <field name="name">Base Tributable</field>
             <field name="code">BASE_TRIBUTABLE</field>
             <field name="sequence">202</field>
-            <field name="category_id" ref="category_base"/>
+            <field name="category_id" ref="category_total_imponible"/>
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
@@ -182,11 +182,12 @@ else:
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
-# AFC Trabajador = 0.6% sobre BASE_TRIBUTABLE (tope 120.2 UF)
-# Normativa: AFC tiene tope diferente al AFP (120.2 UF vs 87.8 UF)
+# AFC Trabajador = 0.6% sobre BASE_TRIBUTABLE (tope 131.9 UF - Actualizado 2025)
+# Normativa: AFC tiene tope diferente al AFP (131.9 UF vs 87.8 UF)
+# Ref: Superintendencia de Pensiones - Límite máximo mensual AFC 2025
 
-# Obtener tope AFC (120.2 UF)
-tope_afc_uf = 120.2
+# Obtener tope AFC (131.9 UF)
+tope_afc_uf = 131.9
 tope_afc = payslip.indicadores_id.uf * tope_afc_uf
 
 # Aplicar tope
@@ -206,7 +207,7 @@ result = -(base * tasa_afc)
             <field name="name">Base Impuesto Único</field>
             <field name="code">BASE_IMPUESTO_UNICO</field>
             <field name="sequence">400</field>
-            <field name="category_id" ref="category_base"/>
+            <field name="category_id" ref="category_total_imponible"/>
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">

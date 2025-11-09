@@ -26,10 +26,11 @@
             <field name="valid_until" eval="False"/>
         </record>
         
-        <!-- AFC - Tope Imponible (120.2 UF) -->
+        <!-- AFC - Tope Imponible (131.9 UF - Actualizado 2025) -->
+        <!-- Ref: Superintendencia de Pensiones - Límite máximo mensual AFC 2025 -->
         <record id="legal_cap_afc_2025" model="l10n_cl.legal.caps">
             <field name="code">AFC_CAP</field>
-            <field name="amount">120.2</field>
+            <field name="amount">131.9</field>
             <field name="unit">uf</field>
             <field name="valid_from">2025-01-01</field>
             <field name="valid_until" eval="False"/>

@@ -1628,7 +1628,8 @@ class HrPayslip(models.Model):
         
         NOTA: Solo se calcula descuento trabajador aquí
         """
-        # AFC trabajador: 0.6% sobre imponible (tope 120.2 UF)
+        # AFC trabajador: 0.6% sobre imponible (tope 131.9 UF - Actualizado 2025)
+        # Ref: Superintendencia de Pensiones - Límite máximo mensual AFC 2025
         try:
             cap_amount, cap_unit = self.env['l10n_cl.legal.caps'].get_cap(
                 'AFC_CAP',
@@ -1636,8 +1637,8 @@ class HrPayslip(models.Model):
             )
             tope_afc = self.indicadores_id.uf * cap_amount
         except:
-            # Fallback si no encuentra tope
-            tope_afc = self.indicadores_id.uf * 120.2
+            # Fallback si no encuentra tope (valor actualizado 2025)
+            tope_afc = self.indicadores_id.uf * 131.9
         
         base_afc = min(self.total_imponible, tope_afc)
         
@@ -2016,8 +2017,9 @@ class HrPayslip(models.Model):
             f"{base_afp:,.0f}"
         )
         
-        # 2. AFC Empleador (2.4% fijo)
-        afc_tope = self.indicadores_id.uf * 120.2
+        # 2. AFC Empleador (2.4% fijo, tope 131.9 UF - Actualizado 2025)
+        # Ref: Superintendencia de Pensiones
+        afc_tope = self.indicadores_id.uf * 131.9
         base_afc = min(self.total_imponible, afc_tope)
         afc_amount = base_afc * 0.024
         

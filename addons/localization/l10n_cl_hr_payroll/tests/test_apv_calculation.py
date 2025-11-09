@@ -156,7 +156,7 @@ class TestAPVCalculation(TransactionCase):
         )
         
         # Verificar que NO se incluye en descuentos previsionales (Régimen B)
-        previsional_codes = ['AFP', 'HEALTH', 'APV_A']  # Solo APV_A rebaja
+        previsional_codes = ['AFP', 'SALUD', 'APV_A']  # Solo APV_A rebaja
         previsional_lines = payslip.line_ids.filtered(
             lambda l: l.code in previsional_codes
         )
@@ -334,7 +334,7 @@ class TestAPVCalculation(TransactionCase):
         self.assertGreater(apv_b, 0, "Debe haber APV en Régimen B")
         # Verificar que previsional B no incluye APV_B
         previsional_codes_b = payslip_b.line_ids.filtered(
-            lambda l: l.code in ['AFP', 'HEALTH', 'APV_A']
+            lambda l: l.code in ['AFP', 'SALUD', 'APV_A']
         ).mapped('code')
         self.assertNotIn('APV_B', previsional_codes_b,
                         "APV_B no debe estar en previsionales")
