@@ -29,7 +29,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.exceptions import InvalidSignature
-from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
+from .safe_xml_parser import fromstring_safe
 
 _logger = logging.getLogger(__name__)
 

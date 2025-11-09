@@ -33,9 +33,12 @@ Reference: http://www.sii.cl/factura_electronica/formato_dte.pdf
 import logging
 from datetime import datetime
 from lxml import etree
-from odoo import _
-from odoo.exceptions import UserError, ValidationError
-from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
+from .i18n import gettext as _
+from .exceptions import (
+    DTEAuthenticationError as UserError,
+    DTEValidationError as ValidationError,
+)
+from .safe_xml_parser import fromstring_safe
 
 _logger = logging.getLogger(__name__)
 

@@ -26,7 +26,7 @@ from lxml import etree
 import base64
 import logging
 from datetime import datetime
-from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
+from .safe_xml_parser import fromstring_safe
 
 _logger = logging.getLogger(__name__)
 

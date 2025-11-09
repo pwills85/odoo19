@@ -28,7 +28,7 @@ from lxml import etree
 from datetime import datetime, date
 import re
 import logging
-from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
+from .safe_xml_parser import fromstring_safe
 
 _logger = logging.getLogger(__name__)
 

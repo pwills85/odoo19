@@ -58,11 +58,14 @@ def _get_env_from_args(args):
         return args[0].env
 
     # Try to get env from HTTP request (controllers)
+    # Conditional Odoo import for ORM-aware metrics
+    # Falls back to basic metrics in standalone mode
     try:
         from odoo.http import request
         if request and hasattr(request, 'env'):
             return request.env
-    except:
+    except ImportError:
+        # Standalone mode: no request context available
         pass
 
     return None

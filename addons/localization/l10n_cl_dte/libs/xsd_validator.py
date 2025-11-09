@@ -23,7 +23,7 @@ License: LGPL-3
 from lxml import etree
 import logging
 import os
-from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe, parse_safe
+from .safe_xml_parser import fromstring_safe, parse_safe
 
 _logger = logging.getLogger(__name__)
 
