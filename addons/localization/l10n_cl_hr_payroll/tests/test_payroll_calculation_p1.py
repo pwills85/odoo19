@@ -49,7 +49,7 @@ class TestPayrollCalculationP1(TransactionCase):
         })
         
         # Topes legales 2025
-        cls.legal_caps = cls.env['l10n_cl.legal_caps'].create({
+        cls.legal_caps = cls.env['l10n_cl.legal.caps'].create({
             'year': 2025,
             'tope_imponible_afp_uf': 81.6,
             'tope_imponible_ips_uf': 81.6,
