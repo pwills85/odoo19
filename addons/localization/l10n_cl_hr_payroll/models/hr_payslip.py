@@ -249,6 +249,18 @@ class HrPayslip(models.Model):
              'Vigencia: Desde 01-08-2025'
     )
 
+    # Campo alias para compatibilidad con tests y código existente
+    employer_reforma_2025 = fields.Monetary(
+        string='Aporte Empleador Reforma 2025',
+        compute='_compute_employer_reforma_2025_alias',
+        store=True,
+        currency_field='currency_id',
+        readonly=True,
+        help='Alias para employer_total_ley21735 - Compatibilidad con tests y código existente. '
+             'Ley 21.735 Art. 2° - Total aporte empleador (0.1% + 0.9% = 1%). '
+             'Vigencia: Desde 01-08-2025'
+    )
+
     # Flag aplicación Ley 21.735
     aplica_ley21735 = fields.Boolean(
         string='Aplica Ley 21.735',
@@ -419,6 +431,20 @@ class HrPayslip(models.Model):
                 f"Seguro Social (0.9%): ${aporte_seguro_social:,.0f}, "
                 f"Total (1%): ${total_aporte:,.0f}"
             )
+
+    @api.depends('employer_total_ley21735')
+    def _compute_employer_reforma_2025_alias(self):
+        """
+        Alias computed field para compatibilidad con tests y código existente
+
+        Mapea employer_total_ley21735 a employer_reforma_2025 para mantener
+        compatibilidad con código que usa el nombre corto.
+
+        Returns:
+            None (actualiza campo compute)
+        """
+        for payslip in self:
+            payslip.employer_reforma_2025 = payslip.employer_total_ley21735
 
     @api.constrains('state', 'aplica_ley21735', 'employer_total_ley21735')
     def _validate_ley21735_before_confirm(self):
@@ -704,7 +730,20 @@ class HrPayslip(models.Model):
         )
         
         return True
-    
+
+    def compute_sheet(self):
+        """
+        Wrapper para compatibilidad con tests y estándares Odoo
+
+        En Odoo estándar, compute_sheet() es el método principal.
+        action_compute_sheet() es el método de acción desde UI.
+        Este wrapper permite ambos usos.
+
+        Returns:
+            bool: True si cálculo exitoso
+        """
+        return self.action_compute_sheet()
+
     def _validate_for_computation(self):
         """Validar que se puede calcular"""
         self.ensure_one()
