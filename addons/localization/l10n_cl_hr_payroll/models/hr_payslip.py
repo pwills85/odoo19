@@ -1128,7 +1128,7 @@ class HrPayslip(models.Model):
         # Dependen de BASE_TRIBUTABLE
         executed, skipped = self._execute_rules_step(
             rules,
-            ['AFP', 'SALUD', 'AFC', 'APV'],
+            ['AFP', 'SALUD', 'AFC', 'APV_A', 'APV_B'],
             contract, worked_days, inputs_dict,
             "3 - DESCUENTOS PREVISIONALES"
         )

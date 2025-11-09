@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ==================== APV (AHORRO PREVISIONAL VOLUNTARIO) ==================== -->
+
+        <!-- RULE: APV Régimen A (Con rebaja tributaria) -->
+        <record id="rule_apv_regime_a" model="hr.salary.rule">
+            <field name="name">APV Régimen A</field>
+            <field name="code">APV_A</field>
+            <field name="sequence">303</field>
+            <field name="category_id" ref="category_desc_legal"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+# Solo aplica si tiene APV configurado con Régimen A
+result = (contract.l10n_cl_apv_institution_id and
+          contract.l10n_cl_apv_regime == 'A')
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Calcular APV Régimen A (con rebaja tributaria)
+result = 0.0
+
+if contract.l10n_cl_apv_institution_id and contract.l10n_cl_apv_regime == 'A':
+    amount_type = contract.l10n_cl_apv_amount_type or 'fixed'
+
+    if amount_type == 'fixed':
+        # Monto fijo en CLP
+        result = contract.l10n_cl_apv_amount or 0.0
+
+    elif amount_type == 'percent':
+        # Porcentaje sobre Renta Líquida Imponible (RLI)
+        # RLI = Base Tributable (después de descuentos previsionales)
+        rli = categories.BASE_TRIBUTABLE or 0.0
+        percent = (contract.l10n_cl_apv_amount or 0.0) / 100.0
+        result = rli * percent
+
+    elif amount_type == 'uf':
+        # Monto en UF - convertir a CLP
+        uf_amount = contract.l10n_cl_apv_amount or 0.0
+        indicadores = payslip.indicadores_id
+        if indicadores and indicadores.uf:
+            result = uf_amount * indicadores.uf
+        else:
+            result = 0.0
+
+    # Aplicar tope mensual (50 UF según legislación)
+    if result > 0:
+        indicadores = payslip.indicadores_id
+        if indicadores and indicadores.uf:
+            # Tope mensual: 50 UF
+            tope_mensual_uf = 50.0
+            tope_mensual_clp = tope_mensual_uf * indicadores.uf
+            result = min(result, tope_mensual_clp)
+
+    # APV es un descuento (negativo)
+    result = -abs(result)
+            </field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- RULE: APV Régimen B (Sin rebaja tributaria) -->
+        <record id="rule_apv_regime_b" model="hr.salary.rule">
+            <field name="name">APV Régimen B</field>
+            <field name="code">APV_B</field>
+            <field name="sequence">304</field>
+            <field name="category_id" ref="category_desc_legal"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+# Solo aplica si tiene APV configurado con Régimen B
+result = (contract.l10n_cl_apv_institution_id and
+          contract.l10n_cl_apv_regime == 'B')
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Calcular APV Régimen B (sin rebaja tributaria)
+result = 0.0
+
+if contract.l10n_cl_apv_institution_id and contract.l10n_cl_apv_regime == 'B':
+    amount_type = contract.l10n_cl_apv_amount_type or 'fixed'
+
+    if amount_type == 'fixed':
+        # Monto fijo en CLP
+        result = contract.l10n_cl_apv_amount or 0.0
+
+    elif amount_type == 'percent':
+        # Porcentaje sobre Renta Líquida Imponible (RLI)
+        rli = categories.BASE_TRIBUTABLE or 0.0
+        percent = (contract.l10n_cl_apv_amount or 0.0) / 100.0
+        result = rli * percent
+
+    elif amount_type == 'uf':
+        # Monto en UF - convertir a CLP
+        uf_amount = contract.l10n_cl_apv_amount or 0.0
+        indicadores = payslip.indicadores_id
+        if indicadores and indicadores.uf:
+            result = uf_amount * indicadores.uf
+        else:
+            result = 0.0
+
+    # Aplicar tope mensual (50 UF según legislación)
+    if result > 0:
+        indicadores = payslip.indicadores_id
+        if indicadores and indicadores.uf:
+            # Tope mensual: 50 UF
+            tope_mensual_uf = 50.0
+            tope_mensual_clp = tope_mensual_uf * indicadores.uf
+            result = min(result, tope_mensual_clp)
+
+    # APV es un descuento (negativo)
+    result = -abs(result)
+            </field>
+            <field name="active" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

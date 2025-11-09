@@ -82,11 +82,12 @@ Licencia: LGPL-3
         'data/ir_cron_data.xml',                     # Cron automático indicadores
         'data/hr_salary_rule_category_base.xml',     # 13 categorías base
         'data/hr_salary_rule_category_sopa.xml',     # 9 categorías SOPA
-        'data/hr_payroll_structure_data.xml',      # Estructura base
         'data/hr_tax_bracket_2025.xml',              # Tramos impuesto 2025
         'data/l10n_cl_legal_caps_2025.xml',          # Topes legales APV/AFC
         'data/l10n_cl_apv_institutions.xml',         # Instituciones APV
         'data/hr_salary_rules_p1.xml',               # Reglas salariales P1
+        'data/hr_salary_rules_apv.xml',              # Reglas APV (Régimen A/B)
+        'data/hr_payroll_structure_data.xml',      # Estructura base
         'data/hr_salary_rules_ley21735.xml',         # Ley 21.735 Reforma Pensiones
         
         # Vistas
