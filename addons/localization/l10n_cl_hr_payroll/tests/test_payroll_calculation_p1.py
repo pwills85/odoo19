@@ -41,8 +41,7 @@ class TestPayrollCalculationP1(TransactionCase):
         
         # Indicadores económicos enero 2025
         cls.indicators = cls.env['hr.economic.indicators'].create({
-            'month': 1,
-            'year': 2025,
+            'period': date(2025, 1, 1),
             'uf': 37800.00,
             'utm': 65967.00,
             'uta': 791604.00,
