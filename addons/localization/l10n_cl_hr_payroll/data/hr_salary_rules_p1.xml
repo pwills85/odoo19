@@ -182,8 +182,17 @@ else:
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
-# AFC Trabajador = 0.6% sobre BASE_TRIBUTABLE
-base = categories.BASE_TRIBUTABLE
+# AFC Trabajador = 0.6% sobre BASE_TRIBUTABLE (tope 120.2 UF)
+# Normativa: AFC tiene tope diferente al AFP (120.2 UF vs 87.8 UF)
+
+# Obtener tope AFC (120.2 UF)
+tope_afc_uf = 120.2
+tope_afc = payslip.indicadores_id.uf * tope_afc_uf
+
+# Aplicar tope
+base = min(categories.BASE_TRIBUTABLE or categories.TOTAL_IMPONIBLE, tope_afc)
+
+# Calcular AFC
 tasa_afc = 0.006  # 0.6%
 result = -(base * tasa_afc)
             </field>
@@ -201,11 +210,14 @@ result = -(base * tasa_afc)
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
-# Base Impuesto = BASE_TRIBUTABLE - descuentos previsionales
-base_trib = categories.BASE_TRIBUTABLE
-afp = abs(categories.AFP)
-salud = abs(categories.SALUD)
-afc = abs(categories.AFC)
+# Base Impuesto = TOTAL_IMPONIBLE - descuentos previsionales
+# Normativa: Base impuesto NO tiene tope AFP (87.8 UF)
+# Usar TOTAL_IMPONIBLE (sin tope) en lugar de BASE_TRIBUTABLE (con tope AFP)
+
+base_trib = categories.TOTAL_IMPONIBLE
+afp = abs(categories.AFP or 0)
+salud = abs(categories.SALUD or 0)
+afc = abs(categories.AFC or 0)
 
 result = base_trib - afp - salud - afc
             </field>

@@ -76,7 +76,15 @@
       "Bash(TAG_NAME=\"session1_end_20251109_0755\")",
       "Bash(/tmp/sprint2_passed_count.txt)",
       "Bash(/tmp/sprint2_failed_count.txt)",
-      "Bash(/tmp/sprint2_error_count.txt)"
+      "Bash(/tmp/sprint2_error_count.txt)",
+      "Bash(git stash:*)",
+      "Bash(timeout:*)",
+      "Bash(evidencias/checkpoint_inicial.log)",
+      "Bash(bash -c:*)",
+      "Bash(evidencias/checkpoint_inicial_real.log)",
+      "Bash(evidencias/task_1.1_after.log)",
+      "Bash(evidencias/checkpoint_task_1.2_complete.log)",
+      "Bash(evidencias/task_1.2_complete_summary.txt)"
     ],
     "deny": [],
     "ask": []

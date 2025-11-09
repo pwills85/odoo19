@@ -338,7 +338,7 @@ class TestPayrollCalculationsSprint32(TransactionCase):
         self.assertTrue(self.payslip.line_ids.filtered(lambda l: l.code == 'BONO_PROD'))
         self.assertTrue(self.payslip.line_ids.filtered(lambda l: l.code == 'COLACION'))
         self.assertTrue(self.payslip.line_ids.filtered(lambda l: l.code == 'AFP'))
-        self.assertTrue(self.payslip.line_ids.filtered(lambda l: l.code == 'HEALTH'))
+        self.assertTrue(self.payslip.line_ids.filtered(lambda l: l.code == 'SALUD'))  # Código en español
         self.assertTrue(self.payslip.line_ids.filtered(lambda l: l.code == 'AFC'))
         
         # Verificar totalizadores
