@@ -258,8 +258,8 @@ async def test_send_message_with_conversation_history(chat_engine, sample_user_c
         # Verify history was retrieved
         chat_engine.context_manager.get_conversation_history.assert_called_with("session-789")
 
-        # Verify user message was added to history
-        assert len(history) == 3
+        # Verify both user message and assistant response were added to history
+        assert len(history) == 4
         assert history[-2]["content"] == "¿Cómo creo un DTE?"
 
 

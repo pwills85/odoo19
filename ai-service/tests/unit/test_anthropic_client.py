@@ -22,6 +22,7 @@ import anthropic
 from anthropic.types import Message, Usage, ContentBlock, TextBlock
 from typing import Dict, Any, List
 import httpx
+import tenacity
 
 # Import the client
 import sys
@@ -617,13 +618,13 @@ async def test_validate_dte_rate_limit_error(anthropic_client, sample_dte_data, 
 
             anthropic_client.client.messages.create = AsyncMock(side_effect=mock_error)
 
-            with pytest.raises(anthropic.RateLimitError):
+            with pytest.raises(tenacity.RetryError):
                 await anthropic_client.validate_dte(sample_dte_data, [])
 
 
 @pytest.mark.unit
 def test_build_validation_user_prompt_long_history(anthropic_client, sample_dte_data):
-    """Test user prompt with long history (should truncate to 3)"""
+    """Test user prompt with long history (should truncate to last 3)"""
     history = [
         {"error_code": f"E{i:03d}", "message": f"Error message {i}"}
         for i in range(10)
@@ -631,8 +632,11 @@ def test_build_validation_user_prompt_long_history(anthropic_client, sample_dte_
 
     prompt = anthropic_client._build_validation_user_prompt_compact(sample_dte_data, history)
 
-    # Should only include last 3 items
-    assert prompt.count("E") <= 5  # Only last 3 error codes
+    # Should only include last 3 error codes (E007, E008, E009)
+    assert "E007" in prompt
+    assert "E008" in prompt
+    assert "E009" in prompt
+    assert "E000" not in prompt  # First items should be excluded
 
 
 @pytest.mark.unit
