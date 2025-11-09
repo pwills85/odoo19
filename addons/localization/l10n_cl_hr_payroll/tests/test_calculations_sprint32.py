@@ -67,6 +67,7 @@ class TestPayrollCalculationsSprint32(TransactionCase):
             'health_system': 'fonasa',
             'weekly_hours': 45,
             'state': 'open',
+            'gratification_type': 'none',  # FIX: Desactivar gratificación automática para tests
             'date_start': date(2025, 1, 1),
         })
         

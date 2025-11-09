@@ -182,16 +182,17 @@ else:
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
-# AFC Trabajador = 0.6% sobre BASE_TRIBUTABLE (tope 131.9 UF - Actualizado 2025)
+# AFC Trabajador = 0.6% sobre TOTAL_IMPONIBLE (tope 131.9 UF - Actualizado 2025)
 # Normativa: AFC tiene tope diferente al AFP (131.9 UF vs 87.8 UF)
 # Ref: Superintendencia de Pensiones - Límite máximo mensual AFC 2025
+# FIX: Usar TOTAL_IMPONIBLE directamente, NO BASE_TRIBUTABLE (que tiene tope AFP 87.8 UF)
 
 # Obtener tope AFC (131.9 UF)
 tope_afc_uf = 131.9
 tope_afc = payslip.indicadores_id.uf * tope_afc_uf
 
-# Aplicar tope
-base = min(categories.BASE_TRIBUTABLE or categories.TOTAL_IMPONIBLE, tope_afc)
+# Aplicar tope AFC sobre TOTAL_IMPONIBLE (no BASE_TRIBUTABLE)
+base = min(categories.TOTAL_IMPONIBLE, tope_afc)
 
 # Calcular AFC
 tasa_afc = 0.006  # 0.6%
