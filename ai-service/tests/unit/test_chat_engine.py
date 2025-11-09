@@ -191,7 +191,7 @@ async def test_send_message_basic(chat_engine, sample_user_context, mock_anthrop
     """Test basic message sending"""
     chat_engine.anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
-    with patch('chat.engine.settings') as mock_settings:
+    with patch('config.settings') as mock_settings:
         mock_settings.chat_max_tokens = 4096
 
         response = await chat_engine.send_message(
@@ -214,7 +214,7 @@ async def test_send_message_without_user_context(chat_engine, mock_anthropic_res
     """Test message sending without user context"""
     chat_engine.anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
-    with patch('chat.engine.settings') as mock_settings:
+    with patch('config.settings') as mock_settings:
         mock_settings.chat_max_tokens = 4096
 
         response = await chat_engine.send_message(
@@ -246,7 +246,7 @@ async def test_send_message_with_conversation_history(chat_engine, sample_user_c
     chat_engine.context_manager.get_conversation_history = MagicMock(return_value=history)
     chat_engine.anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
-    with patch('chat.engine.settings') as mock_settings:
+    with patch('config.settings') as mock_settings:
         mock_settings.chat_max_tokens = 4096
 
         response = await chat_engine.send_message(
@@ -270,7 +270,7 @@ async def test_send_message_plugin_selection(chat_engine, mock_plugin, sample_us
     chat_engine.plugin_registry.get_plugin_for_query = MagicMock(return_value=mock_plugin)
     chat_engine.anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
-    with patch('chat.engine.settings') as mock_settings:
+    with patch('config.settings') as mock_settings:
         mock_settings.chat_max_tokens = 4096
 
         response = await chat_engine.send_message(
@@ -299,7 +299,7 @@ async def test_send_message_knowledge_base_search(chat_engine, sample_user_conte
     chat_engine.knowledge_base.search = MagicMock(return_value=docs)
     chat_engine.anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
-    with patch('chat.engine.settings') as mock_settings:
+    with patch('config.settings') as mock_settings:
         mock_settings.chat_max_tokens = 4096
 
         response = await chat_engine.send_message(
@@ -323,7 +323,7 @@ async def test_send_message_anthropic_api_error(chat_engine, sample_user_context
         side_effect=Exception("API Error")
     )
 
-    with patch('chat.engine.settings') as mock_settings:
+    with patch('config.settings') as mock_settings:
         mock_settings.chat_max_tokens = 4096
 
         with pytest.raises(Exception, match="Anthropic API failed"):
@@ -440,7 +440,7 @@ async def test_call_anthropic_success(chat_engine, mock_anthropic_response):
     """Test successful Anthropic API call"""
     chat_engine.anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
-    with patch('chat.engine.settings') as mock_settings:
+    with patch('config.settings') as mock_settings:
         mock_settings.chat_max_tokens = 4096
 
         response_text, tokens_used = await chat_engine._call_anthropic(
@@ -462,7 +462,7 @@ async def test_call_anthropic_api_error(chat_engine):
         side_effect=Exception("API connection failed")
     )
 
-    with patch('chat.engine.settings') as mock_settings:
+    with patch('config.settings') as mock_settings:
         mock_settings.chat_max_tokens = 4096
 
         with pytest.raises(Exception, match="API connection failed"):
@@ -478,7 +478,7 @@ async def test_call_anthropic_filters_system_messages(chat_engine, mock_anthropi
     """Test that system messages are filtered from history"""
     chat_engine.anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
-    with patch('chat.engine.settings') as mock_settings:
+    with patch('config.settings') as mock_settings:
         mock_settings.chat_max_tokens = 4096
 
         messages = [
@@ -653,7 +653,7 @@ async def test_send_message_confidence_dynamic(chat_engine, sample_user_context,
     """Test that confidence is calculated dynamically based on response"""
     chat_engine.anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
-    with patch('chat.engine.settings') as mock_settings:
+    with patch('config.settings') as mock_settings:
         mock_settings.chat_max_tokens = 4096
 
         response = await chat_engine.send_message(
@@ -795,7 +795,7 @@ async def test_send_message_max_context_messages(chat_engine, sample_user_contex
     chat_engine.context_manager.get_conversation_history = MagicMock(return_value=history)
     chat_engine.anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
-    with patch('chat.engine.settings') as mock_settings:
+    with patch('config.settings') as mock_settings:
         mock_settings.chat_max_tokens = 4096
 
         await chat_engine.send_message(
@@ -822,7 +822,7 @@ async def test_send_message_empty_response(chat_engine, sample_user_context):
 
     chat_engine.anthropic_client.client.messages.create = AsyncMock(return_value=mock_response)
 
-    with patch('chat.engine.settings') as mock_settings:
+    with patch('config.settings') as mock_settings:
         mock_settings.chat_max_tokens = 4096
 
         response = await chat_engine.send_message(

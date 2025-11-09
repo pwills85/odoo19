@@ -21,6 +21,7 @@ from unittest.mock import Mock, patch, AsyncMock, MagicMock
 import anthropic
 from anthropic.types import Message, Usage, ContentBlock, TextBlock
 from typing import Dict, Any, List
+import httpx
 
 # Import the client
 import sys
@@ -145,14 +146,14 @@ def test_anthropic_client_init_default_model(mock_anthropic_client):
 @pytest.mark.asyncio
 async def test_estimate_tokens_success(anthropic_client, mock_settings):
     """Test token estimation with successful response"""
-    with patch('clients.anthropic_client.settings', mock_settings):
+    with patch('config.settings', mock_settings):
         # Mock count_tokens response
         count_response = MagicMock()
         count_response.input_tokens = 100
         anthropic_client.client.messages.count_tokens = AsyncMock(return_value=count_response)
 
         # Mock CLAUDE_PRICING import
-        with patch('clients.anthropic_client.CLAUDE_PRICING', {
+        with patch('utils.cost_tracker.CLAUDE_PRICING', {
             'claude-sonnet-4-5-20250929': {
                 'input': 0.003,
                 'output': 0.015
@@ -174,12 +175,12 @@ async def test_estimate_tokens_success(anthropic_client, mock_settings):
 @pytest.mark.asyncio
 async def test_estimate_tokens_without_system_prompt(anthropic_client, mock_settings):
     """Test token estimation without system prompt"""
-    with patch('clients.anthropic_client.settings', mock_settings):
+    with patch('config.settings', mock_settings):
         count_response = MagicMock()
         count_response.input_tokens = 50
         anthropic_client.client.messages.count_tokens = AsyncMock(return_value=count_response)
 
-        with patch('clients.anthropic_client.CLAUDE_PRICING', {
+        with patch('utils.cost_tracker.CLAUDE_PRICING', {
             'claude-sonnet-4-5-20250929': {'input': 0.003, 'output': 0.015},
             'default': {'input': 0.01, 'output': 0.05}
         }):
@@ -197,12 +198,12 @@ async def test_estimate_tokens_exceeds_max_tokens(anthropic_client, mock_setting
     mock_settings.enable_token_precounting = True
     mock_settings.max_tokens_per_request = 100
 
-    with patch('clients.anthropic_client.settings', mock_settings):
+    with patch('config.settings', mock_settings):
         count_response = MagicMock()
         count_response.input_tokens = 90  # Will exceed with 30% output estimate
         anthropic_client.client.messages.count_tokens = AsyncMock(return_value=count_response)
 
-        with patch('clients.anthropic_client.CLAUDE_PRICING', {
+        with patch('utils.cost_tracker.CLAUDE_PRICING', {
             'claude-sonnet-4-5-20250929': {'input': 0.003, 'output': 0.015},
             'default': {'input': 0.01, 'output': 0.05}
         }):
@@ -219,12 +220,12 @@ async def test_estimate_tokens_exceeds_max_cost(anthropic_client, mock_settings)
     mock_settings.enable_token_precounting = True
     mock_settings.max_estimated_cost_per_request = 0.001
 
-    with patch('clients.anthropic_client.settings', mock_settings):
+    with patch('config.settings', mock_settings):
         count_response = MagicMock()
         count_response.input_tokens = 10000  # Very expensive
         anthropic_client.client.messages.count_tokens = AsyncMock(return_value=count_response)
 
-        with patch('clients.anthropic_client.CLAUDE_PRICING', {
+        with patch('utils.cost_tracker.CLAUDE_PRICING', {
             'claude-sonnet-4-5-20250929': {'input': 0.003, 'output': 0.015},
             'default': {'input': 0.01, 'output': 0.05}
         }):
@@ -238,8 +239,10 @@ async def test_estimate_tokens_exceeds_max_cost(anthropic_client, mock_settings)
 @pytest.mark.asyncio
 async def test_estimate_tokens_api_error(anthropic_client):
     """Test token estimation with API error"""
+    # Create mock request for APIError
+    mock_request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
     anthropic_client.client.messages.count_tokens = AsyncMock(
-        side_effect=anthropic.APIError("API Error")
+        side_effect=anthropic.APIError("API Error", request=mock_request, body=None)
     )
 
     with pytest.raises(anthropic.APIError):
@@ -257,7 +260,7 @@ async def test_estimate_tokens_api_error(anthropic_client):
 @pytest.mark.asyncio
 async def test_validate_dte_success(anthropic_client, sample_dte_data, mock_anthropic_response, mock_settings):
     """Test DTE validation with successful response"""
-    with patch('clients.anthropic_client.settings', mock_settings):
+    with patch('config.settings', mock_settings):
         # Mock estimate_tokens
         anthropic_client.estimate_tokens = AsyncMock(return_value={
             "input_tokens": 150,
@@ -296,7 +299,7 @@ async def test_validate_dte_with_caching(anthropic_client, sample_dte_data, mock
     """Test DTE validation uses prompt caching"""
     mock_settings.enable_prompt_caching = True
 
-    with patch('clients.anthropic_client.settings', mock_settings):
+    with patch('config.settings', mock_settings):
         anthropic_client.estimate_tokens = AsyncMock(return_value={
             "input_tokens": 100,
             "estimated_output_tokens": 30,
@@ -332,7 +335,7 @@ async def test_validate_dte_cost_exceeded(anthropic_client, sample_dte_data, moc
     """Test DTE validation when cost estimate exceeds limit"""
     mock_settings.enable_token_precounting = True
 
-    with patch('clients.anthropic_client.settings', mock_settings):
+    with patch('config.settings', mock_settings):
         # estimate_tokens raises ValueError for expensive request
         anthropic_client.estimate_tokens = AsyncMock(
             side_effect=ValueError("Request too expensive: $100.00 (max $10.00)")
@@ -351,7 +354,7 @@ async def test_validate_dte_circuit_breaker_open(anthropic_client, sample_dte_da
     """Test DTE validation with circuit breaker open"""
     from utils.circuit_breaker import CircuitBreakerError
 
-    with patch('clients.anthropic_client.settings', mock_settings):
+    with patch('config.settings', mock_settings):
         anthropic_client.estimate_tokens = AsyncMock(return_value={
             "input_tokens": 100,
             "estimated_output_tokens": 30,
@@ -374,7 +377,7 @@ async def test_validate_dte_circuit_breaker_open(anthropic_client, sample_dte_da
 @pytest.mark.asyncio
 async def test_validate_dte_json_parse_error(anthropic_client, sample_dte_data, mock_settings):
     """Test DTE validation with JSON parse error"""
-    with patch('clients.anthropic_client.settings', mock_settings):
+    with patch('config.settings', mock_settings):
         anthropic_client.estimate_tokens = AsyncMock(return_value={
             "input_tokens": 100,
             "estimated_output_tokens": 30,
@@ -414,7 +417,7 @@ async def test_validate_dte_with_history(anthropic_client, sample_dte_data, mock
         {"error_code": "E002", "message": "Folio not available"}
     ]
 
-    with patch('clients.anthropic_client.settings', mock_settings):
+    with patch('config.settings', mock_settings):
         anthropic_client.estimate_tokens = AsyncMock(return_value={
             "input_tokens": 100,
             "estimated_output_tokens": 30,
@@ -490,7 +493,7 @@ async def test_call_with_caching_no_cache(anthropic_client, mock_anthropic_respo
     """Test call_with_caching without caching enabled"""
     mock_settings.enable_prompt_caching = False
 
-    with patch('clients.anthropic_client.settings', mock_settings):
+    with patch('config.settings', mock_settings):
         anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
         result = await anthropic_client.call_with_caching(
@@ -511,7 +514,7 @@ async def test_call_with_caching_with_context(anthropic_client, mock_anthropic_r
     """Test call_with_caching with cacheable context"""
     mock_settings.enable_prompt_caching = True
 
-    with patch('clients.anthropic_client.settings', mock_settings):
+    with patch('config.settings', mock_settings):
         anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
         result = await anthropic_client.call_with_caching(
@@ -537,7 +540,7 @@ async def test_call_with_caching_custom_tokens_temp(anthropic_client, mock_anthr
     """Test call_with_caching with custom tokens and temperature"""
     mock_settings.enable_prompt_caching = False
 
-    with patch('clients.anthropic_client.settings', mock_settings):
+    with patch('config.settings', mock_settings):
         anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
         await anthropic_client.call_with_caching(
@@ -588,7 +591,7 @@ def test_get_anthropic_client_singleton():
 @pytest.mark.asyncio
 async def test_validate_dte_rate_limit_error(anthropic_client, sample_dte_data, mock_settings):
     """Test rate limit error handling"""
-    with patch('clients.anthropic_client.settings', mock_settings):
+    with patch('config.settings', mock_settings):
         anthropic_client.estimate_tokens = AsyncMock(return_value={
             "input_tokens": 100,
             "estimated_output_tokens": 30,
@@ -596,9 +599,17 @@ async def test_validate_dte_rate_limit_error(anthropic_client, sample_dte_data, 
             "estimated_cost_usd": 0.0005
         })
 
-        mock_error = anthropic.RateLimitError("Rate limit exceeded")
-        mock_error.response = MagicMock()
-        mock_error.response.headers = {"retry-after": "30"}
+        # Create mock response for RateLimitError
+        mock_response = httpx.Response(
+            status_code=429,
+            headers={"retry-after": "30"},
+            request=httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+        )
+        mock_error = anthropic.RateLimitError(
+            "Rate limit exceeded",
+            response=mock_response,
+            body={}
+        )
 
         with patch('clients.anthropic_client.anthropic_circuit_breaker') as mock_cb:
             mock_cb.__enter__ = MagicMock(return_value=None)
@@ -630,12 +641,12 @@ async def test_estimate_tokens_precounting_disabled(anthropic_client, mock_setti
     """Test token estimation when precounting is disabled"""
     mock_settings.enable_token_precounting = False
 
-    with patch('clients.anthropic_client.settings', mock_settings):
+    with patch('config.settings', mock_settings):
         count_response = MagicMock()
         count_response.input_tokens = 1000000  # Huge, but should not raise
         anthropic_client.client.messages.count_tokens = AsyncMock(return_value=count_response)
 
-        with patch('clients.anthropic_client.CLAUDE_PRICING', {
+        with patch('utils.cost_tracker.CLAUDE_PRICING', {
             'claude-sonnet-4-5-20250929': {'input': 0.003, 'output': 0.015},
             'default': {'input': 0.01, 'output': 0.05}
         }):
@@ -656,7 +667,7 @@ async def test_estimate_tokens_precounting_disabled(anthropic_client, mock_setti
 @pytest.mark.asyncio
 async def test_validate_dte_cache_hit_tracking(anthropic_client, sample_dte_data, mock_settings):
     """Test cache hit rate tracking and logging"""
-    with patch('clients.anthropic_client.settings', mock_settings):
+    with patch('config.settings', mock_settings):
         anthropic_client.estimate_tokens = AsyncMock(return_value={
             "input_tokens": 100,
             "estimated_output_tokens": 30,
