@@ -38,6 +38,40 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'sis_rate': 1.57
         })
 
+        # Indicadores económicos para todos los períodos de tests
+        # Julio 2025 (antes vigencia Ley 21.735)
+        self.env['hr.economic.indicators'].create({
+            'period': date(2025, 7, 1),
+            'uf': 37500.00,
+            'utm': 65000.00,
+            'uta': 780000.00,
+            'minimum_wage': 500000.00
+        })
+        # Agosto 2025 (vigencia Ley 21.735)
+        self.env['hr.economic.indicators'].create({
+            'period': date(2025, 8, 1),
+            'uf': 37500.00,
+            'utm': 65000.00,
+            'uta': 780000.00,
+            'minimum_wage': 500000.00
+        })
+        # Septiembre 2025
+        self.env['hr.economic.indicators'].create({
+            'period': date(2025, 9, 1),
+            'uf': 37500.00,
+            'utm': 65000.00,
+            'uta': 780000.00,
+            'minimum_wage': 500000.00
+        })
+        # Enero 2026 (períodos futuros)
+        self.env['hr.economic.indicators'].create({
+            'period': date(2026, 1, 1),
+            'uf': 38000.00,
+            'utm': 66000.00,
+            'uta': 792000.00,
+            'minimum_wage': 510000.00
+        })
+
     # ===== VIGENCIA LEY 21.735 =====
 
     def test_01_no_aplica_antes_agosto_2025(self):

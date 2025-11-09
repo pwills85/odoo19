@@ -51,20 +51,22 @@ class TestAPVCalculation(TransactionCase):
             'institution_type': 'afp',
         })
         
-        # Crear topes legales
-        self.env['l10n_cl.legal.caps'].create({
-            'code': 'APV_CAP_MONTHLY',
-            'amount': 50.0,  # 50 UF
-            'unit': 'uf',
-            'valid_from': date(2025, 1, 1),
-        })
-        
-        self.env['l10n_cl.legal.caps'].create({
-            'code': 'APV_CAP_ANNUAL',
-            'amount': 600.0,  # 600 UF
-            'unit': 'uf',
-            'valid_from': date(2025, 1, 1),
-        })
+        # Crear topes legales (buscar primero para evitar duplicados)
+        if not self.env['l10n_cl.legal.caps'].search([('code', '=', 'APV_CAP_MONTHLY')]):
+            self.env['l10n_cl.legal.caps'].create({
+                'code': 'APV_CAP_MONTHLY',
+                'amount': 50.0,  # 50 UF
+                'unit': 'uf',
+                'valid_from': date(2025, 1, 1),
+            })
+
+        if not self.env['l10n_cl.legal.caps'].search([('code', '=', 'APV_CAP_ANNUAL')]):
+            self.env['l10n_cl.legal.caps'].create({
+                'code': 'APV_CAP_ANNUAL',
+                'amount': 600.0,  # 600 UF
+                'unit': 'uf',
+                'valid_from': date(2025, 1, 1),
+            })
         
         # Crear empleado
         self.employee = self.env['hr.employee'].create({

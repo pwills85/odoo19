@@ -47,6 +47,7 @@ class TestP0Reforma2025(TransactionCase):
             'employee_id': self.employee.id,
             'wage': 1000000,
             'date_start': date(2024, 6, 1),
+            'date_end': date(2024, 12, 31),  # Cerrar antes de 2025
             'state': 'open',
             'afp_id': self.afp.id
         })
