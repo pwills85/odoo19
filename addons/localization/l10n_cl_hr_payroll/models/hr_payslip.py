@@ -8,7 +8,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-class BrowsableObject(object):
+class BrowsableObject(dict):
     """
     Objeto navegable para contexto de reglas salariales
 
@@ -16,22 +16,21 @@ class BrowsableObject(object):
     Usado en safe_eval context para reglas Python.
 
     Técnica Odoo estándar para motor de reglas.
+    Hereda de dict para compatibilidad con safe_eval.
     """
 
     def __init__(self, employee_id, dict_obj, env):
+        # Inicializar como dict con los valores de dict_obj
+        super(BrowsableObject, self).__init__(dict_obj)
         self.employee_id = employee_id
-        self.dict = dict_obj
         self.env = env
 
     def __getattr__(self, attr):
         # Evitar recursión infinita para atributos especiales
-        if attr in ('employee_id', 'dict', 'env'):
+        if attr in ('employee_id', 'env'):
             return object.__getattribute__(self, attr)
         # Retornar valor del dict o 0.0 si no existe
-        return self.dict.get(attr, 0.0)
-
-    def __getitem__(self, attr):
-        return self.dict.get(attr, 0.0)
+        return self.get(attr, 0.0)
 
 
 class HrPayslip(models.Model):
@@ -923,93 +922,30 @@ class HrPayslip(models.Model):
         if not self.date_from or not self.date_to:
             raise UserError(_('Debe especificar el período'))
     
-    def _compute_basic_lines(self):
+    def _execute_rules_step(self, rules, rule_codes, contract, worked_days, inputs_dict, step_name):
         """
-        Calcular líneas de liquidación usando motor de reglas salariales
+        Ejecutar un conjunto específico de reglas (un paso del cálculo)
 
-        Migrado desde lógica manual a motor de reglas estándar Odoo 19 CE.
-        Ejecuta todas las reglas salariales de la estructura en orden de sequence.
+        Args:
+            rules: Recordset de todas las reglas disponibles
+            rule_codes: Lista de códigos de reglas a ejecutar en este paso
+            contract: Contrato del empleado
+            worked_days: Diccionario de días trabajados
+            inputs_dict: Diccionario de inputs
+            step_name: Nombre descriptivo del paso (para logging)
 
-        Técnica Odoo 19 CE:
-        - Usa struct_id.get_all_rules() para obtener reglas
-        - Evalúa condiciones con _satisfy_condition()
-        - Calcula montos con _compute_rule()
-        - Ejecuta reglas en múltiples pasos para manejar dependencias
-
-        Arquitectura:
-        1. Validar estructura salarial existe
-        2. Obtener reglas ordenadas por sequence
-        3. Ejecutar reglas en pasos según dependencias:
-           - Paso 1: Reglas base (BASIC, GRAT, etc.)
-           - Paso 2: Reglas totalizadoras (HABERES_IMPONIBLES, TOTAL_IMPONIBLE)
-           - Paso 3: Reglas de descuentos (AFP, SALUD, AFC, etc.)
-           - Paso 4: Reglas de impuestos (BASE_IMPUESTO_UNICO, IMPUESTO_UNICO)
-           - Paso 5: Reglas finales (TOTAL_HABERES, TOTAL_DESCUENTOS, NET)
-        4. Invalidar cache entre pasos para actualizar categorías
-
-        Ref: .claude/PROMPT_MASTER_CIERRE_TOTAL_BRECHAS_V5_3.md TASK ARQUITECTÓNICA
+        Returns:
+            tuple: (rules_executed, rules_skipped)
         """
-        self.ensure_one()
-
-        # Limpiar líneas existentes
-        self.line_ids.unlink()
-
-        # ═══════════════════════════════════════════════════════════
-        # VALIDAR ESTRUCTURA SALARIAL
-        # ═══════════════════════════════════════════════════════════
-
-        if not self.struct_id:
-            raise UserError(_(
-                'Debe seleccionar una estructura salarial para calcular la liquidación.\n\n'
-                'Configure la estructura en el campo "Estructura Salarial".'
-            ))
-
-        # ═══════════════════════════════════════════════════════════
-        # OBTENER REGLAS SALARIALES
-        # ═══════════════════════════════════════════════════════════
-
-        rules = self.struct_id.get_all_rules()
-
-        if not rules:
-            raise UserError(_(
-                'No hay reglas salariales definidas en la estructura "%s".\n\n'
-                'Configure las reglas en:\n'
-                'Configuración > Estructuras Salariales > %s > Reglas Salariales'
-            ) % (self.struct_id.name, self.struct_id.name))
-
-        _logger.info(
-            "Ejecutando %d reglas salariales para liquidación %s",
-            len(rules),
-            self.name
-        )
-
-        # ═══════════════════════════════════════════════════════════
-        # PREPARAR CONTEXTO PARA REGLAS
-        # ═══════════════════════════════════════════════════════════
-
-        contract = self.contract_id
-        worked_days = self._get_worked_days_dict()
-        inputs_dict = self._get_inputs_dict()
-
-        # Procesar inputs de la nómina (horas extras, bonos, etc.)
-        self._process_input_lines()
-
-        # ═══════════════════════════════════════════════════════════
-        # EJECUTAR REGLAS EN ORDEN DE SEQUENCE
-        # ═══════════════════════════════════════════════════════════
-        #
-        # Las reglas se ejecutan en orden de sequence para manejar dependencias:
-        # - BASIC (10) → HABERES_IMPONIBLES (100) → TOTAL_IMPONIBLE (200)
-        # - BASE_TRIBUTABLE (202) → AFP (300), SALUD (301), AFC (302)
-        # - BASE_IMPUESTO_UNICO (400) → IMPUESTO_UNICO (401)
-        # - TOTAL_HABERES (900), TOTAL_DESCUENTOS (901) → NET (902)
-        #
-        # Invalidamos cache entre reglas críticas para actualizar categorías
-
         rules_executed = 0
         rules_skipped = 0
 
-        for rule in rules:
+        # Filtrar reglas para este paso
+        step_rules = rules.filtered(lambda r: r.code in rule_codes)
+
+        _logger.info("=== PASO %s: %d reglas ===", step_name, len(step_rules))
+
+        for rule in step_rules:
             # Validar regla activa
             if not rule.active:
                 rules_skipped += 1
@@ -1057,7 +993,7 @@ class HrPayslip(models.Model):
                 rules_executed += 1
 
                 _logger.debug(
-                    "Regla %s ejecutada: %s = $%s",
+                    "  ✓ %s: %s = $%s",
                     rule.code,
                     rule.name,
                     f"{amount:,.2f}"
@@ -1070,13 +1006,158 @@ class HrPayslip(models.Model):
                 )
                 continue
 
-            # Invalidar cache después de reglas críticas que calculan categorías
-            # Esto permite que reglas subsecuentes accedan a categorías ya calculadas
-            if rule.code in ['BASIC', 'HABERES_IMPONIBLES', 'TOTAL_IMPONIBLE',
-                            'BASE_TRIBUTABLE', 'AFP', 'SALUD', 'AFC',
-                            'BASE_IMPUESTO_UNICO', 'IMPUESTO_UNICO']:
-                self.invalidate_recordset(['line_ids'])
-                self._compute_totals()
+        return rules_executed, rules_skipped
+
+    def _compute_basic_lines(self):
+        """
+        Calcular líneas de liquidación usando motor de reglas salariales
+
+        Migrado desde lógica manual a motor de reglas estándar Odoo 19 CE.
+        Ejecuta reglas salariales en múltiples pasos para manejar dependencias.
+
+        Técnica Odoo 19 CE:
+        - Usa struct_id.get_all_rules() para obtener reglas
+        - Evalúa condiciones con _satisfy_condition()
+        - Calcula montos con _compute_rule()
+        - Ejecuta reglas en múltiples pasos para manejar dependencias
+
+        Arquitectura Multi-Paso:
+        1. Validar estructura salarial existe
+        2. Obtener reglas ordenadas por sequence
+        3. Ejecutar reglas en 5 pasos según dependencias:
+           - Paso 1: Reglas base (BASIC, GRAT, HABERES_NO_IMPONIBLES)
+           - Paso 2: Totalizadores (HABERES_IMPONIBLES, TOTAL_IMPONIBLE, TOPE_IMPONIBLE_UF, BASE_TRIBUTABLE)
+           - Paso 3: Descuentos previsionales (AFP, SALUD, AFC, APV)
+           - Paso 4: Base e impuestos (BASE_IMPUESTO_UNICO, IMPUESTO_UNICO)
+           - Paso 5: Totales finales (TOTAL_HABERES, TOTAL_DESCUENTOS, NET)
+        4. Invalidar cache entre pasos para actualizar categorías
+        5. Aportes empleador (EMPLOYER_APV_2025, EMPLOYER_CESANTIA_2025)
+
+        Ref: .claude/PROMPT_MASTER_CIERRE_TOTAL_BRECHAS_V5_4.md Issue #2 Resolution
+        """
+        self.ensure_one()
+
+        # Limpiar líneas existentes
+        self.line_ids.unlink()
+
+        # ═══════════════════════════════════════════════════════════
+        # VALIDAR ESTRUCTURA SALARIAL
+        # ═══════════════════════════════════════════════════════════
+
+        if not self.struct_id:
+            raise UserError(_(
+                'Debe seleccionar una estructura salarial para calcular la liquidación.\n\n'
+                'Configure la estructura en el campo "Estructura Salarial".'
+            ))
+
+        # ═══════════════════════════════════════════════════════════
+        # OBTENER REGLAS SALARIALES
+        # ═══════════════════════════════════════════════════════════
+
+        rules = self.struct_id.get_all_rules()
+
+        if not rules:
+            raise UserError(_(
+                'No hay reglas salariales definidas en la estructura "%s".\n\n'
+                'Configure las reglas en:\n'
+                'Configuración > Estructuras Salariales > %s > Reglas Salariales'
+            ) % (self.struct_id.name, self.struct_id.name))
+
+        _logger.info(
+            "Ejecutando %d reglas salariales para liquidación %s (multi-paso)",
+            len(rules),
+            self.name
+        )
+
+        # ═══════════════════════════════════════════════════════════
+        # PREPARAR CONTEXTO PARA REGLAS
+        # ═══════════════════════════════════════════════════════════
+
+        contract = self.contract_id
+        worked_days = self._get_worked_days_dict()
+        inputs_dict = self._get_inputs_dict()
+
+        # Procesar inputs de la nómina (horas extras, bonos, etc.)
+        self._process_input_lines()
+
+        # ═══════════════════════════════════════════════════════════
+        # EJECUTAR REGLAS EN MÚLTIPLES PASOS (RESOLVER DEPENDENCIAS)
+        # ═══════════════════════════════════════════════════════════
+
+        total_executed = 0
+        total_skipped = 0
+
+        # PASO 1: Reglas Base
+        # Haberes que no dependen de otros cálculos
+        executed, skipped = self._execute_rules_step(
+            rules,
+            ['BASIC', 'GRAT', 'ASIG_FAM', 'HABERES_NO_IMPONIBLES'],
+            contract, worked_days, inputs_dict,
+            "1 - REGLAS BASE"
+        )
+        total_executed += executed
+        total_skipped += skipped
+        self.invalidate_recordset(['line_ids'])
+
+        # PASO 2: Totalizadores e Imponibles
+        # Dependen de reglas base (BASIC, GRAT)
+        executed, skipped = self._execute_rules_step(
+            rules,
+            ['HABERES_IMPONIBLES', 'TOTAL_IMPONIBLE', 'TOPE_IMPONIBLE_UF', 'BASE_TRIBUTABLE'],
+            contract, worked_days, inputs_dict,
+            "2 - TOTALIZADORES"
+        )
+        total_executed += executed
+        total_skipped += skipped
+        self.invalidate_recordset(['line_ids'])
+
+        # PASO 3: Descuentos Previsionales
+        # Dependen de BASE_TRIBUTABLE
+        executed, skipped = self._execute_rules_step(
+            rules,
+            ['AFP', 'SALUD', 'AFC', 'APV'],
+            contract, worked_days, inputs_dict,
+            "3 - DESCUENTOS PREVISIONALES"
+        )
+        total_executed += executed
+        total_skipped += skipped
+        self.invalidate_recordset(['line_ids'])
+
+        # PASO 4: Base Impuesto e Impuesto Único
+        # Dependen de AFP, SALUD, AFC
+        executed, skipped = self._execute_rules_step(
+            rules,
+            ['BASE_IMPUESTO_UNICO', 'IMPUESTO_UNICO'],
+            contract, worked_days, inputs_dict,
+            "4 - IMPUESTOS"
+        )
+        total_executed += executed
+        total_skipped += skipped
+        self.invalidate_recordset(['line_ids'])
+
+        # PASO 5: Totales Finales
+        # Dependen de todas las reglas anteriores
+        executed, skipped = self._execute_rules_step(
+            rules,
+            ['TOTAL_HABERES', 'TOTAL_DESCUENTOS', 'NET'],
+            contract, worked_days, inputs_dict,
+            "5 - TOTALES FINALES"
+        )
+        total_executed += executed
+        total_skipped += skipped
+        self.invalidate_recordset(['line_ids'])
+
+        # PASO 6: Aportes Empleador (Reforma 2025)
+        # Se ejecutan al final, no afectan cálculo del trabajador
+        executed, skipped = self._execute_rules_step(
+            rules,
+            ['EMPLOYER_APV_2025', 'EMPLOYER_CESANTIA_2025'],
+            contract, worked_days, inputs_dict,
+            "6 - APORTES EMPLEADOR"
+        )
+        total_executed += executed
+        total_skipped += skipped
+        self.invalidate_recordset(['line_ids'])
 
         # ═══════════════════════════════════════════════════════════
         # PROCESAMIENTO ADICIONAL (COMPATIBILIDAD)
@@ -1102,12 +1183,17 @@ class HrPayslip(models.Model):
 
         # LOG FINAL
         _logger.info(
+            "Motor de reglas completado: %d reglas ejecutadas, %d omitidas",
+            total_executed,
+            total_skipped
+        )
+        _logger.info(
             "✅ Liquidación %s completada: %d líneas (%d reglas ejecutadas, %d omitidas), "
             "bruto=$%s, líquido=$%s",
             self.name,
             len(self.line_ids),
-            rules_executed,
-            rules_skipped,
+            total_executed,
+            total_skipped,
             f"{self.gross_wage:,.0f}",
             f"{self.net_wage:,.0f}"
         )
