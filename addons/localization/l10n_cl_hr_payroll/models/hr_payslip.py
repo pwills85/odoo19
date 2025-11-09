@@ -27,10 +27,18 @@ class BrowsableObject(dict):
 
     def __getattr__(self, attr):
         # Evitar recursión infinita para atributos especiales
-        if attr in ('employee_id', 'env'):
+        if attr in ('employee_id', 'env', '__dict__', '__class__'):
             return object.__getattribute__(self, attr)
         # Retornar valor del dict o 0.0 si no existe
         return self.get(attr, 0.0)
+
+    def __getitem__(self, key):
+        """Acceso por key (dict style)"""
+        return self.get(key, 0.0)
+
+    def __contains__(self, key):
+        """Verificar si key existe"""
+        return dict.__contains__(self, key)
 
 
 class HrPayslip(models.Model):
@@ -1726,31 +1734,9 @@ class HrPayslip(models.Model):
     # ═══════════════════════════════════════════════════════════
     # MÉTODOS AUXILIARES PARA REGLAS SALARIALES
     # ═══════════════════════════════════════════════════════════
-    
-    def _get_category_dict(self):
-        """
-        Obtener diccionario de categorías con totales acumulados
-        
-        Técnica Odoo 19 CE:
-        - Agrupa líneas por categoría
-        - Retorna dict con totales
-        - Usado por reglas salariales
-        
-        Retorna:
-            dict: {código_categoría: monto_total}
-        """
-        self.ensure_one()
-        
-        category_dict = {}
-        
-        for line in self.line_ids:
-            code = line.category_id.code
-            if code not in category_dict:
-                category_dict[code] = 0.0
-            category_dict[code] += line.total
-        
-        return category_dict
-    
+    # Método _get_category_dict() ya definido en línea 370
+    # NO duplicar aquí (causaba bug: retornaba dict en lugar de BrowsableObject)
+
     # ═══════════════════════════════════════════════════════════
     # WORKFLOW
     # ═══════════════════════════════════════════════════════════
