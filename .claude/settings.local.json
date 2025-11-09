@@ -36,7 +36,21 @@
       "Bash(xargs:*)",
       "Bash(docker cp:*)",
       "Bash(for file in /Users/pedro/Documents/odoo19/docs/upgrade_enterprise_to_odoo19CE/03_Prompts_Desarrollo/05_NOMINA_*.md)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(bash scripts/validate_prerequisites.sh:*)",
+      "Bash(git checkout:*)",
+      "Bash(git push:*)",
+      "Bash(evidencias/sprint0/estado_inicial_modulos.txt)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(bash scripts/upgrade_module.sh:*)",
+      "Bash(bash:*)",
+      "SlashCommand(/update-module:*)",
+      "Bash(MODULE_NAME=\"l10n_cl_hr_payroll\")",
+      "Bash(echo:*)",
+      "Bash(git reset:*)",
+      "Bash(tee:*)",
+      "Bash(1)"
     ],
     "deny": [],
     "ask": []
