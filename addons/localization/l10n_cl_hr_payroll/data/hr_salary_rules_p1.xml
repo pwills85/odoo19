@@ -79,7 +79,7 @@ result = categories.HABERES_IMPONIBLES
             <field name="amount_python_compute">
 # PR-2 FIX (NOM-C001): Usar get_cap() method para tope AFP
 # Obtener tope legal AFP en UF usando vigencia por fecha
-from odoo.exceptions import UserError
+# UserError está disponible en el contexto de safe_eval
 
 if not payslip.indicadores_id:
     raise UserError(

@@ -8,6 +8,28 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
+class BrowsableObject(object):
+    """
+    Objeto navegable para contexto de reglas salariales
+
+    Permite acceso a valores tanto por atributo como por key.
+    Usado en safe_eval context para reglas Python.
+
+    Técnica Odoo estándar para motor de reglas.
+    """
+
+    def __init__(self, employee_id, dict_obj, env):
+        self.employee_id = employee_id
+        self.dict = dict_obj
+        self.env = env
+
+    def __getattr__(self, attr):
+        return attr in self.dict and self.dict.__getitem__(attr) or 0.0
+
+    def __getitem__(self, attr):
+        return self.__getattr__(attr)
+
+
 class HrPayslip(models.Model):
     """
     Liquidación de Sueldo Chile
@@ -337,6 +359,118 @@ class HrPayslip(models.Model):
                 payslip.basic_wage = haber_lines[0].total
             else:
                 payslip.basic_wage = payslip.contract_id.wage if payslip.contract_id else 0.0
+
+    # ═══════════════════════════════════════════════════════════
+    # MÉTODOS HELPERS PARA MOTOR DE REGLAS
+    # ═══════════════════════════════════════════════════════════
+
+    def _get_category_dict(self):
+        """
+        Obtener diccionario de líneas por categoría para motor de reglas
+
+        Usado por motor de reglas salariales para acceder a líneas ya calculadas.
+        Las reglas pueden referenciar categorías como: categories.HABERES_IMPONIBLES
+
+        Técnica Odoo 19 CE:
+        - Retorna dict con totales por categoría/código de regla
+        - Suma automática de totales por categoría
+        - Usado en safe_eval context de reglas Python (acceso por key o getattr)
+
+        Returns:
+            BrowsableObject: Objeto que soporta acceso por atributo y por key
+
+        Example:
+            categories = payslip._get_category_dict()
+            base_tributable = categories.BASE_TRIBUTABLE  # Acceso por atributo
+            base_tributable = categories['BASE_TRIBUTABLE']  # Acceso por key
+        """
+        self.ensure_one()
+
+        category_dict = {}
+
+        # Agrupar líneas por código de categoría
+        for line in self.line_ids:
+            if line.category_id and line.category_id.code:
+                category_code = line.category_id.code
+
+                # Sumar totales de líneas con misma categoría
+                if category_code not in category_dict:
+                    category_dict[category_code] = 0.0
+
+                category_dict[category_code] += line.total
+
+        # También agrupar por código de regla (para acceso directo)
+        for line in self.line_ids:
+            if line.code:
+                # Solo agregar si no existe (evitar sobrescribir categorías)
+                if line.code not in category_dict:
+                    category_dict[line.code] = line.total
+
+        # Retornar como BrowsableObject para acceso por atributo y por key
+        return BrowsableObject(self.env.uid, category_dict, category_dict)
+
+    def _get_worked_days_dict(self):
+        """
+        Obtener diccionario de días trabajados para motor de reglas
+
+        Usado por motor de reglas salariales para acceder a días/horas trabajados.
+
+        Técnica Odoo 19 CE:
+        - Calcula días trabajados desde date_from a date_to
+        - Asume 30 días por mes y 8 horas por día
+        - Retorna dict con 'days' y 'hours'
+
+        Returns:
+            dict: {'days': float, 'hours': float}
+
+        Example:
+            worked_days = payslip._get_worked_days_dict()
+            days = worked_days['days']
+        """
+        self.ensure_one()
+
+        # Calcular días trabajados desde date_from a date_to
+        if self.date_from and self.date_to:
+            days = (self.date_to - self.date_from).days + 1
+        else:
+            # Default: 30 días (mes completo)
+            days = 30
+
+        # Asumir 8 horas por día (jornada laboral estándar Chile)
+        hours = days * 8.0
+
+        return {
+            'days': float(days),
+            'hours': float(hours),
+        }
+
+    def _get_inputs_dict(self):
+        """
+        Obtener diccionario de inputs para motor de reglas
+
+        Usado por motor de reglas salariales para acceder a inputs de la nómina.
+        Los inputs son valores variables (ej: horas extras, bonos, etc.)
+
+        Técnica Odoo 19 CE:
+        - Mapea código de input a su monto
+        - Retorna dict con {input_code: input_amount}
+
+        Returns:
+            dict: {input_code: input_amount}
+
+        Example:
+            inputs = payslip._get_inputs_dict()
+            horas_extras = inputs.get('HEX50', 0.0)
+        """
+        self.ensure_one()
+
+        inputs_dict = {}
+
+        for input_line in self.input_line_ids:
+            if input_line.code:
+                inputs_dict[input_line.code] = input_line.amount
+
+        return inputs_dict
 
     @api.depends('contract_id', 'contract_id.wage', 'date_from', 'date_to')
     def _compute_reforma_ley21735(self):
@@ -787,182 +921,189 @@ class HrPayslip(models.Model):
     
     def _compute_basic_lines(self):
         """
-        Calcular líneas básicas de liquidación usando SOPA 2025
-        
-        Migrado desde Odoo 11 CE con técnicas Odoo 19 CE.
-        Usa categorías con flags para cálculos correctos.
-        
-        Crea las líneas fundamentales:
-        - Sueldo base (categoría BASE, imponible=True)
-        - AFP (usa total_imponible)
-        - Salud (usa total_imponible)
+        Calcular líneas de liquidación usando motor de reglas salariales
+
+        Migrado desde lógica manual a motor de reglas estándar Odoo 19 CE.
+        Ejecuta todas las reglas salariales de la estructura en orden de sequence.
+
+        Técnica Odoo 19 CE:
+        - Usa struct_id.get_all_rules() para obtener reglas
+        - Evalúa condiciones con _satisfy_condition()
+        - Calcula montos con _compute_rule()
+        - Ejecuta reglas en múltiples pasos para manejar dependencias
+
+        Arquitectura:
+        1. Validar estructura salarial existe
+        2. Obtener reglas ordenadas por sequence
+        3. Ejecutar reglas en pasos según dependencias:
+           - Paso 1: Reglas base (BASIC, GRAT, etc.)
+           - Paso 2: Reglas totalizadoras (HABERES_IMPONIBLES, TOTAL_IMPONIBLE)
+           - Paso 3: Reglas de descuentos (AFP, SALUD, AFC, etc.)
+           - Paso 4: Reglas de impuestos (BASE_IMPUESTO_UNICO, IMPUESTO_UNICO)
+           - Paso 5: Reglas finales (TOTAL_HABERES, TOTAL_DESCUENTOS, NET)
+        4. Invalidar cache entre pasos para actualizar categorías
+
+        Ref: .claude/PROMPT_MASTER_CIERRE_TOTAL_BRECHAS_V5_3.md TASK ARQUITECTÓNICA
         """
         self.ensure_one()
-        
+
         # Limpiar líneas existentes
         self.line_ids.unlink()
-        
-        LineObj = self.env['hr.payslip.line']
-        
-        # Obtener categorías SOPA 2025
-        CategoryBase = self.env.ref('l10n_cl_hr_payroll.category_base', raise_if_not_found=False)
-        CategoryLegal = self.env.ref('l10n_cl_hr_payroll.category_desc_legal', raise_if_not_found=False)
-        
-        if not CategoryBase or not CategoryLegal:
+
+        # ═══════════════════════════════════════════════════════════
+        # VALIDAR ESTRUCTURA SALARIAL
+        # ═══════════════════════════════════════════════════════════
+
+        if not self.struct_id:
             raise UserError(_(
-                'Categorías SOPA 2025 no encontradas. '
-                'Por favor actualice el módulo con: odoo -u l10n_cl_hr_payroll'
+                'Debe seleccionar una estructura salarial para calcular la liquidación.\n\n'
+                'Configure la estructura en el campo "Estructura Salarial".'
             ))
-        
+
         # ═══════════════════════════════════════════════════════════
-        # PASO 1: HABERES BASE
+        # OBTENER REGLAS SALARIALES
         # ═══════════════════════════════════════════════════════════
-        
-        LineObj.create({
-            'slip_id': self.id,
-            'code': 'BASIC',
-            'name': 'Sueldo Base',
-            'sequence': 10,
-            'category_id': CategoryBase.id,
-            'amount': self.contract_id.wage,
-            'quantity': 1.0,
-            'rate': 100.0,
-            'total': self.contract_id.wage,
-        })
-        
-        # ═══════════════════════════════════════════════════════════
-        # PASO 2: PROCESAR INPUTS (SPRINT 3.2 ✨)
-        # ═══════════════════════════════════════════════════════════
-        
-        self._process_input_lines()
-        
-        # ═══════════════════════════════════════════════════════════
-        # PASO 3: INVALIDAR Y COMPUTAR TOTALIZADORES
-        # ═══════════════════════════════════════════════════════════
-        
-        self.invalidate_recordset(['line_ids'])
-        self._compute_totals()
-        
+
+        rules = self.struct_id.get_all_rules()
+
+        if not rules:
+            raise UserError(_(
+                'No hay reglas salariales definidas en la estructura "%s".\n\n'
+                'Configure las reglas en:\n'
+                'Configuración > Estructuras Salariales > %s > Reglas Salariales'
+            ) % (self.struct_id.name, self.struct_id.name))
+
         _logger.info(
-            "Totalizadores: imponible=$%s, tributable=$%s",
-            f"{self.total_imponible:,.0f}",
-            f"{self.total_tributable:,.0f}"
+            "Ejecutando %d reglas salariales para liquidación %s",
+            len(rules),
+            self.name
         )
-        
+
         # ═══════════════════════════════════════════════════════════
-        # PASO 3.5: GRATIFICACIÓN Y ASIGNACIÓN FAMILIAR (SPRINT 4) ✅
+        # PREPARAR CONTEXTO PARA REGLAS
         # ═══════════════════════════════════════════════════════════
-        
-        self._compute_gratification_lines()
-        self._compute_family_allowance_lines()
-        
-        # Recomputar totalizadores después de agregar gratificación/asignación
+
+        contract = self.contract_id
+        worked_days = self._get_worked_days_dict()
+        inputs_dict = self._get_inputs_dict()
+
+        # Procesar inputs de la nómina (horas extras, bonos, etc.)
+        self._process_input_lines()
+
+        # ═══════════════════════════════════════════════════════════
+        # EJECUTAR REGLAS EN ORDEN DE SEQUENCE
+        # ═══════════════════════════════════════════════════════════
+        #
+        # Las reglas se ejecutan en orden de sequence para manejar dependencias:
+        # - BASIC (10) → HABERES_IMPONIBLES (100) → TOTAL_IMPONIBLE (200)
+        # - BASE_TRIBUTABLE (202) → AFP (300), SALUD (301), AFC (302)
+        # - BASE_IMPUESTO_UNICO (400) → IMPUESTO_UNICO (401)
+        # - TOTAL_HABERES (900), TOTAL_DESCUENTOS (901) → NET (902)
+        #
+        # Invalidamos cache entre reglas críticas para actualizar categorías
+
+        rules_executed = 0
+        rules_skipped = 0
+
+        for rule in rules:
+            # Validar regla activa
+            if not rule.active:
+                rules_skipped += 1
+                continue
+
+            # Evaluar condición
+            try:
+                condition_satisfied = rule._satisfy_condition(self, contract, worked_days, inputs_dict)
+            except Exception as e:
+                _logger.error(
+                    "Error evaluando condición de regla %s (%s): %s",
+                    rule.code, rule.name, e
+                )
+                continue
+
+            if not condition_satisfied:
+                _logger.debug("Regla %s: condición NO satisfecha, omitiendo", rule.code)
+                rules_skipped += 1
+                continue
+
+            # Calcular monto
+            try:
+                amount = rule._compute_rule(self, contract, worked_days, inputs_dict)
+            except Exception as e:
+                _logger.error(
+                    "Error calculando monto de regla %s (%s): %s",
+                    rule.code, rule.name, e
+                )
+                continue
+
+            # Crear línea de nómina
+            try:
+                self.env['hr.payslip.line'].create({
+                    'slip_id': self.id,
+                    'code': rule.code,
+                    'name': rule.name,
+                    'sequence': rule.sequence,
+                    'category_id': rule.category_id.id if rule.category_id else False,
+                    'amount': abs(amount),
+                    'quantity': 1.0,
+                    'rate': 100.0,
+                    'total': amount,
+                })
+
+                rules_executed += 1
+
+                _logger.debug(
+                    "Regla %s ejecutada: %s = $%s",
+                    rule.code,
+                    rule.name,
+                    f"{amount:,.2f}"
+                )
+
+            except Exception as e:
+                _logger.error(
+                    "Error creando línea para regla %s (%s): %s",
+                    rule.code, rule.name, e
+                )
+                continue
+
+            # Invalidar cache después de reglas críticas que calculan categorías
+            # Esto permite que reglas subsecuentes accedan a categorías ya calculadas
+            if rule.code in ['BASIC', 'HABERES_IMPONIBLES', 'TOTAL_IMPONIBLE',
+                            'BASE_TRIBUTABLE', 'AFP', 'SALUD', 'AFC',
+                            'BASE_IMPUESTO_UNICO', 'IMPUESTO_UNICO']:
+                self.invalidate_recordset(['line_ids'])
+                self._compute_totals()
+
+        # ═══════════════════════════════════════════════════════════
+        # PROCESAMIENTO ADICIONAL (COMPATIBILIDAD)
+        # ═══════════════════════════════════════════════════════════
+
+        # Gratificación y asignación familiar (si no están en reglas)
+        if not self.line_ids.filtered(lambda l: l.code == 'GRAT'):
+            self._compute_gratification_lines()
+
+        if not self.line_ids.filtered(lambda l: l.code == 'ASIG_FAM'):
+            self._compute_family_allowance_lines()
+
+        # Aportes empleador (si no están en reglas)
+        if not self.line_ids.filtered(lambda l: l.code in ['APORTE_EMP_AFP', 'AFC_EMP']):
+            self._compute_employer_contribution_lines()
+
+        # ═══════════════════════════════════════════════════════════
+        # RECOMPUTAR TOTALES FINALES
+        # ═══════════════════════════════════════════════════════════
+
         self.invalidate_recordset(['line_ids'])
         self._compute_totals()
-        
-        # ═══════════════════════════════════════════════════════════
-        # PASO 4: DESCUENTOS PREVISIONALES
-        # ═══════════════════════════════════════════════════════════
-        
-        # 4.1 AFP (usa total_imponible con tope)
-        afp_amount = self._calculate_afp()
-        if afp_amount > 0:
-            LineObj.create({
-                'slip_id': self.id,
-                'code': 'AFP',
-                'name': f'AFP {self.contract_id.afp_id.name}',
-                'sequence': 100,
-                'category_id': CategoryLegal.id,
-                'amount': afp_amount,
-                'quantity': 1.0,
-                'rate': self.contract_id.afp_rate,
-                'total': -afp_amount,
-            })
-            _logger.debug("AFP: $%s", f"{afp_amount:,.0f}")
-        
-        # 4.2 SALUD (usa total_imponible)
-        health_amount = self._calculate_health()
-        if health_amount > 0:
-            health_name = 'FONASA' if self.contract_id.health_system == 'fonasa' \
-                         else f'ISAPRE {self.contract_id.isapre_id.name}'
-            LineObj.create({
-                'slip_id': self.id,
-                'code': 'HEALTH',
-                'name': health_name,
-                'sequence': 110,
-                'category_id': CategoryLegal.id,
-                'amount': health_amount,
-                'quantity': 1.0,
-                'rate': 7.0 if self.contract_id.health_system == 'fonasa' else 0.0,
-                'total': -health_amount,
-            })
-            _logger.debug("Salud: $%s", f"{health_amount:,.0f}")
-        
-        # 4.3 AFC (Seguro de Cesantía - SPRINT 3.2 ✨)
-        afc_amount = self._calculate_afc()
-        if afc_amount > 0:
-            LineObj.create({
-                'slip_id': self.id,
-                'code': 'AFC',
-                'name': 'Seguro de Cesantía',
-                'sequence': 115,
-                'category_id': CategoryLegal.id,
-                'amount': afc_amount,
-                'quantity': 1.0,
-                'rate': 0.6,
-                'total': -afc_amount,
-            })
-            _logger.debug("AFC: $%s", f"{afc_amount:,.0f}")
-        
-        # 4.4 APV (Ahorro Previsional Voluntario - P0-2) 🆕
-        apv_amount, apv_regime = self._calculate_apv()
-        if apv_amount > 0 and apv_regime:
-            apv_code = f'APV_{apv_regime}'  # APV_A o APV_B
-            apv_name = f'APV {self.contract_id.l10n_cl_apv_institution_id.name} (Régimen {apv_regime})'
-            
-            LineObj.create({
-                'slip_id': self.id,
-                'code': apv_code,
-                'name': apv_name,
-                'sequence': 116,
-                'category_id': CategoryLegal.id,
-                'amount': apv_amount,
-                'quantity': 1.0,
-                'rate': 0.0,
-                'total': -apv_amount,
-            })
-            
-            _logger.info(
-                "APV: $%s (Régimen %s) - %s",
-                f"{apv_amount:,.0f}",
-                apv_regime,
-                "Rebaja tributaria" if apv_regime == 'A' else "Sin rebaja"
-            )
-        
-        # ═══════════════════════════════════════════════════════════
-        # PASO 5: IMPUESTO ÚNICO (SPRINT 3.2 ✨)
-        # ═══════════════════════════════════════════════════════════
-        
-        self._compute_tax_lines()
-        
-        # ═══════════════════════════════════════════════════════════
-        # PASO 5.5: APORTES EMPLEADOR (SPRINT 4.3) ✅
-        # ═══════════════════════════════════════════════════════════
-        
-        self._compute_employer_contribution_lines()
-        
-        # ═══════════════════════════════════════════════════════════
-        # PASO 6: RECOMPUTAR TOTALES FINALES
-        # ═══════════════════════════════════════════════════════════
-        
-        self.invalidate_recordset(['line_ids'])
-        self._compute_totals()
-        
+
         # LOG FINAL
         _logger.info(
-            "✅ Liquidación %s completada: %d líneas, bruto=$%s, líquido=$%s",
+            "✅ Liquidación %s completada: %d líneas (%d reglas ejecutadas, %d omitidas), "
+            "bruto=$%s, líquido=$%s",
             self.name,
             len(self.line_ids),
+            rules_executed,
+            rules_skipped,
             f"{self.gross_wage:,.0f}",
             f"{self.net_wage:,.0f}"
         )
