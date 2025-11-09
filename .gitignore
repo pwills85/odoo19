@@ -88,3 +88,16 @@ Thumbs.db
 /test:
 addons/localization/.deprecated/
 addons/localization/.backup_*/
+
+# Backups SQL
+backups/*.sql
+backups/*.sql.gz
+
+# Coverage files
+.coverage
+*.coverage
+htmlcov/
+.coverage.*
+
+# Test baseline outputs
+baseline_tests_*.txt
