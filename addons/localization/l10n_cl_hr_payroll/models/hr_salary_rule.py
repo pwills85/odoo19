@@ -261,6 +261,7 @@ class HrSalaryRule(models.Model):
         - Librerías seguras
         """
         from odoo.exceptions import UserError
+        from datetime import date
 
         return {
             # Modelos principales
@@ -281,6 +282,7 @@ class HrSalaryRule(models.Model):
             'abs': abs,
             'round': round,
             'hasattr': hasattr,
+            'date': date,
 
             # Variable resultado
             'result': 0.0,

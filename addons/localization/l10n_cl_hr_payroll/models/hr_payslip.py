@@ -1053,10 +1053,15 @@ class HrPayslip(models.Model):
         # ═══════════════════════════════════════════════════════════
 
         if not self.struct_id:
-            raise UserError(_(
-                'Debe seleccionar una estructura salarial para calcular la liquidación.\n\n'
-                'Configure la estructura en el campo "Estructura Salarial".'
-            ))
+            # Auto-asignar estructura por defecto si no está configurada
+            default_struct = self.env.ref('l10n_cl_hr_payroll.structure_base_cl', raise_if_not_found=False)
+            if default_struct:
+                self.struct_id = default_struct
+            else:
+                raise UserError(_(
+                    'Debe seleccionar una estructura salarial para calcular la liquidación.\n\n'
+                    'Configure la estructura en el campo "Estructura Salarial".'
+                ))
 
         # ═══════════════════════════════════════════════════════════
         # OBTENER REGLAS SALARIALES
