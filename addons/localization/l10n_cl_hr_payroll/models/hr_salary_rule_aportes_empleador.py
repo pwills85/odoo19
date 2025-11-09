@@ -232,8 +232,8 @@ class HrPayslipAportesEmpleador(models.Model):
         """
         # Buscar UF en indicadores económicos
         indicator = self.env['hr.economic.indicators'].search([
-            ('date', '<=', reference_date)
-        ], order='date desc', limit=1)
+            ('period', '<=', reference_date)
+        ], order='period desc', limit=1)
         
         if indicator and indicator.uf:
             return indicator.uf

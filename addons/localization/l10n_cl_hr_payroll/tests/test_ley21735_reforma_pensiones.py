@@ -63,6 +63,14 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'uta': 780000.00,
             'minimum_wage': 500000.00
         })
+        # Octubre 2025 (para test_07)
+        self.env['hr.economic.indicators'].create({
+            'period': date(2025, 10, 1),
+            'uf': 37500.00,
+            'utm': 65000.00,
+            'uta': 780000.00,
+            'minimum_wage': 500000.00
+        })
         # Enero 2026 (períodos futuros)
         self.env['hr.economic.indicators'].create({
             'period': date(2026, 1, 1),
@@ -277,14 +285,32 @@ class TestLey21735ReformaPensiones(TransactionCase):
     def test_06_validation_blocks_missing_aporte(self):
         """Validación debe bloquear confirmación si falta aporte"""
 
+        # Configurar RUT para evitar validaciones previas
+        self.employee.write({
+            'identification_id': '12.345.678-9'
+        })
+
+        # Archivar contratos anteriores para evitar overlapping
+        existing_contracts = self.env['hr.contract'].search([
+            ('employee_id', '=', self.employee.id),
+            ('state', '=', 'open')
+        ])
+        existing_contracts.write({'state': 'cancel'})
+
         contract = self.env['hr.contract'].create({
             'name': 'Contrato Test Validación',
             'employee_id': self.employee.id,
             'wage': 1000000,
             'date_start': date(2025, 8, 1),
             'state': 'open',
-            'afp_id': self.afp.id
+            'afp_id': self.afp.id,
+            'health_system': 'fonasa'
         })
+
+        # Obtener indicador económico para agosto 2025
+        indicator_agosto = self.env['hr.economic.indicators'].search([
+            ('period', '=', date(2025, 8, 1))
+        ], limit=1)
 
         payslip = self.env['hr.payslip'].create({
             'name': 'Test Validación',
@@ -292,8 +318,12 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'contract_id': contract.id,
             'date_from': date(2025, 8, 1),
             'date_to': date(2025, 8, 31),
-            'struct_id': self.struct.id
+            'struct_id': self.struct.id,
+            'indicadores_id': indicator_agosto.id
         })
+
+        # Calcular primero para tener líneas válidas
+        payslip.compute_sheet()
 
         # Forzar aplica_ley21735 = True pero total = 0 (simular bug)
         payslip.write({
@@ -303,7 +333,7 @@ class TestLey21735ReformaPensiones(TransactionCase):
 
         # Intentar confirmar (debe fallar)
         with self.assertRaises(ValidationError) as cm:
-            payslip.write({'state': 'done'})
+            payslip.action_done()
 
         self.assertIn('Ley 21.735', str(cm.exception))
         self.assertIn('aporte empleador', str(cm.exception).lower())
@@ -322,11 +352,18 @@ class TestLey21735ReformaPensiones(TransactionCase):
 
         for wage, exp_cuenta, exp_seguro, exp_total in test_cases:
             with self.subTest(wage=wage):
+                # Archivar contratos anteriores para evitar overlapping
+                existing_contracts = self.env['hr.contract'].search([
+                    ('employee_id', '=', self.employee.id),
+                    ('state', '=', 'open')
+                ])
+                existing_contracts.write({'state': 'cancel'})
+
                 contract = self.env['hr.contract'].create({
                     'name': f'Contrato ${wage:,}',
                     'employee_id': self.employee.id,
                     'wage': wage,
-                    'date_start': date(2025, 8, 1),
+                    'date_start': date(2025, 10, 1),
                     'state': 'open',
                     'afp_id': self.afp.id
                 })
@@ -395,6 +432,13 @@ class TestLey21735ReformaPensiones(TransactionCase):
 
     def test_09_wage_cero_no_genera_aporte(self):
         """Wage 0 o negativo no debe generar aporte"""
+
+        # Archivar contratos anteriores para evitar overlapping
+        existing_contracts = self.env['hr.contract'].search([
+            ('employee_id', '=', self.employee.id),
+            ('state', '=', 'open')
+        ])
+        existing_contracts.write({'state': 'cancel'})
 
         contract = self.env['hr.contract'].create({
             'name': 'Contrato Sin Sueldo',
