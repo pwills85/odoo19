@@ -1,0 +1,17 @@
+{
+  "timestamp": "20251108_230835",
+  "date": "2025-11-08 23:08:35",
+  "modules": [
+    "l10n_cl_dte",
+    "l10n_cl_hr_payroll",
+    "l10n_cl_financial_reports"
+  ],
+  "odoo_version": "19.0",
+  "coverage_baseline": {
+    "l10n_cl_dte": 0,
+    "l10n_cl_hr_payroll": 0,
+    "l10n_cl_financial_reports": 0
+  },
+  "branch": "feat/cierre_total_brechas_profesional",
+  "backup_file": "pre_cierre_brechas_20251108_230835.sql"
+}
