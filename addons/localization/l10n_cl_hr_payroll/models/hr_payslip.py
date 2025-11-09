@@ -1133,7 +1133,7 @@ class HrPayslip(models.Model):
         - Usa categoría específica para NO imponibles
         """
         # Tope legal: 20% IMM
-        imm = self.indicadores_id.sueldo_minimo
+        imm = self.indicadores_id.minimum_wage
         tope_legal = imm * 0.20
         
         # Aplicar tope

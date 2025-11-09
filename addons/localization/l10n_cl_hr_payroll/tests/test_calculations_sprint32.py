@@ -14,6 +14,9 @@ Tests:
 from odoo.tests import tagged, TransactionCase
 from odoo.exceptions import ValidationError, UserError
 from datetime import date
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 @tagged('post_install', '-at_install', 'payroll_calc')
@@ -220,8 +223,8 @@ class TestPayrollCalculationsSprint32(TransactionCase):
         # Calcular liquidación
         self.payslip.action_compute_sheet()
         
-        # No debe existir línea TAX
-        tax_line = self.payslip.line_ids.filtered(lambda l: l.code == 'TAX')
+        # No debe existir línea IMPUESTO_UNICO
+        tax_line = self.payslip.line_ids.filtered(lambda l: l.code == 'IMPUESTO_UNICO')
         self.assertFalse(tax_line, "Tramo 1 debe estar exento")
     
     def test_tax_tramo2(self):
@@ -232,9 +235,9 @@ class TestPayrollCalculationsSprint32(TransactionCase):
         # Calcular liquidación
         self.payslip.action_compute_sheet()
         
-        # Debe existir línea TAX
-        tax_line = self.payslip.line_ids.filtered(lambda l: l.code == 'TAX')
-        self.assertTrue(tax_line, "Debe existir línea TAX")
+        # Debe existir línea IMPUESTO_UNICO
+        tax_line = self.payslip.line_ids.filtered(lambda l: l.code == 'IMPUESTO_UNICO')
+        self.assertTrue(tax_line, "Debe existir línea IMPUESTO_UNICO")
         
         # Base tributable = 1.000.000
         # - AFP = 1.000.000 * 0.1144 = 114.400
@@ -253,8 +256,8 @@ class TestPayrollCalculationsSprint32(TransactionCase):
         self.payslip.action_compute_sheet()
         
         # Verificar impuesto calculado
-        tax_line = self.payslip.line_ids.filtered(lambda l: l.code == 'TAX')
-        self.assertTrue(tax_line, "Debe existir línea TAX")
+        tax_line = self.payslip.line_ids.filtered(lambda l: l.code == 'IMPUESTO_UNICO')
+        self.assertTrue(tax_line, "Debe existir línea IMPUESTO_UNICO")
         
         # Base = 2.000.000 - (2.000.000 * 0.1144) - (2.000.000 * 0.07)
         # Base = 2.000.000 - 228.800 - 140.000 = 1.631.200

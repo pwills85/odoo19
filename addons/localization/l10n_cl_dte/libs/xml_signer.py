@@ -34,7 +34,7 @@ from datetime import date
 
 # P3.1 GAP CLOSURE: Structured logging with conditional JSON output
 from .structured_logging import get_dte_logger
-from .safe_xml_parser import fromstring_safe
+from .safe_xml_parser import fromstring_safe, parse_safe
 
 _logger = get_dte_logger(__name__)
 

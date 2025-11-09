@@ -72,7 +72,36 @@ app.add_middleware(ErrorTrackingMiddleware)
 # RATE LIMITING
 # ═══════════════════════════════════════════════════════════
 
-limiter = Limiter(key_func=get_remote_address)
+def get_user_identifier(request: Request) -> str:
+    """
+    Get unique user identifier for rate limiting.
+
+    Combines API key (if present) + IP address to prevent
+    bypassing rate limits by rotating IPs.
+
+    Args:
+        request: FastAPI Request object
+
+    Returns:
+        str: Unique identifier (api_key_prefix:ip_address)
+    """
+    # Try to get API key from Authorization header
+    api_key = "anonymous"
+    auth_header = request.headers.get("Authorization", "")
+
+    if auth_header.startswith("Bearer "):
+        # Extract token (first 8 chars for identifier, avoid logging full key)
+        token = auth_header[7:]  # Skip "Bearer "
+        api_key = token[:8] if token else "anonymous"
+
+    # Get client IP
+    ip_address = request.client.host if request.client else "unknown"
+
+    # Combine for unique identifier
+    return f"{api_key}:{ip_address}"
+
+
+limiter = Limiter(key_func=get_user_identifier)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 

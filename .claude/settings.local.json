@@ -59,7 +59,10 @@
       "Bash(curl:*)",
       "Bash(docker-compose down:*)",
       "Bash(/tmp/main_py_backup.txt)",
-      "Bash(timeout 90 docker-compose run:*)"
+      "Bash(timeout 90 docker-compose run:*)",
+      "Bash(git for-each-ref:*)",
+      "Bash(timeout 120 pytest:*)",
+      "Bash(timeout 180 pytest:*)"
     ],
     "deny": [],
     "ask": []
