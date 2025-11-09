@@ -252,7 +252,7 @@ class HrPayslip(models.Model):
     # Campo alias para compatibilidad con tests y código existente
     employer_reforma_2025 = fields.Monetary(
         string='Aporte Empleador Reforma 2025',
-        compute='_compute_employer_reforma_2025_alias',
+        compute='_compute_employer_reforma_2025',
         store=True,
         currency_field='currency_id',
         readonly=True,
@@ -432,19 +432,39 @@ class HrPayslip(models.Model):
                 f"Total (1%): ${total_aporte:,.0f}"
             )
 
-    @api.depends('employer_total_ley21735')
-    def _compute_employer_reforma_2025_alias(self):
+    @api.depends('contract_id', 'contract_id.date_start', 'contract_id.wage', 'date_from')
+    def _compute_employer_reforma_2025(self):
         """
-        Alias computed field para compatibilidad con tests y código existente
+        Cálculo Aporte Empleador Reforma 2025 (Previred)
 
-        Mapea employer_total_ley21735 a employer_reforma_2025 para mantener
-        compatibilidad con código que usa el nombre corto.
+        Reforma Previsional 2025 (desde 2025-01-01):
+        - Aporte empleador: 1% sobre remuneración imponible
+        - Vigencia: Contratos desde 01-01-2025
+        - Sin tope
+
+        NOTA: Diferente de Ley 21.735 que aplica desde 01-08-2025.
+        Este campo cubre la reforma general Previred desde enero 2025.
 
         Returns:
-            None (actualiza campo compute)
+            None (actualiza campo computed)
         """
+        from datetime import date
+
+        FECHA_VIGENCIA_REFORMA_2025 = date(2025, 1, 1)
+
         for payslip in self:
-            payslip.employer_reforma_2025 = payslip.employer_total_ley21735
+            # Valor por defecto
+            payslip.employer_reforma_2025 = 0.0
+
+            # Validaciones
+            if not payslip.contract_id or not payslip.contract_id.date_start:
+                continue
+
+            # Verificar vigencia: contratos desde 2025-01-01
+            if payslip.contract_id.date_start >= FECHA_VIGENCIA_REFORMA_2025:
+                # Calcular 1% sobre sueldo base
+                base_calculo = payslip.contract_id.wage or 0.0
+                payslip.employer_reforma_2025 = base_calculo * 0.01  # 1%
 
     @api.constrains('state', 'aplica_ley21735', 'employer_total_ley21735')
     def _validate_ley21735_before_confirm(self):
