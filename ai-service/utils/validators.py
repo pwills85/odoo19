@@ -54,18 +54,22 @@ def sanitize_rut(rut: str) -> Optional[str]:
     """
     Sanitize and format RUT to standard format.
 
-    Delegates to python-stdnum.cl.rut.compact().
+    Validates first, then formats using python-stdnum.
 
     Args:
         rut: Input RUT (any format)
 
     Returns:
-        Formatted RUT (e.g., "12345678-9") or None if invalid
+        Formatted RUT (e.g., "12345678-5") or None if invalid
     """
     if not rut or not isinstance(rut, str):
         return None
 
     try:
+        # Validate first before sanitizing
+        if not is_valid(rut):
+            return None
+
         # Usar compact de stdnum (limpia el RUT)
         clean = compact(rut)
         # Formato: XXXXXXXX-Y

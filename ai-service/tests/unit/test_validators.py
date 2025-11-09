@@ -28,16 +28,16 @@ class TestRUTValidation:
 
     def test_valid_rut_with_dots(self):
         """Test valid RUT with dots"""
-        assert validate_rut("12.345.678-9") is True
+        assert validate_rut("12.345.678-5") is True
 
     def test_valid_rut_without_dots(self):
         """Test valid RUT without dots"""
-        assert validate_rut("12345678-9") is True
+        assert validate_rut("12345678-5") is True
 
     def test_valid_rut_with_k(self):
         """Test valid RUT with K checksum"""
-        assert validate_rut("12345678-K") is True
-        assert validate_rut("12345678-k") is True  # lowercase should work
+        assert validate_rut("10.600.000-K") is True
+        assert validate_rut("10600000-k") is True  # lowercase should work
 
     def test_invalid_rut_checksum(self):
         """Test invalid RUT checksum"""
@@ -51,8 +51,8 @@ class TestRUTValidation:
 
     def test_sanitize_rut(self):
         """Test RUT sanitization"""
-        assert sanitize_rut("12.345.678-9") == "12345678-9"
-        assert sanitize_rut("12345678-9") == "12345678-9"
+        assert sanitize_rut("12.345.678-5") == "12345678-5"
+        assert sanitize_rut("12345678-5") == "12345678-5"
         assert sanitize_rut("invalid") is None
 
 
@@ -90,8 +90,8 @@ class TestDTEValidation:
             "tipo": 33,
             "folio": 12345,
             "monto_total": 100000,
-            "rut_emisor": "12345678-9",
-            "rut_receptor": "98765432-1"
+            "rut_emisor": "12345678-5",
+            "rut_receptor": "98765432-5"  # Valid RUT with correct checksum
         }
         is_valid, errors = validate_dte_data(dte)
         assert is_valid is True
@@ -114,7 +114,7 @@ class TestDTEValidation:
             "tipo": 33,
             "folio": 12345,
             "monto_total": 100000,
-            "rut_emisor": "00000000-0"  # Invalid checksum
+            "rut_emisor": "12345678-0"  # Invalid checksum (should be -9)
         }
         is_valid, errors = validate_dte_data(dte)
         assert is_valid is False
