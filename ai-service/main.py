@@ -11,6 +11,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, validator
 from typing import Optional, Dict, Any, List
 import re
+import time
+from datetime import datetime, timezone
 import structlog
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -28,6 +30,12 @@ from routes.analytics import router as analytics_router
 # ═══════════════════════════════════════════════════════════
 
 logger = structlog.get_logger()
+
+# ═══════════════════════════════════════════════════════════
+# SERVICE UPTIME TRACKING
+# ═══════════════════════════════════════════════════════════
+
+SERVICE_START_TIME = time.time()
 
 # ═══════════════════════════════════════════════════════════
 # FASTAPI APP
@@ -230,48 +238,272 @@ class PreviredIndicatorsResponse(BaseModel):
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint with real dependency verification"""
-    from datetime import datetime
+    """
+    Enhanced health check endpoint with comprehensive dependency validation.
+
+    Returns comprehensive status of:
+    - Redis Sentinel cluster
+    - Anthropic API configuration
+    - Plugin Registry
+    - Knowledge Base
+    - Service metrics
+
+    Returns:
+        dict: Health status with dependency details
+
+    Status Codes:
+        200: All dependencies healthy
+        207: Service degraded (some non-critical issues)
+        503: Service unhealthy (critical dependency down)
+    """
     from fastapi.responses import JSONResponse
-    
-    health = {
-        "status": "healthy",
-        "service": settings.app_name,
-        "version": settings.app_version,
-        "timestamp": datetime.utcnow().isoformat(),
-        "dependencies": {}
-    }
-    
-    # 1. Check Redis connectivity
+
+    start_time = time.time()
+    overall_status = "healthy"
+    dependencies = {}
+
+    # 1. Check Redis Sentinel
     try:
         from utils.redis_helper import get_redis_client
+
+        redis_start = time.time()
         redis_client = get_redis_client()
         redis_client.ping()
-        health["dependencies"]["redis"] = {
+        redis_latency = (time.time() - redis_start) * 1000
+
+        # Get sentinel info (if available)
+        sentinel_info = {}
+        try:
+            from utils.redis_helper import sentinel
+            if sentinel:
+                # Get master info
+                master_info = sentinel.discover_master('mymaster')
+                replicas_info = sentinel.discover_slaves('mymaster')
+                sentinels_info = sentinel.discover_sentinels('mymaster')
+
+                sentinel_info = {
+                    "type": "sentinel",
+                    "master": f"{master_info[0]}:{master_info[1]}",
+                    "replicas": len(replicas_info),
+                    "sentinels": len(sentinels_info) + 1  # +1 for current
+                }
+        except:
+            sentinel_info = {"type": "standalone"}
+
+        dependencies["redis"] = {
             "status": "up",
-            "message": "Connection successful"
+            **sentinel_info,
+            "latency_ms": round(redis_latency, 2)
         }
     except Exception as e:
-        health["dependencies"]["redis"] = {
+        dependencies["redis"] = {
             "status": "down",
             "error": str(e)[:200]
         }
-        health["status"] = "degraded"
+        overall_status = "unhealthy"
         logger.error("health_check_redis_failed", error=str(e))
-    
-    # 2. Check Anthropic API configuration (not calling API to avoid costs)
-    health["dependencies"]["anthropic"] = {
-        "status": "configured" if settings.anthropic_api_key else "not_configured",
-        "model": settings.anthropic_model if settings.anthropic_api_key else None
+
+    # 2. Check Anthropic API
+    try:
+        api_key_present = bool(settings.anthropic_api_key and
+                              settings.anthropic_api_key != "default_key")
+
+        anthropic_status = {
+            "status": "configured" if api_key_present else "not_configured",
+            "model": settings.anthropic_model,
+            "api_key_present": api_key_present
+        }
+
+        # Optional: Test actual connectivity (commented out for performance)
+        # Uncomment if you want to test real API calls
+        # try:
+        #     from clients.anthropic_client import AnthropicClient
+        #     client = AnthropicClient()
+        #     # Make a lightweight test call (count tokens)
+        #     await client.estimate_tokens("health check test", max_tokens=10)
+        #     anthropic_status["connectivity"] = "ok"
+        # except:
+        #     anthropic_status["connectivity"] = "unreachable"
+        #     overall_status = "degraded"
+
+        dependencies["anthropic"] = anthropic_status
+
+    except Exception as e:
+        dependencies["anthropic"] = {
+            "status": "error",
+            "error": str(e)[:200]
+        }
+        overall_status = "degraded"
+        logger.error("health_check_anthropic_failed", error=str(e))
+
+    # 3. Check Plugin Registry
+    try:
+        from plugins.registry import get_plugin_registry
+
+        plugin_registry = get_plugin_registry()
+        plugins_list = plugin_registry.list_plugins()
+
+        # Extract module names from plugin dicts
+        plugin_modules = [plugin.get('module', 'unknown') for plugin in plugins_list]
+
+        dependencies["plugin_registry"] = {
+            "status": "loaded",
+            "plugins_count": len(plugins_list),
+            "plugins": plugin_modules
+        }
+    except Exception as e:
+        dependencies["plugin_registry"] = {
+            "status": "error",
+            "error": str(e)[:200]
+        }
+        overall_status = "degraded"
+        logger.error("health_check_plugins_failed", error=str(e))
+
+    # 4. Check Knowledge Base
+    try:
+        from chat.knowledge_base import KnowledgeBase
+
+        knowledge_base = KnowledgeBase()
+
+        modules_set = set()
+        for doc in knowledge_base.documents:
+            modules_set.add(doc.get("module", "unknown"))
+
+        dependencies["knowledge_base"] = {
+            "status": "loaded",
+            "documents_count": len(knowledge_base.documents),
+            "modules": sorted(list(modules_set))
+        }
+    except Exception as e:
+        dependencies["knowledge_base"] = {
+            "status": "error",
+            "error": str(e)[:200]
+        }
+        overall_status = "degraded"
+        logger.error("health_check_knowledge_base_failed", error=str(e))
+
+    # 5. Get metrics (optional, from Redis if available)
+    metrics = {}
+    try:
+        if dependencies.get("redis", {}).get("status") == "up":
+            # Try to get metrics from Redis
+            from utils.redis_helper import get_redis_client
+            redis_client = get_redis_client(read_only=True)
+
+            total_requests = redis_client.get("metrics:total_requests")
+            cache_hits = redis_client.get("metrics:cache_hits")
+            cache_total = redis_client.get("metrics:cache_total")
+
+            metrics = {
+                "total_requests": int(total_requests) if total_requests else 0,
+                "cache_hit_rate": (
+                    round(int(cache_hits) / int(cache_total), 3)
+                    if cache_total and int(cache_total) > 0
+                    else 0.0
+                )
+            }
+    except:
+        # Metrics are optional
+        pass
+
+    # Build response
+    health_response = {
+        "status": overall_status,
+        "service": "AI Microservice - DTE Intelligence",
+        "version": settings.app_version,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "uptime_seconds": int(time.time() - SERVICE_START_TIME),
+        "dependencies": dependencies,
+        "health_check_duration_ms": round((time.time() - start_time) * 1000, 2)
     }
-    
-    # OpenAI eliminado - Solo Anthropic
-    
-    # Return 503 if any critical dependency is down
-    if health["status"] == "degraded":
-        return JSONResponse(status_code=503, content=health)
-    
-    return health
+
+    if metrics:
+        health_response["metrics"] = metrics
+
+    # Return appropriate HTTP status code
+    status_code = 200 if overall_status == "healthy" else (
+        503 if overall_status == "unhealthy" else 207  # 207 = Multi-Status (degraded)
+    )
+
+    logger.info("health_check_completed",
+                status=overall_status,
+                duration_ms=health_response["health_check_duration_ms"])
+
+    return JSONResponse(
+        content=health_response,
+        status_code=status_code
+    )
+
+
+@app.get("/ready")
+async def readiness_check():
+    """
+    Readiness probe for Kubernetes/orchestrators.
+
+    Returns 200 only if service is ready to accept traffic.
+    More strict than health check - verifies all critical dependencies.
+
+    Returns:
+        dict: Simple ready/not-ready status
+
+    Status Codes:
+        200: Service ready to accept traffic
+        503: Service not ready
+    """
+    from fastapi.responses import JSONResponse
+
+    try:
+        # Check critical dependencies only
+        from utils.redis_helper import get_redis_client
+        redis_client = get_redis_client()
+        redis_client.ping()
+
+        # Check that essential components are loaded
+        from plugins.registry import get_plugin_registry
+        from chat.knowledge_base import KnowledgeBase
+
+        plugin_registry = get_plugin_registry()
+        knowledge_base = KnowledgeBase()
+
+        plugins_list = plugin_registry.list_plugins()
+        if len(plugins_list) == 0:
+            raise Exception("No plugins loaded")
+
+        if len(knowledge_base.documents) == 0:
+            raise Exception("No knowledge base documents")
+
+        logger.info("readiness_check_passed",
+                    plugins=len(plugins_list),
+                    kb_docs=len(knowledge_base.documents))
+
+        return {"status": "ready"}
+
+    except Exception as e:
+        logger.error("readiness_check_failed", error=str(e))
+        return JSONResponse(
+            content={"status": "not_ready", "error": str(e)[:200]},
+            status_code=503
+        )
+
+
+@app.get("/live")
+async def liveness_check():
+    """
+    Liveness probe for Kubernetes/orchestrators.
+
+    Returns 200 if the application is alive (even if dependencies are down).
+    Used to determine if container should be restarted.
+
+    Returns:
+        dict: Simple alive status
+
+    Status Codes:
+        200: Service is alive
+    """
+    return {
+        "status": "alive",
+        "uptime_seconds": int(time.time() - SERVICE_START_TIME)
+    }
 
 
 @app.get("/metrics")
@@ -780,10 +1012,15 @@ async def get_sii_monitoring_status(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     """
-    Obtiene estado del sistema de monitoreo SII.
+    Obtiene estado del sistema de monitoreo SII con métricas desde Redis.
+    
+    Métricas recuperadas:
+    - sii_monitor:stats - Estadísticas generales (total_checks, error_rate)
+    - sii_monitor:alerts - Alertas activas
+    - sii_monitor:last_check - Timestamp del último chequeo
     
     Returns:
-        Dict con estado del sistema
+        Dict con estado del sistema y métricas reales desde Redis
     """
     if credentials.credentials != settings.api_key:
         raise HTTPException(
@@ -794,12 +1031,44 @@ async def get_sii_monitoring_status(
     try:
         orchestrator = get_orchestrator()
         
-        # TODO: Agregar métricas reales desde Redis
+        # Retrieve metrics from Redis
+        redis_client = get_redis()
+        
+        # Get stats
+        stats_data = {}
+        last_execution = None
+        news_count = 0
+        
+        try:
+            # Try to get stats from Redis
+            stats_raw = await redis_client.get("sii_monitor:stats")
+            if stats_raw:
+                import json
+                stats_data = json.loads(stats_raw)
+            
+            # Get last check timestamp
+            last_check_raw = await redis_client.get("sii_monitor:last_check")
+            if last_check_raw:
+                last_execution = last_check_raw.decode('utf-8') if isinstance(last_check_raw, bytes) else last_check_raw
+            
+            # Get alerts count (list length)
+            alerts_raw = await redis_client.get("sii_monitor:alerts")
+            if alerts_raw:
+                alerts_data = json.loads(alerts_raw)
+                news_count = len(alerts_data) if isinstance(alerts_data, list) else 0
+                
+        except Exception as redis_error:
+            logger.warning("redis_metrics_retrieval_failed", 
+                          error=str(redis_error),
+                          message="Falling back to default values")
+        
         status_data = {
             "status": "operational",
             "orchestrator_initialized": orchestrator is not None,
-            "last_execution": None,  # TODO: Obtener desde Redis
-            "news_count_last_24h": 0,  # TODO: Obtener desde Redis
+            "last_execution": last_execution,
+            "news_count_last_24h": news_count,
+            "total_checks": stats_data.get("total_checks", 0),
+            "error_rate": stats_data.get("error_rate", 0.0)
         }
         
         return status_data

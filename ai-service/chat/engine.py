@@ -234,7 +234,7 @@ class ChatEngine:
             response = ChatResponse(
                 message=response_text,
                 sources=[doc['title'] for doc in relevant_docs],
-                confidence=95.0,  # TODO: Calculate from LLM confidence scores
+                confidence=self._calculate_confidence(response_text, len(history)),
                 session_id=session_id,
                 llm_used=llm_used,
                 tokens_used=tokens_used,
@@ -626,7 +626,7 @@ Focus on this module and suggest other specialists if the question is out of sco
                 "type": "done",
                 "metadata": {
                     "sources": [doc['title'] for doc in relevant_docs],
-                    "confidence": 95.0,
+                    "confidence": self._calculate_confidence(full_response, len(history)),
                     "llm_used": "anthropic",
                     "tokens_used": tokens_used,
                     "session_id": session_id
@@ -644,6 +644,54 @@ Focus on this module and suggest other specialists if the question is out of sco
                         error=str(e),
                         exc_info=True)
             yield {"type": "error", "content": str(e)}
+
+    def _calculate_confidence(self, response_text: str, message_count: int = 1) -> float:
+        """
+        Calculate confidence score based on response quality indicators.
+        
+        Confidence factors:
+        - Response length (longer = more detailed = higher confidence)
+        - Presence of structured output (JSON, lists, code blocks)
+        - Absence of uncertainty phrases
+        - Context depth (more messages = better understanding)
+        
+        Args:
+            response_text: The AI response text
+            message_count: Number of messages in conversation context
+            
+        Returns:
+            float: Confidence score between 0.0 and 100.0
+        """
+        confidence = 50.0  # Base confidence
+        
+        # Factor 1: Response length (up to +20 points)
+        # Longer responses tend to be more detailed and confident
+        length_score = min(len(response_text) / 100, 20)
+        confidence += length_score
+        
+        # Factor 2: Structured output (+15 points)
+        # Presence of JSON, lists, or code blocks indicates confident response
+        structured_markers = ['{', '[', '```', '- ', '* ', '1.', '2.']
+        if any(marker in response_text for marker in structured_markers):
+            confidence += 15
+        
+        # Factor 3: Uncertainty detection (-20 points)
+        # Phrases indicating AI is unsure
+        uncertainty_phrases = [
+            'no estoy seguro', 'no sé', 'quizás', 'tal vez', 'posiblemente',
+            'not sure', "don't know", 'maybe', 'perhaps', 'possibly',
+            'no puedo', 'cannot confirm', 'unclear', 'no está claro'
+        ]
+        if any(phrase in response_text.lower() for phrase in uncertainty_phrases):
+            confidence -= 20
+        
+        # Factor 4: Context depth (up to +15 points)
+        # More conversation context = better understanding
+        context_score = min(message_count * 3, 15)
+        confidence += context_score
+        
+        # Clamp to [0, 100] range
+        return max(0.0, min(100.0, confidence))
 
     def get_conversation_stats(self, session_id: str) -> Dict:
         """

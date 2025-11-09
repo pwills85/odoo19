@@ -48,39 +48,46 @@ class TestPayrollCalculationP1(TransactionCase):
             'minimum_wage': 500000.00,
         })
         
-        # Topes legales 2025
-        cls.legal_caps = cls.env['l10n_cl.legal.caps'].create({
-            'year': 2025,
-            'tope_imponible_afp_uf': 81.6,
-            'tope_imponible_ips_uf': 81.6,
-            'tope_apv_mensual_uf': 50.0,
-            'tope_apv_anual_uf': 600.0,
-        })
+        # Topes legales 2025 (API actualizada a Odoo 19)
+        # Crear solo si no existen (evitar duplicados)
+        legal_caps_data = [
+            ('AFP_IMPONIBLE_CAP', 81.6),
+            ('APV_CAP_MONTHLY', 50.0),
+            ('APV_CAP_ANNUAL', 600.0),
+        ]
+        for code, amount in legal_caps_data:
+            if not cls.env['l10n_cl.legal.caps'].search([
+                ('code', '=', code),
+                ('valid_from', '=', date(2025, 1, 1))
+            ]):
+                cls.env['l10n_cl.legal.caps'].create({
+                    'code': code,
+                    'amount': amount,
+                    'unit': 'uf',
+                    'valid_from': date(2025, 1, 1),
+                })
         
-        # Tramos impuesto 2025 (simplificado)
-        cls.env['hr.tax.bracket'].create([
-            {
-                'year': 2025,
-                'from_amount': 0.00,
-                'to_amount': 916380.00,
-                'rate': 0.0,
-                'fixed_amount': 0.0,
-            },
-            {
-                'year': 2025,
-                'from_amount': 916380.01,
-                'to_amount': 2035200.00,
-                'rate': 4.0,
-                'fixed_amount': 0.0,
-            },
-            {
-                'year': 2025,
-                'from_amount': 2035200.01,
-                'to_amount': 3391200.00,
-                'rate': 8.0,
-                'fixed_amount': 44752.80,
-            },
-        ])
+        # Tramos impuesto 2025 (simplificado) - API actualizada a Odoo 19
+        # Valores en UTM, no en CLP (UTM 2025 = 65,967)
+        # Crear solo si no existen (evitar duplicados)
+        tax_brackets_data = [
+            (1, 0.0, 13.89, 0.0, 0.0),    # 916,380 / 65,967
+            (2, 13.89, 30.85, 4.0, 0.0),  # 2,035,200 / 65,967
+            (3, 30.85, 51.41, 8.0, 0.68), # 3,391,200 / 65,967; rebaja: 44,752.80 / 65,967
+        ]
+        for tramo, desde, hasta, tasa, rebaja in tax_brackets_data:
+            if not cls.env['hr.tax.bracket'].search([
+                ('tramo', '=', tramo),
+                ('vigencia_desde', '=', date(2025, 1, 1))
+            ]):
+                cls.env['hr.tax.bracket'].create({
+                    'tramo': tramo,
+                    'desde': desde,
+                    'hasta': hasta,
+                    'tasa': tasa,
+                    'rebaja': rebaja,
+                    'vigencia_desde': date(2025, 1, 1),
+                })
         
         # Empleados
         cls.employee_low = cls._create_employee(cls, 'Juan Pérez', '12345678-9')
@@ -118,18 +125,14 @@ class TestPayrollCalculationP1(TransactionCase):
     
     def _create_employee(self, name, rut):
         """Helper: crear empleado"""
-        names = name.split()
         return self.env['hr.employee'].create({
             'name': name,
-            'firstname': names[0] if len(names) > 0 else '',
-            'lastname': names[1] if len(names) > 1 else '',
-            'identification_id': rut,
             'company_id': self.company.id,
         })
     
     def _create_contract(self, employee, wage, ref, apv_monto=0, apv_regimen=False):
         """Helper: crear contrato"""
-        return self.env['hr.contract'].create({
+        vals = {
             'name': 'Contrato %s' % ref,
             'employee_id': employee.id,
             'wage': wage,
@@ -137,9 +140,15 @@ class TestPayrollCalculationP1(TransactionCase):
             'date_start': date(2025, 1, 1),
             'afp_id': self.afp.id,
             'company_id': self.company.id,
-            'apv_monto': apv_monto,
-            'apv_regimen': apv_regimen,
-        })
+        }
+
+        # Agregar APV solo si se especifica
+        if apv_monto > 0:
+            vals['l10n_cl_apv_amount'] = apv_monto
+        if apv_regimen:
+            vals['l10n_cl_apv_regime'] = apv_regimen
+
+        return self.env['hr.contract'].create(vals)
     
     def _create_payslip(self, employee, contract):
         """Helper: crear y calcular liquidación"""

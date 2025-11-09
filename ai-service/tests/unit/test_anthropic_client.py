@@ -37,8 +37,13 @@ from clients.anthropic_client import AnthropicClient, get_anthropic_client
 
 @pytest.fixture
 def mock_anthropic_client():
-    """Mock AsyncAnthropic client"""
-    return AsyncMock(spec=anthropic.AsyncAnthropic)
+    """Mock AsyncAnthropic client with proper nested mocks"""
+    mock_client = AsyncMock(spec=anthropic.AsyncAnthropic)
+    # Properly configure nested mocks for messages API
+    mock_client.messages = AsyncMock()
+    mock_client.messages.count_tokens = AsyncMock()
+    mock_client.messages.create = AsyncMock()
+    return mock_client
 
 
 @pytest.fixture
@@ -268,10 +273,10 @@ async def test_validate_dte_success(anthropic_client, sample_dte_data, mock_anth
 
             anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
-            # Mock utilities
-            with patch('clients.anthropic_client.extract_json_from_llm_response') as mock_extract, \
-                 patch('clients.anthropic_client.validate_llm_json_schema') as mock_validate, \
-                 patch('clients.anthropic_client.get_cost_tracker') as mock_tracker:
+            # Mock utilities (patch where they're imported - inside validate_dte)
+            with patch('utils.llm_helpers.extract_json_from_llm_response') as mock_extract, \
+                 patch('utils.llm_helpers.validate_llm_json_schema') as mock_validate, \
+                 patch('utils.cost_tracker.get_cost_tracker') as mock_tracker:
 
                 mock_extract.return_value = {"c": 85.0, "w": ["check_rut"], "e": [], "r": "send"}
                 mock_validate.return_value = {"c": 85.0, "w": ["check_rut"], "e": [], "r": "send"}
@@ -305,9 +310,9 @@ async def test_validate_dte_with_caching(anthropic_client, sample_dte_data, mock
 
             anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
-            with patch('clients.anthropic_client.extract_json_from_llm_response') as mock_extract, \
-                 patch('clients.anthropic_client.validate_llm_json_schema') as mock_validate, \
-                 patch('clients.anthropic_client.get_cost_tracker') as mock_tracker:
+            with patch('utils.llm_helpers.extract_json_from_llm_response') as mock_extract, \
+                 patch('utils.llm_helpers.validate_llm_json_schema') as mock_validate, \
+                 patch('utils.cost_tracker.get_cost_tracker') as mock_tracker:
 
                 mock_extract.return_value = {"c": 85.0, "w": [], "e": [], "r": "send"}
                 mock_validate.return_value = {"c": 85.0, "w": [], "e": [], "r": "send"}
@@ -390,7 +395,7 @@ async def test_validate_dte_json_parse_error(anthropic_client, sample_dte_data, 
 
             anthropic_client.client.messages.create = AsyncMock(return_value=mock_response)
 
-            with patch('clients.anthropic_client.extract_json_from_llm_response') as mock_extract:
+            with patch('utils.llm_helpers.extract_json_from_llm_response') as mock_extract:
                 mock_extract.side_effect = ValueError("Invalid JSON")
 
                 result = await anthropic_client.validate_dte(sample_dte_data, [])
@@ -423,11 +428,13 @@ async def test_validate_dte_with_history(anthropic_client, sample_dte_data, mock
 
             anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
-            with patch('clients.anthropic_client.extract_json_from_llm_response') as mock_extract, \
-                 patch('clients.anthropic_client.validate_llm_json_schema') as mock_validate:
+            with patch('utils.llm_helpers.extract_json_from_llm_response') as mock_extract, \
+                 patch('utils.llm_helpers.validate_llm_json_schema') as mock_validate, \
+                 patch('utils.cost_tracker.get_cost_tracker') as mock_tracker:
 
                 mock_extract.return_value = {"c": 60.0, "w": ["RUT mismatch"], "e": [], "r": "review"}
                 mock_validate.return_value = {"c": 60.0, "w": ["RUT mismatch"], "e": [], "r": "review"}
+                mock_tracker.return_value.record_usage = MagicMock()
 
                 result = await anthropic_client.validate_dte(sample_dte_data, history)
 
@@ -673,9 +680,9 @@ async def test_validate_dte_cache_hit_tracking(anthropic_client, sample_dte_data
 
             anthropic_client.client.messages.create = AsyncMock(return_value=mock_response)
 
-            with patch('clients.anthropic_client.extract_json_from_llm_response') as mock_extract, \
-                 patch('clients.anthropic_client.validate_llm_json_schema') as mock_validate, \
-                 patch('clients.anthropic_client.get_cost_tracker') as mock_tracker:
+            with patch('utils.llm_helpers.extract_json_from_llm_response') as mock_extract, \
+                 patch('utils.llm_helpers.validate_llm_json_schema') as mock_validate, \
+                 patch('utils.cost_tracker.get_cost_tracker') as mock_tracker:
 
                 mock_extract.return_value = {"c": 85.0, "w": [], "e": [], "r": "send"}
                 mock_validate.return_value = {"c": 85.0, "w": [], "e": [], "r": "send"}

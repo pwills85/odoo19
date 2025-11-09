@@ -1,0 +1,210 @@
+# Prometheus Configuration
+# ========================
+# Project: Odoo 19 - Chilean Localization Stack
+# Component: Monitoring Server
+# Created: 2025-11-09
+#
+# Scrape Targets:
+#   - ai-service (FastAPI /metrics)
+#   - redis-master (Redis exporter)
+#   - redis-replica-1, redis-replica-2
+#   - redis-sentinel-1, redis-sentinel-2, redis-sentinel-3
+#   - prometheus (self-monitoring)
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+  # External labels (for multi-cluster federation)
+  external_labels:
+    cluster: 'odoo19_production'
+    environment: 'production'
+    region: 'us-east-1'
+    project: 'chilean_localization'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+      timeout: 10s
+      api_version: v2
+
+# Load alert rules
+rule_files:
+  - '/etc/prometheus/alerts.yml'
+
+# Scrape configurations
+scrape_configs:
+  # ======================
+  # AI Microservice
+  # ======================
+  - job_name: 'ai-service'
+    static_configs:
+      - targets: ['ai-service:8002']
+        labels:
+          service: 'ai-service'
+          tier: 'application'
+          criticality: 'high'
+
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+    # Relabel instance to be more readable
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'ai-service-primary'
+
+    # Only scrape if service is healthy
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'up'
+        action: keep
+
+  # ======================
+  # Redis Master
+  # ======================
+  - job_name: 'redis-master'
+    static_configs:
+      - targets: ['redis-master:6379']
+        labels:
+          service: 'redis'
+          role: 'master'
+          tier: 'cache'
+          criticality: 'critical'
+
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # ======================
+  # Redis Replicas
+  # ======================
+  - job_name: 'redis-replica'
+    static_configs:
+      - targets:
+          - 'redis-replica-1:6379'
+          - 'redis-replica-2:6379'
+        labels:
+          service: 'redis'
+          role: 'replica'
+          tier: 'cache'
+          criticality: 'high'
+
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # ======================
+  # Redis Sentinels
+  # ======================
+  - job_name: 'redis-sentinel'
+    static_configs:
+      - targets:
+          - 'redis-sentinel-1:26379'
+          - 'redis-sentinel-2:26379'
+          - 'redis-sentinel-3:26379'
+        labels:
+          service: 'redis'
+          role: 'sentinel'
+          tier: 'cache'
+          criticality: 'high'
+
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # ======================
+  # Odoo Main Application
+  # ======================
+  - job_name: 'odoo'
+    static_configs:
+      - targets: ['odoo:8069']
+        labels:
+          service: 'odoo'
+          tier: 'application'
+          criticality: 'critical'
+
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 15s
+
+    # Odoo puede ser lento al generar métricas
+    # Aumentamos timeout
+
+  # ======================
+  # PostgreSQL Database
+  # ======================
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['db:5432']
+        labels:
+          service: 'postgresql'
+          tier: 'database'
+          criticality: 'critical'
+
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # ======================
+  # Prometheus Self-Monitoring
+  # ======================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+          tier: 'monitoring'
+          criticality: 'high'
+
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # ======================
+  # Alertmanager
+  # ======================
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+        labels:
+          service: 'alertmanager'
+          tier: 'monitoring'
+          criticality: 'high'
+
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # ======================
+  # Grafana (if metrics exposed)
+  # ======================
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+        labels:
+          service: 'grafana'
+          tier: 'monitoring'
+          criticality: 'medium'
+
+    metrics_path: '/metrics'
+    scrape_interval: 60s
+
+# Storage and query configuration are set via command-line flags in docker-compose.yml:
+#   --storage.tsdb.path=/prometheus
+#   --storage.tsdb.retention.time=15d
+#   --storage.tsdb.retention.size=10GB
+#   --web.enable-lifecycle
+#
+# These cannot be set in this config file.
+
+# Remote write (opcional - para long-term storage)
+# remote_write:
+#   - url: "https://prometheus-remote-storage.example.com/api/v1/write"
+#     queue_config:
+#       capacity: 10000
+#       max_shards: 10
+#       min_shards: 1
+#       max_samples_per_send: 5000
+#       batch_send_deadline: 5s
+#       min_backoff: 30ms
+#       max_backoff: 100ms

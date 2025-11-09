@@ -22,7 +22,10 @@ class Settings(BaseSettings):
     # SEGURIDAD
     # ═══════════════════════════════════════════════════════════
     
-    api_key: str = "default_ai_api_key"  # Cambiar en producción
+    # ⚠️  SECURITY WARNING: Default API key for DEVELOPMENT ONLY
+    # In production, MUST set via environment variable AI_SERVICE_API_KEY
+    # Never commit real API keys to git. Use .env files or secrets management.
+    api_key: str = "default_ai_api_key"
     allowed_origins: list[str] = ["http://odoo:8069", "http://odoo-eergy-services:8001"]
     
     # ═══════════════════════════════════════════════════════════

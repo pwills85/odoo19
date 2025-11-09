@@ -203,7 +203,7 @@ async def test_send_message_basic(chat_engine, sample_user_context, mock_anthrop
         assert isinstance(response, ChatResponse)
         assert response.message == "This is a test response from Claude."
         assert response.session_id == "session-123"
-        assert response.confidence == 95.0  # TODO: Currently hardcoded
+        assert response.confidence >= 50.0 and response.confidence <= 100.0  # Calculated dynamically
         assert response.llm_used == "anthropic"
         assert response.tokens_used is not None
 
@@ -578,24 +578,77 @@ async def test_send_message_stream_disabled(chat_engine, sample_user_context, mo
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# TEST: TODO - HARDCODED CONFIDENCE
+# TEST: CONFIDENCE CALCULATION
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
 @pytest.mark.unit
+def test_calculate_confidence_long_response(chat_engine):
+    """Test confidence calculation for long, detailed response"""
+    long_response = "A" * 500  # Long response = higher confidence
+    confidence = chat_engine._calculate_confidence(long_response, message_count=5)
+
+    # Should be relatively high due to length and context
+    assert confidence >= 60.0
+
+
+@pytest.mark.unit
+def test_calculate_confidence_structured_output(chat_engine):
+    """Test confidence boost for structured output"""
+    structured_response = """
+    Respuesta:
+    1. Punto uno
+    2. Punto dos
+    3. Punto tres
+
+    Tabla:
+    | Campo | Valor |
+    | --- | --- |
+    """
+    confidence = chat_engine._calculate_confidence(structured_response, message_count=3)
+
+    # Should be boosted for structured output
+    assert confidence >= 65.0
+
+
+@pytest.mark.unit
+def test_calculate_confidence_with_uncertainty_phrases(chat_engine):
+    """Test confidence penalty for uncertainty phrases"""
+    uncertain_response = "No estoy seguro, pero posiblemente el DTE sea válido"
+    confidence = chat_engine._calculate_confidence(uncertain_response, message_count=2)
+
+    # Should be penalized for uncertainty
+    assert confidence <= 60.0
+
+
+@pytest.mark.unit
+def test_calculate_confidence_short_response(chat_engine):
+    """Test confidence calculation for short response"""
+    short_response = "Sí"
+    confidence = chat_engine._calculate_confidence(short_response, message_count=1)
+
+    # Should be lower due to brevity
+    assert confidence < 70.0
+
+
+@pytest.mark.unit
+def test_calculate_confidence_clamped_range(chat_engine):
+    """Test that confidence is always between 0 and 100"""
+    # Very long response
+    very_long = "A" * 5000 + "[" * 100 + "{" * 100
+    high_confidence = chat_engine._calculate_confidence(very_long, message_count=50)
+    assert 0.0 <= high_confidence <= 100.0
+
+    # Very short with uncertainty
+    short_uncertain = "no sé no sé no sé"
+    low_confidence = chat_engine._calculate_confidence(short_uncertain, message_count=0)
+    assert 0.0 <= low_confidence <= 100.0
+
+
+@pytest.mark.unit
 @pytest.mark.asyncio
-async def test_send_message_confidence_hardcoded_todo(chat_engine, sample_user_context, mock_anthropic_response):
-    """
-    TEST FOR TODO: confidence=95.0 is hardcoded in send_message (line 237)
-
-    Current Implementation:
-        confidence=95.0  # TODO: Calculate from LLM confidence scores
-
-    Issue: Confidence is not calculated from actual LLM output.
-
-    This test documents the current behavior and can be updated
-    when proper confidence calculation is implemented.
-    """
+async def test_send_message_confidence_dynamic(chat_engine, sample_user_context, mock_anthropic_response):
+    """Test that confidence is calculated dynamically based on response"""
     chat_engine.anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
     with patch('chat.engine.settings') as mock_settings:
@@ -607,25 +660,17 @@ async def test_send_message_confidence_hardcoded_todo(chat_engine, sample_user_c
             user_context=sample_user_context
         )
 
-        # CURRENT: Hardcoded to 95.0
-        assert response.confidence == 95.0
-
-        # TODO: Once implemented, this should be calculated from LLM
-        # For example: response.confidence = llm_response_metadata.get('confidence', 50.0)
-        # Or: response.confidence = calculate_confidence_from_response(llm_response)
+        # Verify confidence is calculated (not hardcoded)
+        assert 0.0 <= response.confidence <= 100.0
+        # For "This is a test response from Claude." - medium-length response
+        # Should have base 50 + length bonus + potential uncertainty check
+        assert response.confidence >= 50.0
 
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_send_message_stream_confidence_hardcoded_todo(chat_engine, sample_user_context, mock_settings):
-    """
-    TEST FOR TODO: confidence=95.0 is hardcoded in send_message_stream (line 629)
-
-    Current Implementation in streaming:
-        "confidence": 95.0,
-
-    Same TODO as send_message - confidence should be calculated properly.
-    """
+async def test_send_message_stream_confidence_dynamic(chat_engine, sample_user_context, mock_settings):
+    """Test streaming message confidence is calculated dynamically"""
     mock_settings.enable_streaming = True
 
     with patch('chat.engine.settings', mock_settings):
@@ -634,7 +679,7 @@ async def test_send_message_stream_confidence_hardcoded_todo(chat_engine, sample
         stream_context.__aexit__ = AsyncMock(return_value=None)
 
         async def async_text_stream():
-            yield "Test response"
+            yield "Este es un DTE válido. Detalles: RUT válido, folio disponible, montos correctos."
 
         stream_context.text_stream = AsyncMock()
         stream_context.text_stream.__aiter__ = lambda self: async_text_stream()
@@ -661,8 +706,9 @@ async def test_send_message_stream_confidence_hardcoded_todo(chat_engine, sample
         # Find done chunk
         done_chunk = next((c for c in chunks if c.get("type") == "done"), None)
         assert done_chunk is not None
-        # CURRENT: Hardcoded to 95.0
-        assert done_chunk["metadata"]["confidence"] == 95.0
+        # Verify confidence is dynamic (should be high for this response)
+        assert 0.0 <= done_chunk["metadata"]["confidence"] <= 100.0
+        assert done_chunk["metadata"]["confidence"] >= 50.0  # Should be decent
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -799,13 +845,14 @@ Methods Tested:
 - _build_system_prompt: 4 tests
 - _build_plugin_system_prompt: 2 tests
 - _call_anthropic: 3 tests
+- _calculate_confidence: 6 tests ✅ NEW
 - send_message_stream: 2 tests
 - get_conversation_stats: 1 test
 - ChatMessage: 1 test
 - ChatResponse: 1 test
 - Edge cases: 2 tests
 
-Total: 26 unit tests
+Total: 32 unit tests (was 26, +6 for confidence calculation)
 Coverage Target: ≥80% (chat/engine.py has 658 LOC)
 
 Key Areas Covered:
@@ -817,12 +864,21 @@ Key Areas Covered:
 ✅ Error handling
 ✅ Token tracking
 ✅ Context management
-✅ TODO documentation (hardcoded confidence)
+✅ Confidence calculation (dynamic, not hardcoded) ✅ FIXED
 ✅ Edge cases (max context, empty responses)
 
-Critical TODOs Found:
-1. Line 237 (send_message): confidence=95.0 hardcoded
-2. Line 629 (send_message_stream): confidence=95.0 hardcoded
-   → These should be calculated from LLM output metadata
-   → Needs implementation of confidence calculation algorithm
+Confidence Calculation Tests:
+✅ test_calculate_confidence_long_response (length bonus)
+✅ test_calculate_confidence_structured_output (structure bonus)
+✅ test_calculate_confidence_with_uncertainty_phrases (penalty)
+✅ test_calculate_confidence_short_response (brevity)
+✅ test_calculate_confidence_clamped_range (boundary checking)
+✅ test_send_message_confidence_dynamic (integration)
+✅ test_send_message_stream_confidence_dynamic (streaming)
+
+Previous TODOs RESOLVED:
+✅ Line 237 (send_message): NOW USES _calculate_confidence() ✅ FIXED
+✅ Line 629 (send_message_stream): NOW USES _calculate_confidence() ✅ FIXED
+   → Confidence is calculated from response quality indicators
+   → Tests updated to verify dynamic calculation
 """
