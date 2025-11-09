@@ -102,6 +102,10 @@ def pytest_configure(config: Any) -> None:
         "markers",
         "skip_on_ci: mark test to skip when running in CI environment",
     )
+    config.addinivalue_line(
+        "markers",
+        "api: mark test as API endpoint test",
+    )
 
 
 def pytest_collection_modifyitems(config: Any, items: list) -> None:
