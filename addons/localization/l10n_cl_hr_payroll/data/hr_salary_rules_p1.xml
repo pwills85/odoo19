@@ -216,25 +216,14 @@ result = base_trib - afp - salud - afc
             <field name="category_id" ref="category_desc_legal"/>
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
-            <field name="amount_python_compute">
-# Aplicar tabla de tramos impositivos
-base_impuesto = categories.BASE_IMPUESTO_UNICO
-result = 0.0
-
-if base_impuesto > 0:
-    # Buscar tramo aplicable
-    tramo = env['hr.tax.bracket'].search([
-        ('year', '=', payslip.date_to.year),
-        ('from_amount', '&lt;=', base_impuesto),
-        ('to_amount', '&gt;=', base_impuesto)
-    ], limit=1)
-    
-    if tramo:
-        # Impuesto = (base - desde) * tasa + factor
-        excedente = base_impuesto - tramo.from_amount
-        result = -((excedente * tramo.rate / 100.0) + tramo.fixed_amount)
-            </field>
-            <field name="active" eval="True"/>
+                        <field name="amount_python_compute">
+            # Cálculo de impuesto único usando el método centralizado del modelo hr.tax.bracket
+            # Esto asegura consistencia y respeta la lógica de negocio de UTM y vigencia.
+            base_impuesto = categories.BASE_IMPUESTO_UNICO
+            # La zona extrema se manejará en un ticket separado si es necesario.
+            # Por ahora, se asume que no hay zona extrema.
+            result = -env['hr.tax.bracket'].calculate_tax(base_impuesto, payslip.date_to)
+                        </field>            <field name="active" eval="True"/>
         </record>
         
         <!-- ==================== TOTALES FINALES ==================== -->

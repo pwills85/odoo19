@@ -72,6 +72,15 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'minimum_wage': 510000.00
         })
 
+        # Estructura salarial
+        self.struct = self.env.ref('l10n_cl_hr_payroll.structure_base_cl',
+                                   raise_if_not_found=False)
+        if not self.struct:
+            self.struct = self.env['hr.payroll.structure'].create({
+                'name': 'Estructura Chile',
+                'code': 'CL_BASE'
+            })
+
     # ===== VIGENCIA LEY 21.735 =====
 
     def test_01_no_aplica_antes_agosto_2025(self):
@@ -93,7 +102,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2025, 7, 1),
-            'date_to': date(2025, 7, 31)
+            'date_to': date(2025, 7, 31),
+            'struct_id': self.struct.id
         })
 
         payslip.compute_sheet()
@@ -134,7 +144,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2025, 8, 1),
-            'date_to': date(2025, 8, 31)
+            'date_to': date(2025, 8, 31),
+            'struct_id': self.struct.id
         })
 
         payslip.compute_sheet()
@@ -170,7 +181,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2025, 8, 1),
-            'date_to': date(2025, 8, 31)
+            'date_to': date(2025, 8, 31),
+            'struct_id': self.struct.id
         })
 
         payslip.compute_sheet()
@@ -202,7 +214,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2025, 8, 1),
-            'date_to': date(2025, 8, 31)
+            'date_to': date(2025, 8, 31),
+            'struct_id': self.struct.id
         })
 
         payslip.compute_sheet()
@@ -234,7 +247,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2025, 9, 1),
-            'date_to': date(2025, 9, 30)
+            'date_to': date(2025, 9, 30),
+            'struct_id': self.struct.id
         })
 
         payslip.compute_sheet()
@@ -277,7 +291,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2025, 8, 1),
-            'date_to': date(2025, 8, 31)
+            'date_to': date(2025, 8, 31),
+            'struct_id': self.struct.id
         })
 
         # Forzar aplica_ley21735 = True pero total = 0 (simular bug)
@@ -321,7 +336,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
                     'employee_id': self.employee.id,
                     'contract_id': contract.id,
                     'date_from': date(2025, 10, 1),
-                    'date_to': date(2025, 10, 31)
+                    'date_to': date(2025, 10, 31),
+                    'struct_id': self.struct.id
                 })
 
                 payslip.compute_sheet()
@@ -358,7 +374,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2025, 8, 1),
-            'date_to': date(2025, 8, 31)
+            'date_to': date(2025, 8, 31),
+            'struct_id': self.struct.id
         })
 
         payslip.compute_sheet()
@@ -393,7 +410,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2025, 8, 1),
-            'date_to': date(2025, 8, 31)
+            'date_to': date(2025, 8, 31),
+            'struct_id': self.struct.id
         })
 
         payslip.compute_sheet()
@@ -422,7 +440,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2026, 1, 1),
-            'date_to': date(2026, 1, 31)
+            'date_to': date(2026, 1, 31),
+            'struct_id': self.struct.id
         })
 
         payslip.compute_sheet()

@@ -46,6 +46,15 @@ class TestPayslipTotals(common.TransactionCase):
             'minimum_wage': 500000.00,
             'afp_limit': 87.8,
         })
+
+        # Estructura salarial
+        self.struct = self.env.ref('l10n_cl_hr_payroll.structure_base_cl',
+                                   raise_if_not_found=False)
+        if not self.struct:
+            self.struct = self.env['hr.payroll.structure'].create({
+                'name': 'Estructura Chile',
+                'code': 'CL_BASE'
+            })
     
     def test_01_total_imponible_single_line(self):
         """Test total_imponible incluye sueldo base + gratificación"""
@@ -55,6 +64,7 @@ class TestPayslipTotals(common.TransactionCase):
             'date_from': date(2025, 10, 1),
             'date_to': date(2025, 10, 31),
             'indicadores_id': self.indicators.id,
+            'struct_id': self.struct.id,
         })
 
         # Calcular
@@ -78,6 +88,7 @@ class TestPayslipTotals(common.TransactionCase):
             'date_from': date(2025, 10, 1),
             'date_to': date(2025, 10, 31),
             'indicadores_id': self.indicators.id,
+            'struct_id': self.struct.id,
         })
 
         payslip.action_compute_sheet()
@@ -102,6 +113,7 @@ class TestPayslipTotals(common.TransactionCase):
             'date_from': date(2025, 10, 1),
             'date_to': date(2025, 10, 31),
             'indicadores_id': self.indicators.id,
+            'struct_id': self.struct.id,
         })
 
         payslip.action_compute_sheet()
@@ -126,6 +138,7 @@ class TestPayslipTotals(common.TransactionCase):
             'date_from': date(2025, 10, 1),
             'date_to': date(2025, 10, 31),
             'indicadores_id': self.indicators.id,
+            'struct_id': self.struct.id,
         })
 
         payslip.action_compute_sheet()
@@ -150,6 +163,7 @@ class TestPayslipTotals(common.TransactionCase):
             'date_from': date(2025, 10, 1),
             'date_to': date(2025, 10, 31),
             'indicadores_id': self.indicators.id,
+            'struct_id': self.struct.id,
         })
         
         # Verificar que se generó número
@@ -168,6 +182,7 @@ class TestPayslipTotals(common.TransactionCase):
             'date_from': date(2025, 10, 1),
             'date_to': date(2025, 10, 31),
             'indicadores_id': self.indicators.id,
+            'struct_id': self.struct.id,
         })
         
         payslip.action_compute_sheet()

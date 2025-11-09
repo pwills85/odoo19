@@ -280,6 +280,7 @@ class HrSalaryRule(models.Model):
             'max': max,
             'abs': abs,
             'round': round,
+            'hasattr': hasattr,
 
             # Variable resultado
             'result': 0.0,

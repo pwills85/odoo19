@@ -65,7 +65,18 @@
       "Bash(timeout 180 pytest:*)",
       "Bash(/tmp/ai_coverage_baseline.json)",
       "Bash(/tmp/dte_h9_validation.txt)",
-      "Bash(/tmp/h9_status.txt)"
+      "Bash(/tmp/h9_status.txt)",
+      "Bash(TAG_NAME=\"sprint0_baseline_20251109_0434\")",
+      "Bash(git tag:*)",
+      "Bash(/tmp/testclient_api.txt)",
+      "Bash(/tmp/testclient_usages.txt)",
+      "Bash(timeout 120 docker-compose exec:*)",
+      "Bash(/tmp/tests_comparison.txt)",
+      "Bash(TAG_NAME=\"sprint1_httpx_fix_20251109_0742\")",
+      "Bash(TAG_NAME=\"session1_end_20251109_0755\")",
+      "Bash(/tmp/sprint2_passed_count.txt)",
+      "Bash(/tmp/sprint2_failed_count.txt)",
+      "Bash(/tmp/sprint2_error_count.txt)"
     ],
     "deny": [],
     "ask": []

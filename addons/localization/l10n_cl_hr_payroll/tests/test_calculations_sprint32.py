@@ -78,6 +78,7 @@ class TestPayrollCalculationsSprint32(TransactionCase):
             'date_from': date(2025, 10, 1),
             'date_to': date(2025, 10, 31),
             'indicadores_id': self.indicators.id,
+            'struct_id': self.env.ref('l10n_cl_hr_payroll.structure_base_cl').id,
         })
     
     # ═══════════════════════════════════════════════════════════
