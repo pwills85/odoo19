@@ -508,11 +508,12 @@ async def test_call_anthropic_filters_system_messages(chat_engine, mock_anthropi
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_send_message_stream_basic(chat_engine, sample_user_context, mock_settings):
+async def test_send_message_stream_basic(chat_engine, sample_user_context):
     """Test streaming message sending"""
-    mock_settings.enable_streaming = True
 
-    with patch('chat.engine.settings', mock_settings):
+    with patch('config.settings') as mock_settings:
+        mock_settings.enable_streaming = True
+        mock_settings.chat_max_tokens = 4096
         # Mock streaming
         stream_context = AsyncMock()
         stream_context.__aenter__ = AsyncMock(return_value=stream_context)
@@ -556,11 +557,12 @@ async def test_send_message_stream_basic(chat_engine, sample_user_context, mock_
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_send_message_stream_disabled(chat_engine, sample_user_context, mock_anthropic_response, mock_settings):
+async def test_send_message_stream_disabled(chat_engine, sample_user_context, mock_anthropic_response):
     """Test fallback when streaming is disabled"""
-    mock_settings.enable_streaming = False
 
-    with patch('chat.engine.settings', mock_settings):
+    with patch('config.settings') as mock_settings:
+        mock_settings.enable_streaming = False
+        mock_settings.chat_max_tokens = 4096
         chat_engine.anthropic_client.client.messages.create = AsyncMock(return_value=mock_anthropic_response)
 
         chunks = []
@@ -669,11 +671,12 @@ async def test_send_message_confidence_dynamic(chat_engine, sample_user_context,
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_send_message_stream_confidence_dynamic(chat_engine, sample_user_context, mock_settings):
+async def test_send_message_stream_confidence_dynamic(chat_engine, sample_user_context):
     """Test streaming message confidence is calculated dynamically"""
-    mock_settings.enable_streaming = True
 
-    with patch('chat.engine.settings', mock_settings):
+    with patch('config.settings') as mock_settings:
+        mock_settings.enable_streaming = True
+        mock_settings.chat_max_tokens = 4096
         stream_context = AsyncMock()
         stream_context.__aenter__ = AsyncMock(return_value=stream_context)
         stream_context.__aexit__ = AsyncMock(return_value=None)
