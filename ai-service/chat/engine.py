@@ -69,6 +69,17 @@ class ChatEngine:
     - Specialized prompts per plugin
     """
 
+    # Base system prompt template (for streaming with caching)
+    SYSTEM_PROMPT_BASE = """Eres un asistente especializado en Odoo 19.
+
+**Contexto Usuario:**
+{user_context}
+
+**Documentación Relevante:**
+{knowledge_base_docs}
+
+**IMPORTANTE:** Si la pregunta está fuera de tu expertise, indícalo claramente."""
+
     def __init__(
         self,
         anthropic_client: AnthropicClient,
