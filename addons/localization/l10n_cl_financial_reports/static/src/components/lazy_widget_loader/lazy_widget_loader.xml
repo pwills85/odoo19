@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="account_financial_report.LazyWidgetLoader" owl="1">
+        <div class="o_lazy_widget_loader" 
+             t-ref="container"
+             t-att-style="`min-height: ${minHeight}`">
+            
+            <!-- Loading state -->
+            <t t-if="state.isLoading">
+                <div class="o_widget_loading">
+                    <div class="o_widget_skeleton">
+                        <!-- Header skeleton -->
+                        <div class="skeleton-header">
+                            <div class="skeleton-line skeleton-title"/>
+                        </div>
+                        
+                        <!-- Content skeleton based on widget type -->
+                        <div class="skeleton-content">
+                            <t t-if="props.widgetData.widget_type === 'kpi'">
+                                <div class="skeleton-kpi">
+                                    <div class="skeleton-line skeleton-value"/>
+                                    <div class="skeleton-line skeleton-label"/>
+                                </div>
+                            </t>
+                            
+                            <t t-elif="props.widgetData.widget_type === 'table'">
+                                <div class="skeleton-table">
+                                    <div class="skeleton-line skeleton-row"/>
+                                    <div class="skeleton-line skeleton-row"/>
+                                    <div class="skeleton-line skeleton-row"/>
+                                </div>
+                            </t>
+                            
+                            <t t-elif="props.widgetData.widget_type.startsWith('chart_')">
+                                <div class="skeleton-chart">
+                                    <div class="skeleton-chart-placeholder"/>
+                                </div>
+                            </t>
+                            
+                            <t t-elif="props.widgetData.widget_type === 'gauge'">
+                                <div class="skeleton-gauge">
+                                    <div class="skeleton-circle"/>
+                                    <div class="skeleton-line skeleton-label"/>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+            </t>
+            
+            <!-- Error state -->
+            <t t-elif="state.hasError">
+                <div class="o_widget_error">
+                    <div class="alert alert-danger" role="alert">
+                        <h5 class="alert-heading">
+                            <i class="fa fa-exclamation-triangle"/> Error Loading Widget
+                        </h5>
+                        <p t-esc="state.errorMessage"/>
+                        <button class="btn btn-sm btn-danger mt-2" 
+                                t-on-click="loadWidgetData">
+                            <i class="fa fa-refresh"/> Retry
+                        </button>
+                    </div>
+                </div>
+            </t>
+            
+            <!-- Loaded content -->
+            <t t-else="">
+                <t t-component="WidgetComponent" t-props="widgetProps"/>
+            </t>
+        </div>
+    </t>
+</templates>

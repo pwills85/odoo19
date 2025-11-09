@@ -1,0 +1,367 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+#	* l10n_cl_dte_eergygroup
+#
+# Translators:
+# EERGYGROUP - Pedro Troncoso Willz <contacto@eergygroup.cl>, 2025
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-03 18:00:00+0000\n"
+"PO-Revision-Date: 2025-11-03 18:00:00+0000\n"
+"Last-Translator: Pedro Troncoso Willz <contacto@eergygroup.cl>\n"
+"Language-Team: Spanish (Chile)\n"
+"Language: es_CL\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Odoo 19.0\n"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model,name:l10n_cl_dte_eergygroup.model_account_move
+msgid "Journal Entry"
+msgstr "Asiento Contable"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model,name:l10n_cl_dte_eergygroup.model_account_move_reference
+msgid "SII Document Reference"
+msgstr "Referencia de Documento SII"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model,name:l10n_cl_dte_eergygroup.model_res_company
+msgid "Company"
+msgstr "Compañía"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model,name:l10n_cl_dte_eergygroup.model_res_config_settings
+msgid "Config Settings"
+msgstr "Configuración"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_account_move__contact_id
+msgid "Contact Person"
+msgstr "Persona de Contacto"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_account_move__contact_id
+msgid "Contact person at customer/vendor company for this invoice. Used for better customer service and collection management."
+msgstr "Persona de contacto en la empresa cliente/proveedor para esta factura. Utilizado para mejor atención al cliente y gestión de cobranzas."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_account_move__forma_pago
+msgid "Custom Payment Terms"
+msgstr "Forma de Pago"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_account_move__forma_pago
+msgid "Additional payment terms description shown on the printed invoice. Examples: 'Contado', '30 días', '60 días', etc."
+msgstr "Descripción adicional de forma de pago mostrada en la factura impresa. Ejemplos: 'Contado', '30 días', '60 días', etc."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_account_move__cedible
+msgid "Print as CEDIBLE"
+msgstr "Imprimir como CEDIBLE"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_account_move__cedible
+msgid "If enabled, the PDF invoice will include a CEDIBLE section at the bottom for factoring purposes. This allows the invoice to be transferred to a factoring company for immediate payment."
+msgstr "Si se habilita, el PDF de la factura incluirá una sección CEDIBLE al pie para propósitos de factoraje. Esto permite que la factura sea transferida a una empresa de factoraje para pago inmediato."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_account_move__reference_ids
+msgid "SII Document References"
+msgstr "Referencias de Documentos SII"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_account_move__reference_ids
+msgid "References to other SII documents (e.g., original invoice for a credit note). Required for Credit Notes (61) and Debit Notes (56) per SII Resolución 80/2014."
+msgstr "Referencias a otros documentos SII (ej: factura original para una nota de crédito). Obligatorio para Notas de Crédito (61) y Notas de Débito (56) según Resolución 80/2014 del SII."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_account_move__reference_required
+msgid "References Required"
+msgstr "Referencias Obligatorias"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_account_move__reference_required
+msgid "Indicates whether this document type requires SII document references (True for DTE 56 and 61)."
+msgstr "Indica si este tipo de documento requiere referencias de documentos SII (Verdadero para DTE 56 y 61)."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_account_move_reference__move_id
+msgid "Invoice"
+msgstr "Factura"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_account_move_reference__document_type_id
+msgid "Document Type"
+msgstr "Tipo de Documento"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_account_move_reference__folio
+msgid "Folio Number"
+msgstr "Número de Folio"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_account_move_reference__folio
+msgid "The folio/invoice number of the referenced document (numeric, 1-10 digits)."
+msgstr "El número de folio/factura del documento referenciado (numérico, 1-10 dígitos)."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_account_move_reference__date
+msgid "Document Date"
+msgstr "Fecha del Documento"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_account_move_reference__date
+msgid "The date of the referenced document (cannot be in the future)."
+msgstr "La fecha del documento referenciado (no puede ser futura)."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_account_move_reference__reason
+msgid "Reference Reason"
+msgstr "Motivo de Referencia"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_account_move_reference__reason
+msgid "Brief explanation of why this document is being referenced. Example: 'Anula factura por error en cantidad', 'Corrige monto de servicios', etc."
+msgstr "Breve explicación de por qué se referencia este documento. Ejemplo: 'Anula factura por error en cantidad', 'Corrige monto de servicios', etc."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_account_move_reference__code
+msgid "Reference Code"
+msgstr "Código de Referencia"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_account_move_reference__code
+msgid "SII reference code indicating the type of correction. See SII documentation for valid codes."
+msgstr "Código de referencia del SII que indica el tipo de corrección. Ver documentación del SII para códigos válidos."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields.selection,name:l10n_cl_dte_eergygroup.selection__account_move_reference__code__1
+msgid "1 - Anula Documento de Referencia"
+msgstr "1 - Anula Documento de Referencia"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields.selection,name:l10n_cl_dte_eergygroup.selection__account_move_reference__code__2
+msgid "2 - Corrige Texto Documento de Referencia"
+msgstr "2 - Corrige Texto Documento de Referencia"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields.selection,name:l10n_cl_dte_eergygroup.selection__account_move_reference__code__3
+msgid "3 - Corrige Montos"
+msgstr "3 - Corrige Montos"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_account_move_reference__display_name
+msgid "Display Name"
+msgstr "Nombre para Mostrar"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_res_company__bank_name
+msgid "Bank Name"
+msgstr "Nombre del Banco"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_res_company__bank_name
+msgid "Name of the bank where the company account is held. Example: 'Banco de Chile', 'Banco Santander', etc."
+msgstr "Nombre del banco donde se mantiene la cuenta de la empresa. Ejemplo: 'Banco de Chile', 'Banco Santander', etc."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_res_company__bank_account_number
+msgid "Bank Account Number"
+msgstr "Número de Cuenta Bancaria"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_res_company__bank_account_number
+msgid "Bank account number for receiving payments. Can include spaces or hyphens for readability (e.g., '9878 6747 7' or '9878-6747-7')."
+msgstr "Número de cuenta bancaria para recibir pagos. Puede incluir espacios o guiones para legibilidad (ej: '9878 6747 7' o '9878-6747-7')."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_res_company__bank_account_type
+msgid "Account Type"
+msgstr "Tipo de Cuenta"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields.selection,name:l10n_cl_dte_eergygroup.selection__res_company__bank_account_type__checking
+msgid "Checking Account (Cuenta Corriente)"
+msgstr "Cuenta Corriente"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields.selection,name:l10n_cl_dte_eergygroup.selection__res_company__bank_account_type__savings
+msgid "Savings Account (Cuenta de Ahorro)"
+msgstr "Cuenta de Ahorro"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields.selection,name:l10n_cl_dte_eergygroup.selection__res_company__bank_account_type__current
+msgid "Current Account (Cuenta Vista)"
+msgstr "Cuenta Vista"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_res_company__bank_info_display
+msgid "Bank Information (Formatted)"
+msgstr "Información Bancaria (Formateada)"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_res_company__bank_info_display
+msgid "Formatted bank information ready for display on invoices. Includes bank name, account number, account type, and company name/RUT."
+msgstr "Información bancaria formateada lista para mostrar en facturas. Incluye nombre del banco, número de cuenta, tipo de cuenta, y nombre/RUT de la empresa."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_res_company__report_primary_color
+msgid "Primary Color"
+msgstr "Color Principal"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_res_company__report_primary_color
+msgid "Primary color for company branding on reports and PDFs. Must be in hex format: #RRGGBB (e.g., #E97300 for EERGYGROUP orange)."
+msgstr "Color principal para branding de la empresa en reportes y PDFs. Debe estar en formato hexadecimal: #RRGGBB (ej: #E97300 para naranja EERGYGROUP)."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_res_company__report_footer_text
+msgid "Report Footer Text"
+msgstr "Texto del Pie de Página"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_res_company__report_footer_text
+msgid "Text displayed at the bottom of all PDF reports. Common phrases: 'Gracias por Preferirnos', 'A su Servicio', or custom company slogan."
+msgstr "Texto mostrado al pie de todos los reportes PDF. Frases comunes: 'Gracias por Preferirnos', 'A su Servicio', o eslogan personalizado de la empresa."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_res_company__report_footer_websites
+msgid "Footer Websites"
+msgstr "Sitios Web del Pie"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_res_company__report_footer_websites
+msgid "Company websites displayed in footer, separated by ' | '. Example: 'www.eergymas.cl | www.eergyhaus.cl | www.eergygroup.cl'. Maximum 5 websites."
+msgstr "Sitios web de la empresa mostrados en el pie, separados por ' | '. Ejemplo: 'www.eergymas.cl | www.eergyhaus.cl | www.eergygroup.cl'. Máximo 5 sitios web."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_res_config_settings__enable_cedible_by_default
+msgid "Enable CEDIBLE by Default"
+msgstr "Habilitar CEDIBLE por Defecto"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_res_config_settings__enable_cedible_by_default
+msgid "If enabled, new customer invoices will have the CEDIBLE checkbox pre-checked. Users can still uncheck it if not needed for factoring."
+msgstr "Si se habilita, las nuevas facturas de cliente tendrán el checkbox CEDIBLE pre-marcado. Los usuarios aún pueden desmarcarlo si no se necesita para factoraje."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_res_config_settings__require_contact_on_invoices
+msgid "Require Contact Person"
+msgstr "Requerir Persona de Contacto"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_res_config_settings__require_contact_on_invoices
+msgid "If enabled, users must select a contact person before posting customer invoices. Improves customer service and collection management."
+msgstr "Si se habilita, los usuarios deben seleccionar una persona de contacto antes de publicar facturas de cliente. Mejora atención al cliente y gestión de cobranzas."
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,field_description:l10n_cl_dte_eergygroup.field_res_config_settings__has_bank_info_configured
+msgid "Bank Info Configured"
+msgstr "Info Bancaria Configurada"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.model.fields,help:l10n_cl_dte_eergygroup.field_res_config_settings__has_bank_info_configured
+msgid "Indicates whether bank information is fully configured for the current company."
+msgstr "Indica si la información bancaria está completamente configurada para la empresa actual."
+
+#. module: l10n_cl_dte_eergygroup
+#: code:addons/l10n_cl_dte_eergygroup/models/account_move.py:0
+#, python-format
+msgid "CEDIBLE can only be enabled on customer invoices (out_invoice). Current document is: %s"
+msgstr "CEDIBLE solo puede habilitarse en facturas de cliente (out_invoice). El documento actual es: %s"
+
+#. module: l10n_cl_dte_eergygroup
+#: code:addons/l10n_cl_dte_eergygroup/models/account_move.py:0
+#, python-format
+msgid "Cannot post Credit Note (61) or Debit Note (56) without at least one SII document reference. Please add references before posting."
+msgstr "No se puede publicar Nota de Crédito (61) o Nota de Débito (56) sin al menos una referencia de documento SII. Por favor agregue referencias antes de publicar."
+
+#. module: l10n_cl_dte_eergygroup
+#: code:addons/l10n_cl_dte_eergygroup/models/account_move_reference.py:0
+#, python-format
+msgid "Document date cannot be in the future. Please enter a valid historical date."
+msgstr "La fecha del documento no puede ser futura. Por favor ingrese una fecha histórica válida."
+
+#. module: l10n_cl_dte_eergygroup
+#: code:addons/l10n_cl_dte_eergygroup/models/account_move_reference.py:0
+#, python-format
+msgid "Reference date (%s) cannot be after the current invoice date (%s). References must be chronological."
+msgstr "La fecha de referencia (%s) no puede ser posterior a la fecha de la factura actual (%s). Las referencias deben ser cronológicas."
+
+#. module: l10n_cl_dte_eergygroup
+#: code:addons/l10n_cl_dte_eergygroup/models/account_move_reference.py:0
+#, python-format
+msgid "Folio number must be numeric (only digits allowed). Please enter a valid folio number."
+msgstr "El número de folio debe ser numérico (solo se permiten dígitos). Por favor ingrese un número de folio válido."
+
+#. module: l10n_cl_dte_eergygroup
+#: code:addons/l10n_cl_dte_eergygroup/models/account_move_reference.py:0
+#, python-format
+msgid "Folio number must be between 1 and 10 digits. Current length: %d digits."
+msgstr "El número de folio debe tener entre 1 y 10 dígitos. Longitud actual: %d dígitos."
+
+#. module: l10n_cl_dte_eergygroup
+#: code:addons/l10n_cl_dte_eergygroup/models/account_move_reference.py:0
+#, python-format
+msgid "Referenced document type must be Chilean (country_code='CL'). Selected document type is from: %s"
+msgstr "El tipo de documento referenciado debe ser chileno (country_code='CL'). El tipo de documento seleccionado es de: %s"
+
+#. module: l10n_cl_dte_eergygroup
+#: code:addons/l10n_cl_dte_eergygroup/models/res_company.py:0
+#, python-format
+msgid "Bank account number must contain only digits, spaces, or hyphens. Invalid characters found."
+msgstr "El número de cuenta bancaria debe contener solo dígitos, espacios o guiones. Se encontraron caracteres inválidos."
+
+#. module: l10n_cl_dte_eergygroup
+#: code:addons/l10n_cl_dte_eergygroup/models/res_company.py:0
+#, python-format
+msgid "Bank account number must be between 6 and 20 digits (excluding spaces/hyphens). Current length: %d digits."
+msgstr "El número de cuenta bancaria debe tener entre 6 y 20 dígitos (excluyendo espacios/guiones). Longitud actual: %d dígitos."
+
+#. module: l10n_cl_dte_eergygroup
+#: code:addons/l10n_cl_dte_eergygroup/models/res_company.py:0
+#, python-format
+msgid "Primary color must be in hex format: #RRGGBB (e.g., #E97300). Current value: %s"
+msgstr "El color principal debe estar en formato hexadecimal: #RRGGBB (ej: #E97300). Valor actual: %s"
+
+#. module: l10n_cl_dte_eergygroup
+#: code:addons/l10n_cl_dte_eergygroup/models/res_company.py:0
+#, python-format
+msgid "Footer websites must be separated by ' | ' and each website must be at least 5 characters. Maximum 5 websites allowed."
+msgstr "Los sitios web del pie deben estar separados por ' | ' y cada sitio web debe tener al menos 5 caracteres. Máximo 5 sitios web permitidos."
+
+#. module: l10n_cl_dte_eergygroup
+#: sql_constraint:account.move.reference
+msgid "You cannot reference the same document twice in the same invoice!"
+msgstr "¡No puede referenciar el mismo documento dos veces en la misma factura!"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:report.paperformat,name:l10n_cl_dte_eergygroup.paperformat_eergygroup_dte
+msgid "EERGYGROUP DTE Invoice"
+msgstr "Factura DTE EERGYGROUP"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:report.paperformat,name:l10n_cl_dte_eergygroup.paperformat_eergygroup_letter
+msgid "EERGYGROUP Letter"
+msgstr "Carta EERGYGROUP"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:report.paperformat,name:l10n_cl_dte_eergygroup.paperformat_eergygroup_a4
+msgid "EERGYGROUP A4"
+msgstr "A4 EERGYGROUP"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.ui.menu,name:l10n_cl_dte_eergygroup.menu_eergygroup_config
+msgid "EERGYGROUP Configuration"
+msgstr "Configuración EERGYGROUP"
+
+#. module: l10n_cl_dte_eergygroup
+#: model:ir.actions.act_window,name:l10n_cl_dte_eergygroup.action_eergygroup_settings
+msgid "EERGYGROUP Settings"
+msgstr "Configuración EERGYGROUP"

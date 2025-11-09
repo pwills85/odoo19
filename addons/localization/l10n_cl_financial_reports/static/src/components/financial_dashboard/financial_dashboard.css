@@ -1,0 +1,38 @@
+.o_financial_dashboard {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.o_financial_dashboard .o_control_panel {
+    padding: 16px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.o_financial_dashboard .o_content {
+    padding: 16px;
+}
+
+.o_kpi_container {
+    display: flex;
+    gap: 16px;
+}
+
+.o_kpi_card {
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    flex-grow: 1;
+}
+
+.o_kpi_value {
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.o_kpi_label {
+    font-size: 1rem;
+    color: #6c757d;
+}

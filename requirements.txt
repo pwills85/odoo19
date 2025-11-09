@@ -1,0 +1,57 @@
+# Production Requirements - l10n_cl_dte & l10n_cl_dte_enhanced
+# Week 2: Frontend Development - PDF Reports & Dashboard
+
+# ============================================================================
+# PDF417 Barcode Generation (Week 2)
+# ============================================================================
+# Required for TED (Timbre Electrónico) generation in DTE reports
+pdf417==1.1.0           # PDF417 2D barcode generation (SII requirement)
+Pillow>=10.0.0          # Image processing for barcode rendering
+
+# ============================================================================
+# XML Processing (Already in Odoo, but explicit for clarity)
+# ============================================================================
+lxml>=4.9.0             # XML generation and parsing
+xmlsec>=1.3.13          # XML digital signatures (DTE signing)
+
+# ============================================================================
+# SOAP Client (SII Communication)
+# ============================================================================
+zeep>=4.2.1             # SOAP client for SII webservices
+requests>=2.31.0        # HTTP client
+
+# ============================================================================
+# Cryptography (Certificate handling)
+# ============================================================================
+cryptography>=41.0.0    # Digital certificates and encryption
+pyOpenSSL>=23.2.0       # SSL/TLS certificate handling
+
+# ============================================================================
+# Utilities
+# ============================================================================
+python-dateutil>=2.8.2  # Date/time utilities
+pytz                    # Timezone handling (Chilean timezone)
+python-stdnum>=1.19     # P3.2 GAP CLOSURE: RUT validation (Chilean tax ID)
+
+# ============================================================================
+# Redis (Sprint 0.2/0.3 - Enterprise Security)
+# ============================================================================
+redis>=5.0.0            # Rate limiting, replay protection, caching
+
+# ============================================================================
+# Optional: Excel Export (Dashboard feature)
+# ============================================================================
+openpyxl>=3.1.2         # Excel export for dashboard reports
+
+# ============================================================================
+# Optional: QR Code (Fallback if PDF417 fails)
+# ============================================================================
+qrcode>=7.4.2           # QR code generation (fallback)
+
+# ============================================================================
+# Notes:
+# - lxml, requests, python-dateutil, pytz are already in Odoo core
+# - We explicitly list them for documentation and version pinning
+# - pdf417 and Pillow are NEW dependencies for Week 2
+# - openpyxl for Excel export in dashboard (optional, Week 3)
+# ============================================================================

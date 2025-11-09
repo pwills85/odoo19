@@ -1,0 +1,273 @@
+// Balance de 8 Columnas - Estilos Enterprise
+
+.balance-eight-columns-container {
+    background-color: #f8f9fa;
+    
+    .balance-header {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+    }
+    
+    .balance-filters {
+        background-color: #f1f3f5;
+        
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 0.25rem;
+        }
+        
+        .form-control, .form-select {
+            font-size: 0.875rem;
+            border-color: #dee2e6;
+            
+            &:focus {
+                border-color: #80bdff;
+                box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+            }
+        }
+    }
+    
+    .balance-table-container {
+        overflow: hidden;
+        
+        .table-responsive {
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+        
+        table {
+            font-size: 0.875rem;
+            
+            thead {
+                z-index: 10;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                
+                th {
+                    font-weight: 600;
+                    color: #495057;
+                    border-bottom: 2px solid #dee2e6;
+                    white-space: nowrap;
+                    
+                    &.sortable {
+                        cursor: pointer;
+                        user-select: none;
+                        
+                        &:hover {
+                            background-color: #f8f9fa;
+                        }
+                        
+                        i {
+                            font-size: 0.75rem;
+                            margin-left: 0.25rem;
+                        }
+                        
+                        .fa-sort {
+                            opacity: 0.3;
+                        }
+                        
+                        .fa-sort-up, .fa-sort-down {
+                            opacity: 1;
+                        }
+                    }
+                }
+            }
+            
+            tbody {
+                tr {
+                    transition: background-color 0.15s ease;
+                    
+                    &:hover {
+                        background-color: #f8f9fa;
+                    }
+                    
+                    &.fw-bold {
+                        td {
+                            color: #212529;
+                        }
+                    }
+                    
+                    &.table-active {
+                        background-color: #e3f2fd;
+                    }
+                    
+                    td {
+                        padding: 0.5rem;
+                        vertical-align: middle;
+                        border-bottom: 1px solid #e9ecef;
+                        
+                        &.text-end {
+                            font-family: 'Roboto Mono', monospace;
+                            font-size: 0.8125rem;
+                        }
+                        
+                        a {
+                            color: #0066cc;
+                            
+                            &:hover {
+                                text-decoration: underline !important;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            tfoot {
+                z-index: 10;
+                box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
+                
+                tr {
+                    background-color: #e9ecef;
+                    
+                    td {
+                        padding: 0.75rem 0.5rem;
+                        font-weight: 700;
+                        color: #212529;
+                        border-top: 2px solid #dee2e6;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Vista de gráficos
+    .balance-chart-container {
+        background-color: #ffffff;
+        
+        .card {
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            
+            .card-header {
+                background-color: #f8f9fa;
+                border-bottom: 1px solid #e0e0e0;
+                
+                .card-title {
+                    font-size: 1rem;
+                    font-weight: 600;
+                    color: #495057;
+                }
+            }
+        }
+    }
+    
+    // Virtual scrolling
+    .virtual-spacer {
+        background: transparent;
+        pointer-events: none;
+    }
+    
+    // Loading state
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+    
+    // Responsivo
+    @media (max-width: 768px) {
+        .balance-header {
+            .col-md-6 {
+                text-align: center !important;
+                margin-bottom: 1rem;
+                
+                &:last-child {
+                    margin-bottom: 0;
+                }
+            }
+        }
+        
+        .balance-filters {
+            .col-md-3 {
+                margin-bottom: 1rem;
+                
+                &:last-child {
+                    margin-bottom: 0;
+                }
+            }
+        }
+        
+        .balance-table-container {
+            table {
+                font-size: 0.75rem;
+                
+                th, td {
+                    padding: 0.25rem;
+                }
+            }
+        }
+    }
+}
+
+// Animaciones
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.balance-row {
+    animation: fadeIn 0.3s ease-out;
+}
+
+// Tema oscuro (si está habilitado)
+body.o_dark_mode {
+    .balance-eight-columns-container {
+        background-color: #1a1a1a;
+        
+        .balance-header {
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+        }
+        
+        .balance-filters {
+            background-color: #252525;
+            
+            .form-control, .form-select {
+                background-color: #333;
+                border-color: #444;
+                color: #e0e0e0;
+            }
+        }
+        
+        table {
+            color: #e0e0e0;
+            
+            thead {
+                background-color: #2a2a2a;
+                
+                th {
+                    border-color: #444;
+                    color: #b0b0b0;
+                }
+            }
+            
+            tbody tr {
+                &:hover {
+                    background-color: #333;
+                }
+                
+                td {
+                    border-color: #444;
+                }
+            }
+            
+            tfoot tr {
+                background-color: #333;
+                
+                td {
+                    border-color: #444;
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="account_financial_report.MobileDashboardWrapper" owl="1">
+        <div t-att-class="mobileClasses">
+
+            <!-- Mobile Navigation Tabs -->
+            <div class="mobile-nav-tabs" t-if="state.isMobile">
+                <button t-att-class="getTabClass('overview')" t-on-click="() => switchTab('overview')">
+                    Overview
+                </button>
+                <button t-att-class="getTabClass('charts')" t-on-click="() => switchTab('charts')">
+                    Charts
+                </button>
+                <button t-att-class="getTabClass('reports')" t-on-click="() => switchTab('reports')">
+                    Reports
+                </button>
+                <button t-att-class="getTabClass('settings')" t-on-click="() => switchTab('settings')">
+                    Settings
+                </button>
+            </div>
+
+            <!-- Offline Indicator -->
+            <div class="offline-indicator" t-if="!state.isOnline">
+                <i class="fa fa-wifi"/> Working Offline
+            </div>
+
+            <!-- Refresh Indicator -->
+            <div class="refresh-indicator" t-if="state.isRefreshing">
+                <i class="fa fa-spinner fa-spin"/> Refreshing...
+            </div>
+
+            <!-- Mobile-optimized content -->
+            <div class="mobile-content">
+
+                <!-- Overview Tab -->
+                <div class="tab-content" t-if="state.activeTab === 'overview'" >
+                    <div class="metrics-grid">
+                        <div class="mobile-widget metric-card" t-foreach="props.widgets.filter(w => w.type === 'metric')" t-as="widget" t-key="widget.id">
+                            <div class="metric-value" t-esc="widget.value"/>
+                            <div class="metric-label" t-esc="widget.label"/>
+                            <div t-att-class="'metric-change ' + (widget.change > 0 ? 'positive' : 'negative')">
+                                <span t-esc="widget.change > 0 ? '+' : ''"/><span t-esc="widget.change"/>%
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="quick-actions">
+                        <button class="action-btn" t-on-click="() => env.bus.trigger('action:generate-f29')">
+                            <i class="fa fa-file-text"/> Generate F29
+                        </button>
+                        <button class="action-btn" t-on-click="() => env.bus.trigger('action:view-reports')">
+                            <i class="fa fa-chart-bar"/> View Reports
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Charts Tab -->
+                <div class="tab-content" t-if="state.activeTab === 'charts'">
+                    <div class="charts-container">
+                        <div class="mobile-widget" t-foreach="props.widgets.filter(w => w.type === 'chart')" t-as="widget" t-key="widget.id">
+                            <div class="widget-title" t-esc="widget.title"/>
+                            <div class="chart-container">
+                                <!-- Chart will be rendered here by chart component -->
+                                <div t-att-data-widget-id="widget.id" class="chart-placeholder">
+                                    Loading chart...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Tab -->
+                <div class="tab-content" t-if="state.activeTab === 'reports'">
+                    <div class="reports-list">
+                        <div class="report-item" t-foreach="props.dashboardData.recent_reports || []" t-as="report" t-key="report.id">
+                            <div class="report-icon">
+                                <i t-att-class="'fa fa-' + report.icon"/>
+                            </div>
+                            <div class="report-info">
+                                <div class="report-name" t-esc="report.name"/>
+                                <div class="report-date" t-esc="report.date"/>
+                            </div>
+                            <button class="btn btn-sm btn-primary" t-on-click="() => env.bus.trigger('action:open-report', report)">
+                                Open
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div class="tab-content" t-if="state.activeTab === 'settings'">
+                    <div class="mobile-settings">
+                        <div class="setting-group">
+                            <h3>Display</h3>
+                            <div class="setting-item">
+                                <label>Auto Refresh</label>
+                                <input type="checkbox" checked="checked"/>
+                            </div>
+                            <div class="setting-item">
+                                <label>Dark Mode</label>
+                                <input type="checkbox"/>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3>Data</h3>
+                            <div class="setting-item">
+                                <label>Cache Data</label>
+                                <input type="checkbox" checked="checked"/>
+                            </div>
+                            <div class="setting-item">
+                                <button class="btn btn-secondary" t-on-click="refreshData">
+                                    Clear Cache
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

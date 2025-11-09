@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Report Definition for PDF Export -->
+    <record id="action_report_balance_sheet_cl_pdf" model="ir.actions.report">
+        <field name="name">Balance General (Chile) - PDF</field>
+        <field name="model">account.report</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">l10n_cl_financial_reports.report_balance_sheet_cl_document</field>
+        <field name="report_file">l10n_cl_financial_reports.report_balance_sheet_cl_document</field>
+        <field name="print_report_name">'Balance_General_CL_%s' % (time.strftime('%Y_%m_%d'))</field>
+    </record>
+
+    <!-- QWeb Template for PDF with DYNAMIC DATA -->
+    <template id="report_balance_sheet_cl_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <!-- Prepare dynamic context from report -->
+                <t t-set="pdf_context" t-value="o.get_pdf_context(context.get('report_options', {}))"/>
+                <t t-set="lines_by_code" t-value="pdf_context['lines_by_code']"/>
+                <t t-set="totals" t-value="pdf_context['totals']"/>
+                <t t-set="period_info" t-value="pdf_context['period_info']"/>
+
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <!-- Header -->
+                        <div class="row mb-4">
+                            <div class="col-12 text-center">
+                                <h2>BALANCE GENERAL CLASIFICADO</h2>
+                                <h3>ESTADO DE SITUACIÓN FINANCIERA</h3>
+                                <h4><span t-field="o.company_id.name"/></h4>
+                            </div>
+                        </div>
+
+                        <!-- Period Info -->
+                        <div class="row mb-4">
+                            <div class="col-12 text-center">
+                                <p class="mb-0">
+                                    <strong>Al:</strong>
+                                    <span t-esc="period_info.get('date_to', 'N/A')"/>
+                                </p>
+                                <p class="text-muted small mb-0">
+                                    (Expresado en Pesos Chilenos - CLP)
+                                </p>
+                            </div>
+                        </div>
+
+                        <hr/>
+
+                        <!-- ACTIVOS Section -->
+                        <div class="mb-4">
+                            <h4 class="bg-primary text-white p-2">ACTIVOS</h4>
+
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 70%;">Cuenta</th>
+                                        <th style="width: 30%;" class="text-end">Saldo (CLP)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Activo Corriente -->
+                                    <tr class="table-info">
+                                        <td class="fw-bold">ACTIVO CORRIENTE</td>
+                                        <td class="text-end fw-bold">
+                                            <span t-esc="totals.get('CL_CURRENT_ASSETS', {}).get('formatted', '0.00')"/>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Activo No Corriente -->
+                                    <tr class="table-info">
+                                        <td class="fw-bold">ACTIVO NO CORRIENTE</td>
+                                        <td class="text-end fw-bold">
+                                            <span t-esc="totals.get('CL_NON_CURRENT_ASSETS', {}).get('formatted', '0.00')"/>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Total Activos -->
+                                    <tr class="table-primary fw-bold">
+                                        <td>TOTAL ACTIVOS</td>
+                                        <td class="text-end">
+                                            <span t-esc="totals.get('CL_ASSETS', {}).get('formatted', '0.00')"/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- PASIVOS Y PATRIMONIO Section -->
+                        <div class="mb-4">
+                            <h4 class="bg-success text-white p-2">PASIVOS Y PATRIMONIO</h4>
+
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 70%;">Cuenta</th>
+                                        <th style="width: 30%;" class="text-end">Saldo (CLP)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Pasivo Corriente -->
+                                    <tr class="table-warning">
+                                        <td class="fw-bold">PASIVO CORRIENTE</td>
+                                        <td class="text-end fw-bold">
+                                            <span t-esc="totals.get('CL_CURRENT_LIABILITIES', {}).get('formatted', '0.00')"/>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Pasivo No Corriente -->
+                                    <tr class="table-warning">
+                                        <td class="fw-bold">PASIVO NO CORRIENTE</td>
+                                        <td class="text-end fw-bold">
+                                            <span t-esc="totals.get('CL_NON_CURRENT_LIABILITIES', {}).get('formatted', '0.00')"/>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Total Pasivos -->
+                                    <tr class="table-secondary fw-bold">
+                                        <td>TOTAL PASIVOS</td>
+                                        <td class="text-end">
+                                            <span t-esc="totals.get('CL_LIABILITIES', {}).get('formatted', '0.00')"/>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Patrimonio -->
+                                    <tr class="table-info">
+                                        <td class="fw-bold">PATRIMONIO</td>
+                                        <td class="text-end fw-bold">
+                                            <span t-esc="totals.get('CL_EQUITY', {}).get('formatted', '0.00')"/>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Total Pasivos + Patrimonio -->
+                                    <tr class="table-success fw-bold">
+                                        <td>TOTAL PASIVOS Y PATRIMONIO</td>
+                                        <td class="text-end">
+                                            <span t-esc="totals.get('CL_LIABILITIES_EQUITY_SECTION', {}).get('formatted', '0.00')"/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Footer Notes -->
+                        <div class="mt-5">
+                            <p class="text-muted small">
+                                <strong>Nota:</strong> Este Balance General Clasificado presenta la situación financiera
+                                de la empresa al cierre del período indicado, clasificando activos y pasivos según su
+                                naturaleza corriente o no corriente conforme a las Normas Internacionales de Información
+                                Financiera (NIIF) y las prácticas contables chilenas.
+                            </p>
+                            <p class="text-muted small">
+                                Generado el: <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y %H:%M')"/> |
+                                Sistema: Odoo 19 CE - l10n_cl_financial_reports
+                            </p>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

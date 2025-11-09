@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Report Definition for PDF Export -->
+    <record id="action_report_profit_loss_cl_pdf" model="ir.actions.report">
+        <field name="name">Estado de Resultados (Chile) - PDF</field>
+        <field name="model">account.report</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">l10n_cl_financial_reports.report_profit_loss_cl_document</field>
+        <field name="report_file">l10n_cl_financial_reports.report_profit_loss_cl_document</field>
+        <field name="print_report_name">'Estado_Resultados_CL_%s' % (time.strftime('%Y_%m_%d'))</field>
+    </record>
+
+    <!-- QWeb Template for PDF with DYNAMIC DATA -->
+    <template id="report_profit_loss_cl_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <!-- Prepare dynamic context from report -->
+                <t t-set="pdf_context" t-value="o.get_pdf_context(context.get('report_options', {}))"/>
+                <t t-set="lines_by_code" t-value="pdf_context['lines_by_code']"/>
+                <t t-set="totals" t-value="pdf_context['totals']"/>
+                <t t-set="period_info" t-value="pdf_context['period_info']"/>
+
+                <!-- Calculate dynamic KPIs -->
+                <t t-set="income_raw" t-value="totals.get('CL_INCOME', {}).get('raw', 0.0)"/>
+                <t t-set="gross_profit_raw" t-value="totals.get('CL_GROSS_PROFIT', {}).get('raw', 0.0)"/>
+                <t t-set="net_profit_raw" t-value="totals.get('CL_NET_PROFIT', {}).get('raw', 0.0)"/>
+
+                <!-- Calculate margins (avoid division by zero) -->
+                <t t-set="margin_bruto" t-value="(gross_profit_raw / income_raw * 100) if income_raw else 0.0"/>
+                <t t-set="margin_neto" t-value="(net_profit_raw / income_raw * 100) if income_raw else 0.0"/>
+
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <!-- Header -->
+                        <div class="row mb-4">
+                            <div class="col-12 text-center">
+                                <h2>ESTADO DE RESULTADOS</h2>
+                                <h3>ESTADO DE RESULTADOS INTEGRALES</h3>
+                                <h4><span t-field="o.company_id.name"/></h4>
+                            </div>
+                        </div>
+
+                        <!-- Period Info -->
+                        <div class="row mb-4">
+                            <div class="col-12 text-center">
+                                <p class="mb-0">
+                                    <strong>Período:</strong>
+                                    Del <span t-esc="period_info.get('date_from', 'N/A')"/>
+                                    al <span t-esc="period_info.get('date_to', 'N/A')"/>
+                                </p>
+                                <p class="text-muted small mb-0">
+                                    (Expresado en Pesos Chilenos - CLP)
+                                </p>
+                            </div>
+                        </div>
+
+                        <hr/>
+
+                        <!-- Income Statement Content -->
+                        <div class="mb-4">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 70%;">Concepto</th>
+                                        <th style="width: 30%;" class="text-end">Monto (CLP)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Ingresos Operacionales -->
+                                    <tr class="table-info">
+                                        <td class="fw-bold">INGRESOS DE ACTIVIDADES ORDINARIAS</td>
+                                        <td class="text-end fw-bold">
+                                            <span t-esc="totals.get('CL_INCOME', {}).get('formatted', '0.00')"/>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Costo de Ventas -->
+                                    <tr>
+                                        <td class="ps-4">Costo de Ventas</td>
+                                        <td class="text-end">
+                                            <span t-esc="totals.get('CL_COST_OF_REVENUE', {}).get('formatted', '0.00')"/>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Utilidad Bruta -->
+                                    <tr class="table-success">
+                                        <td class="fw-bold">UTILIDAD (PÉRDIDA) BRUTA</td>
+                                        <td class="text-end fw-bold">
+                                            <span t-esc="totals.get('CL_GROSS_PROFIT', {}).get('formatted', '0.00')"/>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Otros Ingresos -->
+                                    <tr>
+                                        <td class="ps-4">Otros Ingresos</td>
+                                        <td class="text-end">
+                                            <span t-esc="totals.get('CL_OTHER_INCOME', {}).get('formatted', '0.00')"/>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Gastos de Administración y Ventas -->
+                                    <tr>
+                                        <td class="ps-4">Gastos de Administración y Ventas</td>
+                                        <td class="text-end">
+                                            <span t-esc="totals.get('CL_EXPENSES', {}).get('formatted', '0.00')"/>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Utilidad Neta -->
+                                    <tr class="table-primary">
+                                        <td class="fw-bold">UTILIDAD (PÉRDIDA) DEL EJERCICIO</td>
+                                        <td class="text-end fw-bold">
+                                            <span t-esc="totals.get('CL_NET_PROFIT', {}).get('formatted', '0.00')"/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Key Ratios Section with DYNAMIC VALUES -->
+                        <div class="mb-4">
+                            <h5 class="bg-light p-2">Indicadores Clave</h5>
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <td style="width: 70%;">Margen Bruto (%)</td>
+                                        <td style="width: 30%;" class="text-end">
+                                            <span t-esc="'%.2f%%' % margin_bruto"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Margen Neto (%)</td>
+                                        <td class="text-end">
+                                            <span t-esc="'%.2f%%' % margin_neto"/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Footer Notes -->
+                        <div class="mt-5">
+                            <p class="text-muted small">
+                                <strong>Nota:</strong> Este Estado de Resultados presenta el desempeño financiero
+                                de la empresa durante el período indicado, mostrando los ingresos, costos y gastos
+                                conforme a las Normas Internacionales de Información Financiera (NIIF) y las
+                                prácticas contables chilenas.
+                            </p>
+                            <p class="text-muted small">
+                                Generado el: <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y %H:%M')"/> |
+                                Sistema: Odoo 19 CE - l10n_cl_financial_reports
+                            </p>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

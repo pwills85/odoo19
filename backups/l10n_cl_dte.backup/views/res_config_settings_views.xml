@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extensión de Configuración General -->
+    <record id="res_config_settings_view_form_dte" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.dte</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('settings')]" position="inside">
+                <div class="app_settings_block" data-string="Facturación Electrónica Chile (DTE)" 
+                     string="Facturación Electrónica Chile (DTE)" data-key="l10n_cl_dte">
+                    
+                    <h2>Configuración DTE Chile</h2>
+                    
+                    <!-- Microservicios -->
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label string="DTE Service" for="dte_service_url"/>
+                                <div class="text-muted">
+                                    Microservicio para generación y envío de DTEs
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="dte_service_url" placeholder="http://dte-service:8001"/>
+                                        <field name="dte_api_key" password="True" placeholder="API Key"/>
+                                        <button name="action_test_dte_service" string="Probar Conexión" 
+                                                type="object" class="btn-link"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="use_ai_validation"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="AI Service" for="use_ai_validation"/>
+                                <div class="text-muted">
+                                    Pre-validación inteligente con IA
+                                </div>
+                                <div class="content-group" attrs="{'invisible': [('use_ai_validation', '=', False)]}">
+                                    <div class="mt16">
+                                        <field name="ai_service_url" placeholder="http://ai-service:8002"/>
+                                        <field name="ai_api_key" password="True" placeholder="API Key"/>
+                                        <button name="action_test_ai_service" string="Probar Conexión" 
+                                                type="object" class="btn-link"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Configuración SII -->
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label string="Ambiente SII" for="sii_environment"/>
+                                <div class="text-muted">
+                                    Ambiente del SII (Sandbox para pruebas, Producción para uso real)
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="sii_environment" widget="radio"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label string="Timeout SII" for="sii_timeout"/>
+                                <div class="text-muted">
+                                    Tiempo máximo de espera para respuesta del SII (segundos)
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="sii_timeout"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

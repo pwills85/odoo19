@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+    ═══════════════════════════════════════════════════════════════════════════
+    FIX: Duplicidad de Menús de Facturas (l10n_cl vs account)
+    ═══════════════════════════════════════════════════════════════════════════
+
+    PROBLEMA IDENTIFICADO (2025-11-03):
+    - Módulo l10n_cl (base Odoo) crea menús "Sale Invoices (CL)" y "Vendor Bills (CL)"
+    - Módulo account ya tiene menús "Invoices" y "Bills"
+    - RESULTADO: Duplicidad visual que confunde a usuarios
+
+    SOLUCIÓN IMPLEMENTADA:
+    1. Extender vistas estándar de Odoo para agregar campos chilenos:
+       • Folio (l10n_latam_document_number)
+       • RUT (partner_id_vat)
+       • Tipo DTE (l10n_latam_document_type_id)
+       • Estado DTE (dte_status)
+    2. Ocultar menús duplicados de l10n_cl
+    3. Menús estándar YA incluyen todos los tipos de documento:
+       • Facturas: out_invoice, out_refund (NC), out_receipt
+       • Compras: in_invoice, in_refund (NC), in_receipt
+       • Notas de Débito: Son facturas con referencia (incluidas)
+
+    BENEFICIOS:
+    ✅ UX simplificada (un solo menú por función)
+    ✅ Todos los campos chilenos visibles en vistas estándar
+    ✅ Sin pérdida de funcionalidad
+    ✅ Consistente con experiencia Odoo internacional
+    ✅ Facturas + NC + ND accesibles desde mismo menú
+
+    REFERENCIAS:
+    - Análisis completo: ANALISIS_DUPLICIDAD_MENUS_FACTURAS.md
+    - Issue: Frontend duplicidad menús (2025-11-03)
+    ═══════════════════════════════════════════════════════════════════════════
+    -->
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         PASO 1: Extender Vistas Estándar con Campos Chilenos
+         ══════════════════════════════════════════════════════════════════ -->
+
+    <!--
+    Vista: Facturas de Venta (Customer Invoices)
+    Agrega campos chilenos a la vista tree estándar de Odoo
+    Incluye: Facturas (33, 34), Notas de Crédito (61), Notas de Débito (56)
+    -->
+    <record id="view_out_invoice_tree_inherit_cl_dte_fix" model="ir.ui.view">
+        <field name="name">account.move.out.invoice.tree.inherit.cl.dte.fix</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_out_invoice_tree"/>
+        <field name="arch" type="xml">
+            <!-- Agregar Tipo DTE y Folio después de la columna Number -->
+            <field name="name" position="after">
+                <!-- Tipo de DTE (33=Factura, 34=Exenta, 56=ND, 61=NC) -->
+                <field name="l10n_latam_document_type_id"
+                       string="Tipo DTE"
+                       optional="show"
+                       groups="l10n_cl_dte.group_dte_user"/>
+
+                <!-- Folio del documento SII -->
+                <field name="l10n_latam_document_number"
+                       string="Folio"
+                       optional="show"
+                       groups="l10n_cl_dte.group_dte_user"/>
+            </field>
+
+            <!-- Agregar RUT después del Partner (invoice_partner_display_name) -->
+            <field name="invoice_partner_display_name" position="after">
+                <field name="partner_id_vat"
+                       string="RUT"
+                       optional="show"
+                       groups="l10n_cl_dte.group_dte_user"/>
+            </field>
+
+            <!-- Agregar Estado DTE después de Status -->
+            <field name="status_in_payment" position="after">
+                <field name="dte_status"
+                       string="Estado SII"
+                       optional="hide"
+                       widget="badge"
+                       decoration-success="dte_status == 'accepted'"
+                       decoration-warning="dte_status in ('to_send', 'sending', 'sent')"
+                       decoration-danger="dte_status in ('rejected', 'failed')"
+                       groups="l10n_cl_dte.group_dte_user"/>
+            </field>
+        </field>
+    </record>
+
+    <!--
+    Vista: Facturas de Compra (Vendor Bills)
+    Agrega campos chilenos a la vista tree estándar de Odoo
+    Incluye: Facturas de compra, Notas de Crédito, Notas de Débito
+    -->
+    <record id="view_in_invoice_tree_inherit_cl_dte_fix" model="ir.ui.view">
+        <field name="name">account.move.in.invoice.tree.inherit.cl.dte.fix</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_in_invoice_tree"/>
+        <field name="arch" type="xml">
+            <!-- Agregar Tipo DTE y Folio después de la columna Bill Number -->
+            <field name="name" position="after">
+                <!-- Tipo de DTE -->
+                <field name="l10n_latam_document_type_id"
+                       string="Tipo DTE"
+                       optional="show"
+                       groups="l10n_cl_dte.group_dte_user"/>
+
+                <!-- Folio del documento SII -->
+                <field name="l10n_latam_document_number"
+                       string="Folio"
+                       optional="show"
+                       groups="l10n_cl_dte.group_dte_user"/>
+            </field>
+
+            <!-- Agregar RUT después del Partner (invoice_partner_display_name) -->
+            <field name="invoice_partner_display_name" position="after">
+                <field name="partner_id_vat"
+                       string="RUT"
+                       optional="show"
+                       groups="l10n_cl_dte.group_dte_user"/>
+            </field>
+
+            <!-- Agregar Estado DTE después de Status -->
+            <field name="status_in_payment" position="after">
+                <field name="dte_status"
+                       string="Estado SII"
+                       optional="hide"
+                       widget="badge"
+                       decoration-success="dte_status == 'accepted'"
+                       decoration-warning="dte_status in ('to_send', 'sending', 'sent')"
+                       decoration-danger="dte_status in ('rejected', 'failed')"
+                       groups="l10n_cl_dte.group_dte_user"/>
+            </field>
+        </field>
+    </record>
+
+    <!--
+    Vista: Notas de Crédito de Venta (Customer Credit Notes)
+    Extender vista de NC para incluir campos chilenos
+    -->
+    <record id="view_out_credit_tree_inherit_cl_dte_fix" model="ir.ui.view">
+        <field name="name">account.move.out.credit.tree.inherit.cl.dte.fix</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_out_credit_note_tree"/>
+        <field name="arch" type="xml">
+            <!-- Agregar Tipo DTE y Folio -->
+            <field name="name" position="after">
+                <field name="l10n_latam_document_type_id"
+                       string="Tipo DTE"
+                       optional="show"
+                       groups="l10n_cl_dte.group_dte_user"/>
+                <field name="l10n_latam_document_number"
+                       string="Folio"
+                       optional="show"
+                       groups="l10n_cl_dte.group_dte_user"/>
+            </field>
+
+            <!-- Agregar RUT después del Partner -->
+            <field name="invoice_partner_display_name" position="after">
+                <field name="partner_id_vat"
+                       string="RUT"
+                       optional="show"
+                       groups="l10n_cl_dte.group_dte_user"/>
+            </field>
+
+            <!-- Agregar Estado DTE -->
+            <field name="status_in_payment" position="after">
+                <field name="dte_status"
+                       string="Estado SII"
+                       optional="hide"
+                       widget="badge"
+                       decoration-success="dte_status == 'accepted'"
+                       decoration-warning="dte_status in ('to_send', 'sending', 'sent')"
+                       decoration-danger="dte_status in ('rejected', 'failed')"
+                       groups="l10n_cl_dte.group_dte_user"/>
+            </field>
+        </field>
+    </record>
+
+    <!--
+    Vista: Notas de Crédito de Compra (Vendor Credit Notes/Refunds)
+    Extender vista de NC de compra para incluir campos chilenos
+    -->
+    <record id="view_in_credit_tree_inherit_cl_dte_fix" model="ir.ui.view">
+        <field name="name">account.move.in.credit.tree.inherit.cl.dte.fix</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_in_invoice_refund_tree"/>
+        <field name="arch" type="xml">
+            <!-- Agregar Tipo DTE y Folio -->
+            <field name="name" position="after">
+                <field name="l10n_latam_document_type_id"
+                       string="Tipo DTE"
+                       optional="show"
+                       groups="l10n_cl_dte.group_dte_user"/>
+                <field name="l10n_latam_document_number"
+                       string="Folio"
+                       optional="show"
+                       groups="l10n_cl_dte.group_dte_user"/>
+            </field>
+
+            <!-- Agregar RUT después del Partner -->
+            <field name="invoice_partner_display_name" position="after">
+                <field name="partner_id_vat"
+                       string="RUT"
+                       optional="show"
+                       groups="l10n_cl_dte.group_dte_user"/>
+            </field>
+
+            <!-- Agregar Estado DTE -->
+            <field name="status_in_payment" position="after">
+                <field name="dte_status"
+                       string="Estado SII"
+                       optional="hide"
+                       widget="badge"
+                       decoration-success="dte_status == 'accepted'"
+                       decoration-warning="dte_status in ('to_send', 'sending', 'sent')"
+                       decoration-danger="dte_status in ('rejected', 'failed')"
+                       groups="l10n_cl_dte.group_dte_user"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         PASO 2: Ocultar Menús Duplicados de l10n_cl
+         ══════════════════════════════════════════════════════════════════ -->
+
+    <!--
+    Ocultar: "Sale Invoices and Credit Notes (CL)"
+    Ubicación original: Contabilidad > Clientes > Sale Invoices (CL)
+    Razón: Funcionalidad 100% cubierta por menú "Invoices" estándar
+    -->
+    <record id="l10n_cl.menu_sale_invoices_credit_notes" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+
+    <!--
+    Ocultar: "Vendor Bills and Refunds (CL)"
+    Ubicación original: Contabilidad > Proveedores > Vendor Bills (CL)
+    Razón: Funcionalidad 100% cubierta por menú "Bills" estándar
+    -->
+    <record id="l10n_cl.menu_vendor_bills_and_refunds" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         INFORMACIÓN ADICIONAL
+         ══════════════════════════════════════════════════════════════════
+
+         Menús Estándar que Permanecen Activos:
+
+         1. Contabilidad > Clientes > Invoices
+            - Domain: [('move_type', 'in', ['out_invoice', 'out_refund', 'out_receipt'])]
+            - Incluye: ✅ Facturas (DTE 33, 34)
+                      ✅ Notas de Crédito (DTE 61)
+                      ✅ Notas de Débito (DTE 56 - son facturas con referencia)
+            - Ahora con campos: Tipo DTE, Folio, RUT, Estado SII
+
+         2. Contabilidad > Proveedores > Bills
+            - Domain: [('move_type', 'in', ['in_invoice', 'in_refund', 'in_receipt'])]
+            - Incluye: ✅ Facturas de compra
+                      ✅ Notas de Crédito de compra
+                      ✅ Notas de Débito de compra
+            - Ahora con campos: Tipo DTE, Folio, RUT, Estado SII
+
+         Navegación Completa:
+         • Facturas Venta:        Contabilidad > Clientes > Invoices
+         • Notas Crédito Venta:   Contabilidad > Clientes > Invoices (filtro)
+         • Notas Débito Venta:    Contabilidad > Clientes > Invoices (son facturas)
+         • Facturas Compra:       Contabilidad > Proveedores > Bills
+         • Notas Crédito Compra:  Contabilidad > Proveedores > Bills (filtro)
+         • Notas Débito Compra:   Contabilidad > Proveedores > Bills (son facturas)
+
+         ══════════════════════════════════════════════════════════════════ -->
+
+</odoo>

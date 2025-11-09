@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- ========================================== -->
+        <!-- WIZARD: Generar LRE -->
+        <!-- ========================================== -->
+        
+        <record id="view_hr_lre_wizard_form" model="ir.ui.view">
+            <field name="name">hr.lre.wizard.form</field>
+            <field name="model">hr.lre.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Generar Libro de Remuneraciones Electrónico">
+                    <group states="draft">
+                        <group>
+                            <field name="company_id" invisible="1"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="state" invisible="1"/>
+                            <field name="period_year"/>
+                            <field name="period_month"/>
+                        </group>
+                        <group>
+                            <field name="payslip_run_id" 
+                                   domain="[('date_start', '&gt;=', period_year + '-' + period_month.zfill(2) + '-01')]"
+                                   context="{'default_company_id': company_id}"/>
+                        </group>
+                    </group>
+                    
+                    <group states="done">
+                        <group>
+                            <field name="company_id" invisible="1"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="state" invisible="1"/>
+                            <field name="lre_filename"/>
+                            <field name="total_payslips"/>
+                            <field name="total_employees"/>
+                            <field name="total_remuneraciones"/>
+                        </group>
+                    </group>
+                    
+                    <notebook states="done">
+                        <page string="Archivo Generado">
+                            <group>
+                                <field name="lre_file" filename="lre_filename" widget="binary"/>
+                            </group>
+                        </page>
+                    </notebook>
+                    
+                    <footer>
+                        <button name="action_generate_lre" 
+                                string="Generar LRE" 
+                                type="object" 
+                                class="btn-primary"
+                                states="draft"/>
+                        <button name="action_download_file" 
+                                string="Descargar" 
+                                type="object" 
+                                class="btn-primary"
+                                states="done"/>
+                        <button string="Cerrar" 
+                                class="btn-secondary" 
+                                special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        
+        <!-- ========================================== -->
+        <!-- ACCIÓN -->
+        <!-- ========================================== -->
+        
+        <record id="action_hr_lre_wizard" model="ir.actions.act_window">
+            <field name="name">Generar LRE</field>
+            <field name="res_model">hr.lre.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="binding_model_id" ref="model_hr_payslip_run"/>
+        </record>
+        
+        <!-- ========================================== -->
+        <!-- MENÚ -->
+        <!-- ========================================== -->
+        
+        <menuitem id="menu_hr_lre_wizard"
+                  name="Generar LRE"
+                  parent="menu_hr_payroll_reports"
+                  action="action_hr_lre_wizard"
+                  sequence="10"/>
+        
+    </data>
+</odoo>

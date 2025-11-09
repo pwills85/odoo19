@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+    DTE Invoice Report Template
+    ===========================
+
+    Professional PDF report template for Chilean Electronic Tax Documents (DTE).
+    Complies with SII official format requirements.
+
+    Features:
+    - Company logo and branding
+    - TED barcode (PDF417/QR)
+    - Multi-currency support
+    - Tax breakdown
+    - Payment terms
+    - Professional layout
+
+    Supported DTE Types:
+    - 33: Factura Electrónica
+    - 34: Factura Exenta Electrónica
+    - 52: Guía de Despacho Electrónica
+    - 56: Nota de Débito Electrónica
+    - 61: Nota de Crédito Electrónica
+
+    Author: Odoo 19 CE - Chilean Localization
+    License: LGPL-3
+    -->
+
+    <!-- Main document template -->
+    <template id="report_invoice_dte_document">
+        <t t-call="web.external_layout">
+            <t t-set="o" t-value="o.with_context(lang=o.partner_id.lang)"/>
+            <t t-set="address">
+                <div t-field="o.partner_id"
+                     t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
+                <p t-if="o.partner_id.vat" class="mt-1">
+                    <strong>RUT:</strong>
+                    <t t-out="format_vat(o.partner_id.vat)"/>
+                </p>
+            </t>
+
+            <div class="page">
+                <!-- Header Section -->
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <!-- Company Logo -->
+                        <img t-if="o.company_id.logo"
+                             t-att-src="image_data_uri(o.company_id.logo)"
+                             style="max-height: 80px; max-width: 200px;"
+                             alt="Company Logo"/>
+                    </div>
+                    <div class="col-6 text-end">
+                        <!-- DTE Header Box -->
+                        <div class="border border-dark p-3 d-inline-block text-center"
+                             style="min-width: 250px;">
+                            <h4 class="mb-2">
+                                <!-- PEER REVIEW FIX: Field is dte_code, not dte_type -->
+                                <strong><t t-out="get_dte_type_name(o.dte_code)"/></strong>
+                            </h4>
+                            <p class="mb-1">
+                                <strong>N°</strong>
+                                <t t-out="o.dte_folio or o.name"/>
+                            </p>
+                            <p class="mb-0 small">
+                                <strong>SII - <t t-out="o.company_id.name"/></strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Company Information -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <p class="mb-1">
+                            <strong><t t-out="o.company_id.name"/></strong>
+                        </p>
+                        <p class="mb-1" t-if="o.company_id.street">
+                            <t t-out="o.company_id.street"/>
+                            <t t-if="o.company_id.street2">
+                                , <t t-out="o.company_id.street2"/>
+                            </t>
+                        </p>
+                        <p class="mb-1" t-if="o.company_id.city">
+                            <t t-out="o.company_id.city"/>
+                            <t t-if="o.company_id.state_id">
+                                , <t t-out="o.company_id.state_id.name"/>
+                            </t>
+                        </p>
+                        <p class="mb-1" t-if="o.company_id.vat">
+                            <strong>RUT:</strong>
+                            <t t-out="format_vat(o.company_id.vat)"/>
+                        </p>
+                        <p class="mb-1" t-if="o.company_id.phone">
+                            <strong>Teléfono:</strong>
+                            <t t-out="o.company_id.phone"/>
+                        </p>
+                        <p class="mb-1" t-if="o.company_id.email">
+                            <strong>Email:</strong>
+                            <t t-out="o.company_id.email"/>
+                        </p>
+                    </div>
+                </div>
+
+                <hr class="my-3"/>
+
+                <!-- Customer Information -->
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <p class="mb-1"><strong>Señor(es):</strong></p>
+                        <div class="border p-2" style="min-height: 100px;">
+                            <p class="mb-1"><strong><t t-out="o.partner_id.name"/></strong></p>
+                            <p class="mb-1" t-if="o.partner_id.street">
+                                <t t-out="o.partner_id.street"/>
+                            </p>
+                            <p class="mb-1" t-if="o.partner_id.city">
+                                <t t-out="o.partner_id.city"/>
+                                <t t-if="o.partner_id.state_id">
+                                    , <t t-out="o.partner_id.state_id.name"/>
+                                </t>
+                            </p>
+                            <p class="mb-1" t-if="o.partner_id.vat">
+                                <strong>RUT:</strong>
+                                <t t-out="format_vat(o.partner_id.vat)"/>
+                            </p>
+                            <p class="mb-0" t-if="o.partner_id.activity_description">
+                                <strong>Giro:</strong>
+                                <t t-out="o.partner_id.activity_description"/>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td><strong>Fecha Emisión:</strong></td>
+                                <td><t t-out="o.invoice_date" t-options='{"widget": "date"}'/></td>
+                            </tr>
+                            <tr t-if="o.invoice_date_due">
+                                <td><strong>Fecha Vencimiento:</strong></td>
+                                <td><t t-out="o.invoice_date_due" t-options='{"widget": "date"}'/></td>
+                            </tr>
+                            <tr t-if="o.invoice_payment_term_id">
+                                <td><strong>Condición de Pago:</strong></td>
+                                <td><t t-out="o.invoice_payment_term_id.name"/></td>
+                            </tr>
+                            <tr t-if="o.ref">
+                                <td><strong>Orden de Compra:</strong></td>
+                                <td><t t-out="o.ref"/></td>
+                            </tr>
+                            <tr t-if="o.invoice_origin">
+                                <td><strong>Origen:</strong></td>
+                                <td><t t-out="o.invoice_origin"/></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Invoice Lines -->
+                <table class="table table-sm o_main_table mt-4">
+                    <thead>
+                        <tr class="border-dark">
+                            <th class="text-start"><strong>Descripción</strong></th>
+                            <th class="text-end"><strong>Cantidad</strong></th>
+                            <th class="text-end"><strong>Precio Unit.</strong></th>
+                            <!-- PEER REVIEW FIX: Field is dte_code, not dte_type -->
+                            <th class="text-end" t-if="o.dte_code == '33'"><strong>Descuento</strong></th>
+                            <th class="text-end"><strong>Total</strong></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="o.invoice_line_ids.filtered(lambda l: not l.display_type)" t-as="line">
+                            <tr>
+                                <td>
+                                    <span t-field="line.name"/>
+                                </td>
+                                <td class="text-end">
+                                    <span t-field="line.quantity"/>
+                                    <span t-field="line.product_uom_id" groups="uom.group_uom"/>
+                                </td>
+                                <td class="text-end">
+                                    <span t-field="line.price_unit"/>
+                                </td>
+                                <!-- PEER REVIEW FIX: Field is dte_code, not dte_type -->
+                                <td class="text-end" t-if="o.dte_code == '33'">
+                                    <span t-if="line.discount > 0">
+                                        <t t-out="line.discount"/>%
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <span t-field="line.price_subtotal"
+                                          t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+
+                <!-- Totals Section -->
+                <div class="row mt-4">
+                    <div class="col-7">
+                        <!-- Payment Terms (if any) -->
+                        <t t-set="payment_lines" t-value="get_payment_term_lines(o)"/>
+                        <div t-if="len(payment_lines) > 1" class="border p-2">
+                            <p class="mb-2"><strong>Forma de Pago:</strong></p>
+                            <table class="table table-sm table-borderless">
+                                <t t-foreach="payment_lines" t-as="pline">
+                                    <tr>
+                                        <td><t t-out="pline['date']" t-options='{"widget": "date"}'/></td>
+                                        <td class="text-end">
+                                            <t t-out="pline['amount']"
+                                               t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-5">
+                        <table class="table table-sm">
+                            <tr class="border-dark">
+                                <td><strong>Subtotal (Neto):</strong></td>
+                                <td class="text-end">
+                                    <span t-field="o.amount_untaxed"
+                                          t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                </td>
+                            </tr>
+                            <!-- Tax breakdown -->
+                            <t t-foreach="o.amount_by_group" t-as="amount_by_group">
+                                <tr>
+                                    <td>
+                                        <t t-out="amount_by_group[0]"/>
+                                    </td>
+                                    <td class="text-end">
+                                        <span t-out="amount_by_group[1]"
+                                              t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </t>
+                            <tr class="border-dark">
+                                <td><strong>TOTAL:</strong></td>
+                                <td class="text-end">
+                                    <strong>
+                                        <span t-field="o.amount_total"
+                                              t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </strong>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Comments/Notes -->
+                <div class="row mt-3" t-if="o.narration">
+                    <div class="col-12">
+                        <p class="mb-1"><strong>Observaciones:</strong></p>
+                        <div class="border p-2">
+                            <p t-field="o.narration" class="mb-0"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TED (Timbre Electrónico) Section -->
+                <div class="row mt-5">
+                    <div class="col-12 text-center">
+                        <p class="mb-2"><strong>TIMBRE ELECTRÓNICO SII</strong></p>
+
+                        <!-- PDF417 Barcode (preferred) or QR Code (fallback) -->
+                        <t t-set="ted_barcode" t-value="get_ted_pdf417(o)"/>
+                        <t t-if="not ted_barcode" t-set="ted_barcode" t-value="get_ted_qrcode(o)"/>
+
+                        <div t-if="ted_barcode" class="mb-2">
+                            <img t-att-src="'data:image/png;base64,%s' % ted_barcode"
+                                 style="max-width: 400px; max-height: 150px;"
+                                 alt="TED Barcode"/>
+                        </div>
+
+                        <p class="small mb-0" style="font-size: 8pt;">
+                            Timbre Electrónico SII<br/>
+                            Verifique documento: <t t-out="o.company_id.website or 'www.sii.cl'"/><br/>
+                            Resolución N° 80 del 22-08-2014 - Verifique autenticidad en www.sii.cl
+                        </p>
+
+                        <p class="small mt-2 mb-0" style="font-size: 7pt; color: #666;">
+                            Acuse de recibo según artículo 4° letra c) Resolución N° 80 del 22-08-2014 del SII.
+                            <br/>
+                            Este documento no tiene validez tributaria si no contiene el timbre electrónico.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Page number (footer) -->
+                <div class="row mt-3">
+                    <div class="col-12 text-center text-muted" style="font-size: 8pt;">
+                        <p class="mb-0">
+                            Página <span class="page"/> de <span class="topage"/>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Invoice report template (main entry point) -->
+    <template id="report_invoice_dte">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="l10n_cl_dte.report_invoice_dte_document"
+                   t-lang="o.partner_id.lang"/>
+            </t>
+        </t>
+    </template>
+
+    <!-- Report action -->
+    <record id="action_report_invoice_dte" model="ir.actions.report">
+        <field name="name">DTE - Factura Electrónica</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">l10n_cl_dte.report_invoice_dte</field>
+        <field name="report_file">l10n_cl_dte.report_invoice_dte</field>
+        <!-- PEER REVIEW FIX (HALLAZGO #3): Field is dte_code, not dte_type -->
+        <field name="print_report_name">'DTE-%s-%s' % (object.dte_code or 'DOC', object.dte_folio or object.name)</field>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_us"/>
+    </record>
+
+</odoo>

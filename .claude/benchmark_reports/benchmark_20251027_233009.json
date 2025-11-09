@@ -1,0 +1,85 @@
+{
+  "timestamp": "2025-10-27T23:30:09.576383",
+  "project": "Odoo 19 CE - l10n_cl_dte",
+  "results": {
+    "agents": {
+      "test-automation": "Test Automation Specialist",
+      "odoo-dev": "Odoo Developer",
+      "dte-compliance": "DTE Compliance Expert"
+    },
+    "hooks_performance": {
+      "PreToolUse": 19.941091537475586,
+      "PostToolUse": 21.145105361938477,
+      "PreCompact": 20.130157470703125
+    },
+    "configuration_scores": {
+      "settings": [
+        10,
+        10
+      ],
+      "agents": [
+        3,
+        3
+      ],
+      "hooks": [
+        4,
+        4
+      ],
+      "styles": [
+        2,
+        2
+      ]
+    },
+    "overall_score": 100.0,
+    "tool_usage": {
+      "Read": 2
+    },
+    "total_operations": 2,
+    "file_coverage": {
+      "total_files": 1,
+      "categories": {
+        "models": 0,
+        "views": 0,
+        "controllers": 0,
+        "tests": 0,
+        "security": 0,
+        "data": 0,
+        "other": 1
+      }
+    },
+    "improvements": {
+      "Explore Agent (Haiku)": {
+        "description": "Reduced context usage for codebase exploration",
+        "estimated_saving": "70%",
+        "impact": "High"
+      },
+      "Custom Agents": {
+        "description": "Specialized knowledge reduces trial-and-error",
+        "estimated_saving": "50%",
+        "impact": "High"
+      },
+      "Thinking Mode": {
+        "description": "Better planning reduces rework",
+        "estimated_saving": "30%",
+        "impact": "Medium"
+      },
+      "Auto-compact": {
+        "description": "Infinite conversations without restart",
+        "estimated_saving": "Infinite context",
+        "impact": "High"
+      },
+      "Hooks Validation": {
+        "description": "Prevents errors before execution",
+        "estimated_saving": "20% error reduction",
+        "impact": "Medium"
+      }
+    },
+    "recommendations": [
+      {
+        "priority": "Low",
+        "area": "Usage",
+        "recommendation": "Run more Claude Code sessions to gather meaningful metrics"
+      }
+    ]
+  }
+}

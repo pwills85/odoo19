@@ -1,0 +1,90 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Odoo
+addons/*/static/description/icon.png
+*.pot
+
+# Environment variables
+config/docker.env.local
+*.local
+
+# Logs
+logs/
+*.log
+
+# Database
+data/
+db_data/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Command residuals (prevent accidental file creation from shell redirects)
+/-u
+/--rm
+/--stop-after-init
+/-d
+/-name
+/-o
+/0
+/docker-compose
+/l10n_cl_dte
+/odoo
+/odoo19
+/run
+/echo
+/find
+/archivos
+/Total
+/*test.py
+/test*.py
+/test:
+addons/localization/.deprecated/
+addons/localization/.backup_*/

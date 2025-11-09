@@ -1,0 +1,35 @@
+.o_financial_report_viewer {
+    background-color: #f8f9fa;
+}
+.o_report_control_panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: white;
+    border-bottom: 1px solid #dee2e6;
+}
+.o_report_title h3 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+.o_report_content {
+    padding: 16px;
+}
+.o_report_content .table {
+    background-color: white;
+}
+.o_report_line {
+    cursor: pointer;
+}
+.o_report_line:hover {
+    background-color: #e9ecef;
+}
+.o_report_totals {
+    font-weight: bold;
+    background-color: #f8f9fa;
+    border-top: 2px solid #343a40;
+}
+.text-end {
+    text-align: right;
+}

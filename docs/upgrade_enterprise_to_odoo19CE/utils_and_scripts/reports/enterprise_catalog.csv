@@ -1,0 +1,189 @@
+module,path,name,summary,version,category,depends,auto_install,application,license,has_qweb,has_data
+account_3way_match,addons/enterprise/account_3way_match,Vendor Bill: Release to Pay,,,Purchase Management,purchase,,,OEEL-1,False,True
+account_accountant,addons/enterprise/account_accountant,Accounting,Manage financial and analytic accounting,1.1,Accounting,"account,web_tour",False,True,,False,True
+account_asset,addons/enterprise/account_asset,Assets Management,,,Accounting,account,,,,True,True
+account_bank_statement_import_camt,addons/enterprise/account_bank_statement_import_camt,Import CAMT Bank Statement,,,Accounting,account_bank_statement_import,False,,OEEL-1,False,True
+account_bank_statement_import_csv,addons/enterprise/account_bank_statement_import_csv,Import CSV Bank Statement,,1.0,Accounting,"account_bank_statement_import,base_import",True,,OEEL-1,False,True
+account_bank_statement_import_ofx,addons/enterprise/account_bank_statement_import_ofx,Import OFX Bank Statement,,1.0,Accounting,account_bank_statement_import,True,,OEEL-1,False,True
+account_bank_statement_import_qif,addons/enterprise/account_bank_statement_import_qif,Import QIF Bank Statement,,1.0,Accounting,account_bank_statement_import,False,,OEEL-1,False,True
+account_batch_payment,addons/enterprise/account_batch_payment,Batch Payment,,1.0,Accounting,account,,,OEEL-1,True,True
+account_budget,addons/enterprise/account_budget,Budget Management,,,Accounting,account,,,,False,True
+account_deferred_revenue,addons/enterprise/account_deferred_revenue,Deferred Revenues,,1.0,Accounting,account_asset,,False,OEEL-1,False,True
+account_intrastat,addons/enterprise/account_intrastat,Intrastat Reports,,,Accounting,account_reports,,,,False,True
+account_invoice_extract,addons/enterprise/account_invoice_extract,Account Invoice Extract,Extract data from invoice scans to fill them automatically,1.0,Accounting,"account_accountant,iap,mail_enterprise",True,,,False,True
+account_online_sync,addons/enterprise/account_online_sync,account_online_sync,"
+        This module is used for Online bank synchronization.",2.0,Accounting,account,True,,OEEL-1,True,True
+account_plaid,addons/enterprise/account_plaid,account_plaid,"
+        Use Plaid.com to retrieve bank statements",3.0,Accounting,account_online_sync,True,,OEEL-1,True,True
+account_predictive_bills,addons/enterprise/account_predictive_bills,Predictive vendor bill data,,1.0,Accounting,account_accountant,True,,,False,True
+account_reports,addons/enterprise/account_reports,Accounting Reports,View and create reports,,Accounting,account_accountant,True,,OEEL-1,True,True
+account_reports_followup,addons/enterprise/account_reports_followup,Payment Follow-up Management,,1.0,Accounting,"account,mail,account_reports",False,,OEEL-1,True,True
+account_sepa,addons/enterprise/account_sepa,SEPA Credit Transfer,Export payments as SEPA Credit Transfer files,1.0,Accounting,"account_batch_payment,base_iban",,,OEEL-1,False,True
+account_sepa_direct_debit,addons/enterprise/account_sepa_direct_debit,SEPA Direct Debit,Collect payments from your customers through SEPA direct debit.,,Accounting,"base_iban,account_batch_payment",,,,False,True
+account_taxcloud,addons/enterprise/account_taxcloud,Account TaxCloud,TaxCloud make it easy for business to comply with sales tax law,1.0,Accounting,l10n_us,True,,OEEL-1,False,True
+account_yodlee,addons/enterprise/account_yodlee,Yodlee,Yodlee Finance,2.0,Accounting,account_online_sync,True,,OEEL-1,True,True
+analytic_enterprise,addons/enterprise/analytic_enterprise,Analytic Accounting Enterprise,,0.1,Hidden/Dependency,"web_grid,analytic,account",True,,,False,True
+barcodes_mobile,addons/enterprise/barcodes_mobile,Barcode in Mobile,Barcode scan in Mobile,1.0,Mobile,"barcodes,web_mobile",True,,OEEL-1,False,True
+base_automation_hr_contract,addons/enterprise/base_automation_hr_contract,Automated Action based on Employee Contracts,,1.0,Human Resources,"base_automation,hr_contract",True,,,False,True
+crm_enterprise,addons/enterprise/crm_enterprise,CRM enterprise,Advanced features for CRM,1.0,Sales,"crm,web_dashboard,web_cohort",True,False,,False,True
+currency_rate_live,addons/enterprise/currency_rate_live,Live Currency Exchange Rate,,1.0,Accounting,account,True,,OEEL-1,False,True
+delivery_barcode,addons/enterprise/delivery_barcode,Delivery Barcode Scanning,Add barcode scanning facilities to Delivery.,1.0,,"stock_barcode,delivery",True,,OEEL-1,False,True
+delivery_bpost,addons/enterprise/delivery_bpost,bpost Shipping,,1.0,Warehouse,"delivery,mail",,,OEEL-1,False,True
+delivery_dhl,addons/enterprise/delivery_dhl,DHL Express Shipping,,1.0,Warehouse,"delivery,mail",,,OEEL-1,False,True
+delivery_easypost,addons/enterprise/delivery_easypost,Easypost Shipping,,1.0,Warehouse,"delivery,mail",,,,False,True
+delivery_fedex,addons/enterprise/delivery_fedex,Fedex Shipping,,1.0,Warehouse,"delivery,mail",,,OEEL-1,False,True
+delivery_ups,addons/enterprise/delivery_ups,UPS Shipping,,1.0,Warehouse,"delivery,mail",,,OEEL-1,False,True
+delivery_usps,addons/enterprise/delivery_usps,United States Postal Service (USPS) Shipping,,1.0,Warehouse,"delivery,mail",,,OEEL-1,False,True
+documents,addons/enterprise/documents,Documents,Document management,1.0,Extra Tools,"base,mail,portal,web",,True,,True,True
+documents_account,addons/enterprise/documents_account,Documents - Accounting,Invoices from Documents,1.0,Uncategorized,"documents,account",True,,,False,True
+documents_product,addons/enterprise/documents_product,Documents - Product,Products from Documents,1.0,Uncategorized,"documents,product",True,,,False,True
+documents_project,addons/enterprise/documents_project,Documents - Projects,Project from documents,1.0,Uncategorized,"documents,project",True,,,False,True
+documents_sign,addons/enterprise/documents_sign,Documents - Signatures,Signature templates from Documents,1.0,Uncategorized,"documents,sign",True,,,False,True
+event_barcode,addons/enterprise/event_barcode,Event Barcode Scanning,Add barcode scanning feature to event management.,,Tools,"barcodes,event",,,OEEL-1,True,True
+event_barcode_mobile,addons/enterprise/event_barcode_mobile,Event Barcode in Mobile,Event Barcode scan in Mobile,1.0,Mobile,"event_barcode,web_mobile",True,,OEEL-1,True,True
+event_enterprise,addons/enterprise/event_enterprise,Events Organization Add-on,Displays cohort analysis on attendees.,,Marketing,"event,web_cohort",True,,OEEL-1,False,True
+helpdesk,addons/enterprise/helpdesk,Helpdesk,Track help tickets,1.2,Helpdesk,"base_setup,mail,utm,rating,web_tour,resource,portal,digest",,True,OEEL-1,True,True
+helpdesk_sale_timesheet,addons/enterprise/helpdesk_sale_timesheet,Sell Helpdesk Timesheet,"Project, Helpdesk, Timesheet and Sale Orders",,Hidden,"helpdesk_timesheet,sale_timesheet",True,,,False,True
+helpdesk_timesheet,addons/enterprise/helpdesk_timesheet,Helpdesk Timesheet,"Project, Tasks, Timesheet",,Helpdesk,"helpdesk,hr_timesheet",,,,False,True
+hr_appraisal,addons/enterprise/hr_appraisal,Appraisal,Assess your employees,1.0,Human Resources,"hr,calendar,survey",,True,OEEL-1,False,True
+hr_contract_salary,addons/enterprise/hr_contract_salary,HR Contract Salary (Belgium),Salary Package Configurator,,Human Resource,"hr,website,hr_recruitment,l10n_be_hr_payroll_fleet,sign",,,,False,True
+hr_holidays_gantt,addons/enterprise/hr_holidays_gantt,Leaves Gantt,Gantt view for Leaves Dashboard,1.0,Human Resources,"hr_holidays,web_gantt",True,,OEEL-1,False,True
+inter_company_rules,addons/enterprise/inter_company_rules,Inter Company Module for Sale/Purchase Orders and Invoices,Intercompany SO/PO/INV rules,1.1,Productivity,"sale_management,purchase_stock,sale_stock",False,,OEEL-1,False,True
+iot,addons/enterprise/iot,Internet of Things,Basic models and helpers to support Internet of Things.,,Tools,"mail,web",False,True,,False,True
+l10n_ar_reports,addons/enterprise/l10n_ar_reports,Argentina - Accounting Reports,,1.1,Accounting,"l10n_ar,account_reports",True,,OEEL-1,False,True
+l10n_at_reports,addons/enterprise/l10n_at_reports,Austria - Accounting,,1.0,Accounting,"l10n_at,account_reports",True,,OEEL-1,False,True
+l10n_au_aba,addons/enterprise/l10n_au_aba,ABA Credit Transfer,Export payments as ABA Credit Transfer files,1.0,Accounting &amp; Finance,"account_batch_payment,l10n_au",True,,OEEL-1,False,True
+l10n_au_reports,addons/enterprise/l10n_au_reports,Australian - Accounting Reports,,1.1,Accounting,"l10n_au,account_reports",True,,OEEL-1,False,True
+l10n_be_coda,addons/enterprise/l10n_be_coda,Belgium - Import Bank CODA Statements,,2.1,Accounting,"account_accountant,l10n_be,account_bank_statement_import,base_iban",True,,OEEL-1,False,True
+l10n_be_intrastat,addons/enterprise/l10n_be_intrastat,Belgian Intrastat Declaration,,,Accounting,"l10n_be,account_intrastat",True,,,False,True
+l10n_be_intrastat_2019,addons/enterprise/l10n_be_intrastat_2019,Belgian Intrastat Declaration - Complement for 2019,,,Accounting,l10n_be_intrastat,True,,,False,True
+l10n_be_reports,addons/enterprise/l10n_be_reports,Belgium - Accounting Reports,,1.1,Accounting,"l10n_be,account_reports",True,,OEEL-1,False,True
+l10n_bo_reports,addons/enterprise/l10n_bo_reports,Bolivia - Accounting Reports,,1.1,Accounting,"l10n_bo,account_reports",True,,OEEL-1,False,True
+l10n_br_reports,addons/enterprise/l10n_br_reports,Brazilian - Accounting Reports,,1.1,Accounting,"l10n_br,account_reports",True,,OEEL-1,False,True
+l10n_ca_check_printing,addons/enterprise/l10n_ca_check_printing,Canadian Checks Layout,Print CA Checks,1.0,Accounting,"account_check_printing,l10n_ca",True,,OEEL-1,False,True
+l10n_ch_reports,addons/enterprise/l10n_ch_reports,Switzerland - Accounting Reports,,1.1,Accounting,"l10n_ch,account_reports",True,,OEEL-1,False,True
+l10n_cl_reports,addons/enterprise/l10n_cl_reports,Chile - Accounting Reports,,1.1,Accounting,"l10n_cl,account_reports",True,,OEEL-1,False,True
+l10n_co_edi,addons/enterprise/l10n_co_edi,Electronic invoicing for Colombia with Carvajal,Colombian Localization for EDI documents,0.1,Accounting,"account,l10n_co",,,,False,True
+l10n_co_reports,addons/enterprise/l10n_co_reports,Colombian - Accounting Reports,,1.1,Accounting,"l10n_co,account_reports",True,,OEEL-1,False,True
+l10n_de_reports,addons/enterprise/l10n_de_reports,Germany - Accounting Reports,,1.1,Accounting,"l10n_de,account_reports",True,,OEEL-1,False,True
+l10n_do_reports,addons/enterprise/l10n_do_reports,Dominican Republic - Accounting,,1.0,Accounting,"l10n_do,account_reports",True,,OEEL-1,False,True
+l10n_es_real_estates,addons/enterprise/l10n_es_real_estates,l10n_es_real_estates,,0.1,Accounting,l10n_es_reports,,,,False,True
+l10n_es_reports,addons/enterprise/l10n_es_reports,Spain - Accounting (PGCE 2008) Reports,,4.1,Accounting,"l10n_es,account_reports",True,,OEEL-1,False,True
+l10n_et_reports,addons/enterprise/l10n_et_reports,Ethiopia - Accounting Reports,,1.1,Accounting,"l10n_et,account_reports",True,,OEEL-1,False,True
+l10n_fr_reports,addons/enterprise/l10n_fr_reports,France - Accounting Reports,,1.1,Accounting,"l10n_fr,account_reports",True,,OEEL-1,False,True
+l10n_gr_reports,addons/enterprise/l10n_gr_reports,Greece - Accounting Reports,,1.1,Accounting,"l10n_gr,account_reports",True,,OEEL-1,False,True
+l10n_hr_reports,addons/enterprise/l10n_hr_reports,Croatia - RRIF 2012 COA - Accounting Reports,,1.1,Accounting,"l10n_hr,account_reports",True,,OEEL-1,False,True
+l10n_hu_reports,addons/enterprise/l10n_hu_reports,Hungarian - Accounting Reports,,1.1,Accounting,"l10n_hu,account_reports",True,,OEEL-1,False,True
+l10n_in_reports,addons/enterprise/l10n_in_reports,Indian - Accounting Reports,,1.1,Accounting,"l10n_in,account_reports",True,,OEEL-1,False,True
+l10n_jp_reports,addons/enterprise/l10n_jp_reports,Japan - Accounting Reports,,1.1,Accounting,"l10n_jp,account_reports",True,,OEEL-1,False,True
+l10n_lu_reports,addons/enterprise/l10n_lu_reports,Luxembourg - Accounting Reports,,1.1,Accounting,"l10n_lu,account_reports",True,,OEEL-1,False,True
+l10n_ma_reports,addons/enterprise/l10n_ma_reports,Maroc - Accounting Reports,,1.1,Accounting,"l10n_ma,account_reports",True,,OEEL-1,False,True
+l10n_mx_edi,addons/enterprise/l10n_mx_edi,EDI for Mexico,Mexican Localization for EDI documents,0.1,Hidden,"account,account_cancel,base_vat,base_address_extended,document,base_address_city",False,,,False,True
+l10n_mx_edi_customs,addons/enterprise/l10n_mx_edi_customs,Odoo Mexico Localization for Invoice with customs Number,"
+        Generate Electronic Invoice with Customs Number
+    ",0.1,Hidden,l10n_mx_edi,,,OEEL-1,False,True
+l10n_mx_edi_external_trade,addons/enterprise/l10n_mx_edi_external_trade,EDI External Trade Complement for Mexico,External Trade Complement for the Mexican localization,0.1,Hidden,l10n_mx_edi,False,,,False,True
+l10n_mx_edi_landing,addons/enterprise/l10n_mx_edi_landing,Odoo Mexico Localization for Stock/Landing,"
+        Generate Electronic Invoice with Customs Number
+    ",11.0.1.0.0,Hidden,"stock_landed_costs,sale_management,l10n_mx_edi_customs",,,,False,True
+l10n_mx_edi_payment,addons/enterprise/l10n_mx_edi_payment,EDI Payment,Mexican Localization for EDI documents,0.1,Hidden,l10n_mx_edi,True,,,False,False
+l10n_mx_edi_payment_bank,addons/enterprise/l10n_mx_edi_payment_bank,Bank account payment to Mexico,Bank account in the payments,0.1,Hidden,l10n_mx_edi,True,,,False,True
+l10n_mx_reports,addons/enterprise/l10n_mx_reports,Odoo Mexican Localization Reports,"
+        Electronic accounting reports
+            - COA
+            - Trial Balance
+        DIOT Report
+    ",10.0.1.0.0,Accounting,"account_reports,l10n_mx",True,,OEEL-1,False,True
+l10n_mx_tax_cash_basis,addons/enterprise/l10n_mx_tax_cash_basis,Tax Cash Basis Entries at Payment Date,"
+    Properly create the Journal Entries on Tax Cash basis when using foreign
+    currencies the Tax must be set at date of payment
+    ",0.1,Accounting,l10n_mx_edi,True,,OEEL-1,False,False
+l10n_nl_intrastat,addons/enterprise/l10n_nl_intrastat,Netherlands Intrastat Declaration,,,Localization,"l10n_nl,account_intrastat",True,,,False,True
+l10n_nl_reports,addons/enterprise/l10n_nl_reports,Netherlands - Accounting Reports,,1.5,Accounting,"l10n_nl,account_reports",True,,OEEL-1,False,True
+l10n_no_reports,addons/enterprise/l10n_no_reports,Norway - Accounting Reports,,1.1,Accounting,"l10n_no,account_reports",True,,OEEL-1,False,True
+l10n_pl_reports,addons/enterprise/l10n_pl_reports,Poland - Accounting Reports,,1.1,Accounting,"l10n_pl,account_reports",True,,OEEL-1,False,True
+l10n_ro_reports,addons/enterprise/l10n_ro_reports,Romania - Accounting Reports,,1.1,Accounting,"l10n_ro,account_reports",True,,OEEL-1,False,True
+l10n_sg_reports,addons/enterprise/l10n_sg_reports,Singapore - Accounting Reports,,1.1,Accounting,"l10n_sg,account_reports",True,,OEEL-1,False,True
+l10n_si_reports,addons/enterprise/l10n_si_reports,Slovenian - Accounting Reports,,1.1,Accounting,"l10n_si,account_reports",True,,OEEL-1,False,True
+l10n_th_reports,addons/enterprise/l10n_th_reports,Thailand - Accounting Reports,,1.1,Accounting,"l10n_th,account_reports",True,,OEEL-1,False,True
+l10n_uk_reports,addons/enterprise/l10n_uk_reports,UK - Accounting Reports,,1.1,Accounting,"l10n_uk,account_reports",True,,OEEL-1,False,True
+l10n_uk_reports_hmrc,addons/enterprise/l10n_uk_reports_hmrc,UK - Accounting Reports to HMRC,,1.1,Accounting,l10n_uk_reports,True,,OEEL-1,False,True
+l10n_us_check_printing,addons/enterprise/l10n_us_check_printing,US Checks Layout,Print US Checks,1.0,Accounting,"account_check_printing,l10n_us",True,,OEEL-1,False,True
+l10n_us_reports,addons/enterprise/l10n_us_reports,US - Accounting Reports,,1.0,Accounting,"l10n_us,account_reports",True,,OEEL-1,False,True
+l10n_uy_reports,addons/enterprise/l10n_uy_reports,Uruguay - Accounts Reports,,1.1,Accounting,"l10n_uy,account_reports",True,,OEEL-1,False,True
+l10n_vn_reports,addons/enterprise/l10n_vn_reports,Vietnam - Accounting Reports,,1.1,Accounting,"l10n_vn,account_reports",True,,OEEL-1,False,True
+mail_enterprise,addons/enterprise/mail_enterprise,Mail Enterprise,,,Discuss,mail,True,,OEEL-1,True,True
+mail_github,addons/enterprise/mail_github,Github Integration with Discuss,,,Discuss,mail,,,OEEL-1,False,True
+marketing_automation,addons/enterprise/marketing_automation,Marketing Automation,Build automated mailing campaigns,1.0,Marketing,mass_mailing,,True,OEEL-1,False,True
+mass_mailing_themes,addons/enterprise/mass_mailing_themes,Mass Mailing Themes,Design gorgeous mails,1.0,Marketing,mass_mailing,True,,OEEL-1,False,True
+mrp_account,addons/enterprise/mrp_account,Accounting - MRP,Analytic accounting in Manufacturing,1.0,Manufacturing,"mrp,stock_account",True,,OEEL-1,False,True
+mrp_maintenance,addons/enterprise/mrp_maintenance,Maintenance - MRP,Schedule and manage maintenance on machine and tools.,1.0,Manufacturing,"mrp_workorder,maintenance",True,,OEEL-1,False,True
+mrp_mps,addons/enterprise/mrp_mps,Master Production Schedule,Master Production Schedule,1.0,Manufacturing,"mrp,purchase",,False,OEEL-1,True,True
+mrp_plm,addons/enterprise/mrp_plm,Product Lifecycle Management (PLM),"Manage engineering change orders on products, bills of material and routings",1.0,Manufacturing,mrp,,True,OEEL-1,True,True
+mrp_workorder,addons/enterprise/mrp_workorder,MRP II,"Work Orders, Planing, Stock Reports.",1.0,Manufacturing,"quality,mrp,barcodes",,False,OEEL-1,True,True
+mrp_zebra,addons/enterprise/mrp_zebra,Zebra printers integration for MRP,"
+        Zebra printers integration for mrp module",1.0,mrp,"stock_zebra,quality_mrp_iot",True,,,False,True
+ocn_client,addons/enterprise/ocn_client,Odoo Cloud Notification Client (OCN),Allow push notification to devices,1.0,Tool,"iap,mail",True,,,False,True
+pos_blackbox_be,addons/enterprise/pos_blackbox_be,Belgian Registered Cash Register,"Implements the registered cash system, adhering to guidelines by FPS Finance.",1.0,Point of Sale,"pos_restaurant,l10n_be,web_enterprise",False,,OEEL-1,True,True
+pos_enterprise,addons/enterprise/pos_enterprise,Point of Sale enterprise,Advanced features for PoS,,Point of Sale,"web_enterprise,point_of_sale",True,,,False,True
+pos_iot,addons/enterprise/pos_iot,,Link your PoS configuration with an IoT Box,1.0,Point of Sale,"point_of_sale,iot",True,,OEEL-1,False,True
+pos_loyalty,addons/enterprise/pos_loyalty,Loyalty Program,Loyalty Program for the Point of Sale ,1.0,Point of Sale,point_of_sale,False,,OEEL-1,True,True
+pos_restaurant_iot,addons/enterprise/pos_restaurant_iot,,Link your PoS configuration with an IoT Box for the restaurant,1.0,Point of Sale,"pos_restaurant,iot",True,,OEEL-1,False,True
+project_enterprise,addons/enterprise/project_enterprise,Project Enterprise,Bridge module for project and enterprise,1.0,Project,project,True,,OEEL-1,False,True
+project_forecast,addons/enterprise/project_forecast,Forecast,Forecast your resources on project tasks,1.0,Project,"project,web_grid,hr",,True,OEEL-1,False,True
+project_timesheet_forecast,addons/enterprise/project_timesheet_forecast,Timesheet and Forecast,Compare timesheets and forecasts,1.0,Hidden,"hr_timesheet,project_forecast",True,,,False,True
+project_timesheet_forecast_sale,addons/enterprise/project_timesheet_forecast_sale,Compare timesheets and forecast for your projects,,1.0,Project,"project_forecast,sale_timesheet",True,,OEEL-1,False,True
+project_timesheet_synchro,addons/enterprise/project_timesheet_synchro,Synchronization with the external timesheet application,,1.0,Project,hr_timesheet,True,,OEEL-1,True,True
+purchase_mrp_workorder_quality,addons/enterprise/purchase_mrp_workorder_quality,Full Traceability Report Demo Data,Full Traceability Report Demo Data,1.0,Manufacturing,"purchase_mrp,quality_mrp_workorder,purchase_stock",,False,OEEL-1,False,False
+quality,addons/enterprise/quality,Quality Base,Basic Feature for Quality,1.0,Manufacturing,"stock,decimal_precision",,False,OEEL-1,False,True
+quality_control,addons/enterprise/quality_control,Quality,Control the quality of your products,1.0,Manufacturing,quality,,True,OEEL-1,False,True
+quality_iot,addons/enterprise/quality_iot,Quality Steps with IoT,Quality steps and IoT devices,,Tools,"iot,quality_control",True,,,False,True
+quality_mrp,addons/enterprise/quality_mrp,MRP features for Quality Control,Quality Management with MRP,1.0,Manufacturing,"quality_control,mrp",True,,OEEL-1,False,True
+quality_mrp_iot,addons/enterprise/quality_mrp_iot,IoT features for Work Order Quality Control,Quality steps in MRP work orders with IoT devices,1.0,Manufacturing,"quality_mrp_workorder,iot",True,,OEEL-1,False,True
+quality_mrp_workorder,addons/enterprise/quality_mrp_workorder,MRP features for Quality Control,Quality Management with MRP,1.0,Manufacturing,"quality_control,mrp_workorder,barcodes",True,,OEEL-1,False,True
+sale_account_taxcloud,addons/enterprise/sale_account_taxcloud,Account TaxCloud - Sale,,,Accounting,"account_taxcloud,sale",True,,OEEL-1,False,True
+sale_coupon,addons/enterprise/sale_coupon,Sale Coupon,Allows to use discount coupons in sales orders,1.0,Sales,sale_management,,,,False,True
+sale_coupon_delivery,addons/enterprise/sale_coupon_delivery,Sale Coupon Delivery,Allows to offer free shippings in coupon reward,1.0,Sales,"sale_coupon,delivery",True,,,False,False
+sale_ebay,addons/enterprise/sale_ebay,eBay Connector,"
+  Publish your products on eBay",1.0,Sales,"base,sale_management,stock,delivery,document",,False,OEEL-1,True,True
+sale_enterprise,addons/enterprise/sale_enterprise,Sale enterprise,Advanced Features for Sale Management,1.0,Sales,"sale,web_dashboard",True,False,,False,True
+sale_intrastat,addons/enterprise/sale_intrastat,Sale Intrastat,,,Accounting,"sale,account_intrastat",True,,,False,False
+sale_subscription,addons/enterprise/sale_subscription,Subscriptions,Generate recurring invoices and manage renewals,1.1,Sales,"account_deferred_revenue,sale_management,portal,web_cohort,rating,base_automation",,True,OEEL-1,False,True
+sale_subscription_asset,addons/enterprise/sale_subscription_asset,Deferred Revenues Management for Subscriptions,,1.0,Sales,"sale_subscription,account_deferred_revenue",True,,OEEL-1,False,True
+sale_subscription_dashboard,addons/enterprise/sale_subscription_dashboard,Sale Subscription Dashboard,,1.0,Accounting,"sale_subscription,sale_subscription_asset",True,,OEEL-1,True,True
+sign,addons/enterprise/sign,Sign,Send documents to sign online and handle filled copies,1.0,Document Management,"mail,document,portal,sms",,True,OEEL-1,True,True
+snailmail_account_reports_followup,addons/enterprise/snailmail_account_reports_followup,Snail Mail Follow-Up,Extension to send follow-up documents by post,1.0,Tools,"snailmail,account_reports_followup",True,,OEEL-1,True,True
+stock_account_enterprise,addons/enterprise/stock_account_enterprise,Stock account enterprise,Advanced features for stock_account,1.0,Stock,"stock_account,web_dashboard",True,False,,False,True
+stock_barcode,addons/enterprise/stock_barcode,Barcode,Use barcode scanners to process logistics operations,1.0,Warehouse,"barcodes,stock,web_tour",,True,OEEL-1,True,True
+stock_barcode_mobile,addons/enterprise/stock_barcode_mobile,Stock Barcode in Mobile,Stock Barcode scan in Mobile,1.0,Mobile,"stock_barcode,web_mobile",True,,OEEL-1,True,True
+stock_enterprise,addons/enterprise/stock_enterprise,Stock enterprise,Advanced features for Stock,1.0,Stock,"stock,web_dashboard,web_cohort",True,False,,False,True
+stock_intrastat,addons/enterprise/stock_intrastat,Stock Intrastat,,,Stock,"stock_account,account_intrastat",True,,,False,True
+test_marketing_automation,addons/enterprise/test_marketing_automation,Marketing Automation Tests,Test Suits for Automated Marketing Campaigns,1.0,Hidden,"marketing_automation,test_mail",,False,,False,False
+timesheet_grid,addons/enterprise/timesheet_grid,Timesheets,Timesheet Validation and Grid View,1.0,,"web_grid,hr_timesheet",True,True,OEEL-1,False,True
+timesheet_grid_sale,addons/enterprise/timesheet_grid_sale,Sales Timesheet: Grid Support,Configure timesheet invoicing,0.1,Hidden,"sale_timesheet,timesheet_grid",True,,OEEL-1,False,True
+voip,addons/enterprise/voip,VOIP,"
+        Make calls using a VOIP system",2.0,Sales,"base,mail,web,phone_validation",,True,OEEL-1,True,True
+voip_onsip,addons/enterprise/voip_onsip,VOIP OnSIP,,1.0,Hidden,voip,,False,OEEL-1,False,True
+web_cohort,addons/enterprise/web_cohort,Cohort View,Basic Cohort view for odoo,,,web,True,,OEEL-1,True,True
+web_dashboard,addons/enterprise/web_dashboard,web_dashboard,,1.0,Hidden,web,True,,,True,True
+web_enterprise,addons/enterprise/web_enterprise,Web Enterprise,,1.0,Hidden,web,True,,OEEL-1,True,True
+web_gantt,addons/enterprise/web_gantt,Web Gantt,,2.0,Hidden,web,True,,OEEL-1,True,True
+web_grid,addons/enterprise/web_grid,Grid View,Basic 2D Grid view for odoo,0.1,,web,True,,OEEL-1,True,True
+web_mobile,addons/enterprise/web_mobile,Mobile,Odoo Mobile Core module,1.0,Mobile,web_settings_dashboard,True,,OEEL-1,True,True
+web_studio,addons/enterprise/web_studio,Studio,Create and customize your Odoo apps,1.0,Technical Settings,"base_automation,base_import_module,mail,web,web_enterprise,web_editor",,True,OEEL-1,True,True
+website_calendar,addons/enterprise/website_calendar,Appointments,Schedule appointments with clients,1.0,Website,"calendar_sms,website_enterprise,hr",False,True,OEEL-1,False,True
+website_crm_score,addons/enterprise/website_crm_score,Lead Scoring,,1.0,Sales,"base,sales_team,website_crm,crm_enterprise",,False,OEEL-1,False,True
+website_delivery_ups,addons/enterprise/website_delivery_ups,UPS: Bill My Account,Bill to your UPS account number,,Warehouse,"delivery_ups,website_sale_delivery",True,,,False,True
+website_enterprise,addons/enterprise/website_enterprise,Website Enterprise,Get the enterprise look and feel,,Technical Settings,website,True,,OEEL-1,False,True
+website_form_editor,addons/enterprise/website_form_editor,Form Builder,Build custom web forms,1.0,Website,"website_enterprise,website_form",False,,OEEL-1,False,True
+website_helpdesk,addons/enterprise/website_helpdesk,Website Helpdesk,Bridge module for helpdesk modules using the website.,,Hidden,"helpdesk,website",,,OEEL-1,False,True
+website_helpdesk_form,addons/enterprise/website_helpdesk_form,Online Ticket Submission,Qualify helpdesk queries with a website form,,Website,"website_form_editor,website_helpdesk",,,OEEL-1,False,True
+website_helpdesk_forum,addons/enterprise/website_helpdesk_forum,Helpdesk: Knowledge Base,Knowledge base for helpdesk based on Odoo Forum,,Helpdesk,"website_forum,website_helpdesk",True,,OEEL-1,False,True
+website_helpdesk_livechat,addons/enterprise/website_helpdesk_livechat,Website IM Livechat Helpdesk,"Ticketing, Support, Livechat",,Helpdesk,"website_helpdesk,website_livechat",True,,OEEL-1,False,True
+website_helpdesk_slides,addons/enterprise/website_helpdesk_slides,Website Slides Helpdesk,"Ticketing, Support, Slides",,Helpdesk,"website_helpdesk,website_slides",True,,OEEL-1,False,True
+website_sale_account_taxcloud,addons/enterprise/website_sale_account_taxcloud,Account TaxCloud - Ecommerce,,,Accounting,"account_taxcloud,website_sale",True,,OEEL-1,False,False
+website_sale_coupon,addons/enterprise/website_sale_coupon,Coupons & Promotions for eCommerce,Use coupon & promotion programs in your eCommerce store,1.0,Website,"website_sale,sale_coupon",True,,,False,True
+website_sale_dashboard,addons/enterprise/website_sale_dashboard,Website Sales Dashboard,Get a new dashboard view in the Website App,1.0,Technical Settings,"website_sale,web_dashboard",True,,,True,True
+website_sale_taxcloud_delivery,addons/enterprise/website_sale_taxcloud_delivery,TaxCloud and Delivery - Ecommerce,Compute taxes with TaxCloud after online delivery computation.,,Accounting &amp; Finance,"website_sale_delivery,website_sale_account_taxcloud",True,,OEEL-1,False,False
+website_studio,addons/enterprise/website_studio,Website Studio,Display Website Elements in Studio,1.0,Technical Settings,"web_studio,website_form_editor",True,,OEEL-1,True,True
+website_twitter_wall,addons/enterprise/website_twitter_wall,Twitter Wall,Pretty Way to Display Tweets for Event,,Website,website_twitter,,,OEEL-1,False,True

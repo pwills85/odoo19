@@ -1,0 +1,479 @@
+// Financial Dashboard Styles
+// Modern, responsive design with smooth animations
+
+.o_financial_dashboard {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    padding: 20px;
+    
+    // Header Section
+    .o_dashboard_header {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        
+        .o_dashboard_title {
+            color: #2c3e50;
+            font-weight: 600;
+            margin: 0;
+            font-size: 1.75rem;
+            
+            i {
+                color: #3498db;
+            }
+        }
+        
+        .o_dashboard_filters {
+            .o_date_filter {
+                label {
+                    font-weight: 500;
+                    color: #6c757d;
+                    white-space: nowrap;
+                }
+                
+                input {
+                    width: 140px;
+                }
+            }
+            
+            .btn-group {
+                .btn {
+                    &:hover {
+                        transform: translateY(-1px);
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    }
+                }
+            }
+        }
+    }
+    
+    // Navigation Tabs
+    .nav-tabs {
+        border-bottom: 2px solid #e9ecef;
+        
+        .nav-link {
+            color: #6c757d;
+            border: none;
+            border-bottom: 3px solid transparent;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            
+            &:hover {
+                color: #3498db;
+                border-bottom-color: #3498db;
+            }
+            
+            &.active {
+                color: #3498db;
+                background: none;
+                border-bottom-color: #3498db;
+            }
+            
+            i {
+                font-size: 1.1em;
+            }
+        }
+    }
+    
+    // KPI Cards
+    .o_dashboard_kpis {
+        .o_kpi_card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            height: 100%;
+            
+            &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: linear-gradient(90deg, #3498db, #2ecc71);
+                transform: scaleX(0);
+                transition: transform 0.3s ease;
+            }
+            
+            &:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                
+                &::before {
+                    transform: scaleX(1);
+                }
+            }
+            
+            &.o_kpi_success::before {
+                background: linear-gradient(90deg, #2ecc71, #27ae60);
+            }
+            
+            &.o_kpi_warning::before {
+                background: linear-gradient(90deg, #f39c12, #e67e22);
+            }
+            
+            &.o_kpi_danger::before {
+                background: linear-gradient(90deg, #e74c3c, #c0392b);
+            }
+            
+            &.o_kpi_selected {
+                border: 2px solid #3498db;
+                transform: translateY(-5px);
+                box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+            }
+            
+            .o_kpi_header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 15px;
+                
+                .o_kpi_icon {
+                    font-size: 24px;
+                    color: #3498db;
+                    opacity: 0.8;
+                }
+                
+                .o_kpi_title {
+                    font-size: 13px;
+                    color: #6c757d;
+                    font-weight: 500;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+            }
+            
+            .o_kpi_value {
+                font-size: 28px;
+                font-weight: 700;
+                color: #2c3e50;
+                margin-bottom: 10px;
+                line-height: 1;
+            }
+            
+            .o_kpi_trend {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 14px;
+                
+                i {
+                    font-size: 12px;
+                }
+                
+                small {
+                    font-size: 11px;
+                }
+            }
+        }
+    }
+    
+    // Chart Containers
+    .o_dashboard_charts {
+        .o_chart_container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            transition: all 0.3s ease;
+            
+            &:hover {
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+            }
+            
+            canvas {
+                max-width: 100%;
+                height: auto !important;
+            }
+        }
+    }
+    
+    // Ratio Tables
+    .o_ratio_category {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        
+        h4 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .table {
+            margin-bottom: 0;
+            
+            thead {
+                th {
+                    border-top: none;
+                    font-weight: 600;
+                    color: #6c757d;
+                    text-transform: uppercase;
+                    font-size: 12px;
+                    letter-spacing: 0.5px;
+                }
+            }
+            
+            tbody {
+                tr {
+                    transition: background-color 0.2s ease;
+                    
+                    &:hover {
+                        background-color: #f8f9fa;
+                    }
+                    
+                    td {
+                        vertical-align: middle;
+                        
+                        .badge {
+                            font-size: 11px;
+                            padding: 4px 8px;
+                            font-weight: 500;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Report Cards
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        height: 100%;
+        
+        &:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card-body {
+            padding: 25px;
+            
+            .card-title {
+                color: #2c3e50;
+                font-weight: 600;
+                margin-bottom: 15px;
+                
+                i {
+                    color: #3498db;
+                }
+            }
+            
+            .card-text {
+                color: #6c757d;
+                font-size: 14px;
+                margin-bottom: 20px;
+            }
+            
+            .btn {
+                transition: all 0.3s ease;
+                
+                &:hover {
+                    transform: translateX(5px);
+                }
+            }
+        }
+    }
+    
+    // Loading State
+    .o_dashboard_loading {
+        min-height: 400px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        
+        i {
+            opacity: 0.7;
+        }
+        
+        p {
+            font-size: 16px;
+            font-weight: 500;
+        }
+    }
+}
+
+// Animations
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+// Apply animations to KPI cards
+.o_kpi_card {
+    animation: slideIn 0.5s ease-out backwards;
+    
+    @for $i from 1 through 6 {
+        &:nth-child(#{$i}) {
+            animation-delay: #{$i * 0.1}s;
+        }
+    }
+}
+
+// Apply animations to charts
+.o_chart_container {
+    animation: fadeIn 0.8s ease-out;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+    .o_financial_dashboard {
+        padding: 10px;
+        
+        .o_dashboard_header {
+            padding: 15px;
+            
+            .o_dashboard_title {
+                font-size: 1.5rem;
+            }
+            
+            .o_dashboard_filters {
+                margin-top: 15px;
+                
+                .btn-group {
+                    width: 100%;
+                    margin-bottom: 10px;
+                    
+                    .btn {
+                        font-size: 12px;
+                    }
+                }
+                
+                .o_date_filter {
+                    width: 100%;
+                    margin-bottom: 10px;
+                    
+                    input {
+                        width: 100%;
+                    }
+                }
+            }
+        }
+        
+        .nav-tabs {
+            .nav-link {
+                padding: 8px 12px;
+                font-size: 14px;
+                
+                i {
+                    display: none;
+                }
+            }
+        }
+        
+        .o_kpi_card {
+            .o_kpi_value {
+                font-size: 24px;
+            }
+        }
+    }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+    .o_financial_dashboard {
+        background-color: #1a1a1a;
+        
+        .o_dashboard_header,
+        .o_kpi_card,
+        .o_chart_container,
+        .o_ratio_category,
+        .card {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .o_dashboard_title,
+        h4,
+        .card-title {
+            color: #e0e0e0;
+        }
+        
+        .text-muted {
+            color: #999 !important;
+        }
+        
+        .table {
+            color: #e0e0e0;
+            
+            thead th {
+                color: #999;
+                border-bottom-color: #444;
+            }
+            
+            tbody tr:hover {
+                background-color: #333;
+            }
+        }
+        
+        .nav-tabs {
+            border-bottom-color: #444;
+            
+            .nav-link {
+                color: #999;
+                
+                &:hover,
+                &.active {
+                    color: #3498db;
+                }
+            }
+        }
+    }
+}
+
+// Print styles
+@media print {
+    .o_financial_dashboard {
+        background: white;
+        
+        .o_dashboard_header {
+            box-shadow: none;
+            border: 1px solid #ddd;
+        }
+        
+        .o_dashboard_filters,
+        .nav-tabs,
+        .btn {
+            display: none;
+        }
+        
+        .o_kpi_card,
+        .o_chart_container {
+            box-shadow: none;
+            border: 1px solid #ddd;
+            break-inside: avoid;
+        }
+    }
+}

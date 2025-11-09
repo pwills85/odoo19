@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Vista Tree: Lote de Nóminas -->
+    <record id="view_hr_payslip_run_tree" model="ir.ui.view">
+        <field name="name">hr.payslip.run.tree</field>
+        <field name="model">hr.payslip.run</field>
+        <field name="arch" type="xml">
+            <tree string="Lotes de Nóminas" decoration-info="state=='draft'" 
+                  decoration-muted="state=='cancel'" decoration-success="state=='done'">
+                <field name="name"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="slip_count" string="Liquidaciones"/>
+                <field name="slip_done_count" string="Completadas"/>
+                <field name="total_net" widget="monetary"/>
+                <field name="state" widget="badge" 
+                       decoration-info="state=='draft'"
+                       decoration-warning="state=='processing'"
+                       decoration-success="state=='done'"
+                       decoration-danger="state=='cancel'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vista Form: Lote de Nóminas -->
+    <record id="view_hr_payslip_run_form" model="ir.ui.view">
+        <field name="name">hr.payslip.run.form</field>
+        <field name="model">hr.payslip.run</field>
+        <field name="arch" type="xml">
+            <form string="Lote de Nóminas">
+                <header>
+                    <!-- Botones workflow -->
+                    <button name="action_generate_payslips" string="Generar Liquidaciones" 
+                            type="object" class="oe_highlight"
+                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    
+                    <button name="action_compute_all" string="Calcular Todas" 
+                            type="object" class="oe_highlight"
+                            attrs="{'invisible': [('state', '!=', 'processing')]}"/>
+                    
+                    <button name="action_confirm_all" string="Confirmar Todas" 
+                            type="object" class="oe_highlight"
+                            attrs="{'invisible': [('state', '!=', 'processing')]}"/>
+                    
+                    <button name="action_export_previred" string="Exportar Previred" 
+                            type="object" icon="fa-file-text-o"
+                            attrs="{'invisible': [('state', '!=', 'done')]}"/>
+                    
+                    <button name="action_draft" string="Volver a Borrador" 
+                            type="object" attrs="{'invisible': [('state', '=', 'draft')]}"/>
+                    
+                    <button name="action_cancel" string="Cancelar" 
+                            type="object" attrs="{'invisible': [('state', 'in', ['draft', 'cancel'])]}"/>
+                    
+                    <field name="state" widget="statusbar" 
+                           statusbar_visible="draft,processing,done"/>
+                </header>
+                
+                <sheet>
+                    <!-- Botones estadísticas -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_payslips" type="object"
+                                class="oe_stat_button" icon="fa-list-alt">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="slip_done_count" widget="integer"/>
+                                    /
+                                    <field name="slip_count" widget="integer"/>
+                                </span>
+                                <span class="o_stat_text">Liquidaciones</span>
+                            </div>
+                        </button>
+                        
+                        <button name="action_view_payslips" type="object"
+                                class="oe_stat_button" icon="fa-money"
+                                attrs="{'invisible': [('state', '!=', 'done')]}">
+                            <field name="total_net" widget="statinfo" 
+                                   string="Total Líquido"/>
+                        </button>
+                    </div>
+                    
+                    <widget name="web_ribbon" title="Cancelado" bg_color="bg-danger"
+                            attrs="{'invisible': [('state', '!=', 'cancel')]}"/>
+                    
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="ej: Nómina Octubre 2025"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                            <field name="date_payment"/>
+                        </group>
+                        <group>
+                            <field name="struct_id" options="{'no_create': True}"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Liquidaciones" name="payslips">
+                            <field name="slip_ids">
+                                <tree decoration-info="state=='draft'" 
+                                      decoration-success="state=='done'"
+                                      decoration-muted="state=='cancel'">
+                                    <field name="number"/>
+                                    <field name="employee_id"/>
+                                    <field name="contract_id"/>
+                                    <field name="gross_wage" widget="monetary" sum="Total Bruto"/>
+                                    <field name="net_wage" widget="monetary" sum="Total Líquido"/>
+                                    <field name="state" widget="badge"
+                                           decoration-info="state=='draft'"
+                                           decoration-success="state=='done'"
+                                           decoration-danger="state=='cancel'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <page string="Estadísticas" name="stats"
+                              attrs="{'invisible': [('state', '=', 'draft')]}">
+                            <group>
+                                <group string="Liquidaciones">
+                                    <field name="slip_count"/>
+                                    <field name="slip_draft_count"/>
+                                    <field name="slip_done_count"/>
+                                    <field name="slip_error_count"/>
+                                </group>
+                                <group string="Montos" attrs="{'invisible': [('state', '!=', 'done')]}">
+                                    <field name="total_gross" widget="monetary"/>
+                                    <field name="total_net" widget="monetary"/>
+                                    <field name="currency_id" invisible="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                
+                <!-- Chatter -->
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista Kanban: Lote de Nóminas -->
+    <record id="view_hr_payslip_run_kanban" model="ir.ui.view">
+        <field name="name">hr.payslip.run.kanban</field>
+        <field name="model">hr.payslip.run</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="state"/>
+                <field name="slip_count"/>
+                <field name="slip_done_count"/>
+                <field name="total_net"/>
+                
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                    <br/>
+                                    <span class="text-muted">
+                                        <field name="date_start"/> - <field name="date_end"/>
+                                    </span>
+                                </div>
+                                <field name="state" widget="label_selection" 
+                                       options="{'classes': {'draft': 'info', 'processing': 'warning', 'done': 'success', 'cancel': 'danger'}}"/>
+                            </div>
+                            <div class="o_kanban_record_bottom mt-3">
+                                <div class="oe_kanban_bottom_left">
+                                    <span class="badge badge-pill">
+                                        <i class="fa fa-users"/> 
+                                        <field name="slip_done_count"/> / <field name="slip_count"/>
+                                    </span>
+                                </div>
+                                <div class="oe_kanban_bottom_right" t-if="record.state.raw_value == 'done'">
+                                    <span class="text-success">
+                                        <i class="fa fa-money"/> 
+                                        <field name="total_net" widget="monetary"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Acción: Lotes de Nóminas -->
+    <record id="action_hr_payslip_run" model="ir.actions.act_window">
+        <field name="name">Lotes de Nóminas</field>
+        <field name="res_model">hr.payslip.run</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear un nuevo lote de nóminas
+            </p>
+            <p>
+                Los lotes permiten generar y procesar liquidaciones masivamente para un período.
+            </p>
+        </field>
+    </record>
+
+</odoo>

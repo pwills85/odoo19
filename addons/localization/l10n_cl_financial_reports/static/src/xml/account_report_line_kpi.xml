@@ -1,0 +1,12 @@
+
+<templates xml:space="preserve">
+    <t t-name="account_financial_report.AccountReportLineName" t-inherit="account.AccountReportLineName" t-inherit-mode="extension" owl="1">
+        <xpath expr="//span[hasclass('o_account_report_line_name')]" position="inside">
+            <span 
+                  class="o_kpi_toggle fa fa-star ms-2"
+                  t-att-class="{ 'o_kpi_enabled': line.is_kpi }"
+                  t-on-click.stop.prevent="() => this.onToggleKpi(line)"
+                  title="Toggle as KPI"/>
+        </xpath>
+    </t>
+</templates>

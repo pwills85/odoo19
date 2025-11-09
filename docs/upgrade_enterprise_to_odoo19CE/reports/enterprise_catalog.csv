@@ -1,0 +1,175 @@
+module_name,category,depends,qweb_assets,data_files_count,auto_install,license,domain_cluster,build_policy,risk_level
+web_enterprise,Hidden,web;web_mobile,true,5,true,OEEL-1,UI_FRAMEWORK,REPLICATE_CE_PRO,MEDIUM
+web_mobile,Hidden,web,true,3,true,OEEL-1,UI_FRAMEWORK,REPLACE_CE_OCA,LOW
+web_dashboard,Hidden,web;web_enterprise,true,2,false,OEEL-1,UI_FRAMEWORK,REPLACE_CE_OCA,LOW
+web_gantt,Hidden,web;web_enterprise,true,4,false,OEEL-1,UI_FRAMEWORK,REPLICATE_CE_PRO,MEDIUM
+web_grid,Hidden,web;web_enterprise,true,3,false,OEEL-1,UI_FRAMEWORK,REPLICATE_CE_PRO,MEDIUM
+web_cohort,Hidden,web;web_enterprise,true,2,false,OEEL-1,UI_FRAMEWORK,REPLICATE_CE_PRO,MEDIUM
+web_map,Hidden,web;web_enterprise,true,3,false,OEEL-1,UI_FRAMEWORK,REPLACE_CE_OCA,LOW
+account_accountant,Accounting,account,false,8,true,OEEL-1,ACCOUNTING,REPLACE_CE_OCA,LOW
+account_reports,Accounting,account_accountant;web_enterprise,true,12,true,OEEL-1,ACCOUNTING,REPLICATE_CE_PRO,HIGH
+account_budget,Accounting,account_accountant,false,5,false,OEEL-1,ACCOUNTING,REPLACE_CE_OCA,LOW
+account_bank_statement_import_qif,Accounting,account_bank_statement_import,false,2,false,OEEL-1,ACCOUNTING,REPLACE_CE_OCA,LOW
+account_bank_statement_import_ofx,Accounting,account_bank_statement_import,false,2,false,OEEL-1,ACCOUNTING,REPLACE_CE_OCA,LOW
+account_bank_statement_import_csv,Accounting,account_bank_statement_import,false,2,false,OEEL-1,ACCOUNTING,REPLACE_CE_OCA,LOW
+account_batch_payment,Accounting,account_accountant,false,3,false,OEEL-1,ACCOUNTING,REPLACE_CE_OCA,LOW
+account_online_sync,Accounting,account,false,4,false,OEEL-1,ACCOUNTING,NO_REPLICATE,HIGH
+account_plaid,Accounting,account_online_sync,false,2,false,OEEL-1,ACCOUNTING,NO_REPLICATE,HIGH
+account_sepa,Accounting,account,false,3,false,OEEL-1,ACCOUNTING,REPLACE_CE_OCA,LOW
+account_sepa_direct_debit,Accounting,account_sepa,false,2,false,OEEL-1,ACCOUNTING,REPLACE_CE_OCA,LOW
+account_taxcloud,Accounting,account,false,4,false,OEEL-1,ACCOUNTING,NO_REPLICATE,MEDIUM
+account_yodlee,Accounting,account_online_sync,false,2,false,OEEL-1,ACCOUNTING,NO_REPLICATE,HIGH
+sale_subscription,Sales,sale,true,8,false,OEEL-1,SALES_POS,REPLACE_CE_OCA,MEDIUM
+sale_ebay,Sales,sale,false,5,false,OEEL-1,SALES_POS,NO_REPLICATE,MEDIUM
+sale_amazon,Sales,sale,false,5,false,OEEL-1,SALES_POS,NO_REPLICATE,MEDIUM
+pos_blackbox_be,Point of Sale,point_of_sale,false,4,false,OEEL-1,SALES_POS,NO_REPLICATE,HIGH
+pos_iot,Point of Sale,point_of_sale;iot,false,3,false,OEEL-1,IOT,REPLACE_CE_OCA,LOW
+documents,Document Management,web_enterprise,true,10,false,OEEL-1,DOCUMENTS,REPLICATE_CE_PRO,HIGH
+documents_account,Document Management,documents;account,false,4,false,OEEL-1,DOCUMENTS,REPLACE_CE_OCA,LOW
+documents_project,Document Management,documents;project,false,3,false,OEEL-1,DOCUMENTS,REPLACE_CE_OCA,LOW
+documents_hr,Document Management,documents;hr,false,3,false,OEEL-1,DOCUMENTS,REPLACE_CE_OCA,LOW
+documents_hr_payroll,Document Management,documents;hr_payroll,false,2,false,OEEL-1,DOCUMENTS,REPLACE_CE_OCA,LOW
+documents_hr_recruitment,Document Management,documents;hr_recruitment,false,2,false,OEEL-1,DOCUMENTS,REPLACE_CE_OCA,LOW
+helpdesk,Helpdesk,mail,true,7,false,OEEL-1,HELPDESK,REPLACE_CE_OCA,LOW
+helpdesk_sale,Helpdesk,helpdesk;sale,false,3,false,OEEL-1,HELPDESK,REPLACE_CE_OCA,LOW
+helpdesk_timesheet,Helpdesk,helpdesk;hr_timesheet,false,2,false,OEEL-1,HELPDESK,REPLACE_CE_OCA,LOW
+helpdesk_fsm,Helpdesk,helpdesk;industry_fsm,false,2,false,OEEL-1,HELPDESK,REPLACE_CE_OCA,LOW
+quality_control,Manufacturing,stock,true,6,false,OEEL-1,INVENTORY_MRP,REPLACE_CE_OCA,LOW
+quality_control_worksheet,Manufacturing,quality_control,false,3,false,OEEL-1,INVENTORY_MRP,REPLACE_CE_OCA,LOW
+quality_mrp,Manufacturing,quality_control;mrp,false,2,false,OEEL-1,INVENTORY_MRP,REPLACE_CE_OCA,LOW
+quality_mrp_workorder,Manufacturing,quality_control;mrp_workorder,false,2,false,OEEL-1,INVENTORY_MRP,REPLACE_CE_OCA,LOW
+mrp_account,Manufacturing,mrp;account,false,3,false,OEEL-1,INVENTORY_MRP,REPLACE_CE_OCA,LOW
+mrp_maintenance,Manufacturing,mrp;maintenance,false,2,false,OEEL-1,INVENTORY_MRP,REPLACE_CE_OCA,LOW
+mrp_mps,Manufacturing,mrp,true,5,false,OEEL-1,INVENTORY_MRP,REPLACE_CE_OCA,MEDIUM
+mrp_plm,Manufacturing,mrp,true,6,false,OEEL-1,INVENTORY_MRP,REPLICATE_CE_PRO,MEDIUM
+mrp_workorder,Manufacturing,mrp,true,7,false,OEEL-1,INVENTORY_MRP,REPLACE_CE_OCA,LOW
+stock_barcode,Inventory,stock;web_mobile,true,5,false,OEEL-1,INVENTORY_MRP,REPLACE_CE_OCA,LOW
+stock_barcode_mobile,Inventory,stock_barcode;web_mobile,true,4,false,OEEL-1,INVENTORY_MRP,REPLACE_CE_OCA,LOW
+delivery_barcode,Inventory,delivery;stock_barcode,false,2,false,OEEL-1,INVENTORY_MRP,REPLACE_CE_OCA,LOW
+delivery_bpost,Delivery,delivery,false,3,false,OEEL-1,INVENTORY_MRP,NO_REPLICATE,LOW
+delivery_dhl,Delivery,delivery,false,3,false,OEEL-1,INVENTORY_MRP,NO_REPLICATE,LOW
+delivery_easypost,Delivery,delivery,false,3,false,OEEL-1,INVENTORY_MRP,NO_REPLICATE,LOW
+delivery_fedex,Delivery,delivery,false,3,false,OEEL-1,INVENTORY_MRP,NO_REPLICATE,LOW
+delivery_ups,Delivery,delivery,false,3,false,OEEL-1,INVENTORY_MRP,NO_REPLICATE,LOW
+delivery_usps,Delivery,delivery,false,3,false,OEEL-1,INVENTORY_MRP,NO_REPLICATE,LOW
+hr_referral,Human Resources,hr,true,5,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+hr_appraisal,Human Resources,hr,true,6,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+hr_payroll,Human Resources,hr;account,true,8,false,OEEL-1,OTHER,REPLACE_CE_OCA,MEDIUM
+hr_payroll_account,Human Resources,hr_payroll;account,false,3,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+hr_payroll_expense,Human Resources,hr_payroll;hr_expense,false,2,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+planning,Planning,web_enterprise;resource,true,8,false,OEEL-1,OTHER,REPLICATE_CE_PRO,MEDIUM
+planning_holidays,Planning,planning;hr_holidays,false,3,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+industry_fsm,Field Service,project,true,7,false,OEEL-1,OTHER,REPLACE_CE_OCA,MEDIUM
+industry_fsm_sale,Field Service,industry_fsm;sale,false,3,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+industry_fsm_stock,Field Service,industry_fsm;stock,false,2,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+marketing_automation,Marketing,mass_mailing;crm,true,9,false,OEEL-1,MARKETING,REPLICATE_CE_PRO,MEDIUM
+marketing_automation_sms,Marketing,marketing_automation;sms,false,2,false,OEEL-1,MARKETING,REPLACE_CE_OCA,LOW
+social,Social Marketing,mail,true,8,false,OEEL-1,MARKETING,REPLICATE_CE_PRO,MEDIUM
+social_facebook,Social Marketing,social,false,4,false,OEEL-1,MARKETING,NO_REPLICATE,MEDIUM
+social_linkedin,Social Marketing,social,false,4,false,OEEL-1,MARKETING,NO_REPLICATE,MEDIUM
+social_twitter,Social Marketing,social,false,4,false,OEEL-1,MARKETING,NO_REPLICATE,MEDIUM
+social_youtube,Social Marketing,social,false,3,false,OEEL-1,MARKETING,NO_REPLICATE,MEDIUM
+social_instagram,Social Marketing,social,false,3,false,OEEL-1,MARKETING,NO_REPLICATE,MEDIUM
+website_enterprise,Website,website;web_enterprise,true,4,false,OEEL-1,UI_FRAMEWORK,REPLACE_CE_OCA,LOW
+website_helpdesk,Website,website;helpdesk,false,3,false,OEEL-1,HELPDESK,REPLACE_CE_OCA,LOW
+website_helpdesk_form,Website,website_helpdesk,false,2,false,OEEL-1,HELPDESK,REPLACE_CE_OCA,LOW
+website_helpdesk_forum,Website,website_helpdesk;website_forum,false,2,false,OEEL-1,HELPDESK,REPLACE_CE_OCA,LOW
+website_helpdesk_livechat,Website,website_helpdesk;website_livechat,false,2,false,OEEL-1,HELPDESK,REPLACE_CE_OCA,LOW
+website_helpdesk_slides,Website,website_helpdesk;website_slides,false,2,false,OEEL-1,HELPDESK,REPLACE_CE_OCA,LOW
+website_calendar,Website,website;calendar,false,3,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+website_crm_score,Website,website_crm;website_form,false,3,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+website_studio,Website,website;web_studio,false,2,false,OEEL-1,UI_FRAMEWORK,REPLICATE_CE_PRO,HIGH
+web_studio,Hidden,web_enterprise,true,10,false,OEEL-1,UI_FRAMEWORK,REPLICATE_CE_PRO,HIGH
+iot,Internet of Things,mail,true,8,false,OEEL-1,IOT,REPLACE_CE_OCA,MEDIUM
+iot_input,Internet of Things,iot,false,3,false,OEEL-1,IOT,REPLACE_CE_OCA,LOW
+iot_oca,Internet of Things,iot,false,3,false,OEEL-1,IOT,REPLACE_CE_OCA,LOW
+voip,VoIP,mail;phone_validation,true,5,false,OEEL-1,OTHER,REPLACE_CE_OCA,MEDIUM
+voip_onsip,VoIP,voip,false,2,false,OEEL-1,OTHER,NO_REPLICATE,LOW
+project_forecast,Project,project;web_gantt,true,6,false,OEEL-1,OTHER,REPLACE_CE_OCA,MEDIUM
+project_timesheet_forecast,Project,project_forecast;hr_timesheet,false,3,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+project_timesheet_forecast_sale,Project,project_timesheet_forecast;sale_timesheet,false,2,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+sale_account_taxcloud,Sales,sale;account_taxcloud,false,2,false,OEEL-1,SALES_POS,NO_REPLICATE,LOW
+sale_ebay_connector,Sales,sale_ebay,false,3,false,OEEL-1,SALES_POS,NO_REPLICATE,MEDIUM
+sale_amazon_delivery,Sales,sale_amazon;delivery,false,2,false,OEEL-1,SALES_POS,NO_REPLICATE,LOW
+sale_subscription_dashboard,Sales,sale_subscription;web_dashboard,false,3,false,OEEL-1,SALES_POS,REPLACE_CE_OCA,LOW
+sale_subscription_asset,Sales,sale_subscription;account_asset,false,2,false,OEEL-1,SALES_POS,REPLACE_CE_OCA,LOW
+sale_subscription_stock,Sales,sale_subscription;stock,false,2,false,OEEL-1,SALES_POS,REPLACE_CE_OCA,LOW
+sale_subscription_mrp,Sales,sale_subscription;mrp,false,2,false,OEEL-1,SALES_POS,REPLACE_CE_OCA,LOW
+stock_account_enterprise,Inventory,stock_account;stock_enterprise,false,2,false,OEEL-1,INVENTORY_MRP,REPLACE_CE_OCA,LOW
+stock_enterprise,Inventory,stock;web_enterprise,true,4,false,OEEL-1,INVENTORY_MRP,REPLACE_CE_OCA,LOW
+stock_intrastat,Inventory,stock_account,false,3,false,OEEL-1,INVENTORY_MRP,REPLACE_CE_OCA,LOW
+purchase_enterprise,Purchases,purchase;web_enterprise,true,3,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+purchase_mrp,Purchases,purchase;mrp,false,2,false,OEEL-1,INVENTORY_MRP,REPLACE_CE_OCA,LOW
+purchase_requisition_stock_dropshipping,Purchases,purchase_requisition_stock;stock_dropshipping,false,2,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+crm_enterprise,CRM,crm;web_enterprise,true,4,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+crm_helpdesk,CRM,crm;helpdesk,false,2,false,OEEL-1,HELPDESK,REPLACE_CE_OCA,LOW
+sign,Electronic Signature,mail,true,8,false,OEEL-1,DOCUMENTS,REPLICATE_CE_PRO,HIGH
+sign_itsme,Electronic Signature,sign,false,2,false,OEEL-1,DOCUMENTS,NO_REPLICATE,MEDIUM
+website_sign,Website,website;sign,false,3,false,OEEL-1,DOCUMENTS,REPLACE_CE_OCA,LOW
+approvals,Approvals,mail,true,6,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+approvals_purchase,Approvals,approvals;purchase,false,2,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+approvals_purchase_stock,Approvals,approvals_purchase;purchase_stock,false,2,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+timesheet_grid,Timesheets,hr_timesheet;web_grid,true,5,false,OEEL-1,OTHER,REPLACE_CE_OCA,MEDIUM
+timesheet_grid_sale,Timesheets,timesheet_grid;sale_timesheet,false,2,false,OEEL-1,OTHER,REPLACE_CE_OCA,LOW
+inter_company_rules,Accounting,account,false,4,false,OEEL-1,ACCOUNTING,REPLACE_CE_OCA,MEDIUM
+account_consolidation,Accounting,account_reports,true,7,false,OEEL-1,ACCOUNTING,REPLICATE_CE_PRO,HIGH
+account_followup,Accounting,account_accountant,true,5,false,OEEL-1,ACCOUNTING,REPLACE_CE_OCA,MEDIUM
+account_invoice_extract,Accounting,account,false,4,false,OEEL-1,ACCOUNTING,NO_REPLICATE,HIGH
+account_auto_transfer,Accounting,account_accountant,false,3,false,OEEL-1,ACCOUNTING,REPLACE_CE_OCA,LOW
+account_3way_match,Accounting,purchase,false,3,false,OEEL-1,ACCOUNTING,REPLACE_CE_OCA,LOW
+l10n_ar_reports,Localization,account_reports;l10n_ar,false,4,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_at_reports,Localization,account_reports;l10n_at,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_au_reports,Localization,account_reports;l10n_au,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_be_reports,Localization,account_reports;l10n_be,false,5,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_be_coda,Localization,l10n_be,false,4,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_bo_reports,Localization,account_reports;l10n_bo,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_br_reports,Localization,account_reports;l10n_br,false,4,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_ca_check_printing,Localization,l10n_ca;account_check_printing,false,2,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_ch_reports,Localization,account_reports;l10n_ch,false,4,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_cl_reports,Localization,account_reports;l10n_cl,false,5,false,OEEL-1,LOCALIZATIONS,REPLACE_CE_OCA,MEDIUM
+l10n_co_reports,Localization,account_reports;l10n_co,false,4,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_de_reports,Localization,account_reports;l10n_de,false,4,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_dk_reports,Localization,account_reports;l10n_dk,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_do_reports,Localization,account_reports;l10n_do,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_ec_reports,Localization,account_reports;l10n_ec,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_es_reports,Localization,account_reports;l10n_es,false,5,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_et_reports,Localization,account_reports;l10n_et,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_fi_reports,Localization,account_reports;l10n_fi,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_fr_reports,Localization,account_reports;l10n_fr,false,5,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_gr_reports,Localization,account_reports;l10n_gr,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_hr_reports,Localization,account_reports;l10n_hr,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_hu_reports,Localization,account_reports;l10n_hu,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_id_reports,Localization,account_reports;l10n_id,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_in_reports,Localization,account_reports;l10n_in,false,4,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_it_reports,Localization,account_reports;l10n_it,false,4,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_jp_reports,Localization,account_reports;l10n_jp,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_ke_reports,Localization,account_reports;l10n_ke,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_lu_reports,Localization,account_reports;l10n_lu,false,4,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_ma_reports,Localization,account_reports;l10n_ma,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_mx_reports,Localization,account_reports;l10n_mx,false,5,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_mx_edi,Localization,l10n_mx,false,6,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,MEDIUM
+l10n_mx_edi_payslip,Localization,l10n_mx_edi;hr_payroll,false,4,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_nl_reports,Localization,account_reports;l10n_nl,false,4,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_nl_intrastat,Localization,l10n_nl_reports;stock_intrastat,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_no_reports,Localization,account_reports;l10n_no,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_pe_reports,Localization,account_reports;l10n_pe,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_pl_reports,Localization,account_reports;l10n_pl,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_ro_reports,Localization,account_reports;l10n_ro,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_sg_reports,Localization,account_reports;l10n_sg,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_si_reports,Localization,account_reports;l10n_si,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_th_reports,Localization,account_reports;l10n_th,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_uk_reports,Localization,account_reports;l10n_uk,false,4,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_us_check_printing,Localization,l10n_us;account_check_printing,false,2,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_uy_reports,Localization,account_reports;l10n_uy,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_vn_reports,Localization,account_reports;l10n_vn,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+l10n_za_reports,Localization,account_reports;l10n_za,false,3,false,OEEL-1,LOCALIZATIONS,NO_REPLICATE,LOW
+web_clearbit,Hidden,web,false,2,false,OEEL-1,UI_FRAMEWORK,NO_REPLICATE,LOW
+web_unsplash,Hidden,web,false,2,false,OEEL-1,UI_FRAMEWORK,NO_REPLICATE,LOW
+mail_enterprise,Mail,mail;web_enterprise;web_mobile,true,3,true,OEEL-1,UI_FRAMEWORK,REPLACE_CE_OCA,LOW
+mail_github,Mail,mail,false,2,false,OEEL-1,OTHER,NO_REPLICATE,LOW
+ocn_client,Hidden,iap;mail,false,2,false,OEEL-1,OTHER,NO_REPLICATE,HIGH
+partner_autocomplete,Base,iap,false,3,false,OEEL-1,OTHER,NO_REPLICATE,MEDIUM
+partner_autocomplete_address_extended,Base,partner_autocomplete,false,2,false,OEEL-1,OTHER,NO_REPLICATE,LOW
+snailmail,Mail,iap;mail,false,3,false,OEEL-1,OTHER,NO_REPLICATE,MEDIUM
+snailmail_account,Mail,snailmail;account,false,2,false,OEEL-1,OTHER,NO_REPLICATE,LOW
+sms,SMS,iap;mail,false,4,false,OEEL-1,OTHER,NO_REPLICATE,MEDIUM

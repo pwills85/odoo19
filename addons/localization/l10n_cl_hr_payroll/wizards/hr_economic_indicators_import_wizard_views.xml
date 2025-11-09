@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Wizard Form View -->
+    <record id="view_hr_economic_indicators_import_wizard_form" model="ir.ui.view">
+        <field name="name">hr.economic.indicators.import.wizard.form</field>
+        <field name="model">hr.economic.indicators.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Economic Indicators">
+                <group>
+                    <group>
+                        <field name="csv_file" filename="filename" />
+                        <field name="filename" invisible="1"/>
+                    </group>
+                    <group>
+                        <field name="period" />
+                    </group>
+                </group>
+                
+                <group string="Preview" attrs="{'invisible': [('preview_data', '=', False)]}">
+                    <field name="preview_data" nolabel="1" widget="text"/>
+                </group>
+                
+                <group string="Instructions">
+                    <div>
+                        <p>El archivo CSV debe contener las siguientes columnas (separadas por comas):</p>
+                        <ul>
+                            <li><strong>period</strong>: Fecha en formato YYYY-MM-DD (ej: 2025-01-01)</li>
+                            <li><strong>uf</strong>: Valor UF (ej: 39000.00)</li>
+                            <li><strong>utm</strong>: Valor UTM (ej: 68000.00)</li>
+                            <li><strong>uta</strong>: Valor UTA (ej: 816000.00)</li>
+                            <li><strong>minimum_wage</strong>: Sueldo mínimo (ej: 500000.00)</li>
+                            <li><strong>afp_limit</strong>: Tope AFP en UF (ej: 87.8)</li>
+                        </ul>
+                        <p><strong>Ejemplo de CSV:</strong></p>
+                        <pre>period,uf,utm,uta,minimum_wage,afp_limit
+2025-01-01,39000.00,68000.00,816000.00,500000.00,87.8</pre>
+                    </div>
+                </group>
+                
+                <footer>
+                    <button name="action_import_indicators" 
+                            string="Import" 
+                            type="object" 
+                            class="btn-primary"/>
+                    <button string="Cancel" 
+                            class="btn-secondary" 
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Action -->
+    <record id="action_hr_economic_indicators_import_wizard" model="ir.actions.act_window">
+        <field name="name">Import Indicators from CSV</field>
+        <field name="res_model">hr.economic.indicators.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    
+</odoo>

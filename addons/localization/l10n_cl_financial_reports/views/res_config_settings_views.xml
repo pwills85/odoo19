@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_financial_report" model="ir.ui.view">
+        <field name="name">Financial Report Configuration</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="95"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('settings')]" position="inside">
+                <div class="app_settings_block" data-string="Financial Reports" string="Financial Reports" data-key="l10n_cl_financial_reports">
+
+                    <!-- Dashboard Settings -->
+                    <h2>Dashboard Configuration</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="dashboard_auto_refresh"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="Auto Refresh Dashboard"/>
+                                <div class="text-muted">
+                                    Enable automatic refresh of financial dashboard
+                                </div>
+                                <div class="content-group" attrs="{'invisible': [('dashboard_auto_refresh', '=', False)]}">
+                                    <div class="mt16">
+                                        <label for="dashboard_refresh_interval" class="o_light_label"/>
+                                        <field name="dashboard_refresh_interval" class="oe_inline"/> seconds
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="dashboard_cache_enabled"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="Dashboard Cache"/>
+                                <div class="text-muted">
+                                    Enable caching for better performance
+                                </div>
+                                <div class="content-group" attrs="{'invisible': [('dashboard_cache_enabled', '=', False)]}">
+                                    <div class="mt16">
+                                        <label for="dashboard_cache_ttl" class="o_light_label"/>
+                                        <field name="dashboard_cache_ttl" class="oe_inline"/> seconds TTL
+                                    </div>
+                                    <div class="mt16">
+                                        <button name="action_reset_dashboard_cache" string="Clear Cache"
+                                               type="object" class="btn btn-link"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="dashboard_default_period" string="Default Period"/>
+                                <div class="text-muted">
+                                    Default time period for dashboard
+                                </div>
+                                <field name="dashboard_default_period" class="mt16"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- F29 Settings -->
+                    <h2>F29 Configuration</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="f29_auto_calculate"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="Auto Calculate F29"/>
+                                <div class="text-muted">
+                                    Automatically calculate F29 when period is closed
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="f29_validation_strict"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="Strict Validation"/>
+                                <div class="text-muted">
+                                    Enable strict validation for F29 calculations
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="f29_backup_before_submit"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="Backup Before Submit"/>
+                                <div class="text-muted">
+                                    Create backup before submitting to SII
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Settings -->
+                    <h2>Mobile Configuration</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="mobile_dashboard_enabled"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="Mobile Dashboard"/>
+                                <div class="text-muted">
+                                    Enable mobile-optimized dashboard
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="mobile_touch_gestures"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="Touch Gestures"/>
+                                <div class="text-muted">
+                                    Enable touch gestures support
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="mobile_offline_mode"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="Offline Mode"/>
+                                <div class="text-muted">
+                                    Enable offline mode for mobile devices
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reporting Settings -->
+                    <h2>Reports Configuration</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="report_default_format" string="Default Format"/>
+                                <div class="text-muted">
+                                    Default format for financial reports
+                                </div>
+                                <field name="report_default_format" class="mt16"/>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="report_logo_position" string="Logo Position"/>
+                                <div class="text-muted">
+                                    Position of company logo in reports
+                                </div>
+                                <field name="report_logo_position" class="mt16"/>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="report_watermark_enabled"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="Watermark"/>
+                                <div class="text-muted">
+                                    Add watermark to reports
+                                </div>
+                                <div class="content-group" attrs="{'invisible': [('report_watermark_enabled', '=', False)]}">
+                                    <div class="mt16">
+                                        <field name="report_watermark_text" placeholder="CONFIDENTIAL"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Integration Settings -->
+                    <h2>Integration &amp; Security</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="sii_integration_enabled"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="SII Integration"/>
+                                <div class="text-muted">
+                                    Enable integration with SII systems
+                                </div>
+                                <div class="content-group" attrs="{'invisible': [('sii_integration_enabled', '=', False)]}">
+                                    <div class="mt16">
+                                        <button name="action_test_sii_connection" string="Test Connection"
+                                               type="object" class="btn btn-link"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="audit_trail_enabled"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="Audit Trail"/>
+                                <div class="text-muted">
+                                    Log all financial report access and modifications
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="data_retention_days" string="Data Retention"/>
+                                <div class="text-muted">
+                                    Number of days to retain financial data
+                                </div>
+                                <div class="mt16">
+                                    <field name="data_retention_days" class="oe_inline"/> days
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="external_api_timeout" string="API Timeout"/>
+                                <div class="text-muted">
+                                    Timeout for external API calls
+                                </div>
+                                <div class="mt16">
+                                    <field name="external_api_timeout" class="oe_inline"/> seconds
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label string="Database Optimization"/>
+                                <div class="text-muted">
+                                    Optimize database for better performance
+                                </div>
+                                <div class="mt16">
+                                    <button name="action_optimize_database" string="Optimize Database"
+                                           type="object" class="btn btn-secondary"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_financial_report_config" model="ir.actions.act_window">
+        <field name="name">Financial Reports Configuration</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module' : 'l10n_cl_financial_reports'}</field>
+    </record>
+
+    <menuitem id="menu_financial_report_config"
+              name="Financial Reports"
+              parent="base.menu_administration"
+              action="action_financial_report_config"
+              sequence="30"
+              groups="base.group_system"/>
+</odoo>

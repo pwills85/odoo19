@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extensión de Vista Form de Journal para DTE -->
+    <record id="view_account_journal_form_dte" model="ir.ui.view">
+        <field name="name">account.journal.form.dte</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.view_account_journal_form"/>
+        <field name="arch" type="xml">
+            
+            <!-- Agregar página DTE en notebook -->
+            <xpath expr="//notebook" position="inside">
+                <page string="DTE Chile" name="dte_page" invisible="type != 'sale'">
+                    <group>
+                        <group>
+                            <field name="is_dte_journal"/>
+                            <field name="dte_document_type" invisible="not is_dte_journal"/>
+                        </group>
+                        <group>
+                            <field name="dte_certificate_id"
+                                   invisible="not is_dte_journal"
+                                   required="is_dte_journal"/>
+                        </group>
+                    </group>
+
+                    <group string="Control de Folios"
+                           invisible="not is_dte_journal">
+                        <group>
+                            <field name="dte_folio_start"/>
+                            <field name="dte_folio_end"/>
+                        </group>
+                        <group>
+                            <field name="dte_folio_current"/>
+                            <field name="dte_folios_available" readonly="1" 
+                                   decoration-warning="dte_folios_available &lt; 100"
+                                   decoration-danger="dte_folios_available &lt; 10"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+            
+        </field>
+    </record>
+</odoo>

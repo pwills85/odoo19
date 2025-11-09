@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- EXTENDER VISTA FORM: hr.contract -->
+    <!-- Patrón Odoo 19 CE: inherit_id + xpath -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    
+    <record id="view_hr_contract_cl_form" model="ir.ui.view">
+        <field name="name">hr.contract.cl.form</field>
+        <field name="model">hr.contract</field>
+        <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+        <field name="arch" type="xml">
+            
+            <!-- Agregar campos Chile después del campo wage -->
+            <xpath expr="//field[@name='wage']" position="after">
+                
+                <separator string="Previsión (Chile)" colspan="2"/>
+                
+                <!-- AFP -->
+                <field name="afp_id" 
+                       string="AFP"
+                       placeholder="Seleccionar AFP..."/>
+                <field name="afp_rate" 
+                       string="Tasa AFP (%)"
+                       readonly="1"/>
+                
+                <!-- Salud -->
+                <field name="health_system" 
+                       string="Sistema de Salud"
+                       widget="radio"/>
+                <field name="is_fonasa" invisible="1"/>
+                
+                <field name="isapre_id" 
+                       string="ISAPRE"
+                       invisible="health_system != 'isapre'"
+                       required="health_system == 'isapre'"/>
+                <field name="isapre_plan_uf" 
+                       string="Plan ISAPRE (UF)"
+                       invisible="health_system != 'isapre'"
+                       required="health_system == 'isapre'"/>
+                <field name="isapre_fun" 
+                       string="N° FUN"
+                       invisible="health_system != 'isapre'"/>
+                
+                <!-- APV -->
+                <separator string="Ahorro Previsional Voluntario (APV)" colspan="2"/>
+                <field name="apv_id" string="Institución APV"/>
+                <field name="apv_amount_uf" 
+                       string="Monto APV (UF)"
+                       invisible="not apv_id"/>
+                <field name="apv_type" 
+                       string="Tipo APV"
+                       invisible="not apv_id"
+                       widget="radio"/>
+                
+                <!-- Asignaciones Art. 41 CT -->
+                <separator string="Asignaciones Art. 41 CT" colspan="2"/>
+                <field name="colacion" 
+                       string="Colación"
+                       widget="monetary"/>
+                <field name="movilizacion" 
+                       string="Movilización"
+                       widget="monetary"/>
+                
+                <!-- Cargas Familiares -->
+                <separator string="Cargas Familiares" colspan="2"/>
+                <field name="family_allowance_simple" 
+                       string="Cargas Simples"/>
+                <field name="family_allowance_maternal" 
+                       string="Cargas Maternales"/>
+                <field name="family_allowance_invalid" 
+                       string="Cargas Inválidas"/>
+                
+                <!-- Otros -->
+                <separator string="Otros" colspan="2"/>
+                <field name="gratification_type" 
+                       string="Tipo Gratificación"
+                       widget="radio"/>
+                <field name="weekly_hours" 
+                       string="Jornada Semanal (horas)"/>
+                <field name="extreme_zone" 
+                       string="Zona Extrema"
+                       help="Trabajador en zona extrema (50% rebaja impuesto único)"/>
+                
+            </xpath>
+            
+        </field>
+    </record>
+    
+</odoo>

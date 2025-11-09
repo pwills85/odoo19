@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista Form: Retención IUE -->
+    <record id="view_retencion_iue_form" model="ir.ui.view">
+        <field name="name">retencion.iue.form</field>
+        <field name="model">retencion.iue</field>
+        <field name="arch" type="xml">
+            <form string="Retención IUE">
+                <header>
+                    <button name="action_generar_reporte_mensual" string="Generar Reporte SII"
+                            type="object" class="btn-primary"
+                            invisible="state != 'confirmed'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="profesional_rut"/>
+                            <field name="profesional_nombre"/>
+                            <field name="periodo_mes"/>
+                        </group>
+                        <group>
+                            <field name="monto_bruto_total" readonly="1"/>
+                            <field name="monto_retenido_total" readonly="1" class="oe_subtotal_footer_separator"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Liquidaciones de Honorarios" name="purchase_orders">
+                            <field name="purchase_order_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="date_order"/>
+                                    <field name="monto_bruto_honorarios"/>
+                                    <field name="monto_retencion_iue"/>
+                                    <field name="monto_neto_a_pagar"/>
+                                    <field name="dte_34_status"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Vista Tree: Retenciones -->
+    <record id="view_retencion_iue_tree" model="ir.ui.view">
+        <field name="name">retencion.iue.tree</field>
+        <field name="model">retencion.iue</field>
+        <field name="arch" type="xml">
+            <list string="Retenciones IUE">
+                <field name="name"/>
+                <field name="periodo_mes"/>
+                <field name="profesional_rut"/>
+                <field name="profesional_nombre"/>
+                <field name="monto_bruto_total"/>
+                <field name="monto_retenido_total"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+    
+    <!-- Action: Retenciones -->
+    <record id="action_retencion_iue" model="ir.actions.act_window">
+        <field name="name">Retenciones IUE</field>
+        <field name="res_model">retencion.iue</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

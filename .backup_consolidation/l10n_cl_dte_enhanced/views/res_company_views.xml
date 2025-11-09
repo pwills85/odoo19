@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ==================================================================== -->
+        <!-- RES.COMPANY FORM VIEW - Bank Information Extension                  -->
+        <!-- ==================================================================== -->
+
+        <record id="view_company_form_bank_info" model="ir.ui.view">
+            <field name="name">res.company.form.bank.info</field>
+            <field name="model">res.company</field>
+            <field name="inherit_id" ref="base.view_company_form"/>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+
+                <!-- ============================================================ -->
+                <!-- Add Bank Information in Configuration Tab                   -->
+                <!-- ============================================================ -->
+
+                <!-- Option 1: Add after company details (if there's a 'company_details' group) -->
+                <!-- Option 2: Add in separate page in notebook -->
+                <!-- Let's use Option 2 for better organization -->
+
+                <xpath expr="//notebook" position="inside">
+                    <page string="Bank Information" name="bank_information">
+
+                        <!-- Information Banner -->
+                        <div class="alert alert-info" role="alert">
+                            <i class="fa fa-bank" title="Bank"/> <strong>Bank Information for Invoices</strong><br/>
+                            This information will be displayed on customer invoices to facilitate payments.
+                            Make sure the data is accurate and up-to-date.
+                        </div>
+
+                        <group>
+                            <group string="Bank Account Details">
+                                <field name="bank_name"
+                                       string="Bank Name"
+                                       placeholder="e.g., Banco de Chile, Banco Santander"
+                                       help="Name of the bank where your company account is held"/>
+
+                                <field name="bank_account_number"
+                                       string="Account Number"
+                                       placeholder="e.g., 9878-6747-7"
+                                       help="Bank account number for receiving payments (can include spaces or hyphens)"/>
+
+                                <field name="bank_account_type"
+                                       string="Account Type"
+                                       help="Type of bank account (most common in Chile is 'Cuenta Corriente')"/>
+                            </group>
+
+                            <group string="Preview">
+                                <!-- Show formatted preview -->
+                                <field name="bank_info_display"
+                                       string="Invoice Display Preview"
+                                       widget="text"
+                                       readonly="1"
+                                       nolabel="1"
+                                       class="oe_read_only"
+                                       invisible="not bank_info_display"/>
+
+                                <!-- Placeholder when no data -->
+                                <div invisible="bank_info_display"
+                                     class="text-muted">
+                                    <p>
+                                        <i class="fa fa-info-circle" title="Information"/> Fill in bank details to see preview
+                                    </p>
+                                    <p>
+                                        This is how the bank information will appear on invoices.
+                                    </p>
+                                </div>
+                            </group>
+                        </group>
+
+                        <!-- Help Section -->
+                        <group string="Configuration Tips">
+                            <div class="text-muted">
+                                <p><strong>How to configure:</strong></p>
+                                <ol>
+                                    <li><strong>Bank Name:</strong> Enter the full name of your bank
+                                        (e.g., "Banco de Chile", "Banco Estado")</li>
+                                    <li><strong>Account Number:</strong> Enter your account number.
+                                        You can use spaces or hyphens for readability (e.g., "9878-6747-7")</li>
+                                    <li><strong>Account Type:</strong> Select the type of account
+                                        (most common is "Cuenta Corriente")</li>
+                                </ol>
+
+                                <p><strong>Where this appears:</strong></p>
+                                <ul>
+                                    <li>Customer invoices (DTE 33, 34, etc.)</li>
+                                    <li>PDF reports</li>
+                                    <li>Email templates</li>
+                                </ul>
+
+                                <p>
+                                    <i class="fa fa-lightbulb-o" title="Best Practice"/> <strong>Best Practice:</strong>
+                                    Keep this information up-to-date to ensure customers can pay you correctly.
+                                </p>
+                            </div>
+                        </group>
+
+                    </page>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- ==================================================================== -->
+        <!-- RES.CONFIG.SETTINGS - Quick Access to Bank Info (Optional)          -->
+        <!-- ==================================================================== -->
+        <!--
+        NOTE: Commented out because xpath target may not exist in all versions.
+              Bank information can be configured directly in Company settings
+              (Settings > Companies > Your Company > Bank Information tab)
+
+        <record id="res_config_settings_view_form_bank_info" model="ir.ui.view">
+            ...config settings view extension...
+        </record>
+        -->
+
+    </data>
+</odoo>

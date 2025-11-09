@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Main Wizard Form View -->
+        <record id="financial_dashboard_add_widget_wizard_view" model="ir.ui.view">
+            <field name="name">financial.dashboard.add.widget.wizard.form</field>
+            <field name="model">financial.dashboard.add.widget.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Añadir Widget al Dashboard">
+                    <header>
+                        <button name="action_preview_widget" type="object" 
+                                string="Vista Previa" class="btn-secondary"
+                                attrs="{'invisible': [('widget_template_id', '=', False)]}"/>
+                    </header>
+                    
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="title" placeholder="Título del Widget..."/>
+                            </h1>
+                            <h2>
+                                <field name="widget_type" readonly="1" 
+                                       attrs="{'invisible': [('widget_type', '=', False)]}"/>
+                            </h2>
+                        </div>
+                        
+                        <group>
+                            <group name="widget_selection" string="Configuración del Widget">
+                                <field name="widget_template_id" 
+                                       options="{'no_create': True, 'no_edit': True}"
+                                       domain="[]"/>
+                                <field name="dashboard_id" 
+                                       options="{'no_create': True}"/>
+                            </group>
+                            
+                            <group name="position_size" string="Posición y Tamaño">
+                                <field name="position_x"/>
+                                <field name="position_y"/>
+                                <field name="size_w"/>
+                                <field name="size_h"/>
+                            </group>
+                        </group>
+                        
+                        <notebook>
+                            <page string="Filtros de Datos" name="filters">
+                                <group>
+                                    <group name="date_filters" string="Filtros de Fecha">
+                                        <field name="date_from"/>
+                                        <field name="date_to"/>
+                                    </group>
+                                    <group name="company_filters" string="Filtros de Compañía">
+                                        <field name="company_ids" widget="many2many_tags"
+                                               domain="[]"/>
+                                    </group>
+                                </group>
+                            </page>
+                            
+                            <page string="Configuración Avanzada" name="advanced">
+                                <group>
+                                    <group name="performance" string="Rendimiento">
+                                        <field name="refresh_interval"/>
+                                        <field name="enable_cache"/>
+                                    </group>
+                                    <group name="custom_config" string="Configuración Personalizada">
+                                        <field name="config_data" 
+                                               widget="ace" 
+                                               options="{'mode': 'json'}"
+                                               placeholder="{&quot;custom_option&quot;: &quot;value&quot;}"/>
+                                    </group>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    
+                    <footer>
+                        <button name="action_add_widget" type="object" 
+                                string="Añadir Widget" class="btn-primary"/>
+                        <button name="action_preview_widget" type="object" 
+                                string="Vista Previa" class="btn-secondary"
+                                attrs="{'invisible': [('widget_template_id', '=', False)]}"/>
+                        <button string="Cancelar" class="btn-light" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Preview View -->
+        <record id="financial_dashboard_add_widget_wizard_preview_view" model="ir.ui.view">
+            <field name="name">financial.dashboard.add.widget.wizard.preview.form</field>
+            <field name="model">financial.dashboard.add.widget.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Vista Previa del Widget" create="false" edit="false">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1><field name="title" readonly="1"/></h1>
+                        </div>
+                        
+                        <group>
+                            <group string="Información del Widget">
+                                <field name="widget_type" readonly="1"/>
+                                <field name="size_w" readonly="1"/>
+                                <field name="size_h" readonly="1"/>
+                            </group>
+                            <group string="Configuración de Datos">
+                                <field name="date_from" readonly="1"/>
+                                <field name="date_to" readonly="1"/>
+                                <field name="refresh_interval" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <div class="alert alert-info" role="alert">
+                            <strong>Vista Previa:</strong> Este es cómo se verá el widget en el dashboard.
+                            Los datos mostrados son de ejemplo y pueden diferir de los datos reales.
+                        </div>
+                        
+                        <div class="widget-preview-container" style="border: 2px dashed #ccc; padding: 20px; margin: 10px 0; min-height: 200px; background-color: #f9f9f9;">
+                            <div class="text-center">
+                                <i class="fa fa-chart-line fa-3x text-muted mb-3"/>
+                                <h4>Vista Previa del Widget</h4>
+                                <p class="text-muted">El widget aparecerá aquí con datos reales una vez añadido al dashboard</p>
+                            </div>
+                        </div>
+                    </sheet>
+                    
+                    <footer>
+                        <button name="action_add_widget" type="object" 
+                                string="Confirmar y Añadir" class="btn-primary"/>
+                        <button string="Cerrar" class="btn-light" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Action for the wizard -->
+        <record id="action_financial_dashboard_add_widget_wizard" model="ir.actions.act_window">
+            <field name="name">Añadir Widget al Dashboard</field>
+            <field name="res_model">financial.dashboard.add.widget.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="financial_dashboard_add_widget_wizard_view"/>
+            <field name="target">new</field>
+        </record>
+    </data>
+</odoo>

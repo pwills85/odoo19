@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<odoo>
+    
+    
+    <record id="view_project_profitability_report_tree" model="ir.ui.view">
+        <field name="name">project.profitability.report.tree</field>
+        <field name="model">project.profitability.report</field>
+        <field name="arch" type="xml">
+            <list string="Project Profitability Reports" 
+                  decoration-danger="is_over_budget or is_behind_schedule"
+                  decoration-warning="cost_status == 'warning' or schedule_status == 'warning'"
+                  decoration-success="cost_status == 'excellent' and schedule_status == 'excellent'">
+                
+                <field name="project_id"/>
+                <field name="date_to"/>
+                <field name="budget_at_completion" widget="monetary"/>
+                <field name="actual_cost" widget="monetary"/>
+                <field name="earned_value" widget="monetary"/>
+                
+                
+                <field name="cost_performance_index" 
+                       decoration-danger="cost_performance_index &lt; 0.9"
+                       decoration-warning="cost_performance_index &lt; 1.0"
+                       decoration-success="cost_performance_index &gt;= 1.1"/>
+                       
+                <field name="schedule_performance_index"
+                       decoration-danger="schedule_performance_index &lt; 0.9"
+                       decoration-warning="schedule_performance_index &lt; 1.0"
+                       decoration-success="schedule_performance_index &gt;= 1.1"/>
+                
+                <field name="percent_complete" widget="percentage"/>
+                <field name="margin_percent" widget="percentage"/>
+                <field name="health_score" widget="progressbar"/>
+                
+                
+                <field name="cost_status" invisible="1"/>
+                <field name="schedule_status" invisible="1"/>
+                <field name="is_over_budget" invisible="1"/>
+                <field name="is_behind_schedule" invisible="1"/>
+                <field name="currency_id" invisible="1"/>
+                
+            </list>
+        </field>
+    </record>
+    
+    
+    <record id="view_project_profitability_report_form" model="ir.ui.view">
+        <field name="name">project.profitability.report.form</field>
+        <field name="model">project.profitability.report</field>
+        <field name="arch" type="xml">
+            <form string="Project Profitability Report">
+                
+                <header>
+                    <button name="calculate_evm_metrics" 
+                            string="Recalculate EVM" 
+                            type="object" 
+                            class="btn-primary"
+                            icon="fa-refresh"/>
+                    
+                    <button name="export_to_excel" 
+                            string="Export to Excel" 
+                            type="object" 
+                            class="btn-secondary"
+                            icon="fa-file-excel-o"/>
+                    
+                    <button name="export_to_pdf" 
+                            string="Export to PDF" 
+                            type="object" 
+                            class="btn-secondary"
+                            icon="fa-file-pdf-o"/>
+                    
+                    <field name="cost_status" widget="status_bar" 
+                           statusbar_visible="excellent,good,warning,critical"/>
+                </header>
+                
+                <sheet>
+                    
+                    
+                    <div class="oe_title">
+                        <h1>
+                            <field name="project_id" readonly="1"/>
+                        </h1>
+                        <h3>
+                            Profitability Analysis - <field name="date_to" readonly="1"/>
+                        </h3>
+                    </div>
+                    
+                    
+                    <div class="row mt-3">
+                        <div class="col-lg-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h4><field name="cost_performance_index" readonly="1"/></h4>
+                                    <p>Cost Performance Index</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h4><field name="schedule_performance_index" readonly="1"/></h4>
+                                    <p>Schedule Performance Index</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h4><field name="percent_complete" widget="percentage" readonly="1"/></h4>
+                                    <p>Percent Complete</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h4><field name="health_score" readonly="1"/></h4>
+                                    <p>Health Score</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <notebook>
+                        
+                        
+                        <page string="EVM Metrics" name="evm_metrics">
+                            <group>
+                                <group string="Base Values">
+                                    <field name="date_from"/>
+                                    <field name="date_to"/>
+                                    <field name="budget_at_completion" widget="monetary"/>
+                                    <field name="planned_value" widget="monetary"/>
+                                    <field name="earned_value" widget="monetary"/>
+                                    <field name="actual_cost" widget="monetary"/>
+                                </group>
+                                
+                                <group string="Performance Indices">
+                                    <field name="cost_performance_index"/>
+                                    <field name="schedule_performance_index"/>
+                                    <field name="cost_status"/>
+                                    <field name="schedule_status"/>
+                                </group>
+                            </group>
+                            
+                            <group>
+                                <group string="Forecasts">
+                                    <field name="estimate_at_completion" widget="monetary"/>
+                                    <field name="estimate_to_complete" widget="monetary"/>
+                                    <field name="variance_at_completion" widget="monetary"/>
+                                </group>
+                                
+                                <group string="Variances">
+                                    <field name="cost_variance" widget="monetary"/>
+                                    <field name="schedule_variance" widget="monetary"/>
+                                    <field name="margin_amount" widget="monetary"/>
+                                    <field name="margin_percent" widget="percentage"/>
+                                </group>
+                            </group>
+                            
+                            <group>
+                                <group string="Status Indicators">
+                                    <field name="is_over_budget"/>
+                                    <field name="is_behind_schedule"/>
+                                    <field name="health_score"/>
+                                </group>
+                            </group>
+                            
+                        </page>
+                        
+                        
+                        <page string="S-Curve Analysis" name="s_curve">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div id="s_curve_chart" style="height: 400px;">
+                                        
+                                        <p class="text-muted text-center mt-5">
+                                            S-Curve visualization will be displayed here
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+                            <field name="s_curve_data" invisible="1"/>
+                        </page>
+                        
+                        
+                        <page string="Analysis" name="analysis">
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <h4>Cost Performance Analysis</h4>
+                                    <div class="alert alert-info" role="status">
+                                        <strong>Excellent Cost Performance!</strong><br/>
+                                        Project is performing significantly under budget.
+                                    </div>
+                                    <div class="alert alert-success" role="status">
+                                        <strong>Good Cost Performance</strong><br/>
+                                        Project is on track with budget.
+                                    </div>
+                                    <div class="alert alert-warning" role="alert">
+                                        <strong>Cost Performance Warning</strong><br/>
+                                        Project is slightly over budget. Monitor closely.
+                                    </div>
+                                    <div class="alert alert-danger" role="alert">
+                                        <strong>Critical Cost Performance!</strong><br/>
+                                        Project is significantly over budget. Immediate action required.
+                                    </div>
+                                </div>
+                                
+                                <div class="col-lg-6">
+                                    <h4>Schedule Performance Analysis</h4>
+                                    <div class="alert alert-info" role="status">
+                                        <strong>Excellent Schedule Performance!</strong><br/>
+                                        Project is ahead of schedule.
+                                    </div>
+                                    <div class="alert alert-success" role="status">
+                                        <strong>Good Schedule Performance</strong><br/>
+                                        Project is on schedule.
+                                    </div>
+                                    <div class="alert alert-warning" role="alert">
+                                        <strong>Schedule Performance Warning</strong><br/>
+                                        Project is slightly behind schedule.
+                                    </div>
+                                    <div class="alert alert-danger" role="alert">
+                                        <strong>Critical Schedule Performance!</strong><br/>
+                                        Project is significantly behind schedule. Immediate action required.
+                                    </div>
+                                </div>
+                            </div>
+                        </page>
+                        
+                    </notebook>
+                    
+                </sheet>
+                
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+                
+            </form>
+        </field>
+    </record>
+    
+    
+    <record id="view_project_profitability_report_kanban" model="ir.ui.view">
+        <field name="name">project.profitability.report.kanban</field>
+        <field name="model">project.profitability.report</field>
+        <field name="arch" type="xml">
+            <kanban string="Project Profitability Dashboard" 
+                    class="o_kanban_dashboard" 
+                    create="false">
+                
+                <field name="project_id"/>
+                <field name="cost_performance_index"/>
+                <field name="schedule_performance_index"/>
+                <field name="health_score"/>
+                <field name="percent_complete"/>
+                <field name="margin_percent"/>
+                <field name="cost_status"/>
+                <field name="schedule_status"/>
+                <field name="is_over_budget"/>
+                <field name="is_behind_schedule"/>
+                <field name="currency_id"/>
+                
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            
+                            
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary">
+                                        <strong><t t-esc="record.project_id.value"/></strong>
+                                    </div>
+                                    <div class="text-muted">
+                                        <t t-esc="record.date_to.value"/>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+                            <div class="container o_kanban_card_content">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="badge badge-primary">
+                                            CPI: <t t-esc="record.cost_performance_index.value"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="badge badge-info">
+                                            SPI: <t t-esc="record.schedule_performance_index.value"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <div class="progress">
+                                            <div class="progress-bar" 
+                                                 role="progressbar" 
+                                                 t-att-style="'width: ' + record.percent_complete.value + '%'"
+                                                 t-att-aria-valuenow="record.percent_complete.value"
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                                <t t-esc="record.percent_complete.value"/>% Complete
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                
+                                <div class="row mt-2">
+                                    <div class="col-12 text-center">
+                                        <span class="badge badge-pill"
+                                              t-att-class="record.health_score.raw_value >= 80 ? 'badge-success' : 
+                                                          record.health_score.raw_value >= 60 ? 'badge-warning' : 'badge-danger'">
+                                            Health: <t t-esc="record.health_score.value"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                
+                                <div class="row mt-2">
+                                    <div class="col-6">
+                                        <t t-if="record.is_over_budget.raw_value">
+                                            <span class="badge badge-danger">Over Budget</span>
+                                        </t>
+                                    </div>
+                                    <div class="col-6">
+                                        <t t-if="record.is_behind_schedule.raw_value">
+                                            <span class="badge badge-warning">Behind Schedule</span>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+                            <div class="o_kanban_card_manage_pane dropdown-menu" role="menu">
+                                <a role="menuitem" type="edit" class="dropdown-item">Edit</a>
+                                <a role="menuitem" type="object" name="export_to_excel" class="dropdown-item">Export Excel</a>
+                                <a role="menuitem" type="object" name="calculate_evm_metrics" class="dropdown-item">Recalculate</a>
+                            </div>
+                            
+                        </div>
+                    </t>
+                </templates>
+                
+            </kanban>
+        </field>
+    </record>
+    
+    
+    <record id="view_project_profitability_report_search" model="ir.ui.view">
+        <field name="name">project.profitability.report.search</field>
+        <field name="model">project.profitability.report</field>
+        <field name="arch" type="xml">
+            <search string="Project Profitability Reports">
+                <field name="display_name"/>
+                <field name="project_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                
+                
+                <filter string="Current Month" name="current_month" 
+                        domain="[('date_to', '&gt;=', (context_today().replace(day=1)))]" />
+                <filter string="Last Month" name="last_month" 
+                        help="Use date filter for last month" />
+                <filter string="Last 3 Months" name="last_3_months" 
+                        help="Use date filter for last 3 months" />
+                <filter string="This Year" name="this_year" 
+                        domain="[('date_from', '&gt;=', (context_today().replace(month=1, day=1)))]" />
+                
+                <separator/>
+                
+                
+                
+                <separator/>
+                
+                
+                
+                <separator/>
+                
+                
+                <filter string="Active Projects" name="active_projects" 
+                        domain="[('project_id.active', '=', True)]"/>
+                <filter string="Archived" name="inactive" 
+                        domain="[('project_id.active', '=', False)]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter string="Project" name="group_project" 
+                            context="{'group_by': 'project_id'}"/>
+                    <filter string="Month" name="group_month" 
+                            context="{'group_by': 'date_from:month'}"/>
+                    <filter string="Quarter" name="group_quarter" 
+                            context="{'group_by': 'date_from:quarter'}"/>
+                    <filter string="Year" name="group_year" 
+                            context="{'group_by': 'date_from:year'}"/>
+                    <filter string="Company" name="group_company" 
+                            context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    
+    <record id="action_project_profitability_report" model="ir.actions.act_window">
+        <field name="name">Project Profitability Reports</field>
+        <field name="res_model">project.profitability.report</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="view_id" ref="view_project_profitability_report_kanban"/>
+        <field name="search_view_id" ref="view_project_profitability_report_search"/>
+        <field name="context">{
+            'search_default_this_month': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Project Profitability Report!
+            </p>
+            <p>
+                Track project performance using Earned Value Management (EVM) metrics.
+                Monitor cost and schedule performance to ensure project success.
+            </p>
+        </field>
+    </record>
+    
+    
+    <record id="action_project_profitability_dashboard" model="ir.actions.act_window">
+        <field name="name">Project Profitability Dashboard</field>
+        <field name="res_model">project.profitability.report</field>
+        <field name="view_mode">kanban</field>
+        <field name="view_id" ref="view_project_profitability_report_kanban"/>
+        <field name="context">{
+            'search_default_this_month': 1,
+        }</field>
+    </record>
+    
+    
+    
+    
+</odoo>

@@ -1,0 +1,136 @@
+groups:
+  - name: ai_service_cost_alerts
+    interval: 1m
+    rules:
+      - alert: DailyCostExceeded
+        expr: sum(increase(claude_api_cost_usd_total[24h])) > 50
+        for: 1h
+        labels:
+          severity: warning
+          component: cost
+        annotations:
+          summary: "Daily AI cost exceeded $50"
+          description: "Current daily cost: ${{ $value | printf \"%.2f\" }}"
+          runbook: "Check ai-service/monitoring/runbooks/cost-exceeded.md"
+
+      - alert: DailyCostCritical
+        expr: sum(increase(claude_api_cost_usd_total[24h])) > 100
+        for: 30m
+        labels:
+          severity: critical
+          component: cost
+        annotations:
+          summary: "🚨 Daily AI cost exceeded $100"
+          description: "Current daily cost: ${{ $value | printf \"%.2f\" }}. Consider stopping non-critical operations."
+
+  - name: ai_service_performance_alerts
+    interval: 1m
+    rules:
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, sum by (le, operation) (rate(claude_api_latency_seconds_bucket[5m]))) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: performance
+        annotations:
+          summary: "Claude API p95 latency > 5s"
+          description: "Current p95 latency: {{ $value | printf \"%.2f\" }}s"
+
+      - alert: HighErrorRate
+        expr: sum(rate(claude_api_calls_total{status="error"}[5m])) / sum(rate(claude_api_calls_total[5m])) * 100 > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: performance
+        annotations:
+          summary: "Error rate > 1%"
+          description: "Current error rate: {{ $value | printf \"%.1f\" }}%"
+
+      - alert: CircuitBreakerOpen
+        expr: circuit_breaker_state{name="anthropic", state="open"} == 1
+        for: 1m
+        labels:
+          severity: critical
+          component: resilience
+        annotations:
+          summary: "🚨 Circuit breaker OPEN for Anthropic API"
+          description: "Claude API calls are being blocked. Check service health."
+
+  - name: ai_service_accuracy_alerts
+    interval: 1m
+    rules:
+      - alert: LowConfidence
+        expr: avg(ai_service_confidence_score) < 70
+        for: 1h
+        labels:
+          severity: warning
+          component: ml_accuracy
+        annotations:
+          summary: "Average confidence dropped below 70%"
+          description: "Current average confidence: {{ $value | printf \"%.1f\" }}%"
+
+      - alert: HighRejectionRate
+        expr: sum(rate(ai_service_dte_validations_total{recommendation="reject"}[1h])) / sum(rate(ai_service_dte_validations_total[1h])) * 100 > 30
+        for: 30m
+        labels:
+          severity: info
+          component: ml_accuracy
+        annotations:
+          summary: "High DTE rejection rate"
+          description: "Current rejection rate: {{ $value | printf \"%.1f\" }}%"
+
+  - name: ai_service_cache_alerts
+    interval: 1m
+    rules:
+      - alert: LowCacheHitRate
+        expr: sum(rate(claude_api_cache_hits_total[5m])) / sum(rate(claude_api_calls_total[5m])) * 100 < 70
+        for: 15m
+        labels:
+          severity: warning
+          component: optimization
+        annotations:
+          summary: "Cache hit rate below 70%"
+          description: "Current cache hit rate: {{ $value | printf \"%.1f\" }}%. Cost optimization at risk."
+
+      - alert: NoCacheHits
+        expr: sum(rate(claude_api_cache_hits_total[10m])) == 0
+        for: 10m
+        labels:
+          severity: critical
+          component: optimization
+        annotations:
+          summary: "🚨 No cache hits detected"
+          description: "Prompt caching may be broken. 90% cost savings at risk."
+
+  - name: ai_service_system_alerts
+    interval: 1m
+    rules:
+      - alert: RedisConnectionLost
+        expr: redis_connection_status == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "🚨 Redis connection lost"
+          description: "Session management and caching unavailable"
+
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes > 2147483648  # 2GB
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Memory usage > 2GB"
+          description: "Current memory: {{ $value | humanize }}B"
+
+      - alert: HighQueueDepth
+        expr: ai_service_queue_depth > 100
+        for: 2m
+        labels:
+          severity: warning
+          component: performance
+        annotations:
+          summary: "Request queue depth > 100"
+          description: "Current queue depth: {{ $value }}"

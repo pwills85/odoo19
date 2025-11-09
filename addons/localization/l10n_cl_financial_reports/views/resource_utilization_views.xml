@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Resource Utilization Report Views -->
+    
+    <!-- Tree View -->
+    <record id="view_resource_utilization_report_tree" model="ir.ui.view">
+        <field name="name">resource.utilization.report.tree</field>
+        <field name="model">resource.utilization.report</field>
+        <field name="arch" type="xml">
+            <list string="Resource Utilization Reports" decoration-danger="resource_health_status=='critical'" 
+                  decoration-warning="resource_health_status=='warning'" decoration-success="resource_health_status=='excellent'">
+                <field name="name"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="total_employees"/>
+                <field name="avg_utilization_rate" widget="percentage"/>
+                <field name="overall_utilization" widget="percentage"/>
+                <field name="resource_health_status" widget="badge" 
+                       decoration-success="resource_health_status=='excellent'"
+                       decoration-info="resource_health_status=='good'"
+                       decoration-warning="resource_health_status=='warning'"
+                       decoration-danger="resource_health_status=='critical'"/>
+                <field name="date_generated"/>
+            </list>
+        </field>
+    </record>
+    
+    <!-- Form View -->
+    <record id="view_resource_utilization_report_form" model="ir.ui.view">
+        <field name="name">resource.utilization.report.form</field>
+        <field name="model">resource.utilization.report</field>
+        <field name="arch" type="xml">
+            <form string="Resource Utilization Report">
+                <header>
+                    <button name="action_regenerate_data" string="Regenerate Data" type="object" class="btn-primary"/>
+                    <button name="export_to_excel" string="Export to Excel" type="object" class="btn-secondary"/>
+                    <button name="export_to_pdf" string="Export to PDF" type="object" class="btn-secondary"/>
+                    <field name="resource_health_status" widget="statusbar" statusbar_visible="excellent,good,warning,critical"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_employees" type="object" class="oe_stat_button" icon="fa-users">
+                            <field name="total_employees" widget="statinfo" string="Employees"/>
+                        </button>
+                        <button name="action_view_capacity_forecast" type="object" class="oe_stat_button" icon="fa-calendar">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Capacity</span>
+                                <span class="o_stat_text">Forecast</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group string="Report Period">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="date_generated" readonly="1"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Health Status">
+                            <field name="resource_health_status" widget="badge"/>
+                            <field name="overall_utilization" widget="percentage"/>
+                            <field name="avg_utilization_rate" widget="percentage"/>
+                            <field name="avg_billable_rate" widget="percentage"/>
+                        </group>
+                    </group>
+                    
+                    <!-- KPI Dashboard -->
+                    <div class="row mt16">
+                        <div class="col-lg-3 col-6">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4><field name="total_employees" readonly="1"/></h4>
+                                            <p class="card-text">Total Employees</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fa fa-users fa-2x" title="Total Employees"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-3 col-6">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4><field name="overall_utilization" widget="percentage" readonly="1"/></h4>
+                                            <p class="card-text">Overall Utilization</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fa fa-line-chart fa-2x" title="Overall Utilization"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-3 col-6">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4><field name="total_billable_hours" readonly="1"/></h4>
+                                            <p class="card-text">Billable Hours</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fa fa-clock-o fa-2x" title="Billable Hours"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-3 col-6">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4><field name="employees_overutilized" readonly="1"/></h4>
+                                            <p class="card-text">Overutilized</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fa fa-exclamation-triangle fa-2x" title="Overutilized Employees"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <notebook>
+                        <page string="Utilization Metrics" name="utilization_metrics">
+                            <group>
+                                <group string="Hours Summary">
+                                    <field name="total_available_hours"/>
+                                    <field name="total_worked_hours"/>
+                                    <field name="total_billable_hours"/>
+                                    <field name="avg_overtime_rate" widget="percentage"/>
+                                </group>
+                                <group string="Employee Distribution">
+                                    <field name="employees_overutilized" widget="statinfo"/>
+                                    <field name="employees_optimal" widget="statinfo"/>
+                                    <field name="employees_underutilized" widget="statinfo"/>
+                                    <field name="employees_available" widget="statinfo"/>
+                                </group>
+                            </group>
+                            
+                            <!-- Utilization Chart Placeholder -->
+                            <div class="mt16">
+                                <h3>Utilization Distribution</h3>
+                                <div class="alert alert-info" role="status">
+                                    <i class="fa fa-info-circle" title="Information"/> 
+                                    Interactive utilization charts will be displayed here with OWL components.
+                                </div>
+                            </div>
+                        </page>
+                        
+                        <page string="Employee Details" name="employee_details">
+                            <div class="mt16">
+                                <h3>Employee Utilization Heatmap</h3>
+                                <div class="alert alert-info" role="status">
+                                    <i class="fa fa-info-circle" title="Information"/> 
+                                    Employee utilization heatmap will be displayed here.
+                                    <br/>Use the "View Employees" button to see detailed employee data.
+                                </div>
+                            </div>
+                        </page>
+                        
+                        <page string="Capacity Forecast" name="capacity_forecast">
+                            <div class="mt16">
+                                <h3>12-Week Capacity Forecast</h3>
+                                <div class="alert alert-info" role="status">
+                                    <i class="fa fa-calendar" title="Calendar"/> 
+                                    Capacity forecast charts will be displayed here.
+                                    <br/>Use the "Capacity Forecast" button to see detailed weekly data.
+                                </div>
+                            </div>
+                        </page>
+                        
+                        <page string="Recommendations" name="recommendations">
+                            <div class="mt16">
+                                <h3>Resource Allocation Recommendations</h3>
+                                <div class="alert alert-info" role="status">
+                                    <i class="fa fa-lightbulb-o" title="Recommendations"/> 
+                                    AI-powered recommendations for resource optimization will be displayed here.
+                                </div>
+                            </div>
+                        </page>
+                        
+                        <page string="Technical Data" name="technical_data" groups="base.group_system">
+                            <group>
+                                <field name="employees_data" widget="text" readonly="1"/>
+                                <field name="capacity_forecast_data" widget="text" readonly="1"/>
+                                <field name="recommendations_data" widget="text" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Kanban View -->
+    <record id="view_resource_utilization_report_kanban" model="ir.ui.view">
+        <field name="name">resource.utilization.report.kanban</field>
+        <field name="model">resource.utilization.report</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_dashboard" create="false">
+                <field name="name"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="total_employees"/>
+                <field name="overall_utilization"/>
+                <field name="resource_health_status"/>
+                <field name="employees_overutilized"/>
+                <field name="employees_available"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary">
+                                        <strong><field name="name"/></strong>
+                                    </div>
+                                    <div class="text-muted">
+                                        <field name="date_from"/> - <field name="date_to"/>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_manage_button_section">
+                                    <a class="o_kanban_manage_toggle_button" href="#">
+                                        <i class="fa fa-ellipsis-v" title="More Options"/>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="container o_kanban_card_content">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <button class="btn btn-primary" type="object" name="action_view_employees">
+                                            <field name="total_employees"/> Employees
+                                        </button>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="badge badge-pill" t-attf-class="badge-#{record.resource_health_status.raw_value == 'excellent' and 'success' or record.resource_health_status.raw_value == 'good' and 'info' or record.resource_health_status.raw_value == 'warning' and 'warning' or 'danger'}">
+                                            <field name="resource_health_status"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt8">
+                                    <div class="col-12">
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-success" role="progressbar" 
+                                                 style="width: 80%"
+                                                 aria-valuenow="80" 
+                                                 aria-valuemin="0" aria-valuemax="100">
+                                                <field name="overall_utilization" widget="percentage"/>
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">Overall Utilization</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt8">
+                                    <div class="col-6">
+                                        <span class="text-danger">
+                                            <i class="fa fa-exclamation-triangle" title="Warning"/>
+                                            <field name="employees_overutilized"/> Overutilized
+                                        </span>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="text-success">
+                                            <i class="fa fa-check-circle" title="Success"/>
+                                            <field name="employees_available"/> Available
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="o_kanban_card_manage_pane dropdown-menu" role="menu">
+                                <a role="menuitem" type="object" name="action_regenerate_data" class="dropdown-item">
+                                    <i class="fa fa-refresh" title="Refresh"/> Regenerate Data
+                                </a>
+                                <a role="menuitem" type="object" name="export_to_excel" class="dropdown-item">
+                                    <i class="fa fa-file-excel-o" title="Excel"/> Export to Excel
+                                </a>
+                                <a role="menuitem" type="object" name="action_view_capacity_forecast" class="dropdown-item">
+                                    <i class="fa fa-calendar" title="Calendar"/> View Forecast
+                                </a>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    
+    <!-- Search View -->
+    <record id="view_resource_utilization_report_search" model="ir.ui.view">
+        <field name="name">resource.utilization.report.search</field>
+        <field name="model">resource.utilization.report</field>
+        <field name="arch" type="xml">
+            <search string="Resource Utilization Reports">
+                <field name="name"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="resource_health_status"/>
+                
+                <filter string="This Month" name="this_month" 
+                        help="Reports from this month"/>
+                <filter string="Last Month" name="last_month" 
+                        help="Reports from last month"/>
+                <filter string="Last 3 Months" name="last_3_months" 
+                        help="Reports from last 3 months"/>
+                
+                <separator/>
+                <filter string="Excellent Health" name="excellent_health" 
+                        domain="[('resource_health_status', '=', 'excellent')]"/>
+                <filter string="Good Health" name="good_health" 
+                        domain="[('resource_health_status', '=', 'good')]"/>
+                <filter string="Warning" name="warning_health" 
+                        domain="[('resource_health_status', '=', 'warning')]"/>
+                <filter string="Critical" name="critical_health" 
+                        domain="[('resource_health_status', '=', 'critical')]"/>
+                
+                <separator/>
+                <filter string="High Utilization" name="high_utilization" 
+                        domain="[('overall_utilization', '&gt;=', 80)]"/>
+                <filter string="Low Utilization" name="low_utilization" 
+                        domain="[('overall_utilization', '&lt;', 60)]"/>
+                <filter string="Has Overutilized Employees" name="has_overutilized" 
+                        domain="[('employees_overutilized', '&gt;', 0)]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter string="Health Status" name="group_health_status" 
+                            context="{'group_by': 'resource_health_status'}"/>
+                    <filter string="Month" name="group_month" 
+                            context="{'group_by': 'date_from:month'}"/>
+                    <filter string="Company" name="group_company" 
+                            context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Capacity Forecast Views -->
+    
+    <!-- Capacity Forecast Tree View -->
+    <record id="view_resource_capacity_forecast_tree" model="ir.ui.view">
+        <field name="name">resource.capacity.forecast.tree</field>
+        <field name="model">resource.capacity.forecast</field>
+        <field name="arch" type="xml">
+            <list string="Capacity Forecast" decoration-danger="capacity_status=='overbooked'" 
+                  decoration-warning="capacity_status=='high_utilization'">
+                <field name="week_number"/>
+                <field name="week_start"/>
+                <field name="week_end"/>
+                <field name="available_capacity_hours"/>
+                <field name="planned_allocation_hours"/>
+                <field name="remaining_capacity_hours"/>
+                <field name="utilization_forecast" widget="percentage"/>
+                <field name="capacity_status" widget="badge" 
+                       decoration-danger="capacity_status=='overbooked'"
+                       decoration-warning="capacity_status=='high_utilization'"
+                       decoration-info="capacity_status=='moderate_utilization'"
+                       decoration-muted="capacity_status=='low_utilization'"/>
+            </list>
+        </field>
+    </record>
+    
+    <!-- Capacity Forecast Form View -->
+    <record id="view_resource_capacity_forecast_form" model="ir.ui.view">
+        <field name="name">resource.capacity.forecast.form</field>
+        <field name="model">resource.capacity.forecast</field>
+        <field name="arch" type="xml">
+            <form string="Capacity Forecast">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="week_number" readonly="1"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group string="Week Information">
+                            <field name="week_start"/>
+                            <field name="week_end"/>
+                            <field name="capacity_status" widget="badge"/>
+                        </group>
+                        <group string="Capacity Metrics">
+                            <field name="available_capacity_hours"/>
+                            <field name="planned_allocation_hours"/>
+                            <field name="remaining_capacity_hours"/>
+                            <field name="utilization_forecast" widget="percentage"/>
+                        </group>
+                    </group>
+                    
+                    <div class="mt16">
+                        <h3>Capacity Visualization</h3>
+                        <div class="progress" style="height: 30px;">
+                            <div class="progress-bar progress-bar-info" role="progressbar" style="width: 75%">
+                                <field name="utilization_forecast" widget="percentage"/>
+                            </div>
+                        </div>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Actions -->
+    
+    <!-- Resource Utilization Report Action -->
+    <record id="action_resource_utilization_report" model="ir.actions.act_window">
+        <field name="name">Resource Utilization Reports</field>
+        <field name="res_model">resource.utilization.report</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Resource Utilization Report!
+            </p>
+            <p>
+                Analyze employee utilization, capacity planning, and resource optimization
+                for your engineering projects.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Capacity Forecast Action -->
+    <record id="action_resource_capacity_forecast" model="ir.actions.act_window">
+        <field name="name">Capacity Forecast</field>
+        <field name="res_model">resource.capacity.forecast</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+    </record>
+    
+    <!-- Menu Items -->
+    
+    <!-- COMMENTED OUT: Menus moved to menu_items.xml for proper loading order -->
+    <!--
+    <menuitem id="menu_resource_utilization_report"
+              name="Resource Utilization"
+              parent="menu_financial_reports"
+              action="action_resource_utilization_report"
+              sequence="30"/>
+    
+    <menuitem id="menu_resource_capacity_forecast"
+              name="Capacity Forecast"
+              parent="menu_resource_utilization_report"
+              action="action_resource_capacity_forecast"
+              sequence="10"/>
+    -->
+
+</odoo>

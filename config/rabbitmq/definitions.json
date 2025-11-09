@@ -1,0 +1,183 @@
+{
+  "rabbit_version": "3.12.0",
+  "rabbitmq_version": "3.12.0",
+  "product_name": "RabbitMQ",
+  "product_version": "3.12.0",
+  
+  "users": [
+    {
+      "name": "admin",
+      "password": "changeme",
+      "tags": "administrator"
+    }
+  ],
+  
+  "vhosts": [
+    {
+      "name": "/odoo"
+    }
+  ],
+  
+  "permissions": [
+    {
+      "user": "admin",
+      "vhost": "/odoo",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  
+  "exchanges": [
+    {
+      "name": "dte.direct",
+      "vhost": "/odoo",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "dte.topic",
+      "vhost": "/odoo",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "dte.dlx",
+      "vhost": "/odoo",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  
+  "queues": [
+    {
+      "name": "dte.generate",
+      "vhost": "/odoo",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 3600000,
+        "x-max-priority": 10,
+        "x-dead-letter-exchange": "dte.dlx",
+        "x-dead-letter-routing-key": "dte.generate.dlq"
+      }
+    },
+    {
+      "name": "dte.validate",
+      "vhost": "/odoo",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 1800000,
+        "x-dead-letter-exchange": "dte.dlx",
+        "x-dead-letter-routing-key": "dte.validate.dlq"
+      }
+    },
+    {
+      "name": "dte.send",
+      "vhost": "/odoo",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 7200000,
+        "x-dead-letter-exchange": "dte.dlx",
+        "x-dead-letter-routing-key": "dte.send.dlq"
+      }
+    },
+    {
+      "name": "dte.generate.dlq",
+      "vhost": "/odoo",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dte.validate.dlq",
+      "vhost": "/odoo",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dte.send.dlq",
+      "vhost": "/odoo",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  
+  "bindings": [
+    {
+      "source": "dte.direct",
+      "vhost": "/odoo",
+      "destination": "dte.generate",
+      "destination_type": "queue",
+      "routing_key": "generate",
+      "arguments": {}
+    },
+    {
+      "source": "dte.direct",
+      "vhost": "/odoo",
+      "destination": "dte.validate",
+      "destination_type": "queue",
+      "routing_key": "validate",
+      "arguments": {}
+    },
+    {
+      "source": "dte.direct",
+      "vhost": "/odoo",
+      "destination": "dte.send",
+      "destination_type": "queue",
+      "routing_key": "send",
+      "arguments": {}
+    },
+    {
+      "source": "dte.dlx",
+      "vhost": "/odoo",
+      "destination": "dte.generate.dlq",
+      "destination_type": "queue",
+      "routing_key": "dte.generate.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "dte.dlx",
+      "vhost": "/odoo",
+      "destination": "dte.validate.dlq",
+      "destination_type": "queue",
+      "routing_key": "dte.validate.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "dte.dlx",
+      "vhost": "/odoo",
+      "destination": "dte.send.dlq",
+      "destination_type": "queue",
+      "routing_key": "dte.send.dlq",
+      "arguments": {}
+    }
+  ],
+  
+  "policies": [
+    {
+      "vhost": "/odoo",
+      "name": "ha-all",
+      "pattern": "^dte\\.",
+      "apply-to": "queues",
+      "definition": {
+        "ha-mode": "all",
+        "ha-sync-mode": "automatic"
+      },
+      "priority": 0
+    }
+  ]
+}

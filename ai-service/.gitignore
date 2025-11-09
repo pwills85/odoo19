@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+venv/
+ENV/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.bak
+*.old
+*.BACKUP*
+VERIFICACION_*.txt
+
+# Documentation (development)
+ANALISIS_*.md
+AUDITORIA_*.md
+CACHE_*.md
+CAMBIOS_*.md
+FASE_*.md
+GAP_*.md
+IMPLEMENTACION_*.md
+INTEGRATION_*.md
+MEJORAS_*.md
+PENDIENTES_*.md
+PLAN_*.md
+RESUMEN_*.md
+SESSION_*.md
+UPGRADE_*.md
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Backups
+*.BACKUP
+*.backup
+
+# Keep these
+!README.md
+!docs/

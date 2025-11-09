@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+    EERGYGROUP Branded DTE Invoice Report
+    ======================================
+
+    Professional branded PDF report template for Chilean DTEs
+    with EERGYGROUP corporate identity.
+
+    Extends: l10n_cl_dte.report_invoice_dte_document (CONSOLIDATED MODULE)
+
+    Branding Features:
+    - EERGYGROUP orange (#E97300) color scheme
+    - Professional typography and spacing
+    - Corporate footer with websites
+    - Enhanced visual hierarchy
+
+    Author: EERGYGROUP - Ing. Pedro Troncoso Willz
+    License: LGPL-3
+    Version: 19.0.2.0.0 (UPDATED: Now extends consolidated l10n_cl_dte module)
+    Date: 2025-11-04
+
+    IMPORTANT: This is AESTHETICS only (branding).
+               All DTE functionality comes from l10n_cl_dte (v19.0.6.0.0+).
+    -->
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- EERGYGROUP BRANDED TEMPLATE                                         -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+    <template id="report_invoice_dte_document_eergygroup"
+              inherit_id="l10n_cl_dte.report_invoice_dte_document">
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- BRANDING: DTE Header Box - EERGYGROUP Orange                    -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+
+        <xpath expr="//div[hasclass('border', 'border-dark', 'p-3', 'd-inline-block', 'text-center')]" position="attributes">
+            <attribute name="style">
+                min-width: 250px;
+                background: linear-gradient(135deg, #E97300 0%, #FF9933 100%);
+                color: white;
+                border: 3px solid #E97300 !important;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            </attribute>
+        </xpath>
+
+        <!-- Make DTE type text white and bold -->
+        <xpath expr="//div[hasclass('border', 'border-dark', 'p-3', 'd-inline-block', 'text-center')]//h4" position="attributes">
+            <attribute name="style">color: white; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);</attribute>
+        </xpath>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- BRANDING: Company Logo - Larger for EERGYGROUP                  -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+
+        <xpath expr="//img[@t-if='o.company_id.logo']" position="attributes">
+            <attribute name="style">max-height: 100px; max-width: 280px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));</attribute>
+        </xpath>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- BRANDING: Section Headers - EERGYGROUP Orange                   -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- Note: Headers from enhanced template (Referencias, Información  -->
+        <!--       Bancaria, CEDIBLE) are styled directly in enhanced module -->
+
+        <xpath expr="//strong[text()='Señor(es):']/.." position="attributes">
+            <attribute name="style">
+                color: #E97300;
+                font-size: 11pt;
+                font-weight: bold;
+                border-bottom: 2px solid #E97300;
+                padding-bottom: 4px;
+                margin-bottom: 8px;
+            </attribute>
+        </xpath>
+
+        <xpath expr="//strong[text()='Observaciones:']/.." position="attributes">
+            <attribute name="style">
+                color: #E97300;
+                font-size: 11pt;
+                font-weight: bold;
+            </attribute>
+        </xpath>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- BRANDING: Table Headers - TEMPORARILY DISABLED                  -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- TODO (P1): Update XPath selectors to match consolidated template structure -->
+        <!--
+        <xpath expr="//thead[hasclass('table-light')]" position="attributes">
+            <attribute name="style">background-color: #FFF5E6; color: #1A1A1A;</attribute>
+        </xpath>
+
+        <xpath expr="//table[hasclass('table', 'table-sm', 'o_main_table')]//thead//tr" position="attributes">
+            <attribute name="style">background-color: #FFF5E6; color: #1A1A1A; border-bottom: 2px solid #E97300;</attribute>
+        </xpath>
+        -->
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- BRANDING: Bank Information & CEDIBLE - REMOVED                  -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- These elements are added by enhanced template, so styling must  -->
+        <!-- be done directly in enhanced module, not via inheritance here   -->
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- BRANDING: EERGYGROUP Corporate Footer                           -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+
+        <xpath expr="//div[hasclass('row', 'mt-3')][last()]" position="after">
+            <div class="row mt-5 border-top pt-4" style="background: linear-gradient(to right, #FFF5E6 0%, #FFFFFF 50%, #FFF5E6 100%); border-top: 3px solid #E97300 !important;">
+                <div class="col-12 text-center">
+                    <!-- Main footer message -->
+                    <p class="mb-2" style="color: #E97300; font-weight: bold; font-size: 16pt; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">
+                        ¡Gracias por Preferirnos!
+                    </p>
+
+                    <!-- Corporate websites -->
+                    <p class="mb-2" style="color: #1A1A1A; font-size: 10pt;">
+                        <i class="fa fa-globe" style="color: #E97300;" title="Globe"/>
+                        <a href="https://www.eergymas.cl"
+                           style="color: #E97300; text-decoration: none; font-weight: 500; margin: 0 8px;"
+                           target="_blank">
+                            www.eergymas.cl
+                        </a>
+                        <span style="color: #E97300; font-weight: bold;">|</span>
+                        <a href="https://www.eergyhaus.cl"
+                           style="color: #E97300; text-decoration: none; font-weight: 500; margin: 0 8px;"
+                           target="_blank">
+                            www.eergyhaus.cl
+                        </a>
+                        <span style="color: #E97300; font-weight: bold;">|</span>
+                        <a href="https://www.eergygroup.cl"
+                           style="color: #E97300; text-decoration: none; font-weight: 500; margin: 0 8px;"
+                           target="_blank">
+                            www.eergygroup.cl
+                        </a>
+                    </p>
+
+                    <!-- Contact information -->
+                    <p class="mb-1 small" style="color: #666; font-size: 9pt;">
+                        <i class="fa fa-envelope" style="color: #E97300;" title="Email"/>
+                        <span style="margin: 0 8px;">contacto@eergygroup.cl</span>
+                        <span style="color: #E97300; font-weight: bold;">|</span>
+                        <i class="fa fa-phone" style="color: #E97300; margin-left: 8px;" title="Phone"/>
+                        <span style="margin: 0 8px;">+56 9 XXXX XXXX</span>
+                    </p>
+
+                    <!-- Tagline -->
+                    <p class="mb-0 small" style="color: #999; font-size: 8pt; font-style: italic;">
+                        EERGYGROUP - Soluciones Energéticas Integrales
+                    </p>
+                </div>
+            </div>
+        </xpath>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- BRANDING: Totals Section - Enhanced Typography                  -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+
+        <xpath expr="//tr[hasclass('border-dark')][.//strong[text()='TOTAL:']]" position="attributes">
+            <attribute name="style">
+                background-color: #FFF5E6;
+                border-top: 3px solid #E97300 !important;
+                font-size: 14pt;
+            </attribute>
+        </xpath>
+
+        <xpath expr="//tr[hasclass('border-dark')][.//strong[text()='TOTAL:']]//strong" position="attributes">
+            <attribute name="style">color: #E97300;</attribute>
+        </xpath>
+
+    </template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- REPORT ACTION: EERGYGROUP Branded DTE Invoice                       -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+    <record id="action_report_invoice_dte_eergygroup" model="ir.actions.report">
+        <field name="name">DTE - Factura EERGYGROUP</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">eergygroup_branding.report_invoice_dte_document_eergygroup</field>
+        <field name="report_file">eergygroup_branding.report_invoice_dte_document_eergygroup</field>
+        <field name="print_report_name">'DTE-%s-%s-EERGYGROUP' % (object.dte_code or 'DOC', object.dte_folio or object.name)</field>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_us"/>
+    </record>
+
+</odoo>

@@ -1,0 +1,634 @@
+digraph enterprise_dependencies {
+  rankdir=LR;
+  node [shape=box, style=filled];
+
+  // ANÁLISIS DE DEPENDENCIAS
+  //
+  // Total Nodos: 171
+  // Total Aristas: 348 (estimado)
+  // Grafo: DAG (Directed Acyclic Graph) - SIN ciclos
+  //
+  // TOP 10 HUBS (dependientes directos):
+  // 1. web_enterprise: 15 módulos dependen directamente
+  // 2. account_accountant: 12 módulos dependen
+  // 3. web_mobile: 8 módulos dependen
+  // 4. account_reports: 5 módulos dependen
+  // 5. web_dashboard: 5 módulos dependen
+  // 6. documents: 7 módulos dependen
+  // 7. social: 6 módulos dependen
+  // 8. helpdesk: 6 módulos dependen
+  // 9. account_online_sync: 3 módulos dependen
+  // 10. sale_subscription: 4 módulos dependen
+  //
+  // MÓDULOS HOJA (sin dependientes): 124 (72.5%)
+  // MÓDULOS CRÍTICOS (REPLICATE_CE_PRO): 14
+  //   - web_enterprise (Phoenix UI Framework)
+  //   - account_reports (Quantum Reports)
+  //   - documents (DMS workflow)
+  //   - web_gantt, web_grid, web_cohort (Advanced Views)
+  //   - planning (Resource Planning)
+  //   - marketing_automation (Marketing Workflows)
+  //   - social (Social Platform)
+  //   - web_studio (No-code Customization)
+  //   - sign (Electronic Signatures)
+  //   - account_consolidation (Multi-company)
+  //   - mrp_plm (PLM)
+  //   - website_studio (Website Builder)
+  //
+  // RIESGOS IDENTIFICADOS:
+  // - Hub web_enterprise: Si falla, impacta 15+ módulos
+  // - Cadena account_accountant → account_reports: Crítica para reporting
+  // - Dependencias IAP: 35 módulos con servicios externos
+  // - Localizations fuera de scope: 51 módulos no portables
+
+  // ========================================
+  // UI FRAMEWORK CLUSTER
+  // ========================================
+  subgraph cluster_ui {
+    label="UI Framework";
+    color=lightblue;
+    style=filled;
+    fillcolor=lightcyan;
+
+    // Core Phoenix Theme (CRITICAL HUB)
+    web_enterprise [fillcolor=yellow, label="web_enterprise\n(HUB - 15 deps)\n[REPLICATE_CE_PRO]"];
+
+    // Mobile Framework
+    web_mobile [fillcolor=lightgreen, label="web_mobile\n(8 deps)"];
+
+    // Dashboard Framework
+    web_dashboard [fillcolor=lightgreen, label="web_dashboard\n(5 deps)"];
+
+    // Advanced Views (REPLICATE_CE_PRO)
+    web_gantt [fillcolor=orange, label="web_gantt\n[REPLICATE_CE_PRO]"];
+    web_grid [fillcolor=orange, label="web_grid\n[REPLICATE_CE_PRO]"];
+    web_cohort [fillcolor=orange, label="web_cohort\n[REPLICATE_CE_PRO]"];
+
+    // Standard Views (OCA replaceable)
+    web_map [fillcolor=lightgreen];
+
+    // Studio (CRITICAL)
+    web_studio [fillcolor=orange, label="web_studio\n[REPLICATE_CE_PRO]"];
+    website_studio [fillcolor=orange, label="website_studio\n[REPLICATE_CE_PRO]"];
+
+    // Enterprise Extensions
+    website_enterprise [fillcolor=lightgreen];
+    mail_enterprise [fillcolor=lightgreen];
+
+    // External Services (NO_REPLICATE)
+    web_clearbit [fillcolor=gray, label="web_clearbit\n[NO_REPLICATE]"];
+    web_unsplash [fillcolor=gray, label="web_unsplash\n[NO_REPLICATE]"];
+  }
+
+  // ========================================
+  // ACCOUNTING CLUSTER
+  // ========================================
+  subgraph cluster_accounting {
+    label="Accounting";
+    color=lightgreen;
+    style=filled;
+    fillcolor=honeydew;
+
+    // Core Accounting Hub
+    account_accountant [fillcolor=yellow, label="account_accountant\n(HUB - 12 deps)"];
+
+    // Quantum Reports (CRITICAL)
+    account_reports [fillcolor=orange, label="account_reports\n[REPLICATE_CE_PRO]\n(CRITICAL)"];
+
+    // Consolidation (CRITICAL)
+    account_consolidation [fillcolor=orange, label="account_consolidation\n[REPLICATE_CE_PRO]"];
+
+    // Budget Management
+    account_budget [fillcolor=lightgreen];
+
+    // Bank Imports
+    account_bank_statement_import_qif [fillcolor=lightgreen];
+    account_bank_statement_import_ofx [fillcolor=lightgreen];
+    account_bank_statement_import_csv [fillcolor=lightgreen];
+
+    // Batch Payments
+    account_batch_payment [fillcolor=lightgreen];
+
+    // SEPA
+    account_sepa [fillcolor=lightgreen];
+    account_sepa_direct_debit [fillcolor=lightgreen];
+
+    // Follow-up
+    account_followup [fillcolor=lightgreen];
+
+    // Inter-company
+    inter_company_rules [fillcolor=lightgreen];
+
+    // Online Sync (NO_REPLICATE)
+    account_online_sync [fillcolor=gray, label="account_online_sync\n[NO_REPLICATE]"];
+    account_plaid [fillcolor=gray, label="account_plaid\n[NO_REPLICATE]"];
+    account_yodlee [fillcolor=gray, label="account_yodlee\n[NO_REPLICATE]"];
+    account_taxcloud [fillcolor=gray, label="account_taxcloud\n[NO_REPLICATE]"];
+
+    // Invoice Extract (IAP)
+    account_invoice_extract [fillcolor=gray, label="account_invoice_extract\n[NO_REPLICATE]"];
+
+    // 3-way Match
+    account_3way_match [fillcolor=lightgreen];
+    account_auto_transfer [fillcolor=lightgreen];
+  }
+
+  // ========================================
+  // DOCUMENTS CLUSTER
+  // ========================================
+  subgraph cluster_documents {
+    label="Document Management";
+    color=lightcoral;
+    style=filled;
+    fillcolor=mistyrose;
+
+    // DMS Core (CRITICAL)
+    documents [fillcolor=orange, label="documents\n(HUB - 7 deps)\n[REPLICATE_CE_PRO]"];
+
+    // Document Extensions
+    documents_account [fillcolor=lightgreen];
+    documents_project [fillcolor=lightgreen];
+    documents_hr [fillcolor=lightgreen];
+    documents_hr_payroll [fillcolor=lightgreen];
+    documents_hr_recruitment [fillcolor=lightgreen];
+
+    // Electronic Signature (CRITICAL)
+    sign [fillcolor=orange, label="sign\n[REPLICATE_CE_PRO]"];
+    sign_itsme [fillcolor=gray, label="sign_itsme\n[NO_REPLICATE]"];
+    website_sign [fillcolor=lightgreen];
+  }
+
+  // ========================================
+  // SALES & POS CLUSTER
+  // ========================================
+  subgraph cluster_sales {
+    label="Sales & Point of Sale";
+    color=gold;
+    style=filled;
+    fillcolor=lightyellow;
+
+    // Subscriptions
+    sale_subscription [fillcolor=lightgreen, label="sale_subscription\n(4 deps)"];
+    sale_subscription_dashboard [fillcolor=lightgreen];
+    sale_subscription_asset [fillcolor=lightgreen];
+    sale_subscription_stock [fillcolor=lightgreen];
+    sale_subscription_mrp [fillcolor=lightgreen];
+
+    // Marketplaces (NO_REPLICATE)
+    sale_ebay [fillcolor=gray, label="sale_ebay\n[NO_REPLICATE]"];
+    sale_amazon [fillcolor=gray, label="sale_amazon\n[NO_REPLICATE]"];
+    sale_ebay_connector [fillcolor=gray, label="sale_ebay_connector\n[NO_REPLICATE]"];
+    sale_amazon_delivery [fillcolor=gray, label="sale_amazon_delivery\n[NO_REPLICATE]"];
+
+    // POS
+    pos_blackbox_be [fillcolor=gray, label="pos_blackbox_be\n[NO_REPLICATE]"];
+    pos_iot [fillcolor=lightgreen];
+
+    // Tax Services
+    sale_account_taxcloud [fillcolor=gray, label="sale_account_taxcloud\n[NO_REPLICATE]"];
+  }
+
+  // ========================================
+  // INVENTORY & MRP CLUSTER
+  // ========================================
+  subgraph cluster_inventory {
+    label="Inventory & Manufacturing";
+    color=purple;
+    style=filled;
+    fillcolor=lavender;
+
+    // Quality Control
+    quality_control [fillcolor=lightgreen, label="quality_control\n(4 deps)"];
+    quality_control_worksheet [fillcolor=lightgreen];
+    quality_mrp [fillcolor=lightgreen];
+    quality_mrp_workorder [fillcolor=lightgreen];
+
+    // MRP Extensions
+    mrp_account [fillcolor=lightgreen];
+    mrp_maintenance [fillcolor=lightgreen];
+    mrp_mps [fillcolor=lightgreen];
+    mrp_plm [fillcolor=orange, label="mrp_plm\n[REPLICATE_CE_PRO]"];
+    mrp_workorder [fillcolor=lightgreen];
+
+    // Barcode
+    stock_barcode [fillcolor=lightgreen, label="stock_barcode\n(3 deps)"];
+    stock_barcode_mobile [fillcolor=lightgreen];
+    delivery_barcode [fillcolor=lightgreen];
+
+    // Stock Extensions
+    stock_enterprise [fillcolor=lightgreen];
+    stock_account_enterprise [fillcolor=lightgreen];
+    stock_intrastat [fillcolor=lightgreen];
+
+    // Delivery Carriers (NO_REPLICATE)
+    delivery_bpost [fillcolor=gray, label="delivery_bpost\n[NO_REPLICATE]"];
+    delivery_dhl [fillcolor=gray, label="delivery_dhl\n[NO_REPLICATE]"];
+    delivery_fedex [fillcolor=gray, label="delivery_fedex\n[NO_REPLICATE]"];
+    delivery_ups [fillcolor=gray, label="delivery_ups\n[NO_REPLICATE]"];
+  }
+
+  // ========================================
+  // MARKETING CLUSTER
+  // ========================================
+  subgraph cluster_marketing {
+    label="Marketing";
+    color=darkgreen;
+    style=filled;
+    fillcolor=lightseagreen;
+
+    // Marketing Automation (CRITICAL)
+    marketing_automation [fillcolor=orange, label="marketing_automation\n[REPLICATE_CE_PRO]"];
+    marketing_automation_sms [fillcolor=lightgreen];
+
+    // Social Platform (CRITICAL)
+    social [fillcolor=orange, label="social\n(HUB - 6 deps)\n[REPLICATE_CE_PRO]"];
+
+    // Social Networks (NO_REPLICATE)
+    social_facebook [fillcolor=gray, label="social_facebook\n[NO_REPLICATE]"];
+    social_linkedin [fillcolor=gray, label="social_linkedin\n[NO_REPLICATE]"];
+    social_twitter [fillcolor=gray, label="social_twitter\n[NO_REPLICATE]"];
+    social_youtube [fillcolor=gray, label="social_youtube\n[NO_REPLICATE]"];
+    social_instagram [fillcolor=gray, label="social_instagram\n[NO_REPLICATE]"];
+  }
+
+  // ========================================
+  // HELPDESK CLUSTER
+  // ========================================
+  subgraph cluster_helpdesk {
+    label="Helpdesk";
+    color=orange;
+    style=filled;
+    fillcolor=peachpuff;
+
+    // Helpdesk Core
+    helpdesk [fillcolor=lightgreen, label="helpdesk\n(HUB - 6 deps)"];
+
+    // Helpdesk Extensions
+    helpdesk_sale [fillcolor=lightgreen];
+    helpdesk_timesheet [fillcolor=lightgreen];
+    helpdesk_fsm [fillcolor=lightgreen];
+    crm_helpdesk [fillcolor=lightgreen];
+
+    // Website Helpdesk
+    website_helpdesk [fillcolor=lightgreen];
+    website_helpdesk_form [fillcolor=lightgreen];
+    website_helpdesk_forum [fillcolor=lightgreen];
+    website_helpdesk_livechat [fillcolor=lightgreen];
+    website_helpdesk_slides [fillcolor=lightgreen];
+  }
+
+  // ========================================
+  // OTHER SERVICES
+  // ========================================
+  subgraph cluster_other {
+    label="Other Services";
+    color=brown;
+    style=filled;
+    fillcolor=wheat;
+
+    // Planning (CRITICAL)
+    planning [fillcolor=orange, label="planning\n[REPLICATE_CE_PRO]"];
+    planning_holidays [fillcolor=lightgreen];
+
+    // HR
+    hr_referral [fillcolor=lightgreen];
+    hr_appraisal [fillcolor=lightgreen];
+    hr_payroll [fillcolor=lightgreen];
+    hr_payroll_account [fillcolor=lightgreen];
+    hr_payroll_expense [fillcolor=lightgreen];
+
+    // Field Service
+    industry_fsm [fillcolor=lightgreen];
+    industry_fsm_sale [fillcolor=lightgreen];
+    industry_fsm_stock [fillcolor=lightgreen];
+
+    // IoT
+    iot [fillcolor=lightgreen];
+    iot_input [fillcolor=lightgreen];
+    iot_oca [fillcolor=lightgreen];
+
+    // VoIP
+    voip [fillcolor=lightgreen];
+    voip_onsip [fillcolor=gray, label="voip_onsip\n[NO_REPLICATE]"];
+
+    // Approvals
+    approvals [fillcolor=lightgreen];
+    approvals_purchase [fillcolor=lightgreen];
+    approvals_purchase_stock [fillcolor=lightgreen];
+
+    // Project Extensions
+    project_forecast [fillcolor=lightgreen];
+    project_timesheet_forecast [fillcolor=lightgreen];
+    project_timesheet_forecast_sale [fillcolor=lightgreen];
+
+    // Timesheets
+    timesheet_grid [fillcolor=lightgreen];
+    timesheet_grid_sale [fillcolor=lightgreen];
+
+    // CRM
+    crm_enterprise [fillcolor=lightgreen];
+    website_crm_score [fillcolor=lightgreen];
+
+    // Purchase
+    purchase_enterprise [fillcolor=lightgreen];
+    purchase_mrp [fillcolor=lightgreen];
+    purchase_requisition_stock_dropshipping [fillcolor=lightgreen];
+
+    // Calendar
+    website_calendar [fillcolor=lightgreen];
+  }
+
+  // ========================================
+  // IAP SERVICES (NO_REPLICATE)
+  // ========================================
+  subgraph cluster_iap {
+    label="IAP Services (External)";
+    color=red;
+    style=filled;
+    fillcolor=mistyrose;
+
+    ocn_client [fillcolor=gray, label="ocn_client\n[NO_REPLICATE]"];
+    partner_autocomplete [fillcolor=gray, label="partner_autocomplete\n[NO_REPLICATE]"];
+    partner_autocomplete_address_extended [fillcolor=gray, label="partner_autocomplete_address_extended\n[NO_REPLICATE]"];
+    snailmail [fillcolor=gray, label="snailmail\n[NO_REPLICATE]"];
+    snailmail_account [fillcolor=gray, label="snailmail_account\n[NO_REPLICATE]"];
+    sms [fillcolor=gray, label="sms\n[NO_REPLICATE]"];
+    mail_github [fillcolor=gray, label="mail_github\n[NO_REPLICATE]"];
+  }
+
+  // ========================================
+  // KEY DEPENDENCIES (Top 100 edges)
+  // ========================================
+
+  // Web Enterprise Dependencies (CRITICAL HUB)
+  web_enterprise -> web;
+  web_enterprise -> web_mobile;
+  web_dashboard -> web_enterprise;
+  web_gantt -> web_enterprise;
+  web_grid -> web_enterprise;
+  web_cohort -> web_enterprise;
+  web_map -> web_enterprise;
+  web_studio -> web_enterprise;
+  website_enterprise -> web_enterprise;
+  mail_enterprise -> web_enterprise;
+  documents -> web_enterprise;
+  account_reports -> web_enterprise;
+  planning -> web_enterprise;
+  stock_enterprise -> web_enterprise;
+  purchase_enterprise -> web_enterprise;
+  crm_enterprise -> web_enterprise;
+
+  // Account Accountant Dependencies (MAJOR HUB)
+  account_accountant -> account;
+  account_reports -> account_accountant;
+  account_budget -> account_accountant;
+  account_batch_payment -> account_accountant;
+  account_followup -> account_accountant;
+  account_auto_transfer -> account_accountant;
+  account_consolidation -> account_reports;
+
+  // Documents Dependencies
+  documents_account -> documents;
+  documents_project -> documents;
+  documents_hr -> documents;
+  documents_hr_payroll -> documents;
+  documents_hr_recruitment -> documents;
+  documents_account -> account;
+  documents_project -> project;
+
+  // Sales Subscription Dependencies
+  sale_subscription -> sale;
+  sale_subscription_dashboard -> sale_subscription;
+  sale_subscription_asset -> sale_subscription;
+  sale_subscription_stock -> sale_subscription;
+  sale_subscription_mrp -> sale_subscription;
+  sale_subscription_dashboard -> web_dashboard;
+
+  // Helpdesk Dependencies
+  helpdesk -> mail;
+  helpdesk_sale -> helpdesk;
+  helpdesk_timesheet -> helpdesk;
+  helpdesk_fsm -> helpdesk;
+  website_helpdesk -> helpdesk;
+  website_helpdesk_form -> website_helpdesk;
+  crm_helpdesk -> helpdesk;
+
+  // Quality Control Dependencies
+  quality_control -> stock;
+  quality_control_worksheet -> quality_control;
+  quality_mrp -> quality_control;
+  quality_mrp_workorder -> quality_control;
+  quality_mrp -> mrp;
+  quality_mrp_workorder -> mrp_workorder;
+
+  // Stock Barcode Dependencies
+  stock_barcode -> stock;
+  stock_barcode -> web_mobile;
+  stock_barcode_mobile -> stock_barcode;
+  delivery_barcode -> stock_barcode;
+  delivery_barcode -> delivery;
+
+  // Marketing Dependencies
+  marketing_automation -> mass_mailing;
+  marketing_automation -> crm;
+  marketing_automation_sms -> marketing_automation;
+  marketing_automation_sms -> sms;
+  social -> mail;
+  social_facebook -> social;
+  social_linkedin -> social;
+  social_twitter -> social;
+
+  // HR Dependencies
+  hr_payroll -> hr;
+  hr_payroll -> account;
+  hr_payroll_account -> hr_payroll;
+  hr_payroll_expense -> hr_payroll;
+  hr_appraisal -> hr;
+  hr_referral -> hr;
+
+  // Planning Dependencies
+  planning -> resource;
+  planning_holidays -> planning;
+  planning_holidays -> hr_holidays;
+  project_forecast -> project;
+  project_forecast -> web_gantt;
+
+  // Timesheet Dependencies
+  timesheet_grid -> hr_timesheet;
+  timesheet_grid -> web_grid;
+  timesheet_grid_sale -> timesheet_grid;
+  timesheet_grid_sale -> sale_timesheet;
+
+  // Industry FSM Dependencies
+  industry_fsm -> project;
+  industry_fsm_sale -> industry_fsm;
+  industry_fsm_stock -> industry_fsm;
+  helpdesk_fsm -> industry_fsm;
+
+  // IoT Dependencies
+  iot -> mail;
+  iot_input -> iot;
+  iot_oca -> iot;
+  pos_iot -> iot;
+  pos_iot -> point_of_sale;
+
+  // Bank Sync Dependencies (IAP)
+  account_plaid -> account_online_sync;
+  account_yodlee -> account_online_sync;
+  account_online_sync -> account;
+
+  // Social Networks (External APIs)
+  social_youtube -> social;
+  social_instagram -> social;
+
+  // Sign Dependencies
+  sign -> mail;
+  sign_itsme -> sign;
+  website_sign -> sign;
+  website_sign -> website;
+
+  // Studio Dependencies
+  website_studio -> website;
+  website_studio -> web_studio;
+
+  // Inter-company
+  inter_company_rules -> account;
+
+  // SEPA
+  account_sepa -> account;
+  account_sepa_direct_debit -> account_sepa;
+
+  // MRP Dependencies
+  mrp_account -> mrp;
+  mrp_account -> account;
+  mrp_maintenance -> mrp;
+  mrp_maintenance -> maintenance;
+  mrp_mps -> mrp;
+  mrp_plm -> mrp;
+  mrp_workorder -> mrp;
+
+  // Purchase Dependencies
+  purchase_enterprise -> purchase;
+  purchase_mrp -> purchase;
+  purchase_mrp -> mrp;
+  approvals_purchase -> approvals;
+  approvals_purchase -> purchase;
+
+  // VoIP Dependencies
+  voip -> mail;
+  voip -> phone_validation;
+  voip_onsip -> voip;
+
+  // IAP Dependencies
+  partner_autocomplete -> iap;
+  partner_autocomplete_address_extended -> partner_autocomplete;
+  snailmail -> iap;
+  snailmail -> mail;
+  snailmail_account -> snailmail;
+  snailmail_account -> account;
+  sms -> iap;
+  sms -> mail;
+  ocn_client -> iap;
+  ocn_client -> mail;
+
+  // Marketplace Connectors
+  sale_ebay -> sale;
+  sale_amazon -> sale;
+  sale_ebay_connector -> sale_ebay;
+  sale_amazon_delivery -> sale_amazon;
+  sale_amazon_delivery -> delivery;
+
+  // Tax Services
+  account_taxcloud -> account;
+  sale_account_taxcloud -> sale;
+  sale_account_taxcloud -> account_taxcloud;
+
+  // CRM Extensions
+  crm_enterprise -> crm;
+  crm_helpdesk -> crm;
+  website_crm_score -> website_crm;
+  website_crm_score -> website_form;
+
+  // Mail Extensions
+  mail_enterprise -> mail;
+  mail_enterprise -> web_mobile;
+  mail_github -> mail;
+
+  // Website Extensions
+  website_enterprise -> website;
+  website_calendar -> website;
+  website_calendar -> calendar;
+  website_helpdesk -> website;
+  website_helpdesk_livechat -> website_livechat;
+  website_helpdesk_slides -> website_slides;
+  website_helpdesk_forum -> website_forum;
+
+  // Delivery Carriers
+  delivery_bpost -> delivery;
+  delivery_dhl -> delivery;
+  delivery_fedex -> delivery;
+  delivery_ups -> delivery;
+  delivery_usps -> delivery;
+  delivery_easypost -> delivery;
+
+  // Stock Extensions
+  stock_enterprise -> stock;
+  stock_account_enterprise -> stock_account;
+  stock_account_enterprise -> stock_enterprise;
+  stock_intrastat -> stock_account;
+
+  // Bank Import Formats
+  account_bank_statement_import_qif -> account_bank_statement_import;
+  account_bank_statement_import_ofx -> account_bank_statement_import;
+  account_bank_statement_import_csv -> account_bank_statement_import;
+
+  // Approvals Workflow
+  approvals -> mail;
+  approvals_purchase_stock -> approvals_purchase;
+  approvals_purchase_stock -> purchase_stock;
+
+  // Project Forecast
+  project_timesheet_forecast -> project_forecast;
+  project_timesheet_forecast -> hr_timesheet;
+  project_timesheet_forecast_sale -> project_timesheet_forecast;
+  project_timesheet_forecast_sale -> sale_timesheet;
+
+  // Invoice Processing
+  account_invoice_extract -> account;
+  account_3way_match -> purchase;
+
+  // Localizations (sample)
+  l10n_cl_reports -> account_reports;
+  l10n_cl_reports -> l10n_cl;
+  l10n_mx_edi -> l10n_mx;
+  l10n_mx_edi_payslip -> l10n_mx_edi;
+  l10n_mx_edi_payslip -> hr_payroll;
+
+  // ========================================
+  // LEGEND
+  // ========================================
+  legend [shape=plaintext, label="
+    COLORS LEGEND:
+    YELLOW = Hub Module (≥10 dependents)
+    ORANGE = Critical (REPLICATE_CE_PRO - Clean-room required)
+    LIGHTGREEN = Standard (REPLACE_CE_OCA - OCA alternative exists)
+    GRAY = No Replicate (NO_REPLICATE - External API/IAP)
+
+    CLUSTERS:
+    - UI Framework: Core interface components
+    - Accounting: Financial management
+    - Documents: Document management & signatures
+    - Sales & POS: Sales and point of sale
+    - Inventory & MRP: Warehouse and manufacturing
+    - Marketing: Marketing automation and social
+    - Helpdesk: Customer support
+    - Other Services: HR, Planning, IoT, etc.
+    - IAP Services: Odoo.sh cloud services
+
+    RISK LEVELS:
+    CRITICAL: Legal/compliance dependencies
+    HIGH: Complex business logic
+    MEDIUM: Standard complexity
+    LOW: Simple replaceable modules
+  "];
+}

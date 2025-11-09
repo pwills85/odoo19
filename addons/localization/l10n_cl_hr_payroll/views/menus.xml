@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- MENÚS PRINCIPALES -->
+    <!-- Patrón Odoo 19 CE: Usar parent correcto de hr module -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    
+    <!-- Menú Principal: Nóminas -->
+    <menuitem id="menu_hr_payroll_root"
+              name="Nóminas"
+              parent="hr.menu_hr_root"
+              sequence="20"/>
+    
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- SUBMENÚS: OPERACIONES -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    
+    <!-- Submenú: Lotes de Nóminas -->
+    <menuitem id="menu_hr_payslip_run"
+              name="Lotes de Nóminas"
+              parent="menu_hr_payroll_root"
+              action="action_hr_payslip_run"
+              sequence="5"/>
+    
+    <!-- Submenú: Liquidaciones -->
+    <menuitem id="menu_hr_payslip"
+              name="Liquidaciones"
+              parent="menu_hr_payroll_root"
+              action="action_hr_payslip"
+              sequence="10"/>
+    
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- SUBMENÚS: CONFIGURACIÓN -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    
+    <!-- Submenú: Configuración -->
+    <menuitem id="menu_hr_payroll_configuration"
+              name="Configuración"
+              parent="menu_hr_payroll_root"
+              sequence="100"/>
+    
+    <!-- Configuración: Estructuras Salariales -->
+    <menuitem id="menu_hr_payroll_structure"
+              name="Estructuras Salariales"
+              parent="menu_hr_payroll_configuration"
+              action="action_hr_payroll_structure"
+              sequence="5"/>
+    
+    <!-- Configuración: Reglas Salariales -->
+    <menuitem id="menu_hr_salary_rule"
+              name="Reglas Salariales"
+              parent="menu_hr_payroll_configuration"
+              action="action_hr_salary_rule"
+              sequence="6"/>
+    
+    <!-- Configuración: Indicadores Económicos -->
+    <menuitem id="menu_hr_economic_indicators"
+              name="Indicadores Económicos"
+              parent="menu_hr_payroll_configuration"
+              action="action_hr_economic_indicators"
+              sequence="10"/>
+    
+    <!-- Configuración: AFPs -->
+    <menuitem id="menu_hr_afp"
+              name="AFPs"
+              parent="menu_hr_payroll_configuration"
+              action="action_hr_afp"
+              sequence="20"/>
+    
+    <!-- Configuración: ISAPREs -->
+    <menuitem id="menu_hr_isapre"
+              name="ISAPREs"
+              parent="menu_hr_payroll_configuration"
+              action="action_hr_isapre"
+              sequence="30"/>
+    
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- SUBMENÚS: REPORTES -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    
+    <menuitem id="menu_hr_payroll_reports"
+              name="Reportes"
+              parent="menu_hr_payroll_root"
+              sequence="50"/>
+
+</odoo>

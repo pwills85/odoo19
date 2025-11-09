@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data noupdate="1">
+    <!-- ══════════════════════════════════════════════════════════════════════
+         Configuration Parameters for l10n_cl_dte Module
+         ══════════════════════════════════════════════════════════════════════
+
+         P1-4 GAP CLOSURE: Centralized configuration for DTE module.
+
+         These parameters can be overridden in production via:
+         - Settings > Technical > Parameters > System Parameters
+         - Environment variables
+         - Deployment configuration files
+
+         Security Note: CHANGE webhook_secret in production!
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Webhook Security Configuration
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- P1.4 GAP CLOSURE: Standardized to webhook_key (not webhook_secret) -->
+    <record id="config_webhook_key" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.webhook_key</field>
+      <field name="value">CHANGE_ME_IN_PRODUCTION_USE_STRONG_SECRET</field>
+    </record>
+
+    <record id="config_webhook_window_sec" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.webhook_window_sec</field>
+      <field name="value">300</field>
+    </record>
+
+    <record id="config_webhook_ip_whitelist" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.webhook_ip_whitelist</field>
+      <field name="value">127.0.0.1,::1,172.18.0.0/16</field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Redis Configuration
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <record id="config_redis_url" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.redis_url</field>
+      <field name="value">redis://redis:6379/1</field>
+    </record>
+
+    <record id="config_send_lock_ttl" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.send_lock_ttl_seconds</field>
+      <field name="value">60</field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Rate Limiting Configuration
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <record id="config_ratelimit_max" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.ratelimit_max</field>
+      <field name="value">100</field>
+    </record>
+
+    <record id="config_ratelimit_window" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.ratelimit_window_seconds</field>
+      <field name="value">60</field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SII SOAP Configuration
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <record id="config_sii_environment" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.sii_environment</field>
+      <field name="value">sandbox</field>
+    </record>
+
+    <record id="config_sii_timeout" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.sii_timeout</field>
+      <field name="value">60</field>
+    </record>
+
+    <record id="config_retry_max_attempts" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.retry_max_attempts</field>
+      <field name="value">3</field>
+    </record>
+
+    <record id="config_retry_backoff_base" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.retry_backoff_base</field>
+      <field name="value">2</field>
+    </record>
+
+    <!-- P2.1 GAP CLOSURE: SHA1 fallback for SII signature algorithm compatibility -->
+    <record id="config_enable_sha1_fallback" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.enable_sha1_fallback</field>
+      <field name="value">False</field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Logging Configuration
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <record id="config_log_level" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.log_level</field>
+      <field name="value">INFO</field>
+    </record>
+
+    <record id="config_log_structured" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.log_structured</field>
+      <field name="value">True</field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Performance Monitoring Configuration
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <record id="config_metrics_enabled" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.metrics_enabled</field>
+      <field name="value">True</field>
+    </record>
+
+    <record id="config_metrics_window_hours" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.metrics_window_hours</field>
+      <field name="value">24</field>
+    </record>
+
+  </data>
+</odoo>

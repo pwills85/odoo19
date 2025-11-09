@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ==================================================================== -->
+        <!-- ACCOUNT.MOVE FORM VIEW - Enhanced DTE Fields Extension              -->
+        <!-- ==================================================================== -->
+
+        <record id="view_move_form_dte_enhanced" model="ir.ui.view">
+            <field name="name">account.move.form.dte.enhanced</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+
+                <!-- ============================================================ -->
+                <!-- 1. Contact Person - After partner_id                        -->
+                <!-- ============================================================ -->
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="contact_id"
+                           string="Contact Person"
+                           placeholder="Select contact person..."
+                           options="{'no_create': True, 'no_create_edit': True}"
+                           domain="[('type', '=', 'contact'), '|', ('parent_id', '=', partner_id), ('id', '=', partner_id)]"
+                           invisible="move_type not in ('out_invoice', 'out_refund')"
+                           help="Contact person who will receive this invoice. Auto-populated from customer's default contact. Click the Smart Button above to quickly edit contact details."/>
+                </xpath>
+
+                <!-- ============================================================ -->
+                <!-- 2. Custom Payment Terms - After invoice_payment_term_id     -->
+                <!-- ============================================================ -->
+                <xpath expr="//field[@name='invoice_payment_term_id']" position="after">
+                    <field name="forma_pago"
+                           string="Payment Description"
+                           placeholder="e.g., 50% upfront, 50% on delivery"
+                           invisible="move_type not in ('out_invoice', 'out_refund')"
+                           help="Custom payment terms description. Example: '50% upfront, 50% on delivery'. Auto-populated from standard payment term but can be overridden. This appears on the printed DTE PDF."/>
+                </xpath>
+
+                <!-- ============================================================ -->
+                <!-- 3. CEDIBLE Checkbox - In Chilean DTE Group (if exists)      -->
+                <!-- Otherwise, add in separate group after payment terms        -->
+                <!-- ============================================================ -->
+                <xpath expr="//field[@name='invoice_payment_term_id']" position="after">
+                    <field name="cedible"
+                           string="Print as CEDIBLE"
+                           invisible="move_type not in ('out_invoice', 'out_refund')"
+                           help="Mark invoice as CEDIBLE for electronic factoring. Prints legal indicator 'CEDIBLE ELECTRÓNICAMENTE' on PDF per Art. 18 Resolución Ex. SII N° 93 de 2003. Only applies to customer invoices and credit notes."/>
+                </xpath>
+
+                <!-- ============================================================ -->
+                <!-- 4. SII References Tab - Add new notebook page               -->
+                <!-- ============================================================ -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="SII References"
+                          name="sii_references"
+                          invisible="move_type not in ('out_invoice', 'out_refund')">
+
+                        <!-- Information Box for Credit/Debit Notes -->
+                        <div class="alert alert-info"
+                             role="alert"
+                             invisible="not reference_required">
+                            <i class="fa fa-info-circle" title="Information"/> <strong>SII Requirement:</strong>
+                            Credit Notes (DTE 61) and Debit Notes (DTE 56) <strong>MUST</strong> reference
+                            the original invoice. Please add at least one reference below before posting
+                            this document.
+                        </div>
+
+                        <!-- Help Text -->
+                        <group name="reference_help" invisible="reference_ids">
+                            <div class="text-muted">
+                                <p>
+                                    <i class="fa fa-question-circle" title="Help"/> <strong>What are SII References?</strong><br/>
+                                    References link this document to other fiscal documents (invoices, delivery guides, etc.)
+                                    as required by SII regulations.
+                                </p>
+                                <p>
+                                    <strong>When to add references:</strong>
+                                    <ul>
+                                        <li><strong>Credit Notes (DTE 61):</strong> MANDATORY - Reference original invoice</li>
+                                        <li><strong>Debit Notes (DTE 56):</strong> MANDATORY - Reference original invoice</li>
+                                        <li><strong>Other DTEs:</strong> Optional - Reference delivery guides, purchase orders, etc.</li>
+                                    </ul>
+                                </p>
+                            </div>
+                        </group>
+
+                        <!-- References One2many Field -->
+                        <field name="reference_ids"
+                               nolabel="1"
+                               context="{'default_move_id': id}"
+                               widget="one2many"
+                               help="References to other SII documents (invoices, delivery guides, purchase orders, etc.). MANDATORY for Credit Notes (DTE 61) and Debit Notes (DTE 56) per SII Resolución 80/2014. Click 'SII References' Smart Button to manage references quickly."/>
+
+                        <!-- Quick Stats -->
+                        <group name="reference_stats" invisible="not reference_ids">
+                            <div class="text-muted">
+                                <i class="fa fa-check-circle text-success" title="Success"/>
+                                <span><field name="reference_ids" widget="integer" readonly="1"/> reference(s) added</span>
+                            </div>
+                        </group>
+
+                    </page>
+                </xpath>
+
+                <!-- ============================================================ -->
+                <!-- 5. Add invisible computed field for reference validation    -->
+                <!-- ============================================================ -->
+                <xpath expr="//field[@name='partner_id']" position="attributes">
+                    <attribute name="invisible">0</attribute>
+                </xpath>
+
+                <!-- Add reference_required field (invisible, for attrs) -->
+                <xpath expr="//sheet" position="before">
+                    <field name="reference_required" invisible="1"/>
+                    <field name="reference_count" invisible="1"/>
+                </xpath>
+
+                <!-- ============================================================ -->
+                <!-- 6. Smart Buttons - Add to button_box                        -->
+                <!-- ============================================================ -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+
+                    <!-- Smart Button 1: SII References Counter -->
+                    <button name="action_view_sii_references"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-link"
+                            invisible="reference_count == 0">
+                        <field name="reference_count" widget="statinfo" string="SII Refs"/>
+                    </button>
+
+                    <!-- Smart Button 2: Print DTE PDF -->
+                    <button name="%(l10n_cl_dte_enhanced.action_report_invoice_dte_enhanced)d"
+                            type="action"
+                            class="oe_stat_button"
+                            icon="fa-file-pdf-o"
+                            string="Print DTE"
+                            invisible="not dte_code"/>
+
+                    <!-- Smart Button 3: Contact Person Info -->
+                    <button name="action_view_contact"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-user"
+                            invisible="not contact_id">
+                        <div class="o_stat_info">
+                            <span class="o_stat_text">Contact</span>
+                            <span class="o_stat_value"><field name="contact_id" readonly="1" string=""/></span>
+                        </div>
+                    </button>
+
+                </xpath>
+
+            </field>
+        </record>
+
+    </data>
+</odoo>

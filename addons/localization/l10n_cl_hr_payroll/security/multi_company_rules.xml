@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- RECORD RULES - MULTI-COMPAÑÍA -->
+        <!-- Patrón Odoo 19 CE: Aislamiento por company_ids -->
+        <!-- Ref: Ley 19.628 Protección de Datos Personales -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- HR PAYSLIP - Liquidaciones de Sueldo -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <record id="hr_payslip_multi_company_rule" model="ir.rule">
+            <field name="name">Payslip Multi-Company Rule</field>
+            <field name="model_id" ref="model_hr_payslip"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+            <field name="global" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- HR PAYSLIP RUN - Lotes de Nóminas -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <record id="hr_payslip_run_multi_company_rule" model="ir.rule">
+            <field name="name">Payslip Run Multi-Company Rule</field>
+            <field name="model_id" ref="model_hr_payslip_run"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+            <field name="global" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- HR PAYSLIP LINE - Líneas de Liquidación -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <record id="hr_payslip_line_multi_company_rule" model="ir.rule">
+            <field name="name">Payslip Line Multi-Company Rule</field>
+            <field name="model_id" ref="model_hr_payslip_line"/>
+            <field name="domain_force">[('slip_id.company_id', 'in', company_ids)]</field>
+            <field name="global" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- HR PAYSLIP INPUT - Inputs Adicionales -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <record id="hr_payslip_input_multi_company_rule" model="ir.rule">
+            <field name="name">Payslip Input Multi-Company Rule</field>
+            <field name="model_id" ref="model_hr_payslip_input"/>
+            <field name="domain_force">[('payslip_id.company_id', 'in', company_ids)]</field>
+            <field name="global" eval="True"/>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- NOTA: Los siguientes modelos NO requieren ir.rule -->
+        <!-- porque son datos maestros compartidos sin company_id: -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!--
+        * hr.economic.indicators (UF/UTM históricos compartidos)
+        * l10n_cl.legal.caps (Topes legales compartidos)
+        * hr.afp (AFPs Chile - maestro)
+        * hr.isapre (ISAPREs Chile - maestro)
+        * hr.tax.bracket (Tramos impuesto único - maestro)
+        * l10n_cl.apv.institution (Instituciones APV - maestro)
+        -->
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- NOTA: hr.contract ya tiene ir.rule de Odoo base -->
+        <!-- No es necesario duplicar, Odoo lo maneja automáticamente -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+    </data>
+</odoo>

@@ -1,0 +1,470 @@
+// Responsive Widget Layouts for Financial Dashboard
+// Breakpoint definitions
+$mobile: 480px;
+$tablet: 768px;
+$desktop: 1024px;
+$wide: 1440px;
+
+// Responsive mixins
+@mixin mobile {
+    @media (max-width: #{$tablet - 1px}) {
+        @content;
+    }
+}
+
+@mixin tablet {
+    @media (min-width: #{$tablet}) and (max-width: #{$desktop - 1px}) {
+        @content;
+    }
+}
+
+@mixin desktop {
+    @media (min-width: #{$desktop}) {
+        @content;
+    }
+}
+
+@mixin wide {
+    @media (min-width: #{$wide}) {
+        @content;
+    }
+}
+
+// Base responsive grid
+.financial-dashboard {
+    // CSS Grid for responsive layout
+    .dashboard-grid {
+        display: grid;
+        gap: 16px;
+        padding: 16px;
+        
+        // Mobile: Single column
+        @include mobile {
+            grid-template-columns: 1fr;
+            gap: 12px;
+            padding: 12px;
+        }
+        
+        // Tablet: 2 columns
+        @include tablet {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            padding: 16px;
+        }
+        
+        // Desktop: 3-4 columns
+        @include desktop {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        // Wide: 4-6 columns
+        @include wide {
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            max-width: 1920px;
+            margin: 0 auto;
+        }
+    }
+}
+
+// Responsive widget containers
+.dashboard-widget {
+    background: var(--widget-bg, #fff);
+    border-radius: var(--widget-radius, 8px);
+    box-shadow: var(--widget-shadow, 0 2px 4px rgba(0,0,0,0.1));
+    overflow: hidden;
+    transition: all 0.3s ease;
+    
+    // Responsive sizing
+    @include mobile {
+        min-height: 120px;
+        
+        &.widget-type-kpi {
+            min-height: 100px;
+        }
+        
+        &.widget-type-chart_line,
+        &.widget-type-chart_bar,
+        &.widget-type-chart_pie {
+            min-height: 200px;
+        }
+        
+        &.widget-type-table {
+            min-height: 250px;
+        }
+    }
+    
+    @include tablet {
+        min-height: 150px;
+        
+        &.widget-type-chart_line,
+        &.widget-type-chart_bar,
+        &.widget-type-chart_pie {
+            min-height: 250px;
+        }
+        
+        &.widget-type-table {
+            min-height: 300px;
+        }
+    }
+    
+    @include desktop {
+        min-height: 180px;
+        
+        &.widget-type-chart_line,
+        &.widget-type-chart_bar,
+        &.widget-type-chart_pie {
+            min-height: 300px;
+        }
+        
+        &.widget-type-table {
+            min-height: 350px;
+        }
+    }
+    
+    // Widget header responsive
+    .widget-header {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border-color, #e0e0e0);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        
+        @include mobile {
+            padding: 10px 12px;
+            
+            .widget-title {
+                font-size: 14px;
+                font-weight: 500;
+            }
+            
+            .widget-actions {
+                display: flex;
+                gap: 4px;
+                
+                button {
+                    padding: 4px;
+                    font-size: 14px;
+                }
+            }
+        }
+        
+        @include tablet {
+            .widget-title {
+                font-size: 15px;
+            }
+        }
+        
+        @include desktop {
+            .widget-title {
+                font-size: 16px;
+            }
+        }
+    }
+    
+    // Widget content responsive
+    .widget-content {
+        padding: 16px;
+        
+        @include mobile {
+            padding: 12px;
+        }
+        
+        // KPI specific responsive styles
+        &.kpi-content {
+            text-align: center;
+            
+            .kpi-value {
+                @include mobile {
+                    font-size: 24px;
+                    line-height: 1.2;
+                }
+                
+                @include tablet {
+                    font-size: 28px;
+                }
+                
+                @include desktop {
+                    font-size: 32px;
+                }
+            }
+            
+            .kpi-label {
+                @include mobile {
+                    font-size: 12px;
+                    margin-top: 4px;
+                }
+                
+                @include tablet {
+                    font-size: 13px;
+                }
+                
+                @include desktop {
+                    font-size: 14px;
+                }
+            }
+            
+            .kpi-trend {
+                @include mobile {
+                    font-size: 11px;
+                    margin-top: 8px;
+                }
+            }
+        }
+        
+        // Chart specific responsive styles
+        &.chart-content {
+            position: relative;
+            
+            canvas {
+                max-width: 100%;
+                height: auto !important;
+            }
+            
+            @include mobile {
+                min-height: 150px;
+            }
+            
+            @include tablet {
+                min-height: 200px;
+            }
+            
+            @include desktop {
+                min-height: 250px;
+            }
+        }
+        
+        // Table specific responsive styles
+        &.table-content {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            
+            table {
+                width: 100%;
+                min-width: 300px;
+                
+                @include mobile {
+                    font-size: 12px;
+                    
+                    th, td {
+                        padding: 6px 8px;
+                    }
+                }
+                
+                @include tablet {
+                    font-size: 13px;
+                    
+                    th, td {
+                        padding: 8px 10px;
+                    }
+                }
+                
+                @include desktop {
+                    font-size: 14px;
+                    
+                    th, td {
+                        padding: 10px 12px;
+                    }
+                }
+            }
+            
+            // Mobile table scroll indicator
+            @include mobile {
+                &:after {
+                    content: '';
+                    position: absolute;
+                    right: 0;
+                    top: 0;
+                    bottom: 0;
+                    width: 30px;
+                    background: linear-gradient(to right, transparent, rgba(255,255,255,0.8));
+                    pointer-events: none;
+                }
+            }
+        }
+        
+        // Gauge specific responsive styles
+        &.gauge-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            
+            .gauge-container {
+                @include mobile {
+                    width: 120px;
+                    height: 120px;
+                }
+                
+                @include tablet {
+                    width: 150px;
+                    height: 150px;
+                }
+                
+                @include desktop {
+                    width: 180px;
+                    height: 180px;
+                }
+            }
+        }
+    }
+    
+    // Widget grid span classes
+    &.widget-span-2 {
+        @include tablet {
+            grid-column: span 2;
+        }
+        
+        @include desktop {
+            grid-column: span 2;
+        }
+    }
+    
+    &.widget-span-3 {
+        @include desktop {
+            grid-column: span 3;
+        }
+        
+        @include wide {
+            grid-column: span 3;
+        }
+    }
+    
+    &.widget-full-width {
+        grid-column: 1 / -1;
+    }
+}
+
+// Mobile-specific widget optimizations
+@include mobile {
+    // Stack widgets vertically on mobile
+    .dashboard-widget {
+        &.mobile-stack {
+            width: 100% !important;
+            position: relative !important;
+            left: auto !important;
+            top: auto !important;
+        }
+    }
+    
+    // Hide non-essential elements on mobile
+    .widget-subtitle,
+    .widget-description {
+        display: none;
+    }
+    
+    // Simplify widget actions on mobile
+    .widget-actions {
+        .dropdown-menu {
+            position: fixed;
+            left: 10px;
+            right: 10px;
+            top: auto;
+            bottom: 10px;
+            width: auto;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+    }
+}
+
+// Touch-friendly interactions
+.touch-device {
+    .dashboard-widget {
+        // Larger touch targets
+        .widget-header {
+            min-height: 44px;
+        }
+        
+        button, a {
+            min-height: 44px;
+            min-width: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        // Remove hover effects on touch
+        &:hover {
+            transform: none;
+            box-shadow: var(--widget-shadow, 0 2px 4px rgba(0,0,0,0.1));
+        }
+        
+        // Add active state for touch feedback
+        &:active {
+            transform: scale(0.98);
+            transition: transform 0.1s;
+        }
+    }
+}
+
+// Landscape orientation adjustments
+@media (orientation: landscape) {
+    @include mobile {
+        .dashboard-grid {
+            grid-template-columns: repeat(2, 1fr);
+            
+            .dashboard-widget {
+                &.widget-type-chart_line,
+                &.widget-type-chart_bar {
+                    grid-column: span 2;
+                }
+            }
+        }
+    }
+}
+
+// High DPI screen optimizations
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .dashboard-widget {
+        .widget-header {
+            border-bottom-width: 0.5px;
+        }
+    }
+}
+
+// Print styles
+@media print {
+    .dashboard-grid {
+        display: block;
+        
+        .dashboard-widget {
+            page-break-inside: avoid;
+            margin-bottom: 20px;
+            box-shadow: none;
+            border: 1px solid #ddd;
+        }
+    }
+    
+    // Hide interactive elements
+    .widget-actions,
+    .btn-refresh,
+    .btn-fullscreen {
+        display: none !important;
+    }
+}
+
+// Accessibility improvements
+@media (prefers-reduced-motion: reduce) {
+    .dashboard-widget {
+        transition: none;
+    }
+}
+
+// Dark mode responsive adjustments
+@media (prefers-color-scheme: dark) {
+    .dashboard-widget {
+        --widget-bg: #2a2a2a;
+        --widget-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        --border-color: #444;
+        
+        .widget-content {
+            &.table-content {
+                &:after {
+                    background: linear-gradient(to right, transparent, rgba(42,42,42,0.8));
+                }
+            }
+        }
+    }
+}

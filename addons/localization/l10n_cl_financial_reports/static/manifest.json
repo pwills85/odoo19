@@ -1,0 +1,26 @@
+
+{
+  "name": "Financial Reports",
+  "short_name": "FinReports",
+  "description": "Odoo Financial Reports Mobile Application",
+  "start_url": "/web#action=account_financial_report.action_financial_dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/account_financial_report/static/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/account_financial_report/static/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["business", "finance", "productivity"],
+  "lang": "en",
+  "dir": "ltr"
+}

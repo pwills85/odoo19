@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Ratio Analysis Service Tree View -->
+    <record id="view_ratio_analysis_service_tree" model="ir.ui.view">
+        <field name="name">ratio.analysis.service.tree</field>
+        <field name="model">account.ratio.analysis.service</field>
+        <field name="arch" type="xml">
+            <list string="Ratio Analysis" decoration-success="state=='computed'" decoration-danger="state=='error'">
+                <field name="name"/>
+                <field name="analysis_type"/>
+                <field name="company_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="current_ratio" digits="(16,2)"/>
+                <field name="debt_to_equity" digits="(16,2)"/>
+                <field name="return_on_assets" digits="(16,2)"/>
+                <field name="net_profit_margin" digits="(16,2)"/>
+                <field name="state"/>
+                <button name="compute_analysis" type="object" string="Compute" 
+                        invisible="state != 'draft'"
+                        icon="fa-calculator" class="btn-primary"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Ratio Analysis Service Form View -->
+    <record id="view_ratio_analysis_service_form" model="ir.ui.view">
+        <field name="name">ratio.analysis.service.form</field>
+        <field name="model">account.ratio.analysis.service</field>
+        <field name="arch" type="xml">
+            <form string="Financial Ratio Analysis">
+                <header>
+                    <button name="compute_analysis" type="object" string="Compute Analysis" 
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,computed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Analysis Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="analysis_type"/>
+                            <field name="company_id"/>
+                        </group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Key Ratios Dashboard -->
+                    <div class="row" invisible="state != 'computed'">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="card bg-primary text-white mb-3">
+                                <div class="card-body">
+                                    <h4><field name="current_ratio" digits="(16,2)"/></h4>
+                                    <p>Current Ratio</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="card bg-success text-white mb-3">
+                                <div class="card-body">
+                                    <h4><field name="return_on_assets" digits="(16,2)"/>%</h4>
+                                    <p>Return on Assets</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="card bg-info text-white mb-3">
+                                <div class="card-body">
+                                    <h4><field name="debt_to_equity" digits="(16,2)"/></h4>
+                                    <p>Debt to Equity</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="card bg-warning text-white mb-3">
+                                <div class="card-body">
+                                    <h4><field name="net_profit_margin" digits="(16,2)"/>%</h4>
+                                    <p>Net Profit Margin</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <notebook>
+                        <page string="Key Ratios" invisible="state != 'computed'">
+                            <group string="Liquidity Ratios">
+                                <field name="current_ratio" digits="(16,4)"/>
+                                <field name="quick_ratio" digits="(16,4)"/>
+                            </group>
+                            <group string="Profitability Ratios">
+                                <field name="return_on_assets" digits="(16,2)"/>
+                                <field name="return_on_equity" digits="(16,2)"/>
+                                <field name="gross_profit_margin" digits="(16,2)"/>
+                                <field name="net_profit_margin" digits="(16,2)"/>
+                            </group>
+                            <group string="Leverage Ratios">
+                                <field name="debt_to_equity" digits="(16,4)"/>
+                            </group>
+                        </page>
+                        
+                        <page string="All Ratios" invisible="state != 'computed'">
+                            <field name="ratio_data" widget="text" readonly="1"/>
+                        </page>
+                        
+                        <page string="Analysis Summary" invisible="state != 'computed'">
+                            <group>
+                                <field name="analysis_summary" widget="text" readonly="1"/>
+                            </group>
+                        </page>
+                        
+                        <page string="Recommendations" invisible="state != 'computed'">
+                            <group>
+                                <field name="recommendations" readonly="1"/>
+                            </group>
+                        </page>
+                        
+                        <page string="Benchmarks" invisible="state != 'computed'">
+                            <group>
+                                <field name="benchmark_data" widget="text" readonly="1"/>
+                            </group>
+                        </page>
+                        
+                        <page string="Error Details" invisible="state != 'error'">
+                            <group>
+                                <field name="error_message" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Ratio Analysis Service Search View -->
+    <record id="view_ratio_analysis_service_search" model="ir.ui.view">
+        <field name="name">ratio.analysis.service.search</field>
+        <field name="model">account.ratio.analysis.service</field>
+        <field name="arch" type="xml">
+            <search string="Ratio Analysis">
+                <field name="name"/>
+                <field name="analysis_type"/>
+                <field name="company_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Computed" name="computed" domain="[('state', '=', 'computed')]"/>
+                <filter string="Error" name="error" domain="[('state', '=', 'error')]"/>
+                <separator/>
+                <filter string="Liquidity Analysis" name="liquidity" domain="[('analysis_type', '=', 'liquidity')]"/>
+                <filter string="Profitability Analysis" name="profitability" domain="[('analysis_type', '=', 'profitability')]"/>
+                <filter string="Efficiency Analysis" name="efficiency" domain="[('analysis_type', '=', 'efficiency')]"/>
+                <filter string="Leverage Analysis" name="leverage" domain="[('analysis_type', '=', 'leverage')]"/>
+                <filter string="Comprehensive Analysis" name="comprehensive" domain="[('analysis_type', '=', 'comprehensive')]"/>
+                <separator/>
+                <filter string="High Current Ratio" name="high_current_ratio" domain="[('current_ratio', '&gt;=', 2.0)]"/>
+                <filter string="Low Current Ratio" name="low_current_ratio" domain="[('current_ratio', '&lt;', 1.0)]"/>
+                <filter string="High ROA" name="high_roa" domain="[('return_on_assets', '&gt;=', 10.0)]"/>
+                <filter string="Profitable" name="profitable" domain="[('net_profit_margin', '&gt;', 0)]"/>
+                <separator/>
+                <filter string="This Month" name="this_month" 
+                        help="Analysis from this month"/>
+                <filter string="This Quarter" name="this_quarter" 
+                        help="Analysis from last 3 months"/>
+                <filter string="This Year" name="this_year" 
+                        help="Analysis from this year"/>
+                <group expand="0" string="Group By">
+                    <filter string="Analysis Type" name="group_analysis_type" context="{'group_by': 'analysis_type'}"/>
+                    <filter string="Company" name="group_company" context="{'group_by': 'company_id'}"/>
+                    <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Creation Date" name="group_create_date" context="{'group_by': 'create_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Ratio Analysis Service Action -->
+    <record id="action_ratio_analysis_service" model="ir.actions.act_window">
+        <field name="name">Financial Ratio Analysis</field>
+        <field name="res_model">account.ratio.analysis.service</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first financial ratio analysis!
+            </p>
+            <p>
+                Analyze your company's financial health with comprehensive ratio analysis 
+                including liquidity, profitability, efficiency, and leverage ratios.
+            </p>
+        </field>
+    </record>
+
+    <!-- Quick Ratio Analysis Wizard -->
+    <record id="view_ratio_analysis_quick_wizard" model="ir.ui.view">
+        <field name="name">ratio.analysis.quick.wizard</field>
+        <field name="model">account.ratio.analysis.service</field>
+        <field name="arch" type="xml">
+            <form string="Quick Ratio Analysis">
+                <group>
+                    <field name="analysis_type"/>
+                    <field name="company_id"/>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                </group>
+                <footer>
+                    <button string="Generate Analysis" name="compute_analysis" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ratio_analysis_quick_wizard" model="ir.actions.act_window">
+        <field name="name">Quick Ratio Analysis</field>
+        <field name="res_model">account.ratio.analysis.service</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_ratio_analysis_quick_wizard"/>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_name': 'Quick Ratio Analysis',
+            'default_analysis_type': 'comprehensive'
+        }</field>
+    </record>
+
+    <!-- Ratio Analysis Dashboard View -->
+    <record id="view_ratio_analysis_dashboard" model="ir.ui.view">
+        <field name="name">ratio.analysis.dashboard</field>
+        <field name="model">account.ratio.analysis.service</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_dashboard" create="false">
+                <field name="name"/>
+                <field name="analysis_type"/>
+                <field name="current_ratio"/>
+                <field name="return_on_assets"/>
+                <field name="debt_to_equity"/>
+                <field name="net_profit_margin"/>
+                <field name="state"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary">
+                                        <field name="name"/>
+                                    </div>
+                                    <div class="o_secondary">
+                                        <field name="analysis_type"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="container o_kanban_card_content">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <button t-if="record.state.raw_value == 'draft'" class="btn btn-primary" name="compute_analysis" type="object">
+                                            Compute
+                                        </button>
+                                        <span t-if="record.state.raw_value == 'computed'" class="badge badge-success">
+                                            Computed
+                                        </span>
+                                        <span t-if="record.state.raw_value == 'error'" class="badge badge-danger">
+                                            Error
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="row" t-if="record.state.raw_value == 'computed'">
+                                    <div class="col-6">
+                                        <span class="o_kanban_record_subtitle">Current Ratio:</span>
+                                        <field name="current_ratio"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="o_kanban_record_subtitle">ROA:</span>
+                                        <field name="return_on_assets"/>%
+                                    </div>
+                                </div>
+                                <div class="row" t-if="record.state.raw_value == 'computed'">
+                                    <div class="col-6">
+                                        <span class="o_kanban_record_subtitle">D/E Ratio:</span>
+                                        <field name="debt_to_equity"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="o_kanban_record_subtitle">Net Margin:</span>
+                                        <field name="net_profit_margin"/>%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_ratio_analysis_dashboard" model="ir.actions.act_window">
+        <field name="name">Ratio Analysis Dashboard</field>
+        <field name="res_model">account.ratio.analysis.service</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="view_id" ref="view_ratio_analysis_dashboard"/>
+        <field name="context">{'search_default_computed': 1}</field>
+    </record>
+
+
+
+</odoo>

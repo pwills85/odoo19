@@ -1,0 +1,233 @@
+// Chart Widget Styles
+// Siguiendo convenciones de estilos de Odoo 18
+
+.o_chart_widget {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: var(--o-view-background-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+    
+    &:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    // Header del widget
+    .o_chart_widget_header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        border-bottom: 1px solid var(--o-border-color);
+        background-color: var(--o-view-background-color);
+        
+        .o_chart_widget_title {
+            display: flex;
+            align-items: center;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--o-main-text-color);
+            
+            i {
+                font-size: 1.2rem;
+                opacity: 0.7;
+            }
+        }
+        
+        .o_chart_widget_actions {
+            display: flex;
+            gap: 0.5rem;
+            
+            .btn-link {
+                padding: 0.25rem 0.5rem;
+                color: var(--o-main-text-color);
+                opacity: 0.6;
+                transition: opacity 0.2s;
+                
+                &:hover {
+                    opacity: 1;
+                }
+                
+                i {
+                    font-size: 1rem;
+                }
+            }
+        }
+    }
+    
+    // Contenido del widget
+    .o_chart_widget_content {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        min-height: 200px;
+        position: relative;
+        
+        // Contenedor del canvas
+        .o_chart_canvas_container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            
+            canvas {
+                max-width: 100% !important;
+                max-height: 100% !important;
+            }
+        }
+        
+        // Estado de carga
+        .o_chart_loading_container {
+            text-align: center;
+            
+            .spinner-border {
+                width: 3rem;
+                height: 3rem;
+            }
+            
+            p {
+                margin-top: 1rem;
+                font-size: 0.9rem;
+            }
+        }
+        
+        // Estado de error
+        .o_chart_error_container {
+            text-align: center;
+            max-width: 400px;
+            
+            .alert {
+                margin-bottom: 1rem;
+            }
+        }
+    }
+    
+    // Estados del widget
+    &.o_chart_loading {
+        .o_chart_widget_header {
+            opacity: 0.6;
+        }
+    }
+    
+    &.o_chart_error {
+        .o_chart_widget_header {
+            border-bottom-color: var(--danger);
+        }
+    }
+}
+
+// Responsive
+@media (max-width: 768px) {
+    .o_chart_widget {
+        .o_chart_widget_header {
+            padding: 0.75rem;
+            
+            .o_chart_widget_title {
+                font-size: 1rem;
+                
+                i {
+                    display: none; // Ocultar icono en móvil
+                }
+            }
+        }
+        
+        .o_chart_widget_content {
+            padding: 0.75rem;
+            min-height: 150px;
+        }
+    }
+}
+
+// Modo oscuro
+@media (prefers-color-scheme: dark) {
+    .o_chart_widget {
+        background-color: var(--o-view-background-color);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+        
+        &:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+        
+        .o_chart_widget_header {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+    }
+}
+
+// Real-time update animation
+.o_chart_widget_content {
+    &.o_chart_updating {
+        position: relative;
+        
+        &::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, 
+                rgba(var(--o-primary-rgb), 0.1) 0%, 
+                rgba(var(--o-primary-rgb), 0.05) 50%, 
+                rgba(var(--o-primary-rgb), 0.1) 100%
+            );
+            animation: pulse 1s ease-out;
+            pointer-events: none;
+            border-radius: inherit;
+            z-index: 1;
+        }
+    }
+    
+    @keyframes pulse {
+        0% { 
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        50% { 
+            opacity: 1;
+            transform: scale(1);
+        }
+        100% { 
+            opacity: 0;
+            transform: scale(1);
+        }
+    }
+}
+
+// WebSocket status indicator
+.o_chart_widget_header {
+    .o_websocket_status {
+        display: inline-flex;
+        align-items: center;
+        margin-left: 0.5rem;
+        
+        &::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.25rem;
+            background-color: var(--o-gray-400);
+            animation: none;
+        }
+        
+        &.connected::before {
+            background-color: var(--o-success);
+            animation: pulse-dot 2s infinite;
+        }
+        
+        &.disconnected::before {
+            background-color: var(--o-danger);
+        }
+        
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    }
+}

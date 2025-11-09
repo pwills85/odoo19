@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <record id="view_financial_report_service_tree" model="ir.ui.view">
+        <field name="name">financial.report.service.tree</field>
+        <field name="model">account.financial.report.service</field>
+        <field name="arch" type="xml">
+            <list string="Financial Reports" decoration-success="state=='computed'" decoration-danger="state=='error'">
+                <field name="name"/>
+                <field name="report_type"/>
+                <field name="company_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="state"/>
+                <field name="create_date"/>
+                <button name="compute_report" type="object" string="Compute" 
+                        invisible="state != 'draft'" 
+                        icon="fa-calculator" class="btn-primary"/>
+                <button name="export_to_excel" type="object" string="Excel" 
+                        invisible="state != 'computed'" 
+                        icon="fa-file-excel-o" class="btn-success"/>
+                <button name="export_to_pdf" type="object" string="PDF" 
+                        invisible="state != 'computed'" 
+                        icon="fa-file-pdf-o" class="btn-info"/>
+            </list>
+        </field>
+    </record>
+
+    
+    <record id="view_financial_report_service_form" model="ir.ui.view">
+        <field name="name">financial.report.service.form</field>
+        <field name="model">account.financial.report.service</field>
+        <field name="arch" type="xml">
+            <form string="Financial Report Service">
+                <header>
+                    <button name="compute_report" type="object" string="Compute Report" 
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="export_to_excel" type="object" string="Export to Excel" 
+                            class="btn-success" invisible="state != 'computed'"/>
+                    <button name="export_to_pdf" type="object" string="Export to PDF" 
+                            class="btn-info" invisible="state != 'computed'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,computed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Report Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="report_type"/>
+                            <field name="company_id"/>
+                            <field name="currency_id"/>
+                        </group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="show_zero_balance"/>
+                            <field name="show_hierarchy"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Report Data" invisible="state != 'computed'">
+                            <group>
+                                <field name="report_data" widget="text" readonly="1"/>
+                            </group>
+                        </page>
+                        <page string="Summary" invisible="state != 'computed'">
+                            <group>
+                                <field name="summary_data" widget="text" readonly="1"/>
+                            </group>
+                        </page>
+                        <page string="Error Details" invisible="state != 'error'">
+                            <group>
+                                <field name="error_message" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    
+    <record id="view_financial_report_service_search" model="ir.ui.view">
+        <field name="name">financial.report.service.search</field>
+        <field name="model">account.financial.report.service</field>
+        <field name="arch" type="xml">
+            <search string="Financial Reports">
+                <field name="name"/>
+                <field name="report_type"/>
+                <field name="company_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Computed" name="computed" domain="[('state', '=', 'computed')]"/>
+                <filter string="Error" name="error" domain="[('state', '=', 'error')]"/>
+                <separator/>
+                <filter string="Balance Sheet" name="balance_sheet" domain="[('report_type', '=', 'balance_sheet')]"/>
+                <filter string="Profit &amp; Loss" name="profit_loss" domain="[('report_type', '=', 'profit_loss')]"/>
+                <filter string="Cash Flow" name="cash_flow" domain="[('report_type', '=', 'cash_flow')]"/>
+                <separator/>
+                <filter string="This Month" name="this_month" 
+                        help="Reports from this month" />
+                <filter string="This Quarter" name="this_quarter" 
+                        help="Reports from last 3 months" />
+                <filter string="This Year" name="this_year" 
+                        help="Reports from this year" />
+                <group expand="0" string="Group By">
+                    <filter string="Report Type" name="group_report_type" context="{'group_by': 'report_type'}"/>
+                    <filter string="Company" name="group_company" context="{'group_by': 'company_id'}"/>
+                    <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Creation Date" name="group_create_date" context="{'group_by': 'create_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    
+    <record id="action_financial_report_service" model="ir.actions.act_window">
+        <field name="name">Financial Reports</field>
+        <field name="res_model">account.financial.report.service</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first financial report!
+            </p>
+            <p>
+                Generate comprehensive financial reports including Balance Sheet, 
+                Profit &amp; Loss, Cash Flow, and more using native Odoo 18 APIs.
+            </p>
+        </field>
+    </record>
+
+    
+    <record id="view_financial_report_quick_wizard" model="ir.ui.view">
+        <field name="name">financial.report.quick.wizard</field>
+        <field name="model">account.financial.report.service</field>
+        <field name="arch" type="xml">
+            <form string="Quick Financial Report">
+                <group>
+                    <field name="report_type"/>
+                    <field name="company_id"/>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                </group>
+                <footer>
+                    <button string="Generate Report" name="compute_report" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_financial_report_quick_wizard" model="ir.actions.act_window">
+        <field name="name">Quick Financial Report</field>
+        <field name="res_model">account.financial.report.service</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_financial_report_quick_wizard"/>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_name': 'Quick Report'
+        }</field>
+    </record>
+
+
+
+</odoo>

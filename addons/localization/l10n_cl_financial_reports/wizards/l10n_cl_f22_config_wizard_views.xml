@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ========== FORM VIEW ========== -->
+        <record id="view_l10n_cl_f22_config_wizard_form" model="ir.ui.view">
+            <field name="name">l10n_cl_f22.config.wizard.form</field>
+            <field name="model">l10n_cl_f22.config.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Configuración F22 - Mapeo de Cuentas Contables">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <i class="fa fa-cog text-primary"/> Configuración F22
+                            </h1>
+                            <p class="text-muted">
+                                Configure las cuentas contables para el cálculo y registro del Impuesto Primera Categoría (F22).
+                            </p>
+                        </div>
+
+                        <group name="company">
+                            <field name="company_id" options="{'no_create': True, 'no_open': True}"/>
+                        </group>
+
+                        <!-- Configuración Actual -->
+                        <group name="config_actual" string="Configuración Actual" attrs="{'invisible': [('config_existente', '=', False)]}">
+                            <field name="config_existente" invisible="1"/>
+                            <div class="alert alert-info" role="alert">
+                                <i class="fa fa-info-circle"/> Ya existe configuración previa. Los valores actuales serán reemplazados al guardar.
+                            </div>
+                            <group>
+                                <field name="cuenta_gasto_actual" readonly="1"/>
+                                <field name="cuenta_impuesto_actual" readonly="1"/>
+                            </group>
+                        </group>
+
+                        <separator string="Mapeo de Cuentas Contables"/>
+
+                        <group name="cuentas" col="2">
+                            <group name="cuenta_gasto" string="Cuenta de Gasto">
+                                <field name="cuenta_gasto_impuesto"
+                                       options="{'no_create': True}"
+                                       context="{'show_account_code': True}"/>
+                                <div class="text-muted small">
+                                    <i class="fa fa-lightbulb-o"/> Cuenta para registrar el gasto de impuesto primera categoría (ej: 5105 - Impuesto a la Renta)
+                                </div>
+                            </group>
+
+                            <group name="cuenta_impuesto" string="Cuenta de Pasivo">
+                                <field name="cuenta_impuesto_por_pagar"
+                                       options="{'no_create': True}"
+                                       context="{'show_account_code': True}"/>
+                                <div class="text-muted small">
+                                    <i class="fa fa-lightbulb-o"/> Cuenta de pasivo para el impuesto por pagar al SII (ej: 2103 - Impuesto Renta por Pagar)
+                                </div>
+                            </group>
+                        </group>
+
+                        <notebook>
+                            <page string="Ayuda" name="help">
+                                <group>
+                                    <div class="alert alert-warning" role="alert">
+                                        <h4 class="alert-heading"><i class="fa fa-question-circle"/> ¿Qué cuentas debo seleccionar?</h4>
+                                        <hr/>
+                                        <p><strong>Cuenta Gasto Impuesto Primera Categoría:</strong></p>
+                                        <ul>
+                                            <li>Cuenta de resultados (tipo Gasto) donde se registra el impuesto como gasto del ejercicio</li>
+                                            <li>Código sugerido según plan de cuentas chileno: <strong>5105</strong> o similar</li>
+                                            <li>Ejemplo: "5105 - Impuesto a la Renta"</li>
+                                        </ul>
+
+                                        <p><strong>Cuenta Impuesto por Pagar:</strong></p>
+                                        <ul>
+                                            <li>Cuenta de pasivo corriente donde se registra la deuda con el SII</li>
+                                            <li>Código sugerido según plan de cuentas chileno: <strong>2103</strong> o similar</li>
+                                            <li>Ejemplo: "2103 - Impuesto Renta por Pagar"</li>
+                                        </ul>
+
+                                        <hr/>
+                                        <p class="mb-0">
+                                            <i class="fa fa-info-circle"/> Esta configuración es utilizada por el módulo para generar asientos contables automáticos al calcular el F22.
+                                        </p>
+                                    </div>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+
+                    <footer>
+                        <button name="action_apply_configuration"
+                                type="object"
+                                string="Guardar Configuración"
+                                class="btn-primary"/>
+                        <button name="action_cancel"
+                                type="object"
+                                string="Cancelar"
+                                class="btn-secondary"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!-- ========== ACTION ========== -->
+        <record id="action_l10n_cl_f22_config_wizard" model="ir.actions.act_window">
+            <field name="name">Configuración F22</field>
+            <field name="res_model">l10n_cl_f22.config.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="binding_model_id" ref="model_l10n_cl_f22"/>
+            <field name="binding_view_types">form</field>
+        </record>
+
+        <!-- ========== MENUITEM (bajo Configuración / Reportes Tributarios) ========== -->
+        <menuitem id="menu_l10n_cl_f22_config_wizard"
+                  name="Configuración F22"
+                  parent="account.menu_account_config"
+                  action="action_l10n_cl_f22_config_wizard"
+                  sequence="60"
+                  groups="account.group_account_manager"/>
+
+    </data>
+</odoo>

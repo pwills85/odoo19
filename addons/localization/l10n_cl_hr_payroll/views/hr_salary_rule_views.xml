@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Vista Tree: Reglas Salariales -->
+    <record id="view_hr_salary_rule_tree" model="ir.ui.view">
+        <field name="name">hr.salary.rule.tree</field>
+        <field name="model">hr.salary.rule</field>
+        <field name="arch" type="xml">
+            <tree string="Reglas Salariales">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="category_id"/>
+                <field name="amount_select"/>
+                <field name="struct_id"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vista Form: Reglas Salariales -->
+    <record id="view_hr_salary_rule_form" model="ir.ui.view">
+        <field name="name">hr.salary.rule.form</field>
+        <field name="model">hr.salary.rule</field>
+        <field name="arch" type="xml">
+            <form string="Regla Salarial">
+                <header>
+                    <button name="action_test_rule" string="Probar Regla" type="object"
+                            class="btn-primary"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Archivado" bg_color="bg-danger"
+                            attrs="{'invisible': [('active', '=', True)]}"/>
+                    
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="ej: Sueldo Base, AFP, Horas Extras"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="sequence"/>
+                            <field name="category_id" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="struct_id"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <!-- TAB: CONDICIÓN -->
+                        <page string="Condición" name="condition">
+                            <group>
+                                <field name="condition_select" widget="radio"/>
+                            </group>
+                            
+                            <group attrs="{'invisible': [('condition_select', '!=', 'range')]}">
+                                <group>
+                                    <field name="condition_range" 
+                                           placeholder="ej: contract.date_start"/>
+                                </group>
+                                <group>
+                                    <label for="condition_range_min" string="Rango"/>
+                                    <div class="o_row">
+                                        <field name="condition_range_min"/>
+                                        <span class="mx-2">hasta</span>
+                                        <field name="condition_range_max"/>
+                                    </div>
+                                </group>
+                            </group>
+                            
+                            <group attrs="{'invisible': [('condition_select', '!=', 'python')]}">
+                                <field name="condition_python" widget="ace" options="{'mode': 'python'}"
+                                       placeholder="# Retornar True o False&#10;result = True"/>
+                                <div class="alert alert-info" role="alert">
+                                    <strong>Variables disponibles:</strong><br/>
+                                    • <code>payslip</code>: Liquidación actual<br/>
+                                    • <code>contract</code>: Contrato del empleado<br/>
+                                    • <code>employee</code>: Empleado<br/>
+                                    • <code>inputs</code>: Dict de inputs (ej: inputs.HEX50.amount)<br/>
+                                    • <code>worked_days</code>: Días trabajados<br/>
+                                    • <code>result</code>: Variable de retorno (True/False)
+                                </div>
+                            </group>
+                        </page>
+                        
+                        <!-- TAB: CÁLCULO -->
+                        <page string="Cálculo" name="amount">
+                            <group>
+                                <field name="amount_select" widget="radio"/>
+                            </group>
+                            
+                            <group attrs="{'invisible': [('amount_select', '!=', 'fix')]}">
+                                <field name="amount_fix"/>
+                            </group>
+                            
+                            <group attrs="{'invisible': [('amount_select', '!=', 'percentage')]}">
+                                <field name="amount_percentage" 
+                                       string="Porcentaje (%)"
+                                       widget="percentage"/>
+                                <field name="amount_percentage_base"
+                                       placeholder="ej: contract.wage o payslip.total_imponible"/>
+                            </group>
+                            
+                            <group attrs="{'invisible': [('amount_select', '!=', 'code')]}">
+                                <field name="amount_python_compute" widget="ace" options="{'mode': 'python'}"
+                                       placeholder="# Retornar monto en variable result&#10;result = contract.wage * 1.5"/>
+                                <div class="alert alert-info" role="alert">
+                                    <strong>Variables disponibles:</strong><br/>
+                                    • <code>payslip</code>: Liquidación actual<br/>
+                                    • <code>contract</code>: Contrato del empleado<br/>
+                                    • <code>employee</code>: Empleado<br/>
+                                    • <code>inputs</code>: Dict de inputs (ej: inputs.HEX50.amount)<br/>
+                                    • <code>worked_days</code>: Días trabajados<br/>
+                                    • <code>categories</code>: Dict de categorías con totales<br/>
+                                    • <code>result</code>: Variable de retorno (float)<br/>
+                                    <br/>
+                                    <strong>Funciones disponibles:</strong><br/>
+                                    • <code>min()</code>, <code>max()</code>, <code>abs()</code>, <code>round()</code>
+                                </div>
+                            </group>
+                        </page>
+                        
+                        <!-- TAB: INPUTS (Opcional) -->
+                        <page string="Inputs" name="inputs">
+                            <field name="input_ids">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="code"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <!-- TAB: NOTAS -->
+                        <page string="Notas" name="notes">
+                            <field name="note" placeholder="Descripción, fórmula legal, ejemplos..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Acción: Reglas Salariales -->
+    <record id="action_hr_salary_rule" model="ir.actions.act_window">
+        <field name="name">Reglas Salariales</field>
+        <field name="res_model">hr.salary.rule</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear una nueva regla salarial
+            </p>
+            <p>
+                Las reglas definen cómo se calculan haberes y descuentos en las liquidaciones.
+            </p>
+        </field>
+    </record>
+
+</odoo>

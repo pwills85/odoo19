@@ -1,0 +1,31 @@
+[MASTER]
+init-hook='import sys; sys.path.append("odoo")'
+
+[MESSAGES CONTROL]
+disable=
+    C0103,  # Invalid name
+    C0111,  # Missing docstring
+    C0114,  # Missing module docstring
+    C0115,  # Missing class docstring
+    C0116,  # Missing function docstring
+    R0903,  # Too few public methods
+    R0913,  # Too many arguments
+    W0212,  # Protected access (common in Odoo)
+    W0223,  # Method abstract in parent but not overridden
+    E1101,  # No member (Odoo dynamic attributes)
+    W0511,  # TODO/FIXME comments
+
+[FORMAT]
+max-line-length=120
+indent-string='    '
+
+[DESIGN]
+max-args=10
+max-attributes=15
+max-locals=20
+
+[BASIC]
+good-names=i,j,k,ex,Run,_,id,cr,uid
+
+[TYPECHECK]
+ignored-modules=odoo

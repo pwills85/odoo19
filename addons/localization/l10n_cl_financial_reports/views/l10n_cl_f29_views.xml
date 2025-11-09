@@ -1,0 +1,554 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ========== VISTA DE FORMULARIO F29 ========== -->
+    <record id="view_l10n_cl_f29_form" model="ir.ui.view">
+        <field name="name">l10n_cl.f29.form</field>
+        <field name="model">l10n_cl.f29</field>
+        <field name="arch" type="xml">
+            <form string="Formulario 29 - Declaración Mensual IVA">
+                <!-- Header con botones de acción y statusbar -->
+                <header>
+                    <!-- Botones contextuales -->
+                    <button name="action_calculate" type="object" string="Calcular desde Contabilidad" 
+                            class="btn-primary" 
+                            attrs="{'invisible': [('state', 'not in', ('draft', 'review'))]}"/>
+                    
+                    <button name="action_to_review" type="object" string="Pasar a Revisión" 
+                            class="btn-secondary"
+                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    
+                    <button name="action_validate" type="object" string="Validar F29" 
+                            class="btn-success"
+                            attrs="{'invisible': [('state', 'not in', ('draft', 'review'))]}"/>
+                    
+                    <button name="action_send_sii" type="object" string="Enviar al SII" 
+                            class="btn-warning"
+                            attrs="{'invisible': [('state', '!=', 'validated')]}"/>
+                    
+                    <button name="action_check_status" type="object" string="Consultar Estado SII" 
+                            class="btn-info"
+                            attrs="{'invisible': [('state', 'not in', ('sent', 'accepted', 'rejected'))]}"/>
+                    
+                    <button name="action_replace" type="object" string="Crear Reemplazo" 
+                            class="btn-danger"
+                            attrs="{'invisible': [('state', 'not in', ('sent', 'accepted', 'rejected'))]}"/>
+                    
+                    <!-- Barra de estado -->
+                    <field name="state" widget="statusbar" 
+                           statusbar_visible="draft,review,validated,sent,accepted"/>
+                </header>
+
+                <sheet>
+                    <!-- Título principal -->
+                    <div class="oe_title">
+                        <h1>
+                            <field name="display_name" placeholder="F29 - Declaración IVA"/>
+                        </h1>
+                        <h3 class="text-muted">
+                            Formulario 29 - Declaración Mensual de IVA
+                        </h3>
+                    </div>
+
+                    <!-- Smart buttons -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_moves" type="object" 
+                                class="oe_stat_button" icon="fa-file-text-o">
+                            <field name="move_ids" string="Facturas" widget="statinfo"/>
+                        </button>
+                        
+                        <button name="%(account.action_move_journal_line)d" type="action" 
+                                class="oe_stat_button" icon="fa-book"
+                                context="{'search_default_posted': 1}"
+                                attrs="{'invisible': [('provision_move_id', '=', False)]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Asiento</span>
+                                <span class="o_stat_text">Provisión</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Información básica -->
+                    <group>
+                        <group name="basic_info" string="Información Básica">
+                            <field name="company_id" readonly="1"/>
+                            <field name="period_date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="tipo_declaracion" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="numero_rectificacion"
+                                   attrs="{'invisible': [('tipo_declaracion', '=', 'original')],
+                                           'readonly': [('state', '!=', 'draft')]}"/>
+                        </group>
+                        <group name="sii_info" string="Información SII">
+                            <field name="name" readonly="1" placeholder="F29/..."/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Contenido principal en pestañas -->
+                    <notebook>
+                        <!-- Pestaña: Débito Fiscal (Ventas) -->
+                        <page string="Débito Fiscal" name="debito_fiscal">
+                            <group string="VENTAS Y SERVICIOS">
+                                <group>
+                                    <field name="ventas_afectas" widget="monetary"
+                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                    <field name="ventas_exentas" widget="monetary"
+                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                    <field name="ventas_exportacion" widget="monetary"
+                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                </group>
+                                <group>
+                                    <field name="debito_fiscal" widget="monetary"
+                                           class="oe_subtotal_footer fw-bold" readonly="1"/>
+                                    <label for="debito_fiscal" string="IVA Débito (19%)" class="text-muted"/>
+                                </group>
+                            </group>
+
+                            <group string="AJUSTES Y REMANENTES">
+                                <group>
+                                    <field name="debito_remanente_mes_anterior" widget="monetary"
+                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                    <field name="creditos_especiales" widget="monetary"
+                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                </group>
+                            </group>
+
+                            <div class="alert alert-info mt-3" role="alert">
+                                <strong>Información:</strong> El débito fiscal se calcula automáticamente
+                                como el 19% de las ventas afectas. Los créditos especiales reducen el débito total.
+                            </div>
+                        </page>
+
+                        <!-- Pestaña: Crédito Fiscal (Compras) -->
+                        <page string="Crédito Fiscal" name="credito_fiscal">
+                            <group string="COMPRAS Y SERVICIOS">
+                                <group>
+                                    <field name="compras_afectas" widget="monetary"
+                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                    <field name="compras_exentas" widget="monetary"
+                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                    <field name="compras_activo_fijo" widget="monetary"
+                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                </group>
+                                <group>
+                                    <field name="credito_fiscal" widget="monetary"
+                                           class="oe_subtotal_footer fw-bold" readonly="1"/>
+                                    <label for="credito_fiscal" string="IVA Crédito (19%)" class="text-muted"/>
+                                </group>
+                            </group>
+
+                            <group string="REMANENTES">
+                                <group>
+                                    <field name="remanente_credito_mes_anterior" widget="monetary"
+                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                </group>
+                            </group>
+
+                            <div class="alert alert-info mt-3" role="alert">
+                                <strong>Información:</strong> El crédito fiscal se calcula automáticamente
+                                como el 19% de las compras afectas y activo fijo.
+                            </div>
+                        </page>
+
+                        <!-- Pestaña: PPM y Retenciones -->
+                        <page string="PPM y Retenciones" name="ppm">
+                            <group string="PAGOS PROVISIONALES MENSUALES (PPM)">
+                                <group>
+                                    <field name="ppm_mes" widget="monetary"
+                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                    <field name="ppm_voluntario" widget="monetary"
+                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                </group>
+                            </group>
+
+                            <group string="RETENCIONES">
+                                <group>
+                                    <field name="iva_retenido" widget="monetary"
+                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                </group>
+                            </group>
+
+                            <div class="alert alert-warning mt-3" role="alert">
+                                <strong>Importante:</strong> Los PPM y retenciones reducen el monto final a pagar.
+                            </div>
+                        </page>
+
+                        <!-- Pestaña: Resultado Final -->
+                        <page string="Resultado" name="calculations">
+                            <div class="alert alert-info" role="alert">
+                                <strong>Información:</strong> Los cálculos se actualizan automáticamente
+                                cuando modificas los valores base.
+                            </div>
+
+                            <!-- Determinación IVA -->
+                            <group string="DETERMINACIÓN IVA">
+                                <group>
+                                    <label for="debito_fiscal" string="Débito Fiscal" class="fw-bold"/>
+                                    <field name="debito_fiscal" widget="monetary" readonly="1"/>
+
+                                    <label for="credito_fiscal" string="Crédito Fiscal" class="fw-bold"/>
+                                    <field name="credito_fiscal" widget="monetary" readonly="1"/>
+                                </group>
+                                <group>
+                                    <label for="iva_determinado" string="IVA Determinado" class="fw-bold text-primary"/>
+                                    <field name="iva_determinado" widget="monetary" readonly="1"
+                                           class="oe_subtotal_footer fw-bold"/>
+                                </group>
+                            </group>
+
+                            <!-- Deducciones -->
+                            <group string="DEDUCCIONES Y PAGOS">
+                                <group>
+                                    <field name="iva_retenido" widget="monetary" readonly="1"/>
+                                    <field name="ppm_mes" widget="monetary" readonly="1"/>
+                                    <field name="ppm_voluntario" widget="monetary" readonly="1"/>
+                                </group>
+                            </group>
+
+                            <!-- Resultado Final -->
+                            <group string="RESULTADO FINAL">
+                                <group>
+                                    <label for="iva_a_pagar" string="IVA a Pagar" class="fw-bold text-danger"/>
+                                    <field name="iva_a_pagar" widget="monetary" readonly="1"
+                                           class="oe_subtotal_footer fw-bold text-danger"/>
+
+                                    <label for="saldo_favor" string="Saldo a Favor" class="fw-bold text-success"/>
+                                    <field name="saldo_favor" widget="monetary" readonly="1"
+                                           class="fw-bold text-success"/>
+
+                                    <label for="remanente_mes_siguiente" string="Remanente Mes Siguiente" class="fw-bold text-info"/>
+                                    <field name="remanente_mes_siguiente" widget="monetary" readonly="1"
+                                           class="fw-bold text-info"/>
+                                </group>
+                            </group>
+
+                            <!-- Resumen visual -->
+                            <div class="row mt-4">
+                                <div class="col-md-4">
+                                    <div class="card border-primary">
+                                        <div class="card-header bg-primary text-white">
+                                            <h6 class="mb-0">Débito Fiscal</h6>
+                                        </div>
+                                        <div class="card-body text-center">
+                                            <h3 class="fw-bold">
+                                                <field name="debito_fiscal" widget="monetary"/>
+                                            </h3>
+                                            <small class="text-muted">IVA Ventas</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-info">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0">Crédito Fiscal</h6>
+                                        </div>
+                                        <div class="card-body text-center">
+                                            <h3 class="fw-bold">
+                                                <field name="credito_fiscal" widget="monetary"/>
+                                            </h3>
+                                            <small class="text-muted">IVA Compras</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-danger">
+                                        <div class="card-header bg-danger text-white">
+                                            <h6 class="mb-0">A Pagar</h6>
+                                        </div>
+                                        <div class="card-body text-center">
+                                            <h3 class="fw-bold">
+                                                <field name="iva_a_pagar" widget="monetary"/>
+                                            </h3>
+                                            <small class="text-muted">Monto Final</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Legacy fields (backward compatibility) -->
+                            <group invisible="1">
+                                <field name="total_ventas"/>
+                                <field name="total_compras"/>
+                                <field name="total_iva_debito"/>
+                                <field name="total_iva_credito"/>
+                            </group>
+                        </page>
+
+                        <!-- Pestaña: SII Integration -->
+                        <page string="SII" name="sii_integration" 
+                              attrs="{'invisible': [('state', 'in', ('draft', 'review'))]}">
+                            
+                            <div class="alert alert-warning" role="alert"
+                                 attrs="{'invisible': [('sii_track_id', '!=', False)]}">
+                                <strong>Pendiente:</strong> Este F29 aún no ha sido enviado al SII.
+                            </div>
+
+                            <div class="alert alert-success" role="alert"
+                                 attrs="{'invisible': [('state', '!=', 'accepted')]}">
+                                <strong>Aceptado:</strong> El F29 ha sido aceptado por el SII.
+                            </div>
+
+                            <div class="alert alert-danger" role="alert"
+                                 attrs="{'invisible': [('state', '!=', 'rejected')]}">
+                                <strong>Rechazado:</strong> El F29 ha sido rechazado por el SII. 
+                                Revise la respuesta para más detalles.
+                            </div>
+
+                            <group string="ESTADO SII">
+                                <field name="sii_track_id" readonly="1" 
+                                       placeholder="Se genera automáticamente al enviar"/>
+                                <field name="sii_send_date" readonly="1"/>
+                                <field name="state" widget="badge"
+                                       decoration-success="state == 'accepted'"
+                                       decoration-warning="state == 'sent'"
+                                       decoration-danger="state == 'rejected'"
+                                       decoration-info="state == 'validated'"/>
+                            </group>
+
+                            <group string="RESPUESTA SII" 
+                                   attrs="{'invisible': [('sii_response', '=', False)]}">
+                                <field name="sii_response" nolabel="1" readonly="1" 
+                                       widget="text" placeholder="La respuesta del SII aparecerá aquí..."/>
+                            </group>
+                        </page>
+
+                        <!-- Pestaña: Documentos Incluidos -->
+                        <page string="Documentos" name="documents">
+                            <field name="move_ids" readonly="1">
+                                <tree decoration-info="move_type in ('out_invoice', 'out_refund')"
+                                      decoration-muted="move_type in ('in_invoice', 'in_refund')">
+                                    <field name="name"/>
+                                    <field name="move_type" widget="badge"/>
+                                    <field name="partner_id"/>
+                                    <field name="invoice_date"/>
+                                    <field name="amount_untaxed" sum="Total Neto"/>
+                                    <field name="amount_tax" sum="Total IVA"/>
+                                    <field name="amount_total" sum="Total"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+
+                    <!-- Campos invisibles para cálculos -->
+                    <group invisible="1">
+                        <field name="readonly_state"/>
+                        <field name="readonly_partial"/>
+                        <field name="provision_move_id"/>
+                        <field name="payment_id"/>
+                    </group>
+                </sheet>
+
+                <!-- Chatter para seguimiento -->
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ========== VISTA DE LISTA F29 ========== -->
+    <record id="view_l10n_cl_f29_tree" model="ir.ui.view">
+        <field name="name">l10n_cl.f29.tree</field>
+        <field name="model">l10n_cl.f29</field>
+        <field name="arch" type="xml">
+            <tree string="Formularios F29"
+                  decoration-success="state == 'accepted'"
+                  decoration-info="state in ('confirmed', 'filed')"
+                  decoration-muted="state == 'draft'"
+                  decoration-warning="state == 'review'"
+                  decoration-danger="state == 'cancel'">
+
+                <field name="name" string="N° F29"/>
+                <field name="period_date" string="Período"/>
+                <field name="tipo_declaracion" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="ventas_afectas" sum="Total Ventas Afectas" widget="monetary" optional="show"/>
+                <field name="debito_fiscal" sum="Total Débito" widget="monetary"/>
+                <field name="credito_fiscal" sum="Total Crédito" widget="monetary"/>
+                <field name="iva_determinado" sum="IVA Determinado" widget="monetary" optional="show"/>
+                <field name="iva_a_pagar" sum="Total a Pagar" widget="monetary"/>
+                <field name="saldo_favor" sum="Saldo a Favor" widget="monetary" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'paid'"
+                       decoration-info="state in ('confirmed', 'filed')"
+                       decoration-warning="state == 'review'"
+                       decoration-danger="state == 'cancel'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ========== VISTA DE BÚSQUEDA F29 ========== -->
+    <record id="view_l10n_cl_f29_search" model="ir.ui.view">
+        <field name="name">l10n_cl.f29.search</field>
+        <field name="model">l10n_cl.f29</field>
+        <field name="arch" type="xml">
+            <search string="Buscar F29">
+                <field name="name" string="N° F29"/>
+                <field name="period_date" string="Período"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+
+                <separator/>
+                <filter string="Borradores" name="draft"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter string="En Revisión" name="review"
+                        domain="[('state', '=', 'review')]"/>
+                <filter string="Confirmados" name="confirmed"
+                        domain="[('state', '=', 'confirmed')]"/>
+                <filter string="Presentados SII" name="filed"
+                        domain="[('state', '=', 'filed')]"/>
+                <filter string="Pagados" name="paid"
+                        domain="[('state', '=', 'paid')]"/>
+
+                <separator/>
+                <filter string="Originales" name="original"
+                        domain="[('tipo_declaracion', '=', 'original')]"/>
+                <filter string="Rectificatorias" name="rectificatoria"
+                        domain="[('tipo_declaracion', '=', 'rectificatoria')]"/>
+
+                <separator/>
+                <filter string="Con IVA a Pagar" name="has_tax"
+                        domain="[('iva_a_pagar', '>', 0)]"/>
+                <filter string="Con Saldo a Favor" name="has_credit"
+                        domain="[('saldo_favor', '>', 0)]"/>
+                <filter string="Con Remanente" name="has_remanente"
+                        domain="[('remanente_mes_siguiente', '>', 0)]"/>
+
+                <separator/>
+                <filter string="Año Actual" name="current_year"
+                        domain="[('period_date', '>=', (context_today() - relativedelta(years=1)).strftime('%Y-01-01'))]"/>
+                <filter string="Último Trimestre" name="last_quarter"
+                        domain="[('period_date', '>=', (context_today() - relativedelta(months=3)).strftime('%Y-%m-01'))]"/>
+
+                <group expand="0" string="Agrupar por">
+                    <filter string="Estado" name="group_state"
+                            context="{'group_by': 'state'}"/>
+                    <filter string="Tipo" name="group_type"
+                            context="{'group_by': 'tipo_declaracion'}"/>
+                    <filter string="Período" name="group_period"
+                            context="{'group_by': 'period_date'}"/>
+                    <filter string="Compañía" name="group_company"
+                            context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ========== VISTA KANBAN F29 ========== -->
+    <record id="view_l10n_cl_f29_kanban" model="ir.ui.view">
+        <field name="name">l10n_cl.f29.kanban</field>
+        <field name="model">l10n_cl.f29</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_mobile" quick_create="false">
+                <field name="id"/>
+                <field name="display_name"/>
+                <field name="name"/>
+                <field name="period_date"/>
+                <field name="tipo_declaracion"/>
+                <field name="debito_fiscal"/>
+                <field name="credito_fiscal"/>
+                <field name="iva_a_pagar"/>
+                <field name="saldo_favor"/>
+                <field name="state"/>
+                <field name="company_id"/>
+                <field name="activity_ids"/>
+                <field name="activity_state"/>
+
+                <progressbar field="activity_state"
+                            colors='{"planned": "success", "today": "warning", "overdue": "danger"}'/>
+
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <!-- Card header -->
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="display_name"/>
+                                    </strong>
+                                    <small class="o_kanban_record_subtitle text-muted">
+                                        <field name="period_date"/>
+                                        <span t-if="record.tipo_declaracion.raw_value == 'rectificatoria'" class="badge badge-warning ms-2">Rectificatoria</span>
+                                    </small>
+                                </div>
+                                <div class="o_kanban_record_top_right">
+                                    <field name="activity_ids" widget="kanban_activity"/>
+                                </div>
+                            </div>
+
+                            <!-- Card content -->
+                            <div class="o_kanban_record_body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Débito:</small><br/>
+                                        <strong><field name="debito_fiscal" widget="monetary"/></strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Crédito:</small><br/>
+                                        <strong><field name="credito_fiscal" widget="monetary"/></strong>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-12 text-center">
+                                        <t t-if="record.iva_a_pagar.raw_value &gt; 0">
+                                            <span class="fa fa-money text-danger" title="A Pagar"/>
+                                            <strong class="text-danger ms-2"><field name="iva_a_pagar" widget="monetary"/></strong>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="fa fa-check-circle text-success" title="Saldo a Favor"/>
+                                            <strong class="text-success ms-2"><field name="saldo_favor" widget="monetary"/></strong>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card footer -->
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_right">
+                                    <field name="state" widget="label_selection"
+                                           options="{'classes': {
+                                               'draft': 'secondary',
+                                               'review': 'warning',
+                                               'confirmed': 'info',
+                                               'filed': 'primary',
+                                               'paid': 'success',
+                                               'cancel': 'danger'
+                                           }}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ========== ACCIÓN DE VENTANA F29 ========== -->
+    <record id="action_l10n_cl_f29" model="ir.actions.act_window">
+        <field name="name">Formulario F29</field>
+        <field name="res_model">l10n_cl.f29</field>
+        <field name="view_mode">tree,form,kanban</field>
+        <field name="context">{
+            'search_default_current_year': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear su primer Formulario F29
+            </p>
+            <p>
+                El Formulario F29 es la declaración mensual de IVA que debe presentarse 
+                mensualmente al SII. El sistema calculará automáticamente los valores 
+                desde su contabilidad.
+            </p>
+            <p>
+                <strong>Características:</strong>
+            </p>
+            <ul>
+                <li>Cálculo automático desde movimientos contables</li>
+                <li>Integración directa con SII</li>
+                <li>Seguimiento del estado en tiempo real</li>
+                <li>Generación automática de provisiones contables</li>
+            </ul>
+        </field>
+    </record>
+</odoo>

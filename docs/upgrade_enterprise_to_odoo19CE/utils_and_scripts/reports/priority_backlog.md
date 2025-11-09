@@ -1,0 +1,182 @@
+# Priority Backlog (heurístico)
+
+## P1
+
+- [REPLICATE_CE_PRO] `account_reports` (accounting) — Alt: Quantum: financial_reports_dynamic — Motor de reportes contables dinámicos con drilldown.
+- [REPLICATE_CE_PRO] `web_enterprise` (ui_framework) — Alt: Phoenix: web_enterprise_theme_ce — UI backend moderno en CE 19 (OWL/SCSS). Alto impacto.
+
+## P2
+
+- [REPLACE_CE_OCA] `account_accountant` (accounting) — Alt: OCA/account-financial-tools — Metapaquete de utilidades contables.
+- [REPLACE_CE_OCA] `account_asset` (accounting) — Alt: OCA/account-financial-tools: account_asset* — Sustitutos maduros en OCA.
+- [REPLACE_CE_OCA] `account_batch_payment` (accounting) — Alt: OCA/account-payment — Sustitutos maduros en OCA.
+- [REPLACE_CE_OCA] `account_budget` (accounting) — Alt: OCA/account-budgeting — Sustitutos maduros en OCA.
+- [REPLACE_CE_OCA] `account_intrastat` (accounting) — Alt: OCA/intrastat — Sustitutos maduros en OCA.
+- [REPLACE_CE_OCA] `account_reports_followup` (accounting) — Alt: OCA/credit-control — Seguimiento de cobros con OCA.
+- [REPLACE_CE_OCA] `account_sepa` (accounting) — Alt: OCA/account-payment: SEPA — Sustitutos maduros en OCA.
+- [REPLACE_CE_OCA] `account_sepa_direct_debit` (accounting) — Alt: OCA/account-payment: SEPA DD — Sustitutos maduros en OCA.
+- [REPLACE_CE_OCA] `currency_rate_live` (accounting) — Alt: OCA/currency: currency_rate_update — Actualización de tasas con fuentes libres.
+- [REPLACE_CE_OCA] `delivery_barcode` (inventory_mrp) — Alt: OCA/stock-logistics-barcode — Lectura de códigos de barras comunitaria.
+- [REPLACE_CE_OCA] `stock_barcode` (inventory_mrp) — Alt: OCA/stock-logistics-barcode — Lectura de códigos de barras comunitaria.
+- [REPLACE_CE_OCA] `stock_barcode_mobile` (inventory_mrp) — Alt: OCA/stock-logistics-barcode — Lectura de códigos de barras comunitaria.
+- [REPLACE_CE_OCA] `analytic_enterprise` (other) — Alt: OCA/account-analytic — Analítica en OCA.
+- [REPLACE_CE_OCA] `sale_subscription` (sales_pos) — Alt: OCA/contract — Contratos y facturación recurrente en OCA.
+- [REPLACE_CE_OCA] `sale_subscription_asset` (sales_pos) — Alt: OCA/contract — Contratos y facturación recurrente en OCA.
+- [REPLACE_CE_OCA] `sale_subscription_dashboard` (sales_pos) — Alt: OCA/contract — Contratos y facturación recurrente en OCA.
+- [REPLICATE_CE_PRO] `web_cohort` (ui_framework) — Alt: Phoenix: vistas grid/gantt/dashboard CE — Vistas avanzadas reutilizables en CE 19 (OWL).
+- [REPLICATE_CE_PRO] `web_dashboard` (ui_framework) — Alt: Phoenix: vistas grid/gantt/dashboard CE — Vistas avanzadas reutilizables en CE 19 (OWL).
+- [REPLICATE_CE_PRO] `web_gantt` (ui_framework) — Alt: Phoenix: vistas grid/gantt/dashboard CE — Vistas avanzadas reutilizables en CE 19 (OWL).
+- [REPLICATE_CE_PRO] `web_grid` (ui_framework) — Alt: Phoenix: vistas grid/gantt/dashboard CE — Vistas avanzadas reutilizables en CE 19 (OWL).
+
+## P3
+
+- [NO_REPLICATE] `account_invoice_extract` (accounting) — Dependencias SaaS/IA propietarias o servicios cerrados.
+- [NO_REPLICATE] `account_online_sync` (accounting) — Dependencias SaaS/IA propietarias o servicios cerrados.
+- [NO_REPLICATE] `account_plaid` (accounting) — Dependencias SaaS/IA propietarias o servicios cerrados.
+- [NO_REPLICATE] `account_predictive_bills` (accounting) — Dependencias SaaS/IA propietarias o servicios cerrados.
+- [NO_REPLICATE] `account_taxcloud` (accounting) — Dependencias SaaS/IA propietarias o servicios cerrados.
+- [NO_REPLICATE] `account_yodlee` (accounting) — Dependencias SaaS/IA propietarias o servicios cerrados.
+- [NO_REPLICATE] `l10n_ar_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_at_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_au_aba` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_au_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_be_coda` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_be_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_bo_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_br_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_ca_check_printing` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_ch_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_cl_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_co_edi` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_co_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_de_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_do_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_es_real_estates` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_es_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_et_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_fr_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_gr_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_hr_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_hu_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_in_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_jp_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_lu_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_ma_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_mx_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_mx_tax_cash_basis` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_nl_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_no_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_pl_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_ro_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_sg_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_si_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_th_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_uk_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_uk_reports_hmrc` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_us_check_printing` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_us_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_uy_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `l10n_vn_reports` (accounting) — Alt: Usar localizaciones OCA/país en CE — Reportes y EDI locales enterprise; fuera de alcance.
+- [NO_REPLICATE] `documents_account` (documents_collab) — Firma y automatismos enterprise; deferir.
+- [NO_REPLICATE] `documents_product` (documents_collab) — Firma y automatismos enterprise; deferir.
+- [NO_REPLICATE] `documents_project` (documents_collab) — Firma y automatismos enterprise; deferir.
+- [NO_REPLICATE] `documents_sign` (documents_collab) — Firma y automatismos enterprise; deferir.
+- [NO_REPLICATE] `sign` (documents_collab) — Firma y automatismos enterprise; deferir.
+- [NO_REPLICATE] `voip` (documents_collab) — Heurística por dominio/funcionalidad.
+- [NO_REPLICATE] `voip_onsip` (documents_collab) — Heurística por dominio/funcionalidad.
+- [NO_REPLICATE] `delivery_bpost` (inventory_mrp) — Carriers específicos de pago; deferir.
+- [NO_REPLICATE] `delivery_dhl` (inventory_mrp) — Carriers específicos de pago; deferir.
+- [NO_REPLICATE] `delivery_easypost` (inventory_mrp) — Carriers específicos de pago; deferir.
+- [NO_REPLICATE] `delivery_fedex` (inventory_mrp) — Carriers específicos de pago; deferir.
+- [NO_REPLICATE] `delivery_ups` (inventory_mrp) — Carriers específicos de pago; deferir.
+- [NO_REPLICATE] `delivery_usps` (inventory_mrp) — Carriers específicos de pago; deferir.
+- [NO_REPLICATE] `mrp_mps` (inventory_mrp) — Vertical MRP avanzada enterprise; deferir.
+- [NO_REPLICATE] `mrp_plm` (inventory_mrp) — Vertical MRP avanzada enterprise; deferir.
+- [NO_REPLICATE] `mrp_workorder` (inventory_mrp) — Vertical MRP avanzada enterprise; deferir.
+- [NO_REPLICATE] `iot` (iot) — Fuera de alcance CE-Pro núcleo.
+- [NO_REPLICATE] `l10n_be_intrastat` (localizations) — Fuera de alcance CE-Pro núcleo.
+- [NO_REPLICATE] `l10n_be_intrastat_2019` (localizations) — Fuera de alcance CE-Pro núcleo.
+- [NO_REPLICATE] `l10n_nl_intrastat` (localizations) — Fuera de alcance CE-Pro núcleo.
+- [NO_REPLICATE] `marketing_automation` (marketing) — Automatización marketing enterprise; deferir.
+- [NO_REPLICATE] `mass_mailing_themes` (marketing) — Automatización marketing enterprise; deferir.
+- [NO_REPLICATE] `project_enterprise` (projects_helpdesk) — Extras enterprise; baja prioridad.
+- [NO_REPLICATE] `project_forecast` (projects_helpdesk) — Extras enterprise; baja prioridad.
+- [NO_REPLICATE] `project_timesheet_forecast` (projects_helpdesk) — Extras enterprise; baja prioridad.
+- [NO_REPLICATE] `project_timesheet_forecast_sale` (projects_helpdesk) — Extras enterprise; baja prioridad.
+- [NO_REPLICATE] `project_timesheet_synchro` (projects_helpdesk) — Extras enterprise; baja prioridad.
+- [NO_REPLICATE] `pos_blackbox_be` (sales_pos) — PoS enterprise/IoT; deferir.
+- [NO_REPLICATE] `pos_enterprise` (sales_pos) — PoS enterprise/IoT; deferir.
+- [NO_REPLICATE] `pos_iot` (sales_pos) — PoS enterprise/IoT; deferir.
+- [NO_REPLICATE] `pos_loyalty` (sales_pos) — PoS enterprise/IoT; deferir.
+- [NO_REPLICATE] `pos_restaurant_iot` (sales_pos) — PoS enterprise/IoT; deferir.
+- [NO_REPLICATE] `sale_ebay` (sales_pos) — Conector vertical/externo; deferir.
+- [NO_REPLICATE] `mail_enterprise` (ui_framework) — Heurística por dominio/funcionalidad.
+- [NO_REPLICATE] `web_mobile` (ui_framework) — Builders/Studio propietarios o móviles con bajo ROI.
+- [NO_REPLICATE] `web_studio` (ui_framework) — Builders/Studio propietarios o móviles con bajo ROI.
+- [NO_REPLICATE] `website_calendar` (ui_framework) — Funcionalidad website enterprise; deferir.
+- [NO_REPLICATE] `website_crm_score` (ui_framework) — Funcionalidad website enterprise; deferir.
+- [NO_REPLICATE] `website_delivery_ups` (ui_framework) — Funcionalidad website enterprise; deferir.
+- [NO_REPLICATE] `website_enterprise` (ui_framework) — Funcionalidad website enterprise; deferir.
+- [NO_REPLICATE] `website_form_editor` (ui_framework) — Funcionalidad website enterprise; deferir.
+- [NO_REPLICATE] `website_helpdesk` (ui_framework) — Funcionalidad website enterprise; deferir.
+- [NO_REPLICATE] `website_helpdesk_form` (ui_framework) — Funcionalidad website enterprise; deferir.
+- [NO_REPLICATE] `website_helpdesk_forum` (ui_framework) — Funcionalidad website enterprise; deferir.
+- [NO_REPLICATE] `website_helpdesk_livechat` (ui_framework) — Funcionalidad website enterprise; deferir.
+- [NO_REPLICATE] `website_helpdesk_slides` (ui_framework) — Funcionalidad website enterprise; deferir.
+- [NO_REPLICATE] `website_sale_account_taxcloud` (ui_framework) — Funcionalidad website enterprise; deferir.
+- [NO_REPLICATE] `website_sale_coupon` (ui_framework) — Funcionalidad website enterprise; deferir.
+- [NO_REPLICATE] `website_sale_dashboard` (ui_framework) — Funcionalidad website enterprise; deferir.
+- [NO_REPLICATE] `website_sale_taxcloud_delivery` (ui_framework) — Funcionalidad website enterprise; deferir.
+- [NO_REPLICATE] `website_studio` (ui_framework) — Builders/Studio propietarios o móviles con bajo ROI.
+- [NO_REPLICATE] `website_twitter_wall` (ui_framework) — Funcionalidad website enterprise; deferir.
+- [REPLACE_CE_OCA] `account_3way_match` (accounting) — Alt: OCA/purchase-workflow (triple validación/controls) — Controles de compras equivalentes en OCA.
+- [REPLACE_CE_OCA] `account_bank_statement_import_camt` (accounting) — Alt: OCA/account-* — Sustituible en OCA/CE.
+- [REPLACE_CE_OCA] `account_bank_statement_import_csv` (accounting) — Alt: OCA/account-* — Sustituible en OCA/CE.
+- [REPLACE_CE_OCA] `account_bank_statement_import_ofx` (accounting) — Alt: OCA/account-* — Sustituible en OCA/CE.
+- [REPLACE_CE_OCA] `account_bank_statement_import_qif` (accounting) — Alt: OCA/account-* — Sustituible en OCA/CE.
+- [REPLACE_CE_OCA] `account_deferred_revenue` (accounting) — Alt: OCA/account-* — Sustituible en OCA/CE.
+- [REPLACE_CE_OCA] `sale_account_taxcloud` (accounting) — Alt: OCA/account-* — Sustituible en OCA/CE.
+- [REPLACE_CE_OCA] `documents` (documents_collab) — Alt: OCA/dms; document_attachment_manage (este repo) — DMS comunitario básico en lugar de Enterprise Documents.
+- [REPLACE_CE_OCA] `mrp_account` (inventory_mrp) — Alt: OCA/stock-* — Equivalentes OCA/CE.
+- [REPLACE_CE_OCA] `mrp_maintenance` (inventory_mrp) — Alt: OCA/stock-* — Equivalentes OCA/CE.
+- [REPLACE_CE_OCA] `mrp_zebra` (inventory_mrp) — Alt: OCA/stock-* — Equivalentes OCA/CE.
+- [REPLACE_CE_OCA] `quality_control` (inventory_mrp) — Alt: OCA/quality — Calidad en OCA.
+- [REPLACE_CE_OCA] `quality_iot` (inventory_mrp) — Alt: OCA/quality — Calidad en OCA.
+- [REPLACE_CE_OCA] `quality_mrp` (inventory_mrp) — Alt: OCA/quality — Calidad en OCA.
+- [REPLACE_CE_OCA] `quality_mrp_iot` (inventory_mrp) — Alt: OCA/quality — Calidad en OCA.
+- [REPLACE_CE_OCA] `quality_mrp_workorder` (inventory_mrp) — Alt: OCA/quality — Calidad en OCA.
+- [REPLACE_CE_OCA] `stock_account_enterprise` (inventory_mrp) — Alt: OCA/stock-* — Equivalentes OCA/CE.
+- [REPLACE_CE_OCA] `stock_enterprise` (inventory_mrp) — Alt: OCA/stock-* — Equivalentes OCA/CE.
+- [REPLACE_CE_OCA] `stock_intrastat` (inventory_mrp) — Alt: OCA/stock-* — Equivalentes OCA/CE.
+- [REPLACE_CE_OCA] `barcodes_mobile` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `base_automation_hr_contract` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `event_barcode` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `event_barcode_mobile` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `event_enterprise` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `hr_appraisal` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `hr_contract_salary` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `hr_holidays_gantt` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `inter_company_rules` (other) — Alt: OCA/multi-company — Reglas intercompañía en OCA.
+- [REPLACE_CE_OCA] `l10n_mx_edi` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `l10n_mx_edi_customs` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `l10n_mx_edi_external_trade` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `l10n_mx_edi_landing` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `l10n_mx_edi_payment` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `l10n_mx_edi_payment_bank` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `mail_github` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `ocn_client` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `purchase_mrp_workorder_quality` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `quality` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `snailmail_account_reports_followup` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `test_marketing_automation` (other) — Alt: OCA/* — Sustituible por familia OCA.
+- [REPLACE_CE_OCA] `helpdesk` (projects_helpdesk) — Alt: OCA/helpdesk — Helpdesk comunitario.
+- [REPLACE_CE_OCA] `helpdesk_sale_timesheet` (projects_helpdesk) — Alt: OCA/helpdesk — Helpdesk comunitario.
+- [REPLACE_CE_OCA] `helpdesk_timesheet` (projects_helpdesk) — Alt: OCA/helpdesk — Helpdesk comunitario.
+- [REPLACE_CE_OCA] `timesheet_grid` (projects_helpdesk) — Alt: OCA/timesheet — Grid/Reportes con OCA.
+- [REPLACE_CE_OCA] `timesheet_grid_sale` (projects_helpdesk) — Alt: OCA/timesheet — Grid/Reportes con OCA.
+- [REPLACE_CE_OCA] `crm_enterprise` (sales_pos) — Alt: OCA/sale-* — Equivalentes OCA/CE.
+- [REPLACE_CE_OCA] `sale_coupon` (sales_pos) — Alt: OCA/sale-workflow (coupons/discounts) — Promos mediante OCA.
+- [REPLACE_CE_OCA] `sale_coupon_delivery` (sales_pos) — Alt: OCA/sale-workflow (coupons/discounts) — Promos mediante OCA.
+- [REPLACE_CE_OCA] `sale_enterprise` (sales_pos) — Alt: OCA/sale-* — Equivalentes OCA/CE.
+- [REPLACE_CE_OCA] `sale_intrastat` (sales_pos) — Alt: OCA/sale-* — Equivalentes OCA/CE.
+

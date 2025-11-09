@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Analytic Cost/Benefit Report Views -->
+    
+    <!-- Tree View -->
+    <record id="view_analytic_cost_benefit_report_tree" model="ir.ui.view">
+        <field name="name">analytic.cost.benefit.report.tree</field>
+        <field name="model">analytic.cost.benefit.report</field>
+        <field name="arch" type="xml">
+            <list string="Cost/Benefit Analysis" decoration-success="benefit_margin_percentage &gt; 20" 
+                  decoration-warning="benefit_margin_percentage &gt; 10 and benefit_margin_percentage &lt;= 20"
+                  decoration-danger="benefit_margin_percentage &lt;= 10">
+                <field name="name"/>
+                <field name="analytic_account_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="total_revenues" widget="monetary"/>
+                <field name="total_costs" widget="monetary"/>
+                <field name="net_benefit" widget="monetary"/>
+                <field name="benefit_margin_percentage" widget="percentage"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+    
+    <!-- Form View -->
+    <record id="view_analytic_cost_benefit_report_form" model="ir.ui.view">
+        <field name="name">analytic.cost.benefit.report.form</field>
+        <field name="model">analytic.cost.benefit.report</field>
+        <field name="arch" type="xml">
+            <form string="Cost/Benefit Analysis">
+                <header>
+                    <button name="action_regenerate_analysis" type="object" string="Regenerate Analysis" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="analytic_account_id"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group>
+                            <field name="total_revenues" widget="monetary"/>
+                            <field name="total_costs" widget="monetary"/>
+                            <field name="net_benefit" widget="monetary"/>
+                            <field name="benefit_margin_percentage" widget="percentage"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Summary Cards -->
+                    <div class="row">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="card bg-primary text-white mb-3">
+                                <div class="card-body">
+                                    <h4 class="card-title">Total Revenues</h4>
+                                    <h2><field name="total_revenues" widget="monetary" readonly="1"/></h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="card bg-warning text-white mb-3">
+                                <div class="card-body">
+                                    <h4 class="card-title">Total Costs</h4>
+                                    <h2><field name="total_costs" widget="monetary" readonly="1"/></h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="card bg-success text-white mb-3">
+                                <div class="card-body">
+                                    <h4 class="card-title">Net Benefit</h4>
+                                    <h2><field name="net_benefit" widget="monetary" readonly="1"/></h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="card bg-info text-white mb-3">
+                                <div class="card-body">
+                                    <h4 class="card-title">Margin %</h4>
+                                    <h2><field name="benefit_margin_percentage" widget="percentage" readonly="1"/></h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- COMMENTED OUT: Fields that don't exist in the model -->
+                    <!--
+                    <notebook invisible="state != 'computed'">
+                        <page string="Analysis Details">
+                            <group>
+                                <field name="analysis_data" widget="text" readonly="1"/>
+                            </group>
+                        </page>
+                        <page string="Recommendations">
+                            <group>
+                                <field name="recommendations" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                    -->
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Search View -->
+    <record id="view_analytic_cost_benefit_report_search" model="ir.ui.view">
+        <field name="name">analytic.cost.benefit.report.search</field>
+        <field name="model">analytic.cost.benefit.report</field>
+        <field name="arch" type="xml">
+            <search string="Cost/Benefit Analysis">
+                <field name="name"/>
+                <field name="analytic_account_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                
+                <!-- Quick Filters -->
+                <filter string="Current Month" name="current_month" 
+                        help="Reports from current month"/>
+                <filter string="Last Month" name="last_month" 
+                        help="Reports from last month"/>
+                <filter string="This Year" name="this_year" 
+                        help="Reports from this year"/>
+                
+                <separator/>
+                
+                <!-- Profitability Filters -->
+                <filter string="Profitable" name="profitable" 
+                        domain="[('net_benefit', '&gt;', 0)]"/>
+                <filter string="Loss Making" name="loss_making" 
+                        domain="[('net_benefit', '&lt;=', 0)]"/>
+                <filter string="High Margin (&gt;20%)" name="high_margin" 
+                        domain="[('benefit_margin_percentage', '&gt;', 20)]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter string="Analytic Account" name="group_analytic_account" 
+                            context="{'group_by': 'analytic_account_id'}"/>
+                    <filter string="Month" name="group_month" 
+                            context="{'group_by': 'date_from:month'}"/>
+                    <filter string="Company" name="group_company" 
+                            context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Action -->
+    <record id="action_analytic_cost_benefit_report" model="ir.actions.act_window">
+        <field name="name">Analytic Cost/Benefit Analysis</field>
+        <field name="res_model">analytic.cost.benefit.report</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_analytic_cost_benefit_report_tree"/>
+        <field name="search_view_id" ref="view_analytic_cost_benefit_report_search"/>
+        <field name="context">{
+            'search_default_current_month': 1,
+            'search_default_profitable': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Cost/Benefit Analysis
+            </p>
+        </field>
+    </record>
+</odoo>

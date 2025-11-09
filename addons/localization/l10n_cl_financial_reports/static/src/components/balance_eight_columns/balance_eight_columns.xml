@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="account_financial_report.BalanceEightColumns">
+        <div class="balance-eight-columns-container h-100 d-flex flex-column">
+            <!-- Header con título y acciones -->
+            <div class="balance-header bg-white border-bottom p-3">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h2 class="mb-0">
+                            <i class="fa fa-table me-2 text-primary"/> Balance de 8 Columnas
+                        </h2>
+                        <small class="text-muted">
+                            <t /> - 
+                            <t /> al <t />
+                        </small>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button class="btn btn-sm btn-outline-primary me-2" 
+                                t-on-click="onRefresh"
+                                t-att-disabled="state.loading">
+                            <i class="fa fa-refresh"/> Actualizar
+                        </button>
+                        <button class="btn btn-sm btn-success me-2" 
+                                t-on-click="exportToExcel"
+                                t-att-disabled="state.loading">
+                            <i class="fa fa-file-excel-o"/> Excel
+                        </button>
+                        <button class="btn btn-sm btn-danger me-2" 
+                                t-on-click="exportToPDF"
+                                t-att-disabled="state.loading">
+                            <i class="fa fa-file-pdf-o"/> PDF
+                        </button>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    t-att-class="{'active': state.viewMode === 'table'}"
+                                    t-on-click="() => switchView('table')">
+                                <i class="fa fa-table"/> Tabla
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    t-att-class="{'active': state.viewMode === 'chart'}"
+                                    t-on-click="() => switchView('chart')">
+                                <i class="fa fa-bar-chart"/> Gráfico
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filtros -->
+            <div class="balance-filters bg-light border-bottom p-3">
+                <div class="row g-3">
+                    <!-- Rango de fechas -->
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Desde</label>
+                        <input type="date" 
+                               class="form-control form-control-sm"
+                               t-att-value="state.filters.dateFrom"
+                               t-on-change="(ev) => onDateChange('dateFrom', ev.target.value)"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Hasta</label>
+                        <input type="date" 
+                               class="form-control form-control-sm"
+                               t-att-value="state.filters.dateTo"
+                               t-on-change="(ev) => onDateChange('dateTo', ev.target.value)"/>
+                    </div>
+                    
+                    <!-- Búsqueda -->
+                    <div class="col-md-3">
+                        <label class="form-label">Buscar Cuenta</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">
+                                <i class="fa fa-search"/>
+                            </span>
+                            <input type="text" 
+                                   class="form-control"
+                                   placeholder="Código o nombre..."
+                                   t-att-value="state.filters.searchTerm"
+                                   t-on-input="(ev) => onFilterChange('searchTerm', ev.target.value)"/>
+                        </div>
+                    </div>
+                    
+                    <!-- Opciones -->
+                    <div class="col-md-3">
+                        <label class="form-label">Opciones</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                                <input type="checkbox" 
+                                       class="form-check-input"
+                                       id="showZeroBalance"
+                                       t-att-checked="state.filters.showZeroBalance"
+                                       t-on-change="(ev) => onFilterChange('showZeroBalance', ev.target.checked)"/>
+                                <label class="form-check-label" for="showZeroBalance">
+                                    Mostrar saldo cero
+                                </label>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary"
+                                    t-on-click="onOpenFormView">
+                                <i class="fa fa-window-restore"/> Vista Formulario
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alertas de validación -->
+            <t >
+                <div class="alert alert-warning m-3 mb-0">
+                    <i class="fa fa-exclamation-triangle me-2"/>
+                    <strong>Advertencia:</strong> El balance no está cuadrado.
+                    <ul class="mb-0 mt-2">
+                        <t t-foreach="state.validationErrors" t-as="error" t-key="error_index">
+                            <li><t /></li>
+                        </t>
+                    </ul>
+                </div>
+            </t>
+            
+            <!-- Vista de Tabla -->
+            <t >
+                <div class="balance-table-container flex-grow-1 position-relative">
+                    <t >
+                        <div class="d-flex justify-content-center align-items-center h-100">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </t>
+                    
+                    <t t-else="">
+                        <div class="table-responsive h-100" 
+                             t-ref="balanceTable"
+                             t-on-scroll="onScroll">
+                            <table class="table table-hover table-sm mb-0">
+                                <thead class="sticky-top bg-white">
+                                    <tr>
+                                        <th width="30">
+                                            <input type="checkbox" 
+                                                   class="form-check-input"
+                                                   t-on-change="selectAllAccounts"/>
+                                        </th>
+                                        <th width="100" class="sortable" 
+                                            t-on-click="() => onSort('code')">
+                                            Código 
+                                            <i t-attf-class="fa #{getSortIcon('code')}"/>
+                                        </th>
+                                        <th class="sortable" 
+                                            t-on-click="() => onSort('name')">
+                                            Nombre de Cuenta
+                                            <i t-attf-class="fa #{getSortIcon('name')}"/>
+                                        </th>
+                                        
+                                        <!-- Columnas de Sumas -->
+                                        <th colspan="2" class="text-center bg-light">Sumas</th>
+                                        
+                                        <!-- Columnas de Saldos -->
+                                        <th colspan="2" class="text-center bg-light">Saldos</th>
+                                        
+                                        <!-- Columnas de Inventario -->
+                                        <th colspan="2" class="text-center bg-light">Inventario</th>
+                                        
+                                        <!-- Columnas de Resultado -->
+                                        <th colspan="2" class="text-center bg-light">Resultado</th>
+                                    </tr>
+                                    <tr>
+                                        <th colspan="3"></th>
+                                        <!-- Sumas -->
+                                        <th class="text-end sortable" width="120"
+                                            t-on-click="() => onSort('debit')">
+                                            Débitos
+                                            <i t-attf-class="fa #{getSortIcon('debit')}"/>
+                                        </th>
+                                        <th class="text-end sortable" width="120"
+                                            t-on-click="() => onSort('credit')">
+                                            Créditos
+                                            <i t-attf-class="fa #{getSortIcon('credit')}"/>
+                                        </th>
+                                        
+                                        <!-- Saldos -->
+                                        <th class="text-end sortable" width="120"
+                                            t-on-click="() => onSort('debitBalance')">
+                                            Deudor
+                                            <i t-attf-class="fa #{getSortIcon('debitBalance')}"/>
+                                        </th>
+                                        <th class="text-end sortable" width="120"
+                                            t-on-click="() => onSort('creditBalance')">
+                                            Acreedor
+                                            <i t-attf-class="fa #{getSortIcon('creditBalance')}"/>
+                                        </th>
+                                        
+                                        <!-- Inventario -->
+                                        <th class="text-end sortable" width="120"
+                                            t-on-click="() => onSort('assets')">
+                                            Activo
+                                            <i t-attf-class="fa #{getSortIcon('assets')}"/>
+                                        </th>
+                                        <th class="text-end sortable" width="120"
+                                            t-on-click="() => onSort('liabilities')">
+                                            Pasivo
+                                            <i t-attf-class="fa #{getSortIcon('liabilities')}"/>
+                                        </th>
+                                        
+                                        <!-- Resultado -->
+                                        <th class="text-end sortable" width="120"
+                                            t-on-click="() => onSort('loss')">
+                                            Pérdida
+                                            <i t-attf-class="fa #{getSortIcon('loss')}"/>
+                                        </th>
+                                        <th class="text-end sortable" width="120"
+                                            t-on-click="() => onSort('profit')">
+                                            Ganancia
+                                            <i t-attf-class="fa #{getSortIcon('profit')}"/>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                
+                                <tbody>
+                                    <!-- Virtual scrolling spacer top -->
+                                    <tr 
+                                        t-attf-style="height: #{state.visibleStartIndex * state.rowHeight}px">
+                                        <td colspan="11"></td>
+                                    </tr>
+                                    
+                                    <!-- Filas visibles -->
+                                    <t t-foreach="state.displayedData" t-as="line" t-key="line.account_id">
+                                        <tr t-att-class="getRowClass(line)">
+                                            <td>
+                                                <input type="checkbox" 
+                                                       class="form-check-input"
+                                                       t-att-checked="state.selectedAccounts.has(line.account_id)"
+                                                       t-on-change="() => toggleAccountSelection(line.account_id)"/>
+                                            </td>
+                                            <td>
+                                                <t >
+                                                    <i t-attf-class="fa fa-chevron-#{state.expandedAccounts.has(line.account_id) ? 'down' : 'right'} me-1"
+                                                       style="cursor: pointer;"
+                                                       t-on-click="() => toggleAccountExpansion(line.account_id)"/>
+                                                </t>
+                                                <a href="#" class="text-decoration-none"
+                                                   t-on-click.prevent="() => onAccountClick(line.account_id)">
+                                                    <t />
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <span t-attf-class="ps-#{line.level * 3}">
+                                                    <t />
+                                                </span>
+                                            </td>
+                                            
+                                            <!-- Sumas -->
+                                            <td class="text-end">
+                                                <t  />
+                                            </td>
+                                            <td class="text-end">
+                                                <t  />
+                                            </td>
+                                            
+                                            <!-- Saldos -->
+                                            <td class="text-end">
+                                                <t  />
+                                            </td>
+                                            <td class="text-end">
+                                                <t  />
+                                            </td>
+                                            
+                                            <!-- Inventario -->
+                                            <td class="text-end">
+                                                <t  />
+                                            </td>
+                                            <td class="text-end">
+                                                <t  />
+                                            </td>
+                                            
+                                            <!-- Resultado -->
+                                            <td class="text-end">
+                                                <t  />
+                                            </td>
+                                            <td class="text-end">
+                                                <t  />
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    
+                                    <!-- Virtual scrolling spacer bottom -->
+                                    <tr 
+                                        t-attf-style="height: #{(state.filteredData.length - state.visibleEndIndex) * state.rowHeight}px">
+                                        <td colspan="11"></td>
+                                    </tr>
+                                </tbody>
+                                
+                                <!-- Totales -->
+                                <tfoot class="sticky-bottom bg-white border-top">
+                                    <tr class="fw-bold">
+                                        <td colspan="3">TOTALES</td>
+                                        
+                                        <!-- Sumas -->
+                                        <td class="text-end">
+                                            <t />
+                                        </td>
+                                        <td class="text-end">
+                                            <t />
+                                        </td>
+                                        
+                                        <!-- Saldos -->
+                                        <td class="text-end">
+                                            <t />
+                                        </td>
+                                        <td class="text-end">
+                                            <t />
+                                        </td>
+                                        
+                                        <!-- Inventario -->
+                                        <td class="text-end">
+                                            <t />
+                                        </td>
+                                        <td class="text-end">
+                                            <t />
+                                        </td>
+                                        
+                                        <!-- Resultado -->
+                                        <td class="text-end">
+                                            <t />
+                                        </td>
+                                        <td class="text-end">
+                                            <t />
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </t>
+                </div>
+            </t>
+            
+            <!-- Vista de Gráfico -->
+            <t >
+                <div class="balance-chart-container flex-grow-1 p-4">
+                    <div class="row h-100">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Composición del Balance</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="balanceCompositionChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Validación de Cuadratura</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row text-center">
+                                        <div class="col-6 mb-3">
+                                            <h6>Débitos vs Créditos</h6>
+                                            <div t-attf-class="text-#{state.totals.debit === state.totals.credit ? 'success' : 'danger'}">
+                                                <i t-attf-class="fa fa-#{state.totals.debit === state.totals.credit ? 'check-circle' : 'times-circle'} fa-3x"/>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 mb-3">
+                                            <h6>Deudor vs Acreedor</h6>
+                                            <div t-attf-class="text-#{state.totals.debitBalance === state.totals.creditBalance ? 'success' : 'danger'}">
+                                                <i t-attf-class="fa fa-#{state.totals.debitBalance === state.totals.creditBalance ? 'check-circle' : 'times-circle'} fa-3x"/>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <h6>Activo vs Pasivo + Patrimonio</h6>
+                                            <div t-attf-class="text-#{state.isBalanced ? 'success' : 'danger'}">
+                                                <i t-attf-class="fa fa-#{state.isBalanced ? 'check-circle' : 'times-circle'} fa-3x"/>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <h6>Resultado</h6>
+                                            <div class="h4">
+                                                <t />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>

@@ -1,0 +1,104 @@
+{
+  "model": "sonnet",
+  "thinking": {
+    "enabled": true,
+    "defaultMode": "auto"
+  },
+  "permissions": {
+    "allow": [
+      "Read(//Users/pedro/Documents/odoo19/**)",
+      "Write(//Users/pedro/Documents/odoo19/**)",
+      "Edit(//Users/pedro/Documents/odoo19/**)",
+      "Glob",
+      "Grep",
+      "Bash(docker-compose:*)",
+      "Bash(docker:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(pytest:*)",
+      "Bash(git:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(awk:*)",
+      "Bash(echo:*)",
+      "Bash(pip3:*)",
+      "Bash(npm:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(lsof:*)",
+      "WebFetch(domain:www.odoo.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.sii.cl)",
+      "WebFetch(domain:zeus.sii.cl)",
+      "WebFetch(domain:palena.sii.cl)",
+      "WebFetch(domain:www.anthropic.com)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:es.wikipedia.org)",
+      "WebFetch(domain:www.bcn.cl)",
+      "WebSearch"
+    ],
+    "deny": [
+      "Bash(rm -rf /:*)",
+      "Bash(rm -rf ~:*)",
+      "Bash(rm -rf *:*)",
+      "Bash(docker system prune:*)",
+      "Bash(docker volume rm:*)",
+      "Bash(dropdb:*)",
+      "Bash(psql -c DROP:*)"
+    ],
+    "ask": []
+  },
+  "bash": {
+    "defaultTimeoutMs": 120000,
+    "maxTimeoutMs": 600000,
+    "maintainProjectWorkingDir": true
+  },
+  "autoCompact": {
+    "enabled": true,
+    "threshold": 0.8
+  },
+  "spinnerTipsEnabled": true,
+  "verbose": false,
+  "ignorePatterns": [
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "**/*.pyo",
+    "**/.git/**",
+    "**/node_modules/**",
+    "**/.venv/**",
+    "**/venv/**",
+    "**/.pytest_cache/**",
+    "**/.coverage",
+    "**/htmlcov/**",
+    "**/*.egg-info/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.DS_Store",
+    "**/filestore/**",
+    "**/sessions/**",
+    "**/*.log"
+  ],
+  "hooks": {
+    "PreToolUse": {
+      "command": "python3 .claude/hooks/pre_tool_use.py",
+      "timeout": 5000
+    },
+    "PostToolUse": {
+      "command": "python3 .claude/hooks/post_tool_use.py",
+      "timeout": 5000
+    },
+    "SessionStart": {
+      "command": "bash .claude/hooks/session_start.sh",
+      "timeout": 10000
+    },
+    "PreCompact": {
+      "command": "python3 .claude/hooks/pre_compact.py",
+      "timeout": 5000
+    }
+  }
+}

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- TOPES LEGALES APV 2025 -->
+        <!-- Vigentes desde enero 2025 -->
+        <!-- Fuente: Superintendencia de Pensiones -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        
+        <!-- APV - Tope Mensual (50 UF) -->
+        <record id="legal_cap_apv_monthly_2025" model="l10n_cl.legal.caps">
+            <field name="code">APV_CAP_MONTHLY</field>
+            <field name="amount">50.0</field>
+            <field name="unit">uf</field>
+            <field name="valid_from">2025-01-01</field>
+            <field name="valid_until" eval="False"/>
+        </record>
+        
+        <!-- APV - Tope Anual (600 UF) -->
+        <record id="legal_cap_apv_annual_2025" model="l10n_cl.legal.caps">
+            <field name="code">APV_CAP_ANNUAL</field>
+            <field name="amount">600.0</field>
+            <field name="unit">uf</field>
+            <field name="valid_from">2025-01-01</field>
+            <field name="valid_until" eval="False"/>
+        </record>
+        
+        <!-- AFC - Tope Imponible (120.2 UF) -->
+        <record id="legal_cap_afc_2025" model="l10n_cl.legal.caps">
+            <field name="code">AFC_CAP</field>
+            <field name="amount">120.2</field>
+            <field name="unit">uf</field>
+            <field name="valid_from">2025-01-01</field>
+            <field name="valid_until" eval="False"/>
+        </record>
+        
+        <!-- Gratificación - Tope Legal (4.75 IMM) -->
+        <record id="legal_cap_gratification_2025" model="l10n_cl.legal.caps">
+            <field name="code">GRATIFICATION_CAP</field>
+            <field name="amount">4.75</field>
+            <field name="unit">utm</field>
+            <field name="valid_from">2025-01-01</field>
+            <field name="valid_until" eval="False"/>
+        </record>
+        
+        <!-- AFP - Tope Imponible (83.1 UF) -->
+        <!-- Ley 20.255 Art. 17 - Vigencia 2025 -->
+        <!-- Fuente: Superintendencia de Pensiones 2025 -->
+        <record id="legal_cap_afp_imponible_2025" model="l10n_cl.legal.caps">
+            <field name="code">AFP_IMPONIBLE_CAP</field>
+            <field name="amount">83.1</field>
+            <field name="unit">uf</field>
+            <field name="valid_from">2025-01-01</field>
+            <field name="valid_until" eval="False"/>
+        </record>
+        
+    </data>
+</odoo>
