@@ -170,12 +170,15 @@ class XMLSigner:
                 cert_file.flush()
                 cert_path = cert_file.name
 
-                # Write XML to temp file
-                xml_file.write(xml_string)
+                # Validate XML first (blocks XXE)
+                validated_tree = fromstring_safe(xml_string)
+
+                # Write validated XML to temp file
+                xml_file.write(etree.tostring(validated_tree, encoding='ISO-8859-1').decode('ISO-8859-1'))
                 xml_file.flush()
                 xml_path = xml_file.name
 
-                # Load XML
+                # Load XML (now safe - validated content)
                 xml_tree = etree.parse(xml_path)
                 xml_root = xml_tree.getroot()
 
@@ -413,11 +416,15 @@ class XMLSigner:
                 cert_file.flush()
                 cert_path = cert_file.name
 
-                xml_file.write(xml_string)
+                # Validate XML first (blocks XXE)
+                validated_tree = fromstring_safe(xml_string)
+
+                # Write validated XML to temp file
+                xml_file.write(etree.tostring(validated_tree, encoding='ISO-8859-1').decode('ISO-8859-1'))
                 xml_file.flush()
                 xml_path = xml_file.name
 
-                # Parse XML
+                # Parse XML (now safe - validated content)
                 xml_tree = etree.parse(xml_path)
                 xml_root = xml_tree.getroot()
 

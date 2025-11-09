@@ -23,7 +23,7 @@ License: LGPL-3
 from lxml import etree
 import logging
 import os
-from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
+from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe, parse_safe
 
 _logger = logging.getLogger(__name__)
 
@@ -84,9 +84,9 @@ class XSDValidator:
                 _logger.error(f"[XSD] ❌ {error_msg}")
                 return (False, error_msg)
 
-            # Parse XSD
+            # Parse XSD (defense-in-depth: use safe parser even for local files)
             with open(xsd_path, 'rb') as xsd_file:
-                xsd_doc = etree.parse(xsd_file)
+                xsd_doc = parse_safe(xsd_file)
                 xsd_schema = etree.XMLSchema(xsd_doc)
 
             # Parse XML
