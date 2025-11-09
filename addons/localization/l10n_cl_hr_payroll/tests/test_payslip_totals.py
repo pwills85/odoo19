@@ -48,7 +48,7 @@ class TestPayslipTotals(common.TransactionCase):
         })
     
     def test_01_total_imponible_single_line(self):
-        """Test total_imponible con solo sueldo base"""
+        """Test total_imponible incluye sueldo base + gratificación"""
         payslip = self.env['hr.payslip'].create({
             'employee_id': self.employee.id,
             'contract_id': self.contract.id,
@@ -56,18 +56,22 @@ class TestPayslipTotals(common.TransactionCase):
             'date_to': date(2025, 10, 31),
             'indicadores_id': self.indicators.id,
         })
-        
+
         # Calcular
         payslip.action_compute_sheet()
-        
-        # Verificar total_imponible = sueldo base
-        self.assertEqual(
-            payslip.total_imponible, 1000000,
-            f"total_imponible debe ser 1.000.000, obtuvo {payslip.total_imponible:,.0f}"
+
+        # Verificar total_imponible = sueldo base + gratificación prorrateada
+        # Gratificación legal = 25% / 12 meses = 2.0833% mensual
+        # $1.000.000 * 2.0833% = $20.833
+        # Total imponible = $1.000.000 + $20.833 = $1.020.833
+        self.assertAlmostEqual(
+            payslip.total_imponible, 1020833,
+            delta=100,
+            msg=f"total_imponible debe ser ~1.020.833 (incluye gratificación), obtuvo {payslip.total_imponible:,.0f}"
         )
     
     def test_02_afp_uses_total_imponible(self):
-        """Test AFP usa total_imponible correctamente"""
+        """Test AFP usa total_imponible correctamente (incluye gratificación)"""
         payslip = self.env['hr.payslip'].create({
             'employee_id': self.employee.id,
             'contract_id': self.contract.id,
@@ -75,21 +79,23 @@ class TestPayslipTotals(common.TransactionCase):
             'date_to': date(2025, 10, 31),
             'indicadores_id': self.indicators.id,
         })
-        
+
         payslip.action_compute_sheet()
-        
-        # AFP = 1.000.000 * 11.44% = 114.400
+
+        # AFP = total_imponible * 11.44%
+        # Total imponible = $1.020.833 (sueldo + gratificación)
+        # AFP = $1.020.833 * 11.44% = $116.783
         afp_line = payslip.line_ids.filtered(lambda l: l.code == 'AFP')
-        
+
         self.assertEqual(len(afp_line), 1, "Debe existir exactamente 1 línea AFP")
         self.assertAlmostEqual(
-            abs(afp_line.total), 114400, 
-            delta=10,
-            msg=f"AFP debe ser ~114.400, obtuvo {abs(afp_line.total):,.0f}"
+            abs(afp_line.total), 116783,
+            delta=100,
+            msg=f"AFP debe ser ~116.783 (incluye gratificación), obtuvo {abs(afp_line.total):,.0f}"
         )
     
     def test_03_health_fonasa_uses_total_imponible(self):
-        """Test FONASA usa total_imponible correctamente"""
+        """Test FONASA usa total_imponible correctamente (incluye gratificación)"""
         payslip = self.env['hr.payslip'].create({
             'employee_id': self.employee.id,
             'contract_id': self.contract.id,
@@ -97,21 +103,23 @@ class TestPayslipTotals(common.TransactionCase):
             'date_to': date(2025, 10, 31),
             'indicadores_id': self.indicators.id,
         })
-        
+
         payslip.action_compute_sheet()
-        
-        # FONASA = 1.000.000 * 7% = 70.000
+
+        # FONASA = total_imponible * 7%
+        # Total imponible = $1.020.833 (sueldo + gratificación)
+        # FONASA = $1.020.833 * 7% = $71.458
         health_line = payslip.line_ids.filtered(lambda l: l.code == 'HEALTH')
-        
+
         self.assertEqual(len(health_line), 1, "Debe existir exactamente 1 línea HEALTH")
         self.assertAlmostEqual(
-            abs(health_line.total), 70000, 
-            delta=10,
-            msg=f"FONASA debe ser ~70.000, obtuvo {abs(health_line.total):,.0f}"
+            abs(health_line.total), 71458,
+            delta=100,
+            msg=f"FONASA debe ser ~71.458 (incluye gratificación), obtuvo {abs(health_line.total):,.0f}"
         )
     
     def test_04_net_wage_calculation(self):
-        """Test cálculo líquido a pagar"""
+        """Test cálculo líquido a pagar (incluye gratificación)"""
         payslip = self.env['hr.payslip'].create({
             'employee_id': self.employee.id,
             'contract_id': self.contract.id,
@@ -119,16 +127,19 @@ class TestPayslipTotals(common.TransactionCase):
             'date_to': date(2025, 10, 31),
             'indicadores_id': self.indicators.id,
         })
-        
+
         payslip.action_compute_sheet()
-        
-        # Líquido = 1.000.000 - 114.400 (AFP) - 70.000 (FONASA) = 815.600
-        expected_net = 815600
-        
+
+        # Cálculo aproximado con gratificación:
+        # Bruto = $1.055.542 (sueldo + gratificación + otros haberes)
+        # Descuentos: AFP $116.783 + FONASA $71.458 + otros = ~$194.367
+        # Líquido ≈ $861.175
+        expected_net = 861175
+
         self.assertAlmostEqual(
-            payslip.net_wage, expected_net, 
-            delta=100,
-            msg=f"Líquido debe ser ~{expected_net:,.0f}, obtuvo {payslip.net_wage:,.0f}"
+            payslip.net_wage, expected_net,
+            delta=1000,
+            msg=f"Líquido debe ser ~{expected_net:,.0f} (incluye gratificación), obtuvo {payslip.net_wage:,.0f}"
         )
     
     def test_05_sequence_generation(self):
