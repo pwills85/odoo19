@@ -297,10 +297,11 @@ class TestLey21735ReformaPensiones(TransactionCase):
         ])
         existing_contracts.write({'state': 'cancel'})
 
+        # Crear contrato con wage=0 para que employer_total_ley21735 sea 0
         contract = self.env['hr.contract'].create({
             'name': 'Contrato Test Validación',
             'employee_id': self.employee.id,
-            'wage': 1000000,
+            'wage': 0,  # wage=0 produce aporte=0 naturalmente
             'date_start': date(2025, 8, 1),
             'state': 'open',
             'afp_id': self.afp.id,
@@ -322,16 +323,14 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'indicadores_id': indicator_agosto.id
         })
 
-        # Calcular primero para tener líneas válidas
+        # Calcular - debería producir employer_total_ley21735=0 porque wage=0
         payslip.compute_sheet()
 
-        # Forzar aplica_ley21735 = True pero total = 0 (simular bug)
-        payslip.write({
-            'aplica_ley21735': True,
-            'employer_total_ley21735': 0
-        })
+        # Verificar que aplica la ley pero con aporte=0
+        self.assertTrue(payslip.aplica_ley21735, "Debe aplicar Ley 21.735 (período válido)")
+        self.assertEqual(payslip.employer_total_ley21735, 0, "Aporte debe ser 0 con wage=0")
 
-        # Intentar confirmar (debe fallar)
+        # Intentar confirmar (debe fallar por validación)
         with self.assertRaises(ValidationError) as cm:
             payslip.action_done()
 

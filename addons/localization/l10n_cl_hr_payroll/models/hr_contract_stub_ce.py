@@ -204,11 +204,20 @@ class HrContract(models.Model):
 
     @api.constrains('wage')
     def _check_wage_positive(self):
-        """Validar sueldo positivo"""
+        """
+        Validar sueldo no negativo
+
+        Permite wage=0 para casos especiales:
+        - Contratos suspendidos
+        - Licencias sin goce de sueldo
+        - Contratos en trámite
+
+        Solo rechaza valores negativos
+        """
         for contract in self:
-            if contract.wage <= 0:
+            if contract.wage < 0:
                 raise ValidationError(
-                    _('El sueldo base debe ser mayor a cero.')
+                    _('El sueldo base no puede ser negativo.')
                 )
 
     @api.constrains('employee_id', 'date_start', 'date_end', 'state')
