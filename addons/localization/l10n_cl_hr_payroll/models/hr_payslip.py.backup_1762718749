@@ -322,33 +322,16 @@ class HrPayslip(models.Model):
         - total_gratificacion_base: Base gratificación (afecta_gratificacion=True)
         """
         for payslip in self:
-            # Lista de códigos de reglas totalizadoras a excluir del cálculo de totales
-            # Fix P0: Totalizadores estaban duplicando valores (Sprint Cierre Brechas 2025-11-09)
-            # Los totalizadores suman valores de otras líneas, no deben contarse nuevamente
-            TOTALIZER_CODES = [
-                'HABERES_IMPONIBLES',     # Suma de haberes imponibles
-                'TOTAL_IMPONIBLE',        # Total imponible para AFP/Salud
-                'TOPE_IMPONIBLE_UF',      # Tope imponible en UF
-                'BASE_TRIBUTABLE',        # Base para impuesto único
-                'BASE_IMPUESTO_UNICO',    # Base after deductions
-                'TOTAL_HABERES',          # Total de todos los haberes
-                'TOTAL_DESCUENTOS',       # Total de todos los descuentos
-                'NET',                    # Líquido a pagar
-            ]
             # Sueldo base
             basic_lines = payslip.line_ids.filtered(lambda l: l.code == 'BASIC')
             payslip.basic_wage = sum(basic_lines.mapped('total'))
             
-            # Total haberes (positivos) - EXCLUIR TOTALIZADORES
-            haber_lines = payslip.line_ids.filtered(
-                lambda l: l.total > 0 and l.code not in TOTALIZER_CODES
-            )
+            # Total haberes (positivos)
+            haber_lines = payslip.line_ids.filtered(lambda l: l.total > 0)
             payslip.gross_wage = sum(haber_lines.mapped('total'))
             
-            # Total descuentos (negativos) - EXCLUIR TOTALIZADORES
-            deduction_lines = payslip.line_ids.filtered(
-                lambda l: l.total < 0 and l.code not in TOTALIZER_CODES
-            )
+            # Total descuentos (negativos)
+            deduction_lines = payslip.line_ids.filtered(lambda l: l.total < 0)
             payslip.total_deductions = abs(sum(deduction_lines.mapped('total')))
             
             # Líquido
@@ -381,9 +364,12 @@ class HrPayslip(models.Model):
                 lambda l: l.category_id and l.category_id.code == 'LEGAL'
             )
             payslip.total_descuentos_legales = abs(sum(legal_lines.mapped('total')))
-            # REMOVED: Código buggy que sobreescribía basic_wage con primera línea de haber
-            # Fix P0: basic_wage ya está calculado correctamente arriba con líneas BASIC
-            # No debe sobreescribirse con haber_lines[0] que puede ser cualquier línea
+            
+            # Sueldo base (primera línea de haberes o del contrato)
+            if haber_lines:
+                payslip.basic_wage = haber_lines[0].total
+            else:
+                payslip.basic_wage = payslip.contract_id.wage if payslip.contract_id else 0.0
 
     # ═══════════════════════════════════════════════════════════
     # MÉTODOS HELPERS PARA MOTOR DE REGLAS

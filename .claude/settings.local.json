@@ -84,7 +84,18 @@
       "Bash(evidencias/checkpoint_inicial_real.log)",
       "Bash(evidencias/task_1.1_after.log)",
       "Bash(evidencias/checkpoint_task_1.2_complete.log)",
-      "Bash(evidencias/task_1.2_complete_summary.txt)"
+      "Bash(evidencias/task_1.2_complete_summary.txt)",
+      "WebFetch(domain:www.dt.gob.cl)",
+      "WebFetch(domain:www.spensiones.cl)",
+      "WebFetch(domain:www.afc.cl)",
+      "WebFetch(domain:www.sii.cl)",
+      "Bash(git checkout:*)",
+      "Bash(python -m py_compile:*)",
+      "Bash(git reset:*)",
+      "Bash(test:*)",
+      "Bash(python -m pytest tests/ -v --tb=short)",
+      "Bash(docker compose ps:*)",
+      "Bash(cp:*)"
     ],
     "deny": [],
     "ask": []
