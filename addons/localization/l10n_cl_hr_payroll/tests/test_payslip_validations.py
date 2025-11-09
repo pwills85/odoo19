@@ -56,7 +56,8 @@ class TestPayslipValidations(TransactionCase):
             'period': date(2025, 1, 1),
             'uf': 37500.00,
             'utm': 65000.00,
-            'uta': 780000.00
+            'uta': 780000.00,
+            'minimum_wage': 500000.00
         })
 
         # Contrato 2025 (con reforma)
@@ -155,6 +156,7 @@ class TestPayslipValidations(TransactionCase):
         })
 
         contract_sin_rut = self.env['hr.contract'].create({
+            'name': 'Contract Sin RUT',
             'employee_id': empleado_sin_rut.id,
             'wage': 1000000,
             'date_start': date(2025, 1, 1),
@@ -191,6 +193,7 @@ class TestPayslipValidations(TransactionCase):
         AFP es obligatoria para calcular cotizaciones.
         """
         contract_sin_afp = self.env['hr.contract'].create({
+            'name': 'Contract Sin AFP',
             'employee_id': self.employee.id,
             'wage': 1000000,
             'date_start': date(2025, 1, 1),
@@ -263,6 +266,7 @@ class TestPayslipValidations(TransactionCase):
         """
         # Crear contrato 2024
         contract_2024 = self.env['hr.contract'].create({
+            'name': 'Contract 2024',
             'employee_id': self.employee.id,
             'wage': 1000000,
             'date_start': date(2024, 6, 1),  # Pre-2025
@@ -311,6 +315,7 @@ class TestPayslipValidations(TransactionCase):
         })
 
         contract_errores = self.env['hr.contract'].create({
+            'name': 'Contract Multi Errors',
             'employee_id': empleado_sin_rut.id,
             'wage': 1000000,
             'date_start': date(2025, 1, 1),

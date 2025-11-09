@@ -29,8 +29,8 @@ echo ""
 ERRORS=0
 echo "🔍 Validando campos contra modelo..."
 for field in $VIEW_FIELDS; do
-    # Saltar campos que son del stub base
-    if [[ "$field" =~ ^(employee_id|contract_type_id|date_start|date_end|currency_id|company_id)$ ]]; then
+    # Saltar campos que son del stub base o genéricos
+    if [[ "$field" =~ ^(employee_id|contract_type_id|date_start|date_end|currency_id|company_id|name|state)$ ]]; then
         echo "✅ Campo '$field' (stub base, skip validation)"
         continue
     fi

@@ -38,6 +38,7 @@ class TestLREGeneration(TransactionCase):
             'uf': 37800.00,
             'utm': 65967.00,
             'uta': 791604.00,
+            'minimum_wage': 500000.00,
         })
         
         # Empleados

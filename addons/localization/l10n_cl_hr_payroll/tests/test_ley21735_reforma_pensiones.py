@@ -33,7 +33,9 @@ class TestLey21735ReformaPensiones(TransactionCase):
         # AFP (para otros cálculos)
         self.afp = self.env['hr.afp'].create({
             'name': 'AFP Cuprum',
-            'rate': 11.44
+            'code': 'CUPRUM',
+            'rate': 11.44,
+            'sis_rate': 1.57
         })
 
     # ===== VIGENCIA LEY 21.735 =====

@@ -36,7 +36,8 @@ class TestPayrollCalculationsSprint32(TransactionCase):
             'period': date(2025, 10, 1),
             'uf': 39383.07,
             'utm': 68647,
-            'minimum_wage': 500000,
+            'uta': 823764.00,
+            'minimum_wage': 500000.00,
             'afp_limit': 87.8,
         })
         

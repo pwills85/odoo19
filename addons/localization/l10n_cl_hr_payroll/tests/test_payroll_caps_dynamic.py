@@ -64,8 +64,9 @@ class TestPayrollCapsDynamic(TransactionCase):
             'uf': 37800.00,
             'utm': 65967.00,
             'uta': 791604.00,
+            'minimum_wage': 500000.00,
         })
-        
+
         # Create economic indicators for Jul 2025
         cls.indicators_jul = cls.env['hr.economic.indicators'].create({
             'month': 7,
@@ -73,6 +74,7 @@ class TestPayrollCapsDynamic(TransactionCase):
             'uf': 38200.00,
             'utm': 66500.00,
             'uta': 798000.00,
+            'minimum_wage': 500000.00,
         })
         
         # Create payroll structure

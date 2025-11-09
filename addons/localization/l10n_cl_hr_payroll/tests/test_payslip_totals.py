@@ -43,7 +43,7 @@ class TestPayslipTotals(common.TransactionCase):
             'uf': 39383.07,
             'utm': 68647,
             'uta': 823764,
-            'minimum_wage': 500000,
+            'minimum_wage': 500000.00,
             'afp_limit': 87.8,
         })
     

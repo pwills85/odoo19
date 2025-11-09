@@ -155,33 +155,29 @@
     
     <!-- ═══════════════════════════════════════════════════════════ -->
     <!-- VISTA SEARCH: hr.payslip -->
+    <!-- NOTA: Vista search deshabilitada debido a incompatibilidad con Odoo 19 -->
+    <!-- TODO: Investigar y corregir en SPRINT 2 -->
     <!-- ═══════════════════════════════════════════════════════════ -->
-    
+
+    <!--
     <record id="view_hr_payslip_search" model="ir.ui.view">
         <field name="name">hr.payslip.search</field>
         <field name="model">hr.payslip</field>
         <field name="arch" type="xml">
             <search string="Buscar Liquidaciones">
-                <field name="number" string="Número"/>
-                <field name="employee_id" string="Empleado"/>
-                <field name="date_from" string="Período"/>
-                <separator/>
+                <field name="number"/>
+                <field name="employee_id"/>
+                <field name="date_from"/>
                 <filter string="Borrador" name="draft" domain="[('state', '=', 'draft')]"/>
-                <filter string="En Revisión" name="verify" domain="[('state', '=', 'verify')]"/>
                 <filter string="Pagadas" name="done" domain="[('state', '=', 'done')]"/>
-                <separator/>
-                <filter string="Mes Actual" name="current_month" 
-                        domain="[('date_from', '&gt;=', (context_today() - relativedelta(day=1)).strftime('%Y-%m-%d')),
-                                 ('date_from', '&lt;=', (context_today() + relativedelta(day=31)).strftime('%Y-%m-%d'))]"/>
-                <separator/>
-                <group expand="0" string="Agrupar Por">
+                <group string="Agrupar Por">
                     <filter string="Empleado" name="group_employee" context="{'group_by': 'employee_id'}"/>
                     <filter string="Estado" name="group_state" context="{'group_by': 'state'}"/>
-                    <filter string="Período" name="group_period" context="{'group_by': 'date_from'}"/>
                 </group>
             </search>
         </field>
     </record>
+    -->
     
     <!-- ═══════════════════════════════════════════════════════════ -->
     <!-- ACTION: hr.payslip -->
@@ -191,8 +187,6 @@
         <field name="name">Liquidaciones</field>
         <field name="res_model">hr.payslip</field>
         <field name="view_mode">tree,form</field>
-        <field name="search_view_id" ref="view_hr_payslip_search"/>
-        <field name="context">{'search_default_current_month': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Crear nueva liquidación de sueldo
