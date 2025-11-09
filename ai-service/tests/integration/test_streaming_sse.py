@@ -142,9 +142,7 @@ class TestStreamingSSEIntegration:
 
             with patch("main.get_chat_engine") as mock_get_engine:
                 mock_engine = MagicMock()
-                mock_engine.send_message_stream = AsyncMock(
-                    return_value=mock_stream_generator()
-                )
+                mock_engine.send_message_stream = mock_stream_generator
                 mock_get_engine.return_value = mock_engine
 
                 response = await self._make_streaming_request(
@@ -180,7 +178,7 @@ class TestStreamingSSEIntegration:
             session_id = str(uuid.uuid4())
 
             # Mock progressive token generation
-            async def mock_progressive_stream():
+            async def mock_progressive_stream(session_id, user_message, user_context=None):
                 """Yield tokens one by one."""
                 tokens = ["Primero", " necesitas", " crear", " un", " DTE", " 33"]
                 for token in tokens:
@@ -198,9 +196,7 @@ class TestStreamingSSEIntegration:
 
             with patch("main.get_chat_engine") as mock_get_engine:
                 mock_engine = MagicMock()
-                mock_engine.send_message_stream = AsyncMock(
-                    return_value=mock_progressive_stream()
-                )
+                mock_engine.send_message_stream = mock_progressive_stream
                 mock_get_engine.return_value = mock_engine
 
                 response = await self._make_streaming_request(
@@ -246,9 +242,7 @@ class TestStreamingSSEIntegration:
 
             with patch("main.get_chat_engine") as mock_get_engine:
                 mock_engine = MagicMock()
-                mock_engine.send_message_stream = AsyncMock(
-                    return_value=mock_error_stream()
-                )
+                mock_engine.send_message_stream = mock_error_stream
                 mock_get_engine.return_value = mock_engine
 
                 response = await self._make_streaming_request(
@@ -281,7 +275,7 @@ class TestStreamingSSEIntegration:
             session_id = str(uuid.uuid4())
 
             # Mock complete stream with done event
-            async def mock_complete_stream():
+            async def mock_complete_stream(session_id_param, user_message, user_context=None):
                 """Complete stream with done event."""
                 yield {"type": "text", "content": "Respuesta completa"}
                 yield {
@@ -301,9 +295,7 @@ class TestStreamingSSEIntegration:
 
             with patch("main.get_chat_engine") as mock_get_engine:
                 mock_engine = MagicMock()
-                mock_engine.send_message_stream = AsyncMock(
-                    return_value=mock_complete_stream()
-                )
+                mock_engine.send_message_stream = mock_complete_stream
                 mock_get_engine.return_value = mock_engine
 
                 response = await self._make_streaming_request(
@@ -429,9 +421,7 @@ class TestStreamingSSEIntegration:
 
             with patch("main.get_chat_engine") as mock_get_engine:
                 mock_engine = MagicMock()
-                mock_engine.send_message_stream = AsyncMock(
-                    return_value=mock_kb_stream()
-                )
+                mock_engine.send_message_stream = mock_kb_stream
                 mock_get_engine.return_value = mock_engine
 
                 response = await self._make_streaming_request(
@@ -486,9 +476,7 @@ class TestStreamingSSEIntegration:
 
             with patch("main.get_chat_engine") as mock_get_engine:
                 mock_engine = MagicMock()
-                mock_engine.send_message_stream = AsyncMock(
-                    return_value=mock_cached_stream()
-                )
+                mock_engine.send_message_stream = mock_cached_stream
                 mock_get_engine.return_value = mock_engine
 
                 response = await self._make_streaming_request(
@@ -524,7 +512,7 @@ class TestStreamingSSEIntegration:
             session_id = str(uuid.uuid4())
 
             # Mock empty stream
-            async def mock_empty_stream():
+            async def mock_empty_stream(session_id_param, user_message, user_context=None):
                 """Empty stream."""
                 yield {
                     "type": "done",
@@ -538,9 +526,7 @@ class TestStreamingSSEIntegration:
 
             with patch("main.get_chat_engine") as mock_get_engine:
                 mock_engine = MagicMock()
-                mock_engine.send_message_stream = AsyncMock(
-                    return_value=mock_empty_stream()
-                )
+                mock_engine.send_message_stream = mock_empty_stream
                 mock_get_engine.return_value = mock_engine
 
                 response = await self._make_streaming_request(
@@ -570,7 +556,7 @@ class TestStreamingSSEIntegration:
             session_id = str(uuid.uuid4())
 
             # Mock large response
-            async def mock_large_stream():
+            async def mock_large_stream(session_id_param, user_message, user_context=None):
                 """Large streaming response."""
                 # Simulate 100 chunks
                 for i in range(100):
@@ -588,9 +574,7 @@ class TestStreamingSSEIntegration:
 
             with patch("main.get_chat_engine") as mock_get_engine:
                 mock_engine = MagicMock()
-                mock_engine.send_message_stream = AsyncMock(
-                    return_value=mock_large_stream()
-                )
+                mock_engine.send_message_stream = mock_large_stream
                 mock_get_engine.return_value = mock_engine
 
                 response = await self._make_streaming_request(
@@ -631,9 +615,7 @@ class TestStreamingSSEIntegration:
 
             with patch("main.get_chat_engine") as mock_get_engine:
                 mock_engine = MagicMock()
-                mock_engine.send_message_stream = AsyncMock(
-                    return_value=mock_stream()
-                )
+                mock_engine.send_message_stream = mock_stream
                 mock_get_engine.return_value = mock_engine
 
                 # Make several rapid requests
