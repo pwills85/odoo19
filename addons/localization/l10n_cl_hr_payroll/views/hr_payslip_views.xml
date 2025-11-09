@@ -155,8 +155,9 @@
     
     <!-- ═══════════════════════════════════════════════════════════ -->
     <!-- VISTA SEARCH: hr.payslip -->
-    <!-- NOTA: Vista search deshabilitada debido a incompatibilidad con Odoo 19 -->
-    <!-- TODO: Investigar y corregir en SPRINT 2 -->
+    <!-- NOTA: Vista search deshabilitada - requiere investigación profunda -->
+    <!-- ERROR: RNG validation fails even with correct Odoo 19 syntax -->
+    <!-- TODO SPRINT 2: Investigar validación RNG y modelo hr.payslip -->
     <!-- ═══════════════════════════════════════════════════════════ -->
 
     <!--
@@ -164,13 +165,12 @@
         <field name="name">hr.payslip.search</field>
         <field name="model">hr.payslip</field>
         <field name="arch" type="xml">
-            <search string="Buscar Liquidaciones">
+            <search>
                 <field name="number"/>
                 <field name="employee_id"/>
-                <field name="date_from"/>
                 <filter string="Borrador" name="draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="Pagadas" name="done" domain="[('state', '=', 'done')]"/>
-                <group string="Agrupar Por">
+                <group expand="0" string="Group By">
                     <filter string="Empleado" name="group_employee" context="{'group_by': 'employee_id'}"/>
                     <filter string="Estado" name="group_state" context="{'group_by': 'state'}"/>
                 </group>
