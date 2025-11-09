@@ -1,0 +1,14 @@
+# SII Certificates - DO NOT COMMIT
+# Los certificados oficiales del SII deben descargarse localmente
+
+# Ignore all .pem files
+*.pem
+
+# Ignore all .cer files
+*.cer
+*.der
+
+# Keep directory structure
+!.gitkeep
+!README.md
+!.gitignore
