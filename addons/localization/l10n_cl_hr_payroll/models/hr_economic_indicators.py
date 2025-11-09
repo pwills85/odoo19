@@ -84,7 +84,21 @@ class HrEconomicIndicators(models.Model):
         string='Activo',
         default=True
     )
-    
+
+    # Currency field for Monetary fields in extensions
+    currency_id = fields.Many2one(
+        'res.currency',
+        string='Moneda',
+        default=lambda self: self.env.company.currency_id,
+        required=True
+    )
+    company_id = fields.Many2one(
+        'res.company',
+        string='Compañía',
+        default=lambda self: self.env.company,
+        required=True
+    )
+
     _sql_constraints = [
         ('period_unique', 'UNIQUE(period)', 'Ya existe un indicador para este período'),
     ]
@@ -303,8 +317,10 @@ class HrEconomicIndicators(models.Model):
                     
                     # Notificar a admin
                     self._notify_indicators_failure(year, month)
-                    
-                    raise
+
+                    # FAIL-SOFT: Return None instead of raising to avoid cron traceback
+                    # Admin notification sent above
+                    return False
     
     def _notify_indicators_failure(self, year, month):
         """

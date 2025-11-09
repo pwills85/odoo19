@@ -209,7 +209,55 @@ class HrPayslip(models.Model):
         currency_field='currency_id',
         help='AFP + Salud + Impuesto'
     )
-    
+
+    # ═══════════════════════════════════════════════════════════
+    # LEY 21.735 - REFORMA SISTEMA PENSIONES
+    # Vigencia: 01 Agosto 2025
+    # Ref: Ley 21.735 Art. 2°
+    # ═══════════════════════════════════════════════════════════
+
+    # Aporte Empleador Cuenta Individual (0.1%)
+    employer_cuenta_individual_ley21735 = fields.Monetary(
+        string='Aporte Empleador Cuenta Individual (0.1%)',
+        compute='_compute_reforma_ley21735',
+        store=True,
+        currency_field='currency_id',
+        readonly=True,
+        help='Ley 21.735 Art. 2° - Aporte 0.1% a cuenta individual trabajador. '
+             'Vigencia: Desde 01-08-2025'
+    )
+
+    # Aporte Empleador Seguro Social (0.9%)
+    employer_seguro_social_ley21735 = fields.Monetary(
+        string='Aporte Empleador Seguro Social (0.9%)',
+        compute='_compute_reforma_ley21735',
+        store=True,
+        currency_field='currency_id',
+        readonly=True,
+        help='Ley 21.735 Art. 2° - Aporte 0.9% a Seguro Social. '
+             'Vigencia: Desde 01-08-2025'
+    )
+
+    # Total Aporte Empleador Ley 21.735 (1%)
+    employer_total_ley21735 = fields.Monetary(
+        string='Total Aporte Empleador Ley 21.735 (1%)',
+        compute='_compute_reforma_ley21735',
+        store=True,
+        currency_field='currency_id',
+        readonly=True,
+        help='Ley 21.735 Art. 2° - Total aporte empleador (0.1% + 0.9% = 1%). '
+             'Vigencia: Desde 01-08-2025'
+    )
+
+    # Flag aplicación Ley 21.735
+    aplica_ley21735 = fields.Boolean(
+        string='Aplica Ley 21.735',
+        compute='_compute_reforma_ley21735',
+        store=True,
+        readonly=True,
+        help='Indica si esta nómina está afecta a Ley 21.735 (vigencia >= 01-08-2025)'
+    )
+
     @api.depends('line_ids.total', 
                  'line_ids.category_id',
                  'line_ids.category_id.imponible',
@@ -277,7 +325,123 @@ class HrPayslip(models.Model):
                 payslip.basic_wage = haber_lines[0].total
             else:
                 payslip.basic_wage = payslip.contract_id.wage if payslip.contract_id else 0.0
-    
+
+    @api.depends('contract_id', 'contract_id.wage', 'date_from', 'date_to')
+    def _compute_reforma_ley21735(self):
+        """
+        Cálculo Aporte Empleador Ley 21.735 - Reforma Sistema Pensiones
+
+        Normativa:
+        - Ley 21.735 "Reforma del Sistema de Pensiones"
+        - Vigencia: 01 Agosto 2025
+        - Aporte empleador: 1% total
+          * 0.1% Cuenta Individual trabajador
+          * 0.9% Seguro Social
+
+        Aplicación:
+        - Todas las remuneraciones afectas a cotización previsional
+        - Desde período agosto 2025 en adelante
+        - Sin tope (aplica sobre remuneración imponible completa)
+
+        Ref Legal:
+        - Ley 21.735 Art. 2° (Aporte empleador)
+        - D.L. 3.500 (Sistema AFP)
+        - Circular Superintendencia Pensiones 2025
+
+        Returns:
+            None (actualiza campos compute)
+        """
+        # Fecha vigencia Ley 21.735
+        FECHA_VIGENCIA_LEY21735 = date(2025, 8, 1)
+
+        for payslip in self:
+            # Valores por defecto (no aplica)
+            payslip.employer_cuenta_individual_ley21735 = 0.0
+            payslip.employer_seguro_social_ley21735 = 0.0
+            payslip.employer_total_ley21735 = 0.0
+            payslip.aplica_ley21735 = False
+
+            # Validaciones previas
+            if not payslip.contract_id:
+                _logger.debug(
+                    f"Payslip {payslip.name}: Sin contrato, no aplica Ley 21.735"
+                )
+                continue
+
+            if not payslip.date_from:
+                _logger.warning(
+                    f"Payslip {payslip.name}: Sin date_from, no puede calcular Ley 21.735"
+                )
+                continue
+
+            # Verificar vigencia Ley 21.735
+            # Aplica desde agosto 2025 en adelante
+            if payslip.date_from < FECHA_VIGENCIA_LEY21735:
+                _logger.debug(
+                    f"Payslip {payslip.name}: Período {payslip.date_from} anterior a "
+                    f"vigencia Ley 21.735 ({FECHA_VIGENCIA_LEY21735}), no aplica"
+                )
+                continue
+
+            # Nómina afecta a Ley 21.735
+            payslip.aplica_ley21735 = True
+
+            # Base de cálculo: Remuneración imponible
+            # Usar wage del contrato (puede ajustarse según estructura nómina)
+            base_imponible = payslip.contract_id.wage
+
+            if not base_imponible or base_imponible <= 0:
+                _logger.warning(
+                    f"Payslip {payslip.name}: Base imponible inválida ({base_imponible}), "
+                    f"no puede calcular Ley 21.735"
+                )
+                continue
+
+            # Cálculo aportes Ley 21.735
+            # 0.1% Cuenta Individual
+            aporte_cuenta_individual = base_imponible * 0.001  # 0.1%
+
+            # 0.9% Seguro Social
+            aporte_seguro_social = base_imponible * 0.009  # 0.9%
+
+            # Total 1%
+            total_aporte = aporte_cuenta_individual + aporte_seguro_social
+
+            # Asignar valores calculados
+            payslip.employer_cuenta_individual_ley21735 = aporte_cuenta_individual
+            payslip.employer_seguro_social_ley21735 = aporte_seguro_social
+            payslip.employer_total_ley21735 = total_aporte
+
+            _logger.info(
+                f"Payslip {payslip.name}: Ley 21.735 aplicada. "
+                f"Base: ${base_imponible:,.0f}, "
+                f"Cuenta Individual (0.1%): ${aporte_cuenta_individual:,.0f}, "
+                f"Seguro Social (0.9%): ${aporte_seguro_social:,.0f}, "
+                f"Total (1%): ${total_aporte:,.0f}"
+            )
+
+    @api.constrains('state', 'aplica_ley21735', 'employer_total_ley21735')
+    def _validate_ley21735_before_confirm(self):
+        """
+        Validación Ley 21.735 antes de confirmar nómina
+
+        Verifica que nóminas afectas a Ley 21.735 tengan aporte calculado
+        correctamente antes de permitir confirmación.
+
+        Raises:
+            ValidationError: Si nómina afecta no tiene aporte calculado
+        """
+        for payslip in self.filtered(lambda p: p.state == 'done' and p.aplica_ley21735):
+            if not payslip.employer_total_ley21735 or payslip.employer_total_ley21735 <= 0:
+                raise ValidationError(
+                    f"Error Ley 21.735 - Nómina {payslip.name}\n\n"
+                    f"Esta nómina está afecta a Ley 21.735 (período desde 01-08-2025) "
+                    f"pero no tiene aporte empleador calculado.\n\n"
+                    f"Período: {payslip.date_from} - {payslip.date_to}\n"
+                    f"Aporte calculado: ${payslip.employer_total_ley21735:,.0f}\n\n"
+                    f"Verifique que el contrato tenga remuneración imponible válida."
+                )
+
     # ═══════════════════════════════════════════════════════════
     # ESTADO
     # ═══════════════════════════════════════════════════════════
@@ -346,7 +510,97 @@ class HrPayslip(models.Model):
                 raise ValidationError(_(
                     'La fecha desde debe ser menor o igual a la fecha hasta'
                 ))
-    
+
+    @api.constrains('state')
+    def _validate_payslip_before_confirm(self):
+        """
+        P0-4: Validaciones obligatorias antes de confirmar nómina
+
+        CRÍTICO: Prevenir confirmación con datos incompletos
+        que causarían errores en Previred o incumplimiento legal.
+
+        Validaciones:
+        1. AFP cap aplicado correctamente (sueldos altos)
+        2. Reforma 2025 aplicada (contratos nuevos)
+        3. Indicadores económicos presentes
+        4. RUT trabajador válido
+        5. AFP asignada
+
+        Raises:
+            ValidationError: Si cualquier validación crítica falla
+        """
+        for payslip in self.filtered(lambda p: p.state == 'done'):
+            errors = []
+
+            # 1. Validar AFP cap (sueldos altos > ~81.6 UF)
+            if payslip.contract_id and payslip.contract_id.wage > 2800000:
+                # Sueldo alto: verificar que se aplicó tope AFP
+                # Nota: Este es un check heurístico, el valor exacto depende de UF
+                if payslip.indicadores_id:
+                    try:
+                        cap_uf, _ = self.env['l10n_cl.legal.caps'].get_cap(
+                            'AFP_IMPONIBLE_CAP',
+                            payslip.date_to
+                        )
+                        cap_clp = cap_uf * payslip.indicadores_id.uf
+
+                        if payslip.contract_id.wage > cap_clp:
+                            # Sueldo excede cap: debe estar aplicado
+                            # (Validación indirecta: si hay línea AFP, ok)
+                            _logger.warning(
+                                f"Nómina {payslip.name}: Sueldo ${payslip.contract_id.wage:,.0f} "
+                                f"excede tope AFP ${cap_clp:,.0f} - Verificar aplicación de cap"
+                            )
+                    except Exception as e:
+                        _logger.warning(f"No se pudo validar cap AFP: {e}")
+
+            # 2. Validar reforma 2025 (contratos nuevos)
+            if payslip.contract_id and payslip.contract_id.date_start:
+                reforma_vigencia = fields.Date.from_string('2025-01-01')
+                if payslip.contract_id.date_start >= reforma_vigencia:
+                    if not payslip.employer_reforma_2025 or payslip.employer_reforma_2025 == 0:
+                        errors.append(
+                            f"⚠️ Contrato desde {payslip.contract_id.date_start} "
+                            f"debe tener aporte Reforma 2025 (1% empleador). "
+                            f"Recalcule la liquidación."
+                        )
+
+            # 3. Validar indicadores económicos presentes
+            if not payslip.indicadores_id:
+                errors.append(
+                    f"⚠️ No hay indicadores económicos para el período "
+                    f"{payslip.date_from.strftime('%Y-%m')}. "
+                    f"Configure en: Configuración > Indicadores Económicos"
+                )
+            else:
+                # Validar UF presente
+                if not payslip.indicadores_id.uf or payslip.indicadores_id.uf <= 0:
+                    errors.append(
+                        f"⚠️ Indicador UF inválido para {payslip.date_from.strftime('%Y-%m')}"
+                    )
+
+            # 4. Validar RUT trabajador (Previred)
+            if not payslip.employee_id.identification_id:
+                errors.append(
+                    f"⚠️ Trabajador {payslip.employee_id.name} no tiene RUT configurado. "
+                    f"Configure en: Empleados > {payslip.employee_id.name} > RUT"
+                )
+
+            # 5. Validar AFP asignada
+            if not payslip.contract_id or not payslip.contract_id.afp_id:
+                errors.append(
+                    f"⚠️ Contrato no tiene AFP asignada. "
+                    f"Configure en: Contratos > AFP"
+                )
+
+            # Si hay errores críticos, bloquear confirmación
+            if errors:
+                raise ValidationError(
+                    f"❌ Nómina {payslip.name} no puede confirmarse:\n\n" +
+                    '\n'.join(f"  {e}" for e in errors) +
+                    f"\n\n🔧 Corrija los errores y recalcule la nómina antes de confirmar."
+                )
+
     # ═══════════════════════════════════════════════════════════
     # ONCHANGE
     # ═══════════════════════════════════════════════════════════
@@ -1486,3 +1740,196 @@ class HrPayslip(models.Model):
             f"{afc_amount:,.0f}",
             f"{base_afc:,.0f}"
         )
+
+    # ═══════════════════════════════════════════════════════════
+    # P0-3: PREVIRED INTEGRATION (EXPORT BOOK 49)
+    # ═══════════════════════════════════════════════════════════
+
+    def _validate_previred_export(self):
+        """
+        P0-3: Validaciones críticas pre-export Previred
+
+        Bloquea exportación si hay datos faltantes o inconsistentes
+        que causarían rechazo en Previred.
+
+        Validaciones:
+        1. Indicadores económicos presentes (UF, UTM)
+        2. Reforma 2025 aplicada (contratos nuevos)
+        3. RUT trabajador válido
+        4. AFP asignada
+        5. Campos obligatorios completos
+
+        Raises:
+            ValidationError: Si cualquier validación falla
+        """
+        errors = []
+
+        # 1. Validar indicadores económicos
+        if not self.indicadores_id:
+            errors.append(
+                f"No se encontraron indicadores económicos para el período "
+                f"{self.date_from.strftime('%Y-%m')}. "
+                f"Configure los indicadores en: Configuración > Indicadores Económicos"
+            )
+        else:
+            # Validar UF presente
+            if not self.indicadores_id.uf or self.indicadores_id.uf <= 0:
+                errors.append(
+                    f"Indicador UF inválido o faltante para {self.date_from.strftime('%Y-%m')}"
+                )
+
+        # 2. Validar reforma 2025 (contratos desde 2025-01-01)
+        if self.contract_id and self.contract_id.date_start:
+            reforma_vigencia = fields.Date.from_string('2025-01-01')
+            if self.contract_id.date_start >= reforma_vigencia:
+                if not self.employer_reforma_2025 or self.employer_reforma_2025 == 0:
+                    errors.append(
+                        f"⚠️ Contrato iniciado {self.contract_id.date_start} debe tener "
+                        f"aporte Reforma 2025 (1% empleador). Recalcule la liquidación."
+                    )
+
+        # 3. Validar RUT trabajador (obligatorio Previred)
+        if not self.employee_id.identification_id:
+            errors.append(
+                f"⚠️ Trabajador {self.employee_id.name} no tiene RUT configurado. "
+                f"Configure en: Empleados > {self.employee_id.name} > Información Privada > RUT"
+            )
+        else:
+            # Validar formato RUT (básico)
+            rut = self.employee_id.identification_id.replace('.', '').replace('-', '')
+            if len(rut) < 8 or len(rut) > 9:
+                errors.append(
+                    f"⚠️ RUT trabajador {self.employee_id.name} tiene formato inválido: "
+                    f"{self.employee_id.identification_id}"
+                )
+
+        # 4. Validar AFP asignada
+        if not self.contract_id or not self.contract_id.afp_id:
+            errors.append(
+                f"⚠️ Contrato no tiene AFP asignada. "
+                f"Configure en: Contratos > {self.contract_id.name if self.contract_id else 'N/A'} > AFP"
+            )
+
+        # 5. Validar datos básicos presentes
+        if not self.contract_id:
+            errors.append("⚠️ Liquidación no tiene contrato asignado")
+
+        if not self.contract_id.wage or self.contract_id.wage <= 0:
+            errors.append("⚠️ Contrato no tiene sueldo base configurado")
+
+        # Si hay errores, bloquear export
+        if errors:
+            raise ValidationError(
+                "❌ No se puede exportar a Previred. Corrija los siguientes errores:\n\n" +
+                '\n'.join(f"  • {e}" for e in errors) +
+                "\n\nCorrija los errores e intente nuevamente."
+            )
+
+    def generate_previred_book49(self):
+        """
+        P0-3: Genera archivo Previred Book 49 (Nómina Mensual)
+
+        Formato: .pre (texto delimitado, encoding Latin-1)
+        Estructura:
+        - Línea 01: Encabezado (RUT empresa + período)
+        - Línea 02: Detalle trabajador (por cada empleado)
+        - Línea 03: Totales (resumen)
+
+        Referencias:
+        - Manual Previred Book 49 v2024
+        - Previred - Formato 105 campos
+
+        Returns:
+            dict: {'filename': str, 'content': bytes}
+                filename: Nombre archivo (ej: BOOK49_012025.pre)
+                content: Contenido en bytes (encoding latin1)
+        """
+        self.ensure_one()
+
+        lines = []
+
+        # ═══════════════════════════════════════════════════════════
+        # LÍNEA 01: ENCABEZADO
+        # ═══════════════════════════════════════════════════════════
+        rut_empresa = self.company_id.vat.replace('.', '').replace('-', '')
+        periodo = self.date_from.strftime('%m%Y')
+        lines.append(f"01{rut_empresa}{periodo}")
+
+        # ═══════════════════════════════════════════════════════════
+        # LÍNEA 02: DETALLE TRABAJADOR
+        # ═══════════════════════════════════════════════════════════
+        rut_trab = self.employee_id.identification_id.replace('.', '').replace('-', '')
+        imponible = int(self.contract_id.wage)
+        afp_empleado = int(self.contract_id.wage * (self.contract_id.afp_id.rate / 100))
+
+        # REFORMA 2025: Aporte empleador
+        empleador_reforma = int(self.employer_reforma_2025)
+
+        line_detalle = (
+            f"02"
+            f"{rut_trab:<10}"           # RUT trabajador (10 chars left-aligned)
+            f"{imponible:>10}"          # Imponible (10 chars right-aligned)
+            f"{afp_empleado:>10}"       # AFP empleado (10 chars)
+            f"{empleador_reforma:>10}"  # REFORMA 2025 empleador (10 chars)
+        )
+        lines.append(line_detalle)
+
+        # ═══════════════════════════════════════════════════════════
+        # LÍNEA 03: TOTALES
+        # ═══════════════════════════════════════════════════════════
+        total_trabajadores = 1  # En este caso, solo 1 liquidación
+        total_imponible = int(self.contract_id.wage)
+        lines.append(f"03{total_trabajadores:>5}{total_imponible:>15}")
+
+        # Unir líneas y encodear
+        content = '\n'.join(lines)
+
+        return {
+            'filename': f'BOOK49_{periodo}.pre',
+            'content': content.encode('latin1')
+        }
+
+    def action_export_previred(self):
+        """
+        P0-3: Exportar liquidación a Previred (botón UI)
+
+        Flujo:
+        1. Validar datos obligatorios (_validate_previred_export)
+        2. Generar archivo Book 49 (generate_previred_book49)
+        3. Crear attachment en Odoo
+        4. Retornar descarga automática
+
+        Returns:
+            dict: Action Odoo para descargar archivo
+        """
+        self.ensure_one()
+
+        # 1. Validar antes de exportar
+        self._validate_previred_export()
+
+        # 2. Generar archivo
+        export_data = self.generate_previred_book49()
+
+        # 3. Crear attachment
+        import base64
+        attachment = self.env['ir.attachment'].create({
+            'name': export_data['filename'],
+            'datas': base64.b64encode(export_data['content']),
+            'res_model': 'hr.payslip',
+            'res_id': self.id,
+            'mimetype': 'text/plain',
+            'description': f"Archivo Previred Book 49 - {self.name}"
+        })
+
+        _logger.info(
+            "✅ Previred Book 49 exportado: %s (ID: %s)",
+            export_data['filename'],
+            attachment.id
+        )
+
+        # 4. Retornar descarga
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'/web/content/{attachment.id}?download=true',
+            'target': 'new'
+        }

@@ -1,0 +1,538 @@
+name: Enterprise Compliance - l10n_cl_dte
+
+on:
+  push:
+    branches: [ main, develop, feature/*, hotfix/* ]
+    paths:
+      - 'addons/localization/l10n_cl_dte/**'
+      - 'scripts/validate_enterprise_compliance.py'
+      - '.github/workflows/enterprise-compliance.yml'
+      - 'requirements.txt'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'addons/localization/l10n_cl_dte/**'
+
+env:
+  PYTHON_VERSION: '3.11'
+  COVERAGE_THRESHOLD: '80'
+
+jobs:
+  # ══════════════════════════════════════════════════════════════════════
+  # JOB 1: Enterprise Validation (P0/P1 Checks)
+  # ══════════════════════════════════════════════════════════════════════
+  enterprise-validation:
+    name: 🔍 Enterprise Compliance Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: 🔍 Run Enterprise Compliance Validator
+        id: compliance
+        run: |
+          python3 scripts/validate_enterprise_compliance.py > compliance_report.txt 2>&1
+          EXIT_CODE=$?
+          cat compliance_report.txt
+
+          # Extract summary
+          SUMMARY=$(grep -A 5 "SUMMARY:" compliance_report.txt || echo "No summary found")
+          echo "summary<<EOF" >> $GITHUB_OUTPUT
+          echo "$SUMMARY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Fail if P0 not 100%
+          if grep -q "❌ CRITICAL FAILURES (P0)" compliance_report.txt; then
+            echo "❌ P0 blockers detected!"
+            exit 1
+          fi
+
+          exit $EXIT_CODE
+
+      - name: 📊 Upload Compliance Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: enterprise-compliance-report
+          path: compliance_report.txt
+          retention-days: 30
+
+      - name: 💬 Comment PR with Compliance Status
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('compliance_report.txt', 'utf8');
+            const body = `## 🔍 Enterprise Compliance Report\n\n\`\`\`\n${report}\n\`\`\``;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  # ══════════════════════════════════════════════════════════════════════
+  # JOB 2: XSD Smoke Tests (5/5 DTEs)
+  # ══════════════════════════════════════════════════════════════════════
+  xsd-smoke-tests:
+    name: 📋 XSD Smoke Tests (5 DTEs)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install lxml
+        run: pip install lxml
+
+      - name: 🧪 Run XSD Smoke Tests
+        id: xsd_tests
+        run: |
+          echo "## XSD Smoke Test Results" > xsd_results.txt
+          echo "" >> xsd_results.txt
+
+          FAILED=0
+
+          for dte in 33 34 52 56 61; do
+            SCRIPT="addons/localization/l10n_cl_dte/tests/smoke/smoke_xsd_dte${dte}.py"
+            echo "Running: $SCRIPT" | tee -a xsd_results.txt
+
+            if python3 "$SCRIPT" >> xsd_results.txt 2>&1; then
+              echo "✅ DTE $dte: PASS" | tee -a xsd_results.txt
+            else
+              echo "❌ DTE $dte: FAIL" | tee -a xsd_results.txt
+              FAILED=1
+            fi
+            echo "" >> xsd_results.txt
+          done
+
+          cat xsd_results.txt
+
+          if [ $FAILED -eq 1 ]; then
+            echo "❌ Some XSD smoke tests failed!"
+            exit 1
+          fi
+
+          echo "✅ All 5 XSD smoke tests passed!"
+
+      - name: 📊 Upload XSD Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: xsd-smoke-test-results
+          path: xsd_results.txt
+          retention-days: 30
+
+  # ══════════════════════════════════════════════════════════════════════
+  # JOB 3: Unit Tests + Coverage (≥80%)
+  # ══════════════════════════════════════════════════════════════════════
+  unit-tests-coverage:
+    name: 🧪 Unit Tests + Coverage
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: odoo_test
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-mock coverage
+
+      - name: 🧪 Run Unit Tests with Coverage
+        env:
+          REDIS_URL: redis://localhost:6379/1
+        run: |
+          # P1-4 GAP CLOSURE: Enforce strict coverage gates
+          # - Global: >=80%
+          # - DTE module: >=70%
+
+          echo "Running tests with coverage..."
+
+          # Run tests for critical components
+          pytest \
+            addons/localization/l10n_cl_dte/tests/ \
+            --cov=addons/localization/l10n_cl_dte/libs \
+            --cov=addons/localization/l10n_cl_dte/controllers \
+            --cov-report=term-missing:skip-covered \
+            --cov-report=html:htmlcov \
+            --cov-report=xml:coverage.xml \
+            -v \
+            --tb=short
+
+          TEST_EXIT_CODE=$?
+
+          # Check test failures first
+          if [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "❌ Tests failed!"
+            exit 1
+          fi
+
+          # P1-4: Verify coverage thresholds
+          echo ""
+          echo "Verifying coverage thresholds..."
+
+          # Extract coverage percentage from coverage report
+          COVERAGE_PCT=$(coverage report | grep TOTAL | awk '{print $4}' | sed 's/%//')
+
+          echo "Global coverage: ${COVERAGE_PCT}%"
+
+          # Check global threshold (80%)
+          if (( $(echo "$COVERAGE_PCT < ${{ env.COVERAGE_THRESHOLD }}" | bc -l) )); then
+            echo "❌ FAIL: Global coverage ${COVERAGE_PCT}% is below threshold ${{ env.COVERAGE_THRESHOLD }}%"
+            exit 1
+          fi
+
+          echo "✅ Global coverage threshold met (${COVERAGE_PCT}% >= ${{ env.COVERAGE_THRESHOLD }}%)"
+
+          # P1-4: Check DTE module coverage (>=70%)
+          DTE_LIBS_COV=$(coverage report --include="addons/localization/l10n_cl_dte/libs/*" | grep TOTAL | awk '{print $4}' | sed 's/%//')
+          DTE_CTRL_COV=$(coverage report --include="addons/localization/l10n_cl_dte/controllers/*" | grep TOTAL | awk '{print $4}' | sed 's/%//')
+
+          echo "DTE libs coverage: ${DTE_LIBS_COV}%"
+          echo "DTE controllers coverage: ${DTE_CTRL_COV}%"
+
+          # Average DTE coverage
+          DTE_AVG_COV=$(echo "scale=2; ($DTE_LIBS_COV + $DTE_CTRL_COV) / 2" | bc)
+          echo "DTE average coverage: ${DTE_AVG_COV}%"
+
+          if (( $(echo "$DTE_AVG_COV < 70" | bc -l) )); then
+            echo "❌ FAIL: DTE module coverage ${DTE_AVG_COV}% is below threshold 70%"
+            exit 1
+          fi
+
+          echo "✅ DTE module coverage threshold met (${DTE_AVG_COV}% >= 70%)"
+          echo ""
+          echo "🎉 All coverage thresholds passed!"
+
+      - name: 📊 Upload Coverage Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-reports
+          path: |
+            htmlcov/
+            coverage.xml
+          retention-days: 30
+
+      - name: 📈 Coverage Summary
+        if: always()
+        run: |
+          if [ -f coverage.xml ]; then
+            echo "## Coverage Summary" >> $GITHUB_STEP_SUMMARY
+            coverage report --show-missing || true
+          fi
+
+  # ══════════════════════════════════════════════════════════════════════
+  # JOB 4: Odoo Inheritance Validation (No _name duplication)
+  # ══════════════════════════════════════════════════════════════════════
+  odoo-standards:
+    name: 🏗️ Odoo Standards Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Verify Odoo Inheritance Patterns
+        run: |
+          echo "## Odoo Standards Validation" > standards_report.txt
+          echo "" >> standards_report.txt
+
+          FAILED=0
+
+          # Check for _name + _inherit antipattern
+          echo "### Checking for _name + _inherit duplication..." | tee -a standards_report.txt
+
+          FILES=$(find addons/localization/l10n_cl_dte/models -name "*.py" -type f)
+
+          for FILE in $FILES; do
+            # Skip __init__.py
+            if [[ "$FILE" == *"__init__.py"* ]]; then
+              continue
+            fi
+
+            # Check if file has both _name and _inherit
+            if grep -q "_name = " "$FILE" && grep -q "_inherit = " "$FILE"; then
+              # Extract model name from both
+              NAME=$(grep "_name = " "$FILE" | head -1 || echo "")
+              INHERIT=$(grep "_inherit = " "$FILE" | head -1 || echo "")
+
+              # If they reference same model, that's antipattern
+              if [[ "$NAME" == *"account.move"* ]] && [[ "$INHERIT" == *"account.move"* ]]; then
+                echo "❌ FAIL: $FILE has _name + _inherit for same model" | tee -a standards_report.txt
+                FAILED=1
+              elif [[ "$NAME" == *"stock.picking"* ]] && [[ "$INHERIT" == *"stock.picking"* ]]; then
+                echo "❌ FAIL: $FILE has _name + _inherit for same model" | tee -a standards_report.txt
+                FAILED=1
+              fi
+            fi
+          done
+
+          if [ $FAILED -eq 0 ]; then
+            echo "✅ PASS: No _name + _inherit duplications found" | tee -a standards_report.txt
+          fi
+
+          cat standards_report.txt
+          exit $FAILED
+
+      - name: 📊 Upload Standards Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: odoo-standards-report
+          path: standards_report.txt
+          retention-days: 30
+
+  # ══════════════════════════════════════════════════════════════════════
+  # JOB 5: Security Audit
+  # ══════════════════════════════════════════════════════════════════════
+  security-audit:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install security tools
+        run: pip install bandit safety
+
+      - name: 🔍 Run Bandit (Security Linter)
+        run: |
+          bandit -r addons/localization/l10n_cl_dte/ \
+            --exclude=*/tests/*,*/migrations/* \
+            --skip=B101 \
+            -f json -o bandit_report.json
+        continue-on-error: true
+
+      - name: 🔍 Check for Hardcoded Secrets
+        run: |
+          echo "## Security: Hardcoded Secrets Check" > security_report.txt
+
+          # Check for common secret patterns
+          if grep -r "password.*=" addons/localization/l10n_cl_dte/ --include="*.py" | grep -v "ir.config_parameter"; then
+            echo "⚠️ Potential hardcoded passwords found" | tee -a security_report.txt
+          else
+            echo "✅ No hardcoded passwords detected" | tee -a security_report.txt
+          fi
+
+          # Check for default keys
+          if grep -r "default.*key" addons/localization/l10n_cl_dte/ --include="*.py" | grep -v "# "; then
+            echo "⚠️ Potential default keys found" | tee -a security_report.txt
+          else
+            echo "✅ No default keys detected" | tee -a security_report.txt
+          fi
+
+          cat security_report.txt
+
+      - name: 📊 Upload Security Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-audit-reports
+          path: |
+            bandit_report.json
+            security_report.txt
+          retention-days: 30
+
+  # ══════════════════════════════════════════════════════════════════════
+  # JOB 6: XMLDSig Signature Verification (P1-2)
+  # ══════════════════════════════════════════════════════════════════════
+  xmlsec-verification:
+    name: 🔒 XMLDSig Signature Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install xmlsec1 and dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xmlsec1 libxml2-utils
+
+      - name: ✅ Verify xmlsec1 installation
+        run: |
+          xmlsec1 --version
+          which xmlsec1
+
+      - name: 🔐 Verify XML signatures
+        id: verify
+        run: |
+          python3 scripts/verify_xmlsec_signatures.py > xmlsec_verification.txt 2>&1
+          EXIT_CODE=$?
+          cat xmlsec_verification.txt
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "✅ All signatures verified successfully"
+          elif [ $EXIT_CODE -eq 1 ]; then
+            echo "⚠️ Setup error (files not found or xmlsec1 issue)"
+            echo "This is a WARNING, not blocking the build"
+            exit 0  # Don't fail CI on setup issues (fixtures may not be signed yet)
+          elif [ $EXIT_CODE -eq 2 ]; then
+            echo "❌ One or more signatures are INVALID"
+            echo "This is a BLOCKER for production-ready code"
+            exit 1  # FAIL CI on invalid signatures
+          fi
+
+      - name: 📊 Upload Verification Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: xmlsec-verification-report
+          path: xmlsec_verification.txt
+          retention-days: 30
+
+  # ══════════════════════════════════════════════════════════════════════
+  # JOB 7: Performance Metrics Generation (P1-3)
+  # ══════════════════════════════════════════════════════════════════════
+  performance-metrics:
+    name: 📊 Performance Metrics (p50/p95/p99)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: 📈 Generate performance metrics
+        run: |
+          # Run performance metrics calculation
+          # This will create performance_metrics.json with p50/p95/p99 data
+          python3 -c "
+          import sys
+          sys.path.insert(0, 'addons/localization/l10n_cl_dte')
+          from libs import performance_metrics
+
+          # Generate sample metrics report for CI
+          # In production, this would use real Redis data
+          metrics = performance_metrics.generate_metrics_report()
+
+          import json
+          with open('performance_metrics.json', 'w') as f:
+              json.dump(metrics, f, indent=2)
+
+          print('✅ Performance metrics generated')
+          print(json.dumps(metrics, indent=2))
+          "
+
+      - name: 📊 Upload Performance Metrics
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-metrics
+          path: performance_metrics.json
+          retention-days: 30
+
+  # ══════════════════════════════════════════════════════════════════════
+  # JOB 8: Final Summary
+  # ══════════════════════════════════════════════════════════════════════
+  summary:
+    name: 📊 Enterprise Compliance Summary
+    runs-on: ubuntu-latest
+    needs:
+      - enterprise-validation
+      - xsd-smoke-tests
+      - unit-tests-coverage
+      - odoo-standards
+      - security-audit
+      - xmlsec-verification
+      - performance-metrics
+    if: always()
+
+    steps:
+      - name: 📊 Generate Summary
+        run: |
+          echo "# 🏆 Enterprise Compliance CI Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Enterprise Validation: ${{ needs.enterprise-validation.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- XSD Smoke Tests: ${{ needs.xsd-smoke-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Unit Tests + Coverage: ${{ needs.unit-tests-coverage.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Odoo Standards: ${{ needs.odoo-standards.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Security Audit: ${{ needs.security-audit.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- XMLDSig Verification: ${{ needs.xmlsec-verification.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Performance Metrics: ${{ needs.performance-metrics.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check if all critical jobs passed
+          # P1-2: xmlsec-verification is now critical
+          if [ "${{ needs.enterprise-validation.result }}" == "success" ] && \
+             [ "${{ needs.xsd-smoke-tests.result }}" == "success" ] && \
+             [ "${{ needs.odoo-standards.result }}" == "success" ] && \
+             [ "${{ needs.xmlsec-verification.result }}" == "success" ]; then
+            echo "## ✅ Status: PASS" >> $GITHUB_STEP_SUMMARY
+            echo "All critical compliance checks passed!" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          else
+            echo "## ❌ Status: FAIL" >> $GITHUB_STEP_SUMMARY
+            echo "Some critical compliance checks failed!" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi

@@ -9,22 +9,22 @@
         <!-- Grupo: Usuario de Reportes Financieros -->
         <record id="group_financial_reports_user" model="res.groups">
             <field name="name">Financial Reports: User</field>
-            <field name="category_id" ref="base.module_category_accounting"/>
+            <!-- ODOO 19: category_id removed, groups auto-categorized by module -->
             <field name="comment">Puede ver y generar reportes financieros básicos</field>
         </record>
-        
+
         <!-- Grupo: Manager de Reportes Financieros -->
         <record id="group_financial_reports_manager" model="res.groups">
             <field name="name">Financial Reports: Manager</field>
-            <field name="category_id" ref="base.module_category_accounting"/>
+            <!-- ODOO 19: category_id removed, groups auto-categorized by module -->
             <field name="implied_ids" eval="[(4, ref('group_financial_reports_user'))]"/>
             <field name="comment">Puede configurar y administrar todos los reportes financieros</field>
         </record>
-        
+
         <!-- Grupo: Analista Financiero -->
         <record id="group_financial_analyst" model="res.groups">
             <field name="name">Financial Reports: Analyst</field>
-            <field name="category_id" ref="base.module_category_accounting"/>
+            <!-- ODOO 19: category_id removed, groups auto-categorized by module -->
             <field name="implied_ids" eval="[(4, ref('group_financial_reports_user'))]"/>
             <field name="comment">Puede acceder a análisis avanzados y dashboards ejecutivos</field>
         </record>

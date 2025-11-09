@@ -1,0 +1,49 @@
+# Development / QA Requirements Consolidated (Post PR-3)
+# Infra QA: Lint + Tests + Coverage + Security
+
+# Testing
+pytest==8.3.3
+pytest-cov==5.0.0
+pytest-mock==3.14.0
+pytest-xdist==3.6.1  # Parallel testing
+pytest-odoo==0.1.0  # Odoo test integration layer
+
+# Code Quality (Primary Gate: ruff)
+ruff==0.5.6
+black==24.4.2
+isort==5.13.2
+# Legacy linters (opcional)
+flake8==7.1.0
+pylint==3.2.6
+
+# Type Checking
+mypy==1.10.0
+types-requests==2.32.0.20240914
+types-setuptools==75.1.0.20240917
+
+# Security
+bandit==1.7.10
+safety==3.2.6
+
+# Documentation (diferible si no cambia API)
+sphinx==7.1.2
+sphinx-rtd-theme==2.0.0
+sphinx-autodoc-typehints==2.0.0
+
+# Code Coverage
+coverage==7.6.4
+codecov==2.1.13
+
+# Pre-commit hooks
+pre-commit==3.7.1
+
+# Performance profiling
+py-spy==0.3.14
+memory-profiler==0.61.0
+
+# Debugging
+ipdb==0.13.13
+ipython==8.26.0
+
+# NOTE: Pinning versions → reproducible CI builds.
+# If dependency conflicts appear, relax specific pins with rationale.

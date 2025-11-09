@@ -32,12 +32,13 @@ class L10nClF29StackIntegration(models.Model):
         help='Facturas DTE del período consolidadas en este F29'
     )
 
-    payroll_integration_ids = fields.Many2many(
-        'hr.payslip',
-        string='Nóminas Relacionadas',
-        compute='_compute_payroll_integration',
-        help='Nóminas del período con retenciones consolidadas'
-    )
+    # TEMPORARILY DISABLED: Requires l10n_cl_hr_payroll to be installed
+    # payroll_integration_ids = fields.Many2many(
+    #     'hr.payslip',
+    #     string='Nóminas Relacionadas',
+    #     compute='_compute_payroll_integration',
+    #     help='Nóminas del período con retenciones consolidadas'
+    # )
 
     total_dte_sales = fields.Monetary(
         string='Ventas DTE',
@@ -107,35 +108,36 @@ class L10nClF29StackIntegration(models.Model):
             record.total_dte_sales = sales
             record.total_dte_purchases = purchases
 
-    @api.depends('period_date', 'company_id')
-    def _compute_payroll_integration(self):
-        """
-        Integración con l10n_cl_hr_payroll
-        Obtiene nóminas con retenciones del período
-        """
-        for record in self:
-            if not record.period_date:
-                record.payroll_integration_ids = False
-                continue
-
-            # Solo si el módulo l10n_cl_hr_payroll está instalado
-            if 'hr.payslip' not in self.env:
-                record.payroll_integration_ids = False
-                continue
-
-            # Rango del período
-            date_from = fields.Date.start_of(record.period_date, 'month')
-            date_to = fields.Date.end_of(record.period_date, 'month')
-
-            # Buscar nóminas del período
-            domain = [
-                ('company_id', '=', record.company_id.id),
-                ('date_from', '>=', date_from),
-                ('date_to', '<=', date_to),
-                ('state', '=', 'done')
-            ]
-
-            record.payroll_integration_ids = self.env['hr.payslip'].search(domain)
+    # TEMPORARILY DISABLED: Requires l10n_cl_hr_payroll to be installed
+    # @api.depends('period_date', 'company_id')
+    # def _compute_payroll_integration(self):
+    #     """
+    #     Integración con l10n_cl_hr_payroll
+    #     Obtiene nóminas con retenciones del período
+    #     """
+    #     for record in self:
+    #         if not record.period_date:
+    #             record.payroll_integration_ids = False
+    #             continue
+    #
+    #         # Solo si el módulo l10n_cl_hr_payroll está instalado
+    #         if 'hr.payslip' not in self.env:
+    #             record.payroll_integration_ids = False
+    #             continue
+    #
+    #         # Rango del período
+    #         date_from = fields.Date.start_of(record.period_date, 'month')
+    #         date_to = fields.Date.end_of(record.period_date, 'month')
+    #
+    #         # Buscar nóminas del período
+    #         domain = [
+    #             ('company_id', '=', record.company_id.id),
+    #             ('date_from', '>=', date_from),
+    #             ('date_to', '<=', date_to),
+    #             ('state', '=', 'done')
+    #         ]
+    #
+    #         record.payroll_integration_ids = self.env['hr.payslip'].search(domain)
 
     def action_view_dte_documents(self):
         """
@@ -156,23 +158,24 @@ class L10nClF29StackIntegration(models.Model):
             }
         }
 
-    def action_view_payroll_documents(self):
-        """
-        Acción para ver nóminas relacionadas
-        Integración con l10n_cl_hr_payroll
-        """
-        self.ensure_one()
-
-        return {
-            'name': _('Nóminas del Período'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'hr.payslip',
-            'view_mode': 'tree,form',
-            'domain': [('id', 'in', self.payroll_integration_ids.ids)],
-            'context': {
-                'default_company_id': self.company_id.id,
-            }
-        }
+    # TEMPORARILY DISABLED: Requires l10n_cl_hr_payroll to be installed
+    # def action_view_payroll_documents(self):
+    #     """
+    #     Acción para ver nóminas relacionadas
+    #     Integración con l10n_cl_hr_payroll
+    #     """
+    #     self.ensure_one()
+    #
+    #     return {
+    #         'name': _('Nóminas del Período'),
+    #         'type': 'ir.actions.act_window',
+    #         'res_model': 'hr.payslip',
+    #         'view_mode': 'tree,form',
+    #         'domain': [('id', 'in', self.payroll_integration_ids.ids)],
+    #         'context': {
+    #             'default_company_id': self.company_id.id,
+    #         }
+    #     }
 
 
 class FinancialDashboardStackIntegration(models.Model):

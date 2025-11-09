@@ -45,6 +45,11 @@ class SIISoapClient:
     Pure Python class with optional Odoo env injection for config access.
     Used by dte.certificate, account.move, dte.inbox models.
 
+    **PR-1 FIX (DTE-C002):** Configuración robusta de timeouts
+    - Connect timeout: 10s (tiempo para establecer conexión)
+    - Read timeout: 30s (tiempo máximo de respuesta del SII)
+    - Retry policy: 3 intentos con backoff exponencial 0.5s -> 1s -> 2s
+
     Usage:
         # With env (for Odoo config access)
         client = SIISoapClient(env)
@@ -55,6 +60,10 @@ class SIISoapClient:
         # Configure manually before using
     """
 
+    # Timeouts según recomendaciones SII Chile
+    CONNECT_TIMEOUT = 10  # segundos para establecer conexión
+    READ_TIMEOUT = 30     # segundos máximo de espera de respuesta
+
     def __init__(self, env=None):
         """
         Initialize SII SOAP Client.
@@ -63,6 +72,7 @@ class SIISoapClient:
             env: Odoo environment (optional, needed for config DB access)
         """
         self.env = env
+        self.session = None  # Inicializado en _get_session()
 
     # ═══════════════════════════════════════════════════════════
     # SII WSDL URLS (Maullin sandbox & Palena production)
@@ -140,10 +150,29 @@ class SIISoapClient:
     # SOAP CLIENT CREATION
     # ═══════════════════════════════════════════════════════════
 
+    def _get_session(self):
+        """
+        Get or create configured requests Session.
+
+        **PR-1 FIX (DTE-C002):** Session reutilizable para Transport
+        - La sesión se crea una vez y se reutiliza
+        - El timeout se configura en Transport, no en Session
+
+        Returns:
+            requests.Session: Sesión para reutilizar en Transport
+        """
+        if not self.session:
+            self.session = Session()
+
+            _logger.info("SOAP session created for reuse in Transport")
+
+        return self.session
+
     def _create_soap_client(self, service_type='envio_dte', transport=None):
         """
         Create SOAP client with configured timeout.
 
+        **PR-1 UPDATE:** Usa Transport con timeout (connect, read) configurado.
         P1-6 UPDATE: Now accepts custom transport (for authentication headers).
 
         Args:
@@ -157,16 +186,20 @@ class SIISoapClient:
 
         # Use provided transport or create default one
         if not transport:
-            timeout = self._get_sii_timeout()
-            session = Session()
-            # P2-9 GAP CLOSURE: Pass timeout to Transport, not session
-            # (session.timeout doesn't apply to zeep)
-            transport = Transport(session=session, timeout=timeout)
+            # PR-1 FIX: Configurar timeout en Transport
+            # Esto previene workers colgados indefinidamente
+            session = self._get_session()
+            timeout_tuple = (self.CONNECT_TIMEOUT, self.READ_TIMEOUT)
+            transport = Transport(session=session, timeout=timeout_tuple)
 
         # Create SOAP client
         client = Client(wsdl=wsdl_url, transport=transport)
 
-        _logger.info(f"SOAP client created: {service_type}, environment: {self._get_sii_environment()}")
+        _logger.info(
+            f"SOAP client created: service={service_type}, "
+            f"environment={self._get_sii_environment()}, "
+            f"timeout=({self.CONNECT_TIMEOUT}s, {self.READ_TIMEOUT}s)"
+        )
 
         return client
 

@@ -16,3 +16,7 @@ from . import controllers
 from . import wizards
 from . import tools
 from . import report
+
+# ⭐ Sprint 0.2: Post-install hooks (webhook_key generation)
+from . import hooks
+from .hooks import post_init_hook  # Expose hook function at module level for Odoo

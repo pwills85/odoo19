@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ═══════════════════════════════════════════════════════════════
+         VISTA PERSONALIZADA: Formulario res.company
+         Agrega campo "Razón Social Legal" visible en formulario
+         ═══════════════════════════════════════════════════════════════ -->
+
+    <record id="view_company_form_dte" model="ir.ui.view">
+        <field name="name">res.company.form.dte</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+
+            <!-- ══════════════════════════════════════════════════════════════
+                 PASO 1: Ocultar campo del módulo oficial l10n_cl (evitar duplicación)
+                 El campo será reubicado en nuestra sección organizada más abajo
+                 ══════════════════════════════════════════════════════════════ -->
+            <xpath expr="//field[@name='l10n_cl_activity_description']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- ══════════════════════════════════════════════════════════════
+                 SECCIÓN SUPERIOR: Datos del Partner (Razón Social + Ubicación)
+                 ══════════════════════════════════════════════════════════════ -->
+            <xpath expr="//field[@name='name']" position="after">
+
+                <!-- Info box: Diferencia entre nombres -->
+                <div class="alert alert-info mt-3 mb-3" role="alert">
+                    <div class="mb-2"><strong>ℹ️ Diferencia entre nombres:</strong></div>
+                    <ul class="mb-0 mt-2 small">
+                        <li><strong>Nombre de la empresa (arriba):</strong> Nombre corto para uso interno en Odoo (ej: "EERGY GROUP SPA")</li>
+                        <li><strong>Razón Social Legal (abajo):</strong> Nombre completo que aparece en facturas electrónicas - DTEs</li>
+                    </ul>
+                </div>
+
+                <!-- Razón Social Legal (readonly, con botón para editar partner) -->
+                <label for="partner_id" string="Razón Social Legal (para DTEs)" class="fw-bold"/>
+                <div class="o_row">
+                    <field name="partner_id"
+                           readonly="1"
+                           options="{'no_open': False}"
+                           context="{'show_address': 1}"/>
+                    <button name="%(base.action_partner_form)d"
+                            type="action"
+                            string="✏️ Editar Ficha Completa"
+                            class="btn btn-link"
+                            context="{'form_view_ref': 'base.view_partner_form'}"/>
+                </div>
+                <div class="text-muted small mb-2">
+                    Este nombre legal completo se usa en todos los documentos tributarios (XML <code>&lt;RznSoc&gt;</code>)
+                </div>
+
+                <!-- SEPARADOR -->
+                <separator string="Ubicación Tributaria (del Partner)"/>
+
+                <!-- Ubicación Tributaria: Región, Comuna, Ciudad (EDITABLES) -->
+                <group col="4">
+                    <field name="l10n_cl_state_id"
+                           string="Región"
+                           options="{'no_create': True, 'no_open': True}"
+                           placeholder="Seleccione la región..."/>
+
+                    <field name="l10n_cl_comuna_id"
+                           string="Comuna SII"
+                           options="{'no_create': True, 'no_open': True}"
+                           domain="[('state_id', '=', l10n_cl_state_id)]"
+                           placeholder="Primero seleccione Región, luego Comuna..."
+                           context="{'default_state_id': l10n_cl_state_id}"/>
+
+                    <field name="l10n_cl_city"
+                           string="Ciudad"
+                           placeholder="Ej: Santiago, Temuco, Concepción..."
+                           colspan="2"/>
+                </group>
+
+                <!-- Nota explicativa -->
+                <div class="alert alert-info mt-2 mb-3" role="alert">
+                    <i class="fa fa-lightbulb-o" title="Información"/>
+                    <strong>Ubicación Tributaria:</strong> Los cambios aquí se guardan en la ficha del Partner asociado.
+                    La <strong>Comuna</strong> se usa en el XML DTE como
+                    <code>&lt;CmnaOrigen&gt;</code> y es <strong>OBLIGATORIA</strong>.
+
+                    <div class="mt-2 small">
+                        <strong>Flujo recomendado:</strong>
+                        <ol class="mb-0 mt-1">
+                            <li>Seleccione primero la <strong>Región</strong></li>
+                            <li>Luego seleccione la <strong>Comuna</strong> (se filtra automáticamente por región)</li>
+                            <li>Ingrese la <strong>Ciudad</strong></li>
+                        </ol>
+                    </div>
+                </div>
+
+            </xpath>
+
+            <!-- ══════════════════════════════════════════════════════════════
+                 SECCIÓN INFERIOR: Configuración Tributaria DTE
+                 Agrupa TODOS los campos tributarios necesarios para DTEs
+                 ══════════════════════════════════════════════════════════════ -->
+            <xpath expr="//group[@name='social_media']" position="after">
+                <group string="Configuración Tributaria Chile - DTE" name="chile_tax" colspan="2">
+
+                    <!-- GIRO: Descripción textual de la actividad (campo del módulo l10n_cl, reubicado aquí) -->
+                    <field name="l10n_cl_activity_description"
+                           string="Giro de la Empresa"
+                           placeholder="Ej: CONSULTORIAS INFORMATICAS, DESARROLLO DE SISTEMAS"
+                           help="Descripción textual de la actividad económica (máx 80 caracteres). Se usa en XML DTE como &lt;GiroEmis&gt; (OBLIGATORIO)"
+                           colspan="2"/>
+
+                    <!-- ACTECO: Códigos numéricos oficiales SII -->
+                    <field name="l10n_cl_activity_ids"
+                           widget="many2many_tags"
+                           options="{'color_field': 'code', 'no_create': True}"
+                           placeholder="Seleccione una o más actividades económicas..."
+                           colspan="2"/>
+
+                    <!-- Info box: Diferencia entre Giro y Actividad Económica -->
+                    <div colspan="2" class="alert alert-info mt-2" role="alert">
+                        <strong>ℹ️ Diferencia entre Giro y Actividad Económica:</strong>
+                        <table class="table table-sm table-borderless mt-2 mb-0 small">
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold" style="width: 180px;">Giro (arriba):</td>
+                                    <td>Descripción TEXTUAL libre (máx 80 caracteres). Aparece en facturas como <code>&lt;GiroEmis&gt;</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Actividad Económica:</td>
+                                    <td>Código(s) NUMÉRICO(S) oficial(es) SII. Aparece en facturas como <code>&lt;Acteco&gt;</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <ul class="mb-0 mt-2 small">
+                            <li>El <strong>Giro</strong> describe lo que hace tu empresa en lenguaje simple</li>
+                            <li>Las <strong>Actividades Económicas</strong> son códigos oficiales del clasificador CIIU Rev. 4 CL</li>
+                            <li>Una empresa puede tener <strong>múltiples</strong> actividades económicas (hasta 4 en DTEs)</li>
+                            <li>Ambos campos son <strong>OBLIGATORIOS</strong> para emisión de DTEs</li>
+                            <li>
+                                <a href="https://www.sii.cl/destacados/codigos_actividades/" target="_blank">
+                                    📋 Ver catálogo oficial de códigos SII
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

@@ -1,5 +1,14 @@
 # -*- coding: utf-8 -*-
 
+# P0 Critical Tests (Auditoría 2025-11-07)
+from . import test_p0_afp_cap_2025
+from . import test_p0_multi_company
+from . import test_p0_reforma_2025
+from . import test_ley21735_reforma_pensiones  # Corrección profesional Ley 21.735
+from . import test_previred_integration
+from . import test_payslip_validations
+
+# Existing tests
 from . import test_naming_integrity
 from . import test_tax_brackets
 from . import test_apv_calculation

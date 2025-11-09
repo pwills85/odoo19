@@ -1,0 +1,40 @@
+{
+  "generated_at": "2025-11-07T23:03:37Z",
+  "root": "/Users/pedro/Documents/odoo19",
+  "lint": {
+    "tool": null,
+    "ran": false,
+    "issues": null,
+    "rc": null
+  },
+  "tests": {
+    "ran": false,
+    "coverage_percent": null,
+    "rc": null
+  },
+  "i18n": {
+    "es_CL": {
+      "files": 99,
+      "total_entries": 10818,
+      "translated_entries": 1325,
+      "coverage_percent": 12.25
+    },
+    "en_US": {
+      "files": 1,
+      "total_entries": 32,
+      "translated_entries": 32,
+      "coverage_percent": 100.0
+    }
+  },
+  "security": {
+    "eval": 4,
+    "exec": 1,
+    "os_system": 1,
+    "subprocess_shell_true": 3
+  },
+  "notes": [
+    "Lint no disponible (ruff/flake8 no instalados)",
+    "pytest/coverage no disponibles"
+  ],
+  "version": 1
+}

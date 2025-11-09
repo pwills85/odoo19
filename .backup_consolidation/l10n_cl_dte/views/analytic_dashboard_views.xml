@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ═════════════════════════════════════════════════════════════
+         DASHBOARD RENTABILIDAD POR PROYECTO
+         Vista Tree, Form, Search, Kanban, Pivot, Graph
+         Autor: EERGYGROUP - Ing. Pedro Troncoso Willz
+         Fecha: 2025-10-23
+         ═════════════════════════════════════════════════════════════ -->
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TREE VIEW - Lista de Cuenta Analíticas con KPIs
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_analytic_dashboard_tree" model="ir.ui.view">
+        <field name="name">analytic.dashboard.list</field>
+        <field name="model">analytic.dashboard</field>
+        <field name="arch" type="xml">
+            <list string="Dashboard Cuentas Analíticas"
+                  decoration-success="analytic_status == 'on_budget'"
+                  decoration-warning="analytic_status == 'at_risk'"
+                  decoration-danger="analytic_status == 'over_budget'">
+
+                <field name="analytic_account_id"/>
+                <field name="total_invoiced" sum="Total Facturado"/>
+                <field name="total_costs" sum="Total Costos"/>
+                <field name="gross_margin" sum="Margen Bruto"/>
+                <field name="margin_percentage" widget="percentage"
+                       decoration-success="margin_percentage >= 25"
+                       decoration-warning="margin_percentage >= 15 and margin_percentage &lt; 25"
+                       decoration-danger="margin_percentage &lt; 15"/>
+                <field name="budget_consumed_percentage" widget="progressbar"
+                       decoration-success="budget_consumed_percentage &lt; 80"
+                       decoration-warning="budget_consumed_percentage >= 80 and budget_consumed_percentage &lt; 100"
+                       decoration-danger="budget_consumed_percentage >= 100"/>
+                <field name="analytic_status" widget="badge"
+                       decoration-success="analytic_status == 'on_budget'"
+                       decoration-warning="analytic_status == 'at_risk'"
+                       decoration-danger="analytic_status == 'over_budget'"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         FORM VIEW - Detalle Dashboard con KPIs y Gráficos
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_analytic_dashboard_form" model="ir.ui.view">
+        <field name="name">analytic.dashboard.form</field>
+        <field name="model">analytic.dashboard</field>
+        <field name="arch" type="xml">
+            <form string="Dashboard Rentabilidad Cuenta Analítica">
+                <header>
+                    <!-- Botones Acción -->
+                    <button name="action_view_invoices_out" string="Ver Facturas Cliente"
+                            type="object" class="btn-primary" icon="fa-file-invoice"/>
+                    <button name="action_view_invoices_in" string="Ver Facturas Proveedor"
+                            type="object" class="btn-secondary" icon="fa-file-invoice-dollar"/>
+                    <button name="action_view_purchases" string="Ver Órdenes Compra"
+                            type="object" class="btn-secondary" icon="fa-shopping-cart"/>
+                    <button name="action_view_analytic_lines" string="Ver Líneas Analíticas"
+                            type="object" class="btn-secondary" icon="fa-list"/>
+                    <button name="action_export_excel" string="Export Excel"
+                            type="object" class="btn-success" icon="fa-file-excel-o"
+                            help="Export dashboard to Excel with multiple sheets (Summary, Invoices, Purchases)"/>
+
+                    <!-- Estado Cuenta Analítica -->
+                    <field name="analytic_status" widget="statusbar"
+                           statusbar_visible="on_budget,at_risk,over_budget"/>
+                </header>
+
+                <sheet>
+                    <!-- Título -->
+                    <div class="oe_title">
+                        <h1>
+                            <field name="analytic_account_id" placeholder="Seleccionar Cuenta Analítica..."
+                                   options="{'no_create': True}"/>
+                        </h1>
+                    </div>
+
+                    <!-- Smart Buttons -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_invoices_out" type="object"
+                                class="oe_stat_button" icon="fa-file-invoice">
+                            <div class="o_stat_info">
+                                <field name="dtes_emitted_count" class="o_stat_value"/>
+                                <span class="o_stat_text">DTEs Emitidos</span>
+                            </div>
+                        </button>
+                        <button name="action_view_purchases" type="object"
+                                class="oe_stat_button" icon="fa-shopping-cart">
+                            <div class="o_stat_info">
+                                <field name="purchases_count" class="o_stat_value"/>
+                                <span class="o_stat_text">Órdenes Compra</span>
+                            </div>
+                        </button>
+                        <button name="action_view_invoices_in" type="object"
+                                class="oe_stat_button" icon="fa-file-invoice-dollar">
+                            <div class="o_stat_info">
+                                <field name="vendor_invoices_count" class="o_stat_value"/>
+                                <span class="o_stat_text">Fact. Proveedores</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- KPIs Principales -->
+                    <group>
+                        <group string="Ingresos">
+                            <field name="total_invoiced" widget="monetary"/>
+                            <field name="dtes_emitted_count"/>
+                        </group>
+                        <group string="Costos">
+                            <field name="total_purchases" widget="monetary"/>
+                            <field name="total_vendor_invoices" widget="monetary"/>
+                            <field name="total_costs" widget="monetary" class="fw-bold"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Rentabilidad">
+                            <field name="gross_margin" widget="monetary"
+                                   class="text-success fw-bold"
+                                   decoration-danger="gross_margin &lt; 0"/>
+                            <field name="margin_percentage" widget="percentage"
+                                   decoration-success="margin_percentage >= 25"
+                                   decoration-warning="margin_percentage >= 15 and margin_percentage &lt; 25"
+                                   decoration-danger="margin_percentage &lt; 15"/>
+                        </group>
+                        <group string="Presupuesto">
+                            <field name="budget_original" widget="monetary"/>
+                            <field name="budget_consumed_amount" widget="monetary"/>
+                            <field name="budget_consumed_percentage" widget="progressbar"
+                                   decoration-success="budget_consumed_percentage &lt; 80"
+                                   decoration-warning="budget_consumed_percentage >= 80 and budget_consumed_percentage &lt; 100"
+                                   decoration-danger="budget_consumed_percentage >= 100"/>
+                            <field name="budget_remaining" widget="monetary"
+                                   decoration-danger="budget_remaining &lt; 0"/>
+                        </group>
+                    </group>
+
+                    <!-- Metadata -->
+                    <group>
+                        <group>
+                            <field name="company_id" readonly="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="last_update" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Alertas -->
+                    <notebook>
+                        <page string="Alertas &amp; Recomendaciones" name="alerts">
+                            <div class="alert alert-danger" role="status"
+                                 invisible="analytic_status != 'over_budget'">
+                                <strong>⚠️ PRESUPUESTO EXCEDIDO</strong><br/>
+                                El cuenta analítica ha superado el presupuesto original.
+                                Se recomienda revisión inmediata de costos.
+                            </div>
+                            <div class="alert alert-warning" role="status"
+                                 invisible="analytic_status != 'at_risk'">
+                                <strong>⚠️ PRESUPUESTO EN RIESGO</strong><br/>
+                                El cuenta analítica está consumiendo presupuesto más rápido que lo planeado.
+                                Considerar medidas de control de costos.
+                            </div>
+                            <div class="alert alert-success" role="status"
+                                 invisible="analytic_status != 'on_budget'">
+                                <strong>✅ PROYECTO EN PRESUPUESTO</strong><br/>
+                                El cuenta analítica se encuentra dentro del presupuesto asignado.
+                            </div>
+
+                            <div class="alert alert-info" role="status"
+                                 invisible="margin_percentage >= 15">
+                                <strong>💡 MARGEN BAJO</strong><br/>
+                                El margen actual (<field name="margin_percentage" widget="percentage" readonly="1"/>)
+                                está por debajo del objetivo (15%). Revisar precios y costos.
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         SEARCH VIEW - Filtros y Agrupaciones
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_analytic_dashboard_search" model="ir.ui.view">
+        <field name="name">analytic.dashboard.search</field>
+        <field name="model">analytic.dashboard</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Cuenta Analíticas">
+                <!-- Campos de búsqueda -->
+                <field name="analytic_account_id" string="Cuenta Analítica"
+                       filter_domain="[('analytic_account_id', 'ilike', self)]"/>
+
+                <!-- Filtros Predefinidos -->
+                <filter name="filter_on_budget" string="En Presupuesto"
+                        domain="[('analytic_status', '=', 'on_budget')]"/>
+                <filter name="filter_at_risk" string="En Riesgo"
+                        domain="[('analytic_status', '=', 'at_risk')]"/>
+                <filter name="filter_over_budget" string="Sobre Presupuesto"
+                        domain="[('analytic_status', '=', 'over_budget')]"/>
+
+                <separator/>
+
+                <filter name="filter_high_margin" string="Margen Alto (>25%)"
+                        domain="[('margin_percentage', '>=', 25)]"/>
+                <filter name="filter_medium_margin" string="Margen Medio (15-25%)"
+                        domain="[('margin_percentage', '>=', 15), ('margin_percentage', '&lt;', 25)]"/>
+                <filter name="filter_low_margin" string="Margen Bajo (&lt;15%)"
+                        domain="[('margin_percentage', '&lt;', 15)]"/>
+
+                <separator/>
+
+                <filter name="filter_my_company" string="Mi Compañía"
+                        domain="[('company_id', '=', uid.company_id.id)]"/>
+
+                <!-- Agrupaciones -->
+                <separator/>
+                <filter name="group_status" string="Estado"
+                        context="{'group_by': 'analytic_status'}"/>
+                <filter name="group_company" string="Compañía"
+                        context="{'group_by': 'company_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         KANBAN VIEW - Vista Tarjetas CON DRAG & DROP
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_analytic_dashboard_kanban" model="ir.ui.view">
+        <field name="name">analytic.dashboard.kanban</field>
+        <field name="model">analytic.dashboard</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile"
+                    default_group_by="analytic_status"
+                    records_draggable="true"
+                    quick_create="false">
+                <!-- Fields necesarios para drag & drop y agrupación -->
+                <field name="sequence"/>
+                <field name="analytic_status"/>
+                <field name="analytic_account_id"/>
+                <field name="total_invoiced"/>
+                <field name="total_costs"/>
+                <field name="gross_margin"/>
+                <field name="margin_percentage"/>
+                <field name="budget_consumed_percentage"/>
+                <field name="currency_id"/>
+
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="analytic_account_id"/>
+                                    </strong>
+                                </div>
+                                <span class="badge"
+                                      t-att-class="record.analytic_status.raw_value == 'on_budget' ? 'badge-success' :
+                                                   record.analytic_status.raw_value == 'at_risk' ? 'badge-warning' :
+                                                   'badge-danger'">
+                                    <field name="analytic_status"/>
+                                </span>
+                            </div>
+
+                            <div class="o_kanban_record_body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <span class="text-muted">Ingresos:</span><br/>
+                                        <strong><field name="total_invoiced" widget="monetary"/></strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="text-muted">Costos:</span><br/>
+                                        <strong><field name="total_costs" widget="monetary"/></strong>
+                                    </div>
+                                </div>
+                                <hr class="my-2"/>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <span class="text-muted">Margen:</span><br/>
+                                        <strong t-att-class="record.margin_percentage.raw_value >= 25 ? 'text-success' :
+                                                             record.margin_percentage.raw_value >= 15 ? 'text-warning' :
+                                                             'text-danger'">
+                                            <field name="margin_percentage" widget="percentage"/>
+                                        </strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="text-muted">Presupuesto:</span><br/>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar"
+                                                 t-att-class="record.budget_consumed_percentage.raw_value &lt; 80 ? 'bg-success' :
+                                                              record.budget_consumed_percentage.raw_value &lt; 100 ? 'bg-warning' :
+                                                              'bg-danger'"
+                                                 role="progressbar"
+                                                 t-att-style="'width: ' + record.budget_consumed_percentage.raw_value + '%'">
+                                                <field name="budget_consumed_percentage"/>%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+
+                    <!-- Template personalizado para grupos kanban -->
+                    <t t-name="kanban-group">
+                        <div class="o_kanban_group" t-att-data-id="group.value">
+                            <div class="o_kanban_header">
+                                <div class="o_kanban_header_title">
+                                    <span class="o_column_title">
+                                        <t t-if="group.value == 'on_budget'">
+                                            <span class="badge badge-success">✅ On Budget</span>
+                                        </t>
+                                        <t t-if="group.value == 'at_risk'">
+                                            <span class="badge badge-warning">⚠️ At Risk</span>
+                                        </t>
+                                        <t t-if="group.value == 'over_budget'">
+                                            <span class="badge badge-danger">🔴 Over Budget</span>
+                                        </t>
+                                    </span>
+                                    <span class="o_column_unfold ms-auto">
+                                        <i class="fa fa-minus" title="Fold"/>
+                                    </span>
+                                </div>
+                                <div class="o_kanban_counter">
+                                    <span class="o_kanban_counter_side">
+                                        <b><t t-esc="group.count"/></b> Projects
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         GRAPH VIEW - Gráfico Margen por Cuenta Analítica
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_analytic_dashboard_graph" model="ir.ui.view">
+        <field name="name">analytic.dashboard.graph</field>
+        <field name="model">analytic.dashboard</field>
+        <field name="arch" type="xml">
+            <graph string="Análisis Rentabilidad" type="bar" stacked="False">
+                <field name="analytic_account_id"/>
+                <field name="total_invoiced" type="measure"/>
+                <field name="total_costs" type="measure"/>
+                <field name="gross_margin" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         PIVOT VIEW - Tabla Dinámica
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_analytic_dashboard_pivot" model="ir.ui.view">
+        <field name="name">analytic.dashboard.pivot</field>
+        <field name="model">analytic.dashboard</field>
+        <field name="arch" type="xml">
+            <pivot string="Análisis Cuenta Analíticas">
+                <field name="analytic_account_id" type="row"/>
+                <field name="total_invoiced" type="measure"/>
+                <field name="total_costs" type="measure"/>
+                <field name="gross_margin" type="measure"/>
+                <field name="margin_percentage" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         ACTIONS - Acción Ventana Principal
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="action_analytic_dashboard" model="ir.actions.act_window">
+        <field name="name">Dashboard Rentabilidad</field>
+        <field name="res_model">analytic.dashboard</field>
+        <field name="view_mode">kanban,list,form,graph,pivot</field>
+        <field name="context">{
+            'search_default_filter_my_company': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear primer Dashboard de Cuenta Analítica
+            </p>
+            <p>
+                El dashboard muestra KPIs financieros en tiempo real:<br/>
+                • Total facturado (ingresos)<br/>
+                • Total costos (compras + facturas proveedores)<br/>
+                • Margen bruto y porcentual<br/>
+                • Presupuesto consumido<br/>
+                • Estado del cuenta analítica (on-budget/at-risk/over-budget)
+            </p>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         MENU - Menú Principal
+         ══════════════════════════════════════════════════════════════ -->
+    <menuitem id="menu_analytic_dashboard"
+              name="Dashboard Cuentas Analíticas"
+              parent="account.menu_finance"
+              action="action_analytic_dashboard"
+              sequence="25"/>
+
+</odoo>

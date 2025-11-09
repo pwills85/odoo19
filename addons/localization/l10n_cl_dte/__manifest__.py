@@ -165,6 +165,7 @@ Es un desarrollo independiente para localización chilena.
             'zeep',          # SOAP client SII
             'pyOpenSSL',     # Certificate management
             'cryptography',  # Cryptographic operations
+            # 'redis',       # Redis client for caching (AI Service sessions) - OPCIONAL: Solo para webhooks enterprise
         ],
     },
     'data': [
@@ -199,6 +200,7 @@ Es un desarrollo independiente para localización chilena.
 
         # ⭐ REPORTES (must load BEFORE enhanced views to define report actions)
         'report/report_invoice_dte_document.xml',  # ⭐ P0-1: PDF Reports profesionales
+        'report/report_dte_52.xml',  # ⭐ FASE 1 (2025-11-08): DTE 52 PDF Report - Guía de Despacho
 
         # ⭐ ENHANCED FEATURES (v19.0.6.0.0 - ex-l10n_cl_dte_enhanced)
         'views/account_move_enhanced_views.xml',      # Contact, forma_pago, cedible, references
@@ -219,8 +221,8 @@ Es un desarrollo independiente para localización chilena.
         'views/dte_contingency_pending_views.xml',  # ⭐ NEW (Sprint 3 - 2025-10-24): Pending DTEs (Contingency)
         'views/res_config_settings_views.xml',
         'views/analytic_dashboard_views.xml',   # ⭐ NUEVO: Dashboard Cuentas Analíticas
-        'views/dte_dashboard_views.xml',        # ⭐ NEW (Fase 2.1 - 2025-11-07): Dashboard Central DTEs - Monitoreo SII
-        'views/dte_dashboard_views_enhanced.xml',  # ⭐ ENHANCED (Fase 2.1 Cierre Brechas): KPIs regulatorios, alertas
+        # 'views/dte_dashboard_views.xml',        # ⭐ DESACTIVADO: tipo 'dashboard' no soportado en Odoo 19 (convertir a kanban)
+        # 'views/dte_dashboard_views_enhanced.xml',  # ⭐ DESACTIVADO: depende de dte_dashboard_views.xml
         'views/boleta_honorarios_views.xml',    # ⭐ NUEVO Sprint D: Boletas de Honorarios (loaded first - referenced by retencion_iue_tasa)
         'views/retencion_iue_tasa_views.xml',   # ⭐ NUEVO Sprint D: Tasas de Retención IUE
         'views/l10n_cl_rcv_entry_views.xml',    # ⭐ NEW (Sprint 1 - 2025-11-01): RCV Entries (Res. 61/2017)

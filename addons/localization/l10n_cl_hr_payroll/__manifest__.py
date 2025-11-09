@@ -86,6 +86,7 @@ Licencia: LGPL-3
         'data/l10n_cl_legal_caps_2025.xml',          # Topes legales APV/AFC
         'data/l10n_cl_apv_institutions.xml',         # Instituciones APV
         'data/hr_salary_rules_p1.xml',               # Reglas salariales P1
+        'data/hr_salary_rules_ley21735.xml',         # Ley 21.735 Reforma Pensiones
         
         # Vistas
         'views/hr_payroll_structure_views.xml',

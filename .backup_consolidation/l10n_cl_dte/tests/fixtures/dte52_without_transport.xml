@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<DTE xmlns="http://www.sii.cl/SiiDte" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" version="1.0">
+  <Documento ID="DTE-1001">
+    <Encabezado>
+      <IdDoc>
+        <TipoDTE>52</TipoDTE>
+        <Folio>1001</Folio>
+        <FchEmis>2025-10-30</FchEmis>
+        <IndTraslado>5</IndTraslado>
+      </IdDoc>
+      <Emisor>
+        <RUTEmisor>11111111-1</RUTEmisor>
+        <RznSoc>Empresa Emisora SpA</RznSoc>
+        <GiroEmis>Servicios</GiroEmis>
+        <Acteco>620200</Acteco>
+        <DirOrigen>Av. Siempre Viva 123</DirOrigen>
+        <CmnaOrigen>Santiago</CmnaOrigen>
+        <CiudadOrigen>Santiago</CiudadOrigen>
+      </Emisor>
+      <Receptor>
+        <RUTRecep>22222222-2</RUTRecep>
+        <RznSocRecep>Cliente S.A.</RznSocRecep>
+        <GiroRecep>N/A</GiroRecep>
+        <DirRecep>Calle Cliente 456</DirRecep>
+        <CmnaRecep>Santiago</CmnaRecep>
+        <CiudadRecep>Santiago</CiudadRecep>
+      </Receptor>
+      <Totales>
+        <MntTotal>1</MntTotal>
+      </Totales>
+    </Encabezado>
+    <Detalle>
+      <NroLinDet>1</NroLinDet>
+      <NmbItem>Traslado interno</NmbItem>
+      <QtyItem>1</QtyItem>
+      <UnmdItem>UN</UnmdItem>
+  <MontoItem>1</MontoItem>
+    </Detalle>
+  </Documento>
+  <!-- Firma dummy solo para cumplir XSD (no válida criptográficamente) -->
+  <ds:Signature>
+    <ds:SignedInfo>
+      <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+      <ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+      <ds:Reference URI="#DTE-1001">
+        <ds:Transforms>
+          <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+        </ds:Transforms>
+        <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+        <ds:DigestValue>AAAA</ds:DigestValue>
+      </ds:Reference>
+    </ds:SignedInfo>
+    <ds:SignatureValue>AAAA</ds:SignatureValue>
+    <ds:KeyInfo>
+      <ds:KeyValue>
+        <ds:RSAKeyValue>
+          <ds:Modulus>AAAA</ds:Modulus>
+          <ds:Exponent>AQAB</ds:Exponent>
+        </ds:RSAKeyValue>
+      </ds:KeyValue>
+      <ds:X509Data>
+        <ds:X509Certificate>AAAA</ds:X509Certificate>
+      </ds:X509Data>
+    </ds:KeyInfo>
+  </ds:Signature>
+</DTE>

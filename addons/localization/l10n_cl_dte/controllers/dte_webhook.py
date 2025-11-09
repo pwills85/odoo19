@@ -28,12 +28,20 @@ import time
 import hmac
 import hashlib
 import ipaddress
-import redis
 
 # P1.3 GAP CLOSURE: Performance metrics instrumentation
 from odoo.addons.l10n_cl_dte.libs.performance_metrics import measure_performance
 
 _logger = logging.getLogger(__name__)
+
+# Safe Redis exception handling (lazy import compatible)
+try:
+    import redis
+    RedisError = redis.RedisError
+except ImportError:
+    # If redis not installed, treat as generic exception
+    RedisError = Exception
+    _logger.warning("Redis library not installed. Webhook features will be limited.")
 
 
 def get_redis_client():
@@ -46,6 +54,12 @@ def get_redis_client():
     Raises:
         RuntimeError: Si Redis no está configurado o no responde
     """
+    # Lazy import para evitar bloqueo si redis no está instalado
+    try:
+        import redis
+    except ImportError:
+        raise RuntimeError("Redis library not installed. Install with: pip install redis")
+
     redis_url = request.env['ir.config_parameter'].sudo().get_param(
         'l10n_cl_dte.redis_url',
         'redis://redis:6379/1'
@@ -119,7 +133,7 @@ def rate_limit_redis(max_calls=100, period=60):
                         f"Rate limit exceeded: {max_calls_config} calls per {period}s"
                     )
 
-            except redis.RedisError as e:
+            except RedisError as e:
                 # Fallback: log error pero permitir request (fail-open para rate limit)
                 _logger.error(
                     "Rate limit check failed (Redis error)",
@@ -295,7 +309,7 @@ def check_replay_attack(nonce, ttl_seconds=600):
 
         return True
 
-    except redis.RedisError as e:
+    except RedisError as e:
         # FAIL-SECURE: si Redis falla, rechazar request
         _logger.error(
             "Replay check failed (Redis error) - REJECTING",
@@ -578,7 +592,7 @@ class DTEWebhookController(http.Controller):
                 'code': 500
             }
 
-    @http.route('/api/dte/health', type='json', auth='public', methods=['GET'])
+    @http.route('/api/dte/health', type='jsonrpc', auth='public', methods=['GET'])
     def dte_health(self):
         """
         Health check endpoint para verificar webhook activo

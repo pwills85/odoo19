@@ -11,10 +11,25 @@
         <field name="print_report_name">'Estado_Resultados_CL_%s' % (time.strftime('%Y_%m_%d'))</field>
     </record>
 
-    <!-- QWeb Template for PDF -->
+    <!-- QWeb Template for PDF with DYNAMIC DATA -->
     <template id="report_profit_loss_cl_document">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
+                <!-- Prepare dynamic context from report -->
+                <t t-set="pdf_context" t-value="o.get_pdf_context(context.get('report_options', {}))"/>
+                <t t-set="lines_by_code" t-value="pdf_context['lines_by_code']"/>
+                <t t-set="totals" t-value="pdf_context['totals']"/>
+                <t t-set="period_info" t-value="pdf_context['period_info']"/>
+
+                <!-- Calculate dynamic KPIs -->
+                <t t-set="income_raw" t-value="totals.get('CL_INCOME', {}).get('raw', 0.0)"/>
+                <t t-set="gross_profit_raw" t-value="totals.get('CL_GROSS_PROFIT', {}).get('raw', 0.0)"/>
+                <t t-set="net_profit_raw" t-value="totals.get('CL_NET_PROFIT', {}).get('raw', 0.0)"/>
+
+                <!-- Calculate margins (avoid division by zero) -->
+                <t t-set="margin_bruto" t-value="(gross_profit_raw / income_raw * 100) if income_raw else 0.0"/>
+                <t t-set="margin_neto" t-value="(net_profit_raw / income_raw * 100) if income_raw else 0.0"/>
+
                 <t t-call="web.external_layout">
                     <div class="page">
                         <!-- Header -->
@@ -31,8 +46,8 @@
                             <div class="col-12 text-center">
                                 <p class="mb-0">
                                     <strong>Período:</strong>
-                                    Del <span t-esc="context.get('date_from', 'N/A')"/>
-                                    al <span t-esc="context.get('date_to', 'N/A')"/>
+                                    Del <span t-esc="period_info.get('date_from', 'N/A')"/>
+                                    al <span t-esc="period_info.get('date_to', 'N/A')"/>
                                 </p>
                                 <p class="text-muted small mb-0">
                                     (Expresado en Pesos Chilenos - CLP)
@@ -56,7 +71,7 @@
                                     <tr class="table-info">
                                         <td class="fw-bold">INGRESOS DE ACTIVIDADES ORDINARIAS</td>
                                         <td class="text-end fw-bold">
-                                            <!-- Placeholder - populated by account.report -->
+                                            <span t-esc="totals.get('CL_INCOME', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
 
@@ -64,7 +79,7 @@
                                     <tr>
                                         <td class="ps-4">Costo de Ventas</td>
                                         <td class="text-end">
-                                            <!-- Placeholder - populated by account.report -->
+                                            <span t-esc="totals.get('CL_COST_OF_REVENUE', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
 
@@ -72,7 +87,7 @@
                                     <tr class="table-success">
                                         <td class="fw-bold">UTILIDAD (PÉRDIDA) BRUTA</td>
                                         <td class="text-end fw-bold">
-                                            <!-- Placeholder - populated by account.report -->
+                                            <span t-esc="totals.get('CL_GROSS_PROFIT', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
 
@@ -80,7 +95,7 @@
                                     <tr>
                                         <td class="ps-4">Otros Ingresos</td>
                                         <td class="text-end">
-                                            <!-- Placeholder - populated by account.report -->
+                                            <span t-esc="totals.get('CL_OTHER_INCOME', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
 
@@ -88,15 +103,7 @@
                                     <tr>
                                         <td class="ps-4">Gastos de Administración y Ventas</td>
                                         <td class="text-end">
-                                            <!-- Placeholder - populated by account.report -->
-                                        </td>
-                                    </tr>
-
-                                    <!-- Utilidad Operacional -->
-                                    <tr class="table-warning">
-                                        <td class="fw-bold">UTILIDAD (PÉRDIDA) OPERACIONAL</td>
-                                        <td class="text-end fw-bold">
-                                            <!-- Placeholder - calculated aggregate -->
+                                            <span t-esc="totals.get('CL_EXPENSES', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
 
@@ -104,14 +111,14 @@
                                     <tr class="table-primary">
                                         <td class="fw-bold">UTILIDAD (PÉRDIDA) DEL EJERCICIO</td>
                                         <td class="text-end fw-bold">
-                                            <!-- Placeholder - populated by account.report -->
+                                            <span t-esc="totals.get('CL_NET_PROFIT', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
 
-                        <!-- Key Ratios Section (Optional) -->
+                        <!-- Key Ratios Section with DYNAMIC VALUES -->
                         <div class="mb-4">
                             <h5 class="bg-light p-2">Indicadores Clave</h5>
                             <table class="table table-sm">
@@ -119,19 +126,13 @@
                                     <tr>
                                         <td style="width: 70%;">Margen Bruto (%)</td>
                                         <td style="width: 30%;" class="text-end">
-                                            <!-- (Utilidad Bruta / Ingresos) * 100 -->
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Margen Operacional (%)</td>
-                                        <td class="text-end">
-                                            <!-- (Utilidad Operacional / Ingresos) * 100 -->
+                                            <span t-esc="'%.2f%%' % margin_bruto"/>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Margen Neto (%)</td>
                                         <td class="text-end">
-                                            <!-- (Utilidad Neta / Ingresos) * 100 -->
+                                            <span t-esc="'%.2f%%' % margin_neto"/>
                                         </td>
                                     </tr>
                                 </tbody>

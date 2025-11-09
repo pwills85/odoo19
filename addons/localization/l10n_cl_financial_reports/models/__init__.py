@@ -10,9 +10,6 @@ from . import services
 
 # Report models
 
-# Stack Integration (Odoo 19 CE + Custom Modules)
-from . import stack_integration
-
 # Imports automáticos generados por Claude Code
 from . import base_financial_service
 from . import company_security_mixin
@@ -25,7 +22,7 @@ from . import account_report
 from . import analytic_cost_benefit_report
 from . import balance_eight_columns_report
 from . import balance_eight_columns
-from . import budget_comparison_report
+# from . import budget_comparison_report  # DISABLED: Requires Enterprise account.budget.post model
 from . import date_helper
 from . import financial_dashboard_add_widget_wizard
 from . import financial_dashboard_layout
@@ -38,14 +35,17 @@ from . import general_ledger
 from . import l10n_cl_f22_report
 from . import l10n_cl_f22
 from . import l10n_cl_f29_report
-from . import l10n_cl_f29
+from . import l10n_cl_f29  # Base model MUST be imported before stack_integration
 from . import l10n_cl_kpi_dashboard
+from . import project_profitability_report  # MUST be before stack_integration (line 366 inherits from it)
+
+# Stack Integration (Odoo 19 CE + Custom Modules) - AFTER base models
+from . import stack_integration
 from . import l10n_cl_kpi_alert
 from . import performance_mixin
 from . import l10n_cl_ppm
 from . import multi_period_comparison
-from . import project_cashflow_report
-from . import project_profitability_report
+# from . import project_cashflow_report  # DISABLED: Requires sale module (sale.order.line)
 from . import ratio_analysis_adaptor
 from . import ratio_analysis_service_model
 from . import ratio_prediction_ml

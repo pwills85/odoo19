@@ -81,6 +81,7 @@ result = categories.HABERES_IMPONIBLES
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
+# PR-2 FIX (NOM-C001): Usar get_cap() method para tope AFP
 # Obtener tope legal AFP en UF usando vigencia por fecha
 from odoo.exceptions import UserError
 
@@ -91,26 +92,17 @@ if not payslip.indicadores_id:
         % payslip.date_to.strftime('%Y-%m')
     )
 
-# Buscar tope AFP vigente usando modelo l10n_cl.legal.caps
-# Nota: El código 'AFP_IMPONIBLE_CAP' debe estar configurado en datos de topes legales
-domain = [
-    ('code', '=', 'AFP_IMPONIBLE_CAP'),
-    ('valid_from', '&lt;=', payslip.date_to),
-    '|',
-    ('valid_until', '=', False),
-    ('valid_until', '&gt;', payslip.date_to)
-]
-legal_cap = env['l10n_cl.legal.caps'].search(domain, order='valid_from desc', limit=1)
+# PR-2: Usar get_cap() method en lugar de búsqueda manual
+# Esto centraliza la lógica de búsqueda y garantiza consistencia
+tope_uf, unit = env['l10n_cl.legal.caps'].get_cap('AFP_IMPONIBLE_CAP', payslip.date_to)
 
-if not legal_cap:
+# Validar que el tope está en UF
+if unit != 'uf':
     raise UserError(
-        'No se encontró tope imponible AFP vigente para %s. '
-        'Por favor configure los topes en Configuración > Legal Caps (código: AFP_IMPONIBLE_CAP).'
-        % payslip.date_to.strftime('%Y-%m-%d')
+        'El tope AFP debe estar expresado en UF, encontrado: %s' % unit
     )
 
 # Convertir UF a CLP
-tope_uf = legal_cap.amount
 uf_value = payslip.indicadores_id.uf
 result = tope_uf * uf_value
             </field>
@@ -315,6 +307,52 @@ result = categories.TOTAL_HABERES + categories.TOTAL_DESCUENTOS
             <field name="appears_on_payslip" eval="True"/>
             <field name="active" eval="True"/>
         </record>
-        
+
+        <!-- ==================== REFORMA PREVISIONAL 2025 ==================== -->
+        <!-- P0-1: Aporte Empleador 1% Adicional (Ley 21.419) -->
+        <!-- Vigencia: Contratos desde 2025-01-01 -->
+
+        <!-- RULE 15: APV 0.5% Empleador (Reforma 2025) -->
+        <record id="rule_employer_apv_2025" model="hr.salary.rule">
+            <field name="name">APV 0.5% Empleador (Reforma 2025)</field>
+            <field name="code">EMPLOYER_APV_2025</field>
+            <field name="sequence">1000</field>
+            <field name="category_id" ref="category_empleador_reforma"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+# Solo aplica a contratos desde 2025-01-01
+from datetime import date as dt_date
+result = contract.date_start and contract.date_start >= dt_date(2025, 1, 1)
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# APV 0.5% sobre sueldo base
+result = contract.wage * 0.005
+            </field>
+            <field name="appears_on_payslip" eval="False"/>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- RULE 16: Cesantía 0.5% Empleador (Reforma 2025) -->
+        <record id="rule_employer_cesantia_2025" model="hr.salary.rule">
+            <field name="name">Cesantía 0.5% Empleador (Reforma 2025)</field>
+            <field name="code">EMPLOYER_CESANTIA_2025</field>
+            <field name="sequence">1001</field>
+            <field name="category_id" ref="category_empleador_reforma"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+# Solo aplica a contratos desde 2025-01-01
+from datetime import date as dt_date
+result = contract.date_start and contract.date_start >= dt_date(2025, 1, 1)
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Cesantía 0.5% sobre sueldo base
+result = contract.wage * 0.005
+            </field>
+            <field name="appears_on_payslip" eval="False"/>
+            <field name="active" eval="True"/>
+        </record>
+
     </data>
 </odoo>

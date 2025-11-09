@@ -170,7 +170,7 @@ class BalanceEightColumns(models.Model):
                 'show_zero': record.show_zero_balance
             }
             record.cache_key = json.dumps(key_data, sort_keys=True)
-    @tools.ormcache_context('self.id', keys=('company_id'))
+    @tools.ormcache('self.id', 'company_id')  # Odoo 19: Use self.env.context.get('company_id')
 
     @api.depends('line_ids', 'line_ids.debit', 'line_ids.credit',
                  'line_ids.debit_balance', 'line_ids.credit_balance',

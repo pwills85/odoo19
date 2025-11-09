@@ -219,7 +219,7 @@ class ProjectProfitabilityReport(models.Model):
     # ==========================================
     # COMPUTED FIELDS
     # ==========================================
-    @tools.ormcache_context('self.id', keys=('company_id'))
+    @tools.ormcache('self.id', 'company_id')  # Odoo 19: Use self.env.context.get('company_id')
     
     @api.depends('budget_at_completion', 'estimate_at_completion')
     def _compute_margin_metrics(self):

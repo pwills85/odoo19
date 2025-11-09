@@ -1,0 +1,178 @@
+model = "gpt-5-codex"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[project]
+name = "OdooEnergy"
+language = "Python"
+framework = "Odoo 19 CE"
+description = "Módulos y automatizaciones energéticas desarrolladas por EERGYGROUP"
+version_control = "git"
+
+[profiles.deep-engineering]
+model_reasoning_effort = "high"
+model_context_window = 16384  # Máximo contexto para análisis profundos
+model_max_output_tokens = 2048
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+notes = "Máxima inteligencia y contexto para refactorización crítica, auditorías y seguridad."
+
+[profiles.quick-prototype]
+model_reasoning_effort = "medium"  # Balance velocidad/precisión
+model_context_window = 8192
+model_max_output_tokens = 1024  # Menos output = más rápido
+approval_policy = "untrusted"
+sandbox_mode = "read-only"
+notes = "Optimizado para prototipado rápido de scripts o ideas."
+
+[profiles.creative-docs]
+model_reasoning_effort = "low"  # Rápido para documentación
+model_context_window = 4096
+model_max_output_tokens = 4096  # Más tokens para docs largas
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+notes = "Optimizado para generar documentación, docstrings y manuales técnicos."
+
+# Nuevo perfil: Turbo para desarrollo iterativo rápido
+[profiles.turbo-dev]
+model_reasoning_effort = "medium"
+model_context_window = 4096
+model_max_output_tokens = 512  # Mínimo para máxima velocidad
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+notes = "Máxima velocidad para desarrollo iterativo rápido."
+
+# Perfiles para Orquestación de Sub-Agentes
+
+# Agente Principal (Orquestador)
+[profiles.orchestrator]
+model_reasoning_effort = "high"
+model_context_window = 16384
+model_max_output_tokens = 2048
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+notes = "Agente principal que coordina y supervisa sub-agentes especializados."
+
+# Sub-Agente 1: Especialista en Código
+[profiles.code-specialist]
+model_reasoning_effort = "high"
+model_context_window = 8192
+model_max_output_tokens = 2048
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+notes = "Especialista en análisis, refactorización e implementación de código."
+
+# Sub-Agente 2: Especialista en Testing
+[profiles.test-specialist]
+model_reasoning_effort = "medium"
+model_context_window = 4096
+model_max_output_tokens = 1024
+approval_policy = "untrusted"
+sandbox_mode = "read-only"
+notes = "Especialista en creación de tests, validación y calidad de código."
+
+# Sub-Agente 3: Especialista en Compliance
+[profiles.compliance-specialist]
+model_reasoning_effort = "high"
+model_context_window = 8192
+model_max_output_tokens = 1024
+approval_policy = "never"
+sandbox_mode = "read-only"
+notes = "Especialista en validación de cumplimiento normativo (SII, regulaciones chilenas)."
+
+# Sub-Agente 4: Especialista en Documentación
+[profiles.docs-specialist]
+model_reasoning_effort = "low"
+model_context_window = 4096
+model_max_output_tokens = 4096
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+notes = "Especialista en generación de documentación técnica, docstrings y manuales."
+
+# ═══════════════════════════════════════════════════════════
+# Agentes Especializados Migrados de Claude Code
+# Basados en .claude/agents/ con mejoras según estándares Codex CLI
+# ═══════════════════════════════════════════════════════════
+
+# Agente 1: Odoo Developer (Migrado de .claude/agents/odoo-dev.md)
+[profiles.odoo-dev]
+model_reasoning_effort = "high"
+model_context_window = 16384  # Proyectos grandes, múltiples archivos
+model_max_output_tokens = 2048
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+notes = """
+Especialista en desarrollo Odoo 19 CE, localización chilena y módulos DTE.
+- Expertise: ORM, XML views, workflows, módulos, Python, decoradores
+- Conocimiento crítico: .claude/agents/knowledge/*.md (sii_regulatory_context, odoo19_patterns, project_architecture)
+- Alcance: l10n_cl_dte, l10n_cl_hr_payroll, l10n_cl_financial_reports
+- Patrones: _inherit (NO duplicar), @api.depends, libs/ pure Python (NO AbstractModel)
+- Mejora vs Claude Code: +100% context window (16K vs límites Claude)
+"""
+
+# Agente 2: DTE Compliance Expert (Migrado de .claude/agents/dte-compliance.md)
+[profiles.dte-compliance]
+model_reasoning_effort = "high"
+model_context_window = 16384  # Regulaciones extensas, múltiples documentos
+model_max_output_tokens = 1024  # Reportes concisos
+approval_policy = "never"
+sandbox_mode = "read-only"  # Solo validación, no modifica código
+notes = """
+Especialista en cumplimiento SII, validación DTE y regulaciones fiscales chilenas.
+- Expertise: SII compliance, DTE validation, CAF, XMLDSig, TED, RUT modulo 11
+- Conocimiento crítico: .claude/agents/knowledge/sii_regulatory_context.md
+- Alcance: DTEs 33,34,52,56,61 (EERGYGROUP B2B - NO boletas 39/41)
+- Validaciones: RUT modulo 11, esquemas XSD SII, firmas digitales, folios CAF
+- Read-only: Solo validación y reportes, NO modifica código
+- Mejora vs Claude Code: +100% context window, sandbox read-only para seguridad
+"""
+
+# Agente 3: Test Automation Specialist (Migrado de .claude/agents/test-automation.md)
+[profiles.test-automation]
+model_reasoning_effort = "medium"  # Balance velocidad/precisión
+model_context_window = 8192  # Tests y código relacionado
+model_max_output_tokens = 2048  # Tests completos con fixtures
+approval_policy = "untrusted"  # Ejecuta tests, no modifica producción
+sandbox_mode = "read-only"  # Tests no modifican datos reales
+notes = """
+Especialista en testing automatizado, CI/CD y calidad de código.
+- Expertise: TransactionCase, SingleTransactionCase, HttpCase, pytest, fixtures
+- Patrones: Odoo 19 testing patterns, @tagged decorators, factories
+- Targets: 100% crítico (DTE signature, Previred export), 90% lógica negocio, 70% UI
+- Alcance: Unit tests, integration tests, CI/CD pipelines, coverage
+- Mejora vs Claude Code: Reasoning medium (vs Haiku rápido), optimizado para Odoo 19
+"""
+
+# Agente 4: Docker DevOps Expert (Migrado de .claude/agents/docker-devops.md)
+[profiles.docker-devops]
+model_reasoning_effort = "high"
+model_context_window = 8192  # docker-compose.yml, configs múltiples
+model_max_output_tokens = 2048  # Configuraciones completas
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+notes = """
+Especialista en Docker, Docker Compose, despliegues producción y DevOps.
+- Expertise: Containerización, multi-stage builds, seguridad, performance tuning
+- Conocimiento: Odoo 19 CLI completo (150+ comandos), PostgreSQL tuning
+- Alcance: docker-compose.yml, config/odoo.conf, CI/CD, monitoring, health checks
+- Infraestructura: Workers, recursos, volúmenes, redes, secrets management
+- Mejora vs Claude Code: Context window optimizado para configs Docker
+"""
+
+# Agente 5: AI FastAPI Developer (Migrado de .claude/agents/ai-fastapi-dev.md)
+[profiles.ai-fastapi-dev]
+model_reasoning_effort = "high"
+model_context_window = 16384  # Microservicios grandes, múltiples archivos
+model_max_output_tokens = 2048  # Código completo con optimizaciones
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+notes = """
+Especialista en microservicios AI, FastAPI, Claude API y optimización LLM.
+- Expertise: FastAPI async, prompt caching (90% cost reduction), streaming SSE, token pre-counting
+- Optimizaciones: Phase 1 completo (prompt caching, streaming, token efficiency)
+- Arquitectura: Plugin system multi-agent, RAG, knowledge base, circuit breakers
+- Alcance: ai-service/, plugins/, clients/anthropic_client.py, chat/engine.py
+- NO crítico path: Solo chat, analytics, project matching (NO DTE signature/validation)
+- Mejora vs Claude Code: +100% context window para microservicios grandes
+"""
+

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<DTE xmlns="http://www.sii.cl/SiiDte" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" version="1.0">
+  <Documento ID="DTE-34-1002">
+    <Encabezado>
+      <IdDoc>
+        <TipoDTE>34</TipoDTE>
+        <Folio>1002</Folio>
+        <FchEmis>2025-11-07</FchEmis>
+        <FmaPago>1</FmaPago>
+        <IndServicio>3</IndServicio>
+      </IdDoc>
+      <Emisor>
+        <RUTEmisor>11111111-1</RUTEmisor>
+        <RznSoc>Empresa Emisora SpA</RznSoc>
+        <GiroEmis>Servicios Educacionales</GiroEmis>
+        <Acteco>854910</Acteco>
+        <DirOrigen>Av. Educación 789</DirOrigen>
+        <CmnaOrigen>Santiago</CmnaOrigen>
+        <CiudadOrigen>Santiago</CiudadOrigen>
+      </Emisor>
+      <Receptor>
+        <RUTRecep>33333333-3</RUTRecep>
+        <RznSocRecep>Fundación Cliente</RznSocRecep>
+        <GiroRecep>Educación</GiroRecep>
+        <DirRecep>Calle Fundación 101</DirRecep>
+        <CmnaRecep>Santiago</CmnaRecep>
+        <CiudadRecep>Santiago</CiudadRecep>
+      </Receptor>
+      <Totales>
+        <MntExe>5000</MntExe>
+        <MntTotal>5000</MntTotal>
+      </Totales>
+    </Encabezado>
+    <Detalle>
+      <NroLinDet>1</NroLinDet>
+      <IndExe>1</IndExe>
+      <NmbItem>Curso de Capacitación</NmbItem>
+      <QtyItem>1</QtyItem>
+      <UnmdItem>UN</UnmdItem>
+      <PrcItem>5000</PrcItem>
+      <MontoItem>5000</MontoItem>
+    </Detalle>
+  </Documento>
+  <!-- Firma dummy solo para cumplir XSD (no válida criptográficamente) -->
+  <ds:Signature>
+    <ds:SignedInfo>
+      <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+      <ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+      <ds:Reference URI="#DTE-34-1002">
+        <ds:Transforms>
+          <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+        </ds:Transforms>
+        <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+        <ds:DigestValue>AAAA</ds:DigestValue>
+      </ds:Reference>
+    </ds:SignedInfo>
+    <ds:SignatureValue>AAAA</ds:SignatureValue>
+    <ds:KeyInfo>
+      <ds:KeyValue>
+        <ds:RSAKeyValue>
+          <ds:Modulus>AAAA</ds:Modulus>
+          <ds:Exponent>AQAB</ds:Exponent>
+        </ds:RSAKeyValue>
+      </ds:KeyValue>
+      <ds:X509Data>
+        <ds:X509Certificate>AAAA</ds:X509Certificate>
+      </ds:X509Data>
+    </ds:KeyInfo>
+  </ds:Signature>
+</DTE>

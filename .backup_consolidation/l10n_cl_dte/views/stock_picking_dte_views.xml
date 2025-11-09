@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extensión de Vista Form de Stock Picking para DTE 52 -->
+    <record id="view_stock_picking_form_dte" model="ir.ui.view">
+        <field name="name">stock.picking.form.dte</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            
+            <!-- Agregar botón en header -->
+            <xpath expr="//header/button[@name='button_validate']" position="after">
+                <button name="action_generar_dte_52" string="Generar Guía Electrónica (DTE 52)"
+                        type="object" class="btn-primary"
+                        invisible="not genera_dte_52 or state != 'done'"/>
+            </xpath>
+
+            <!-- Agregar página DTE 52 -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Guía Electrónica (DTE 52)" name="dte_52_page">
+                    <group>
+                        <group>
+                            <field name="genera_dte_52"/>
+                            <field name="dte_52_status" invisible="not genera_dte_52"/>
+                        </group>
+                        <group>
+                            <field name="dte_52_folio" readonly="1"
+                                   invisible="not dte_52_folio"/>
+                            <field name="dte_52_timestamp" readonly="1"
+                                   invisible="not dte_52_timestamp"/>
+                        </group>
+                    </group>
+
+                    <group string="Datos del Traslado"
+                           invisible="not genera_dte_52">
+                        <group>
+                            <field name="tipo_traslado"/>
+                            <field name="patente_vehiculo"/>
+                        </group>
+                        <group>
+                            <field name="invoice_id" domain="[('partner_id', '=', partner_id)]"/>
+                        </group>
+                    </group>
+
+                    <group string="XML DTE 52"
+                           invisible="not dte_52_xml">
+                        <field name="dte_52_xml" filename="dte_52_filename" readonly="1"/>
+                    </group>
+                </page>
+            </xpath>
+            
+        </field>
+    </record>
+</odoo>

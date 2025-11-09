@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- VISTAS: res.partner (Extensión para DTE Chile)             -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+
+    <!-- Form View - Agregar campos DTE Chile -->
+    <record id="view_partner_form_dte" model="ir.ui.view">
+        <field name="name">res.partner.form.dte</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Agregar campo Giro después del VAT (RUT) -->
+            <xpath expr="//field[@name='vat']" position="after">
+                <field name="l10n_cl_activity_description"
+                       placeholder="Ej: SERVICIOS DE CONSTRUCCION"
+                       invisible="country_code != 'CL' or not is_company"/>
+            </xpath>
+
+            <!-- Sprint 4 (2025-10-25): Campos específicos para intercambio DTE -->
+            <xpath expr="//field[@name='email']" position="after">
+                <field name="dte_email"
+                       placeholder="Email específico para DTEs (opcional)"
+                       invisible="country_code != 'CL'"
+                       widget="email"/>
+                <field name="es_mipyme"
+                       invisible="country_code != 'CL' or not is_company"/>
+            </xpath>
+
+            <!-- Reemplazar campo ciudad con comuna (catálogo oficial SII) -->
+            <xpath expr="//field[@name='city']" position="after">
+                <field name="l10n_cl_comuna_id"
+                       placeholder="Primero seleccione Región arriba, luego elija comuna aquí..."
+                       options="{'no_create': True, 'no_open': True}"
+                       invisible="country_code != 'CL'"
+                       context="{'default_state_id': state_id}"/>
+
+                <!-- Hint inline para flujo Región → Comuna -->
+                <div class="text-muted small mt-1" invisible="country_code != 'CL' or l10n_cl_comuna_id">
+                    <i class="fa fa-info-circle text-info" title="Información"/>
+                    <span class="ms-1">
+                        Las comunas se filtran automáticamente según la
+                        <strong>Región</strong> seleccionada arriba.
+                        Si no ve su comuna, verifique primero la región.
+                    </span>
+                </div>
+            </xpath>
+
+            <!-- Info helper mejorado para usuarios chilenos -->
+            <xpath expr="//field[@name='country_id']" position="after">
+                <div class="alert alert-warning mt-2" role="alert"
+                     invisible="country_code != 'CL' or (l10n_cl_comuna_id and l10n_cl_activity_description)">
+                    <div class="mb-1">
+                        <i class="fa fa-exclamation-triangle" title="Advertencia"/>
+                        <strong>Datos Tributarios Obligatorios para DTE</strong>
+                    </div>
+                    <p class="mb-2 small">
+                        Si este contacto emitirá o recibirá <strong>Documentos Tributarios Electrónicos (DTEs)</strong>
+                        en Chile, debe completar:
+                    </p>
+                    <ol class="mb-0 small">
+                        <li class="mb-1" invisible="l10n_cl_activity_description">
+                            <strong>Giro:</strong> Descripción de la actividad económica
+                            (ej: "SERVICIOS DE CONSTRUCCION", máx 80 caracteres)
+                        </li>
+                        <li class="mb-1" invisible="state_id">
+                            <strong>Región (Estado):</strong> Seleccione la región de Chile donde opera
+                            <span class="text-primary">← PASO 1</span>
+                        </li>
+                        <li class="mb-1" invisible="l10n_cl_comuna_id">
+                            <strong>Comuna:</strong> Elija la comuna del catálogo oficial SII
+                            <span class="text-primary">← PASO 2 (después de Región)</span>
+                        </li>
+                    </ol>
+                    <div class="mt-2 pt-2 border-top small">
+                        <i class="fa fa-lightbulb-o text-warning" title="Importante"/>
+                        <strong>Importante:</strong> La lista de comunas se filtra automáticamente
+                        según la región. Esto cumple con el catálogo oficial del SII (347 comunas, 16 regiones).
+                    </div>
+                </div>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

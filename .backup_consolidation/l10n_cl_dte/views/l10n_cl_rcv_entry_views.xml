@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- RCV ENTRY - TREE VIEW -->
+    <!-- ============================================================ -->
+    <record id="view_l10n_cl_rcv_entry_tree" model="ir.ui.view">
+        <field name="name">l10n_cl.rcv.entry.tree</field>
+        <field name="model">l10n_cl.rcv.entry</field>
+        <field name="arch" type="xml">
+            <list string="Entradas RCV"
+                  create="false"
+                  edit="false"
+                  delete="false"
+                  decoration-danger="sii_discrepancy == True"
+                  decoration-muted="active == False">
+
+                <field name="date"/>
+                <field name="entry_type" widget="badge" decoration-success="entry_type == 'sale'" decoration-info="entry_type == 'purchase'"/>
+                <field name="document_type_id"/>
+                <field name="folio"/>
+                <field name="partner_name"/>
+                <field name="partner_vat"/>
+                <field name="amount_untaxed" sum="Total Neto"/>
+                <field name="amount_tax" sum="Total IVA"/>
+                <field name="amount_total" sum="Total"/>
+                <field name="sii_state" widget="badge"
+                       decoration-success="sii_state == 'accepted'"
+                       decoration-warning="sii_state == 'pending'"
+                       decoration-danger="sii_state == 'rejected'"/>
+                <field name="sii_discrepancy" optional="hide"/>
+                <field name="active" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- RCV ENTRY - FORM VIEW -->
+    <!-- ============================================================ -->
+    <record id="view_l10n_cl_rcv_entry_form" model="ir.ui.view">
+        <field name="name">l10n_cl.rcv.entry.form</field>
+        <field name="model">l10n_cl.rcv.entry</field>
+        <field name="arch" type="xml">
+            <form string="Entrada RCV" create="false" edit="false" delete="false">
+                <header>
+                    <field name="sii_state" widget="statusbar" statusbar_visible="pending,sent,accepted"/>
+
+                    <button name="action_view_invoice"
+                            string="Ver Factura"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="not move_id"/>
+
+                    <button name="action_mark_discrepancy_resolved"
+                            string="Marcar Resuelta"
+                            type="object"
+                            class="btn-warning"
+                            invisible="not sii_discrepancy"
+                            confirm="¿Confirmar que la discrepancia fue resuelta?"/>
+                </header>
+
+                <sheet>
+                    <!-- Alert box for discrepancies -->
+                    <div class="alert alert-danger" role="alert" invisible="not sii_discrepancy">
+                        <strong>⚠️ Discrepancia con SII</strong>
+                        <p><field name="sii_discrepancy_detail" readonly="1" nolabel="1"/></p>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="display_name"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Información Documento">
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="period_id"/>
+                            <field name="entry_type" widget="radio"/>
+                            <field name="document_type_id"/>
+                            <field name="folio"/>
+                            <field name="date"/>
+                        </group>
+
+                        <group string="Contraparte">
+                            <field name="partner_id"/>
+                            <field name="partner_vat"/>
+                            <field name="partner_name"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Montos">
+                            <field name="currency_id" invisible="1"/>
+                            <field name="amount_untaxed"/>
+                            <field name="amount_tax"/>
+                            <field name="amount_exempt"/>
+                            <field name="amount_total" class="oe_subtotal_footer_separator"/>
+                        </group>
+
+                        <group string="Estado SII">
+                            <field name="sii_sync_date"/>
+                            <field name="sii_discrepancy"/>
+                            <field name="move_id" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Observaciones">
+                        <field name="notes" nolabel="1"/>
+                    </group>
+
+                    <group>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- RCV ENTRY - SEARCH VIEW -->
+    <!-- ============================================================ -->
+    <record id="view_l10n_cl_rcv_entry_search" model="ir.ui.view">
+        <field name="name">l10n_cl.rcv.entry.search</field>
+        <field name="model">l10n_cl.rcv.entry</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Entradas RCV">
+                <!-- Search fields -->
+                <field name="partner_name" string="Cliente/Proveedor"/>
+                <field name="partner_vat" string="RUT"/>
+                <field name="folio" string="Folio"/>
+                <field name="document_type_id" string="Tipo Documento"/>
+
+                <!-- Filters -->
+                <filter string="Ventas" name="filter_sales" domain="[('entry_type', '=', 'sale')]"/>
+                <filter string="Compras" name="filter_purchases" domain="[('entry_type', '=', 'purchase')]"/>
+
+                <separator/>
+
+                <filter string="Aceptados SII" name="filter_accepted" domain="[('sii_state', '=', 'accepted')]"/>
+                <filter string="Rechazados SII" name="filter_rejected" domain="[('sii_state', '=', 'rejected')]"/>
+                <filter string="Con Discrepancias" name="filter_discrepancies" domain="[('sii_discrepancy', '=', True)]"/>
+
+                <separator/>
+
+                <filter string="Mes Actual" name="filter_current_month"
+                        domain="[('date', '&gt;=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d')),
+                                 ('date', '&lt;=', (context_today() + relativedelta(day=31)).strftime('%Y-%m-%d'))]"/>
+
+                <filter string="Mes Anterior" name="filter_last_month"
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(months=1, day=1)).strftime('%Y-%m-%d')),
+                                 ('date', '&lt;=', (context_today() - relativedelta(months=1, day=31)).strftime('%Y-%m-%d'))]"/>
+
+                <separator/>
+
+                <filter string="Archivados" name="filter_inactive" domain="[('active', '=', False)]"/>
+
+                <!-- Group by -->
+                <separator/>
+                <filter string="Tipo (Venta/Compra)" name="group_type" context="{'group_by': 'entry_type'}"/>
+                <filter string="Tipo Documento" name="group_document" context="{'group_by': 'document_type_id'}"/>
+                <filter string="Período" name="group_period" context="{'group_by': 'period_id'}"/>
+                <filter string="Cliente/Proveedor" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                <filter string="Fecha" name="group_date" context="{'group_by': 'date'}"/>
+                <filter string="Estado SII" name="group_sii_state" context="{'group_by': 'sii_state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- RCV ENTRY - PIVOT VIEW -->
+    <!-- ============================================================ -->
+    <record id="view_l10n_cl_rcv_entry_pivot" model="ir.ui.view">
+        <field name="name">l10n_cl.rcv.entry.pivot</field>
+        <field name="model">l10n_cl.rcv.entry</field>
+        <field name="arch" type="xml">
+            <pivot string="Análisis RCV">
+                <field name="entry_type" type="row"/>
+                <field name="document_type_id" type="row"/>
+                <field name="date" interval="month" type="col"/>
+                <field name="amount_total" type="measure"/>
+                <field name="amount_tax" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- RCV ENTRY - GRAPH VIEW -->
+    <!-- ============================================================ -->
+    <record id="view_l10n_cl_rcv_entry_graph" model="ir.ui.view">
+        <field name="name">l10n_cl.rcv.entry.graph</field>
+        <field name="model">l10n_cl.rcv.entry</field>
+        <field name="arch" type="xml">
+            <graph string="Gráfico RCV" type="line">
+                <field name="date" interval="month"/>
+                <field name="amount_total" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- RCV ENTRY - ACTION -->
+    <!-- ============================================================ -->
+    <record id="action_l10n_cl_rcv_entry" model="ir.actions.act_window">
+        <field name="name">Entradas RCV</field>
+        <field name="res_model">l10n_cl.rcv.entry</field>
+        <field name="view_mode">list,form,pivot,graph</field>
+        <field name="context">{
+            'search_default_filter_current_month': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay entradas RCV
+            </p>
+            <p>
+                Las entradas RCV se crean automáticamente al confirmar facturas.<br/>
+                <strong>Resolución SII 61/2017:</strong> Registro obligatorio de compras y ventas.
+            </p>
+        </field>
+    </record>
+
+</odoo>

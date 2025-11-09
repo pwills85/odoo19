@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   # ══════════════════════════════════════════════════════════
   # POSTGRESQL DATABASE
@@ -91,7 +89,7 @@ services:
       args:
         ODOO_VERSION: "19.0"
         ODOO_RELEASE: "20251021"
-    image: eergygroup/odoo19:chile-1.0.2
+    image: eergygroup/odoo19:chile-1.0.5  # ⭐ UPDATED (2025-11-08): Zero warnings (redis + refactoring)
     container_name: odoo19_app
     restart: unless-stopped
     depends_on:
@@ -110,8 +108,8 @@ services:
       - TZ=America/Santiago
       - PYTHONUNBUFFERED=1
     volumes:
-      # Usar odoo.conf interno de la imagen (ya optimizado para Chile)
-      # - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
+      # Usar odoo.conf limpio (Odoo 19 compatible - sin warnings)
+      - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
       - ./addons/custom:/mnt/extra-addons/custom
       - ./addons/localization:/mnt/extra-addons/localization
       - ./addons/third_party:/mnt/extra-addons/third_party

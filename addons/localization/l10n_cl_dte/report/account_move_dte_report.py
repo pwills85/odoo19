@@ -37,10 +37,13 @@ except ImportError:
     qrcode = None
 
 try:
-    import pdf417gen
+    import pdf417
+    # Alias for compatibility
+    pdf417gen = pdf417
 except ImportError:
-    _logger.warning('pdf417gen library not available. Install: pip install pdf417gen')
+    _logger.warning('pdf417 library not available. Install: pip install pdf417')
     pdf417gen = None
+    pdf417 = None
 
 
 class AccountMoveReportDTE(models.AbstractModel):

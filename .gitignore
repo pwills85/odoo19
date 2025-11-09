@@ -65,3 +65,26 @@ yarn-error.log
 # OS
 .DS_Store
 Thumbs.db
+
+# Command residuals (prevent accidental file creation from shell redirects)
+/-u
+/--rm
+/--stop-after-init
+/-d
+/-name
+/-o
+/0
+/docker-compose
+/l10n_cl_dte
+/odoo
+/odoo19
+/run
+/echo
+/find
+/archivos
+/Total
+/*test.py
+/test*.py
+/test:
+addons/localization/.deprecated/
+addons/localization/.backup_*/

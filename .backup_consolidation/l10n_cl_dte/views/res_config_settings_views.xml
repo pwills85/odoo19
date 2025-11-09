@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extensión de Configuración General -->
+    <record id="res_config_settings_view_form_dte" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.dte</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <!-- ⭐ CORREGIDO para Odoo 19: insertar después del último bloque -->
+            <xpath expr="//form" position="inside">
+                <div class="app_settings_block" data-string="Facturación Electrónica Chile (DTE)" 
+                     string="Facturación Electrónica Chile (DTE)" data-key="l10n_cl_dte">
+                    
+                    <h2>Configuración DTE Chile</h2>
+                    
+                    <!-- Microservicios -->
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label string="DTE Service" for="dte_service_url"/>
+                                <div class="text-muted">
+                                    Microservicio para generación y envío de DTEs
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="dte_service_url" placeholder="http://odoo-eergy-services:8001"/>
+                                        <field name="dte_api_key" password="True" placeholder="API Key"/>
+                                        <button name="action_test_dte_service" string="Probar Conexión" 
+                                                type="object" class="btn-link"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="use_ai_validation"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="AI Service" for="use_ai_validation"/>
+                                <div class="text-muted">
+                                    Pre-validación inteligente con IA
+                                </div>
+                                <div class="content-group" invisible="not use_ai_validation">
+                                    <div class="mt16">
+                                        <field name="ai_service_url" placeholder="http://ai-service:8002"/>
+                                        <field name="ai_api_key" password="True" placeholder="API Key"/>
+                                        <button name="action_test_ai_service" string="Probar Conexión" 
+                                                type="object" class="btn-link"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Datos Tributarios Empresa -->
+                    <div class="row mt16 o_settings_container">
+                        <!-- Actividades Económicas (Many2many - Odoo 19) -->
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label string="Actividades Económicas SII" for="l10n_cl_activity_ids"/>
+                                <div class="text-muted">
+                                    Códigos CIIU Rev. 4 CL (OBLIGATORIO en DTEs, hasta 4 códigos)
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="company_id" invisible="1"/>
+                                        <field name="l10n_cl_activity_ids"
+                                               widget="many2many_tags"
+                                               options="{'no_create': True, 'color_field': 'code'}"
+                                               placeholder="Seleccione una o más actividades económicas..."/>
+                                        <div class="text-muted mt8">
+                                            <a href="https://www.sii.cl/destacados/codigos_actividades/"
+                                               target="_blank">
+                                                📋 Ver catálogo oficial de códigos SII
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Giro de la Empresa -->
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label string="Giro de la Empresa" for="l10n_cl_activity_description"/>
+                                <div class="text-muted">
+                                    Descripción textual de la actividad (máx 80 caracteres, OBLIGATORIO en DTEs)
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="l10n_cl_activity_description"
+                                               placeholder="Ej: CONSULTORIAS INFORMATICAS, DESARROLLO DE SISTEMAS"/>
+                                        <div class="text-muted mt8">
+                                            <small>Se usa en XML DTE como elemento &lt;GiroEmis&gt;</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ubicación Tributaria -->
+                    <div class="row mt16 o_settings_container">
+                        <!-- Comuna SII -->
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label string="Ubicación Tributaria" for="partner_id"/>
+                                <div class="text-muted">
+                                    Región y comuna según catálogo oficial SII (OBLIGATORIO en DTEs)
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="partner_id" invisible="1"/>
+                                        <label for="partner_id" string="Región" class="o_form_label"/>
+                                        <field name="partner_id"
+                                               options="{'no_open': True, 'no_create': True}"
+                                               context="{'show_address': 0, 'show_vat': 0}"
+                                               class="o_field_widget o_field_many2one"
+                                               readonly="1"
+                                               nolabel="1"/>
+                                        <div class="text-muted mt8">
+                                            <small>Configure la ubicación en: Configuración → Empresas → Mi Empresa</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resolución DTE -->
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label string="Resolución DTE" for="dte_resolution_number"/>
+                                <div class="text-muted">
+                                    Datos de resolución de autorización SII
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <label for="dte_resolution_number" string="Número"/>
+                                        <field name="dte_resolution_number" placeholder="Ej: 80"/>
+                                        <label for="dte_resolution_date" string="Fecha" class="mt8"/>
+                                        <field name="dte_resolution_date"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuración SII -->
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label string="Ambiente SII" for="sii_environment"/>
+                                <div class="text-muted">
+                                    Ambiente del SII (Sandbox para pruebas, Producción para uso real)
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="sii_environment" widget="radio"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label string="Timeout SII" for="sii_timeout"/>
+                                <div class="text-muted">
+                                    Tiempo máximo de espera para respuesta del SII (segundos)
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="sii_timeout"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -65,3 +65,31 @@
   - Validación OpenSSL de certificado PKCS#12
   - Validación xmllint de archivos CAF XML
   - Instrucciones paso a paso para importación manual en UI Odoo 19
+
+## Data Migration Scripts - Partners (⭐⭐⭐ NUEVO 2025-10-25)
+- `addons/localization/l10n_cl_dte/scripts/export_partners_from_odoo11.sql` - SQL export desde PostgreSQL Odoo 11 (15 líneas)
+  - Exporta 3,922 contactos a CSV con 25 campos
+  - Incluye RUT, email, teléfono, dirección, clasificación
+- `addons/localization/l10n_cl_dte/scripts/analyze_bad_contacts.py` - Análisis calidad de datos (186 líneas)
+  - Identifica 1,021 child contacts (parent_id != NULL)
+  - Detecta nombres inválidos (@, ., números)
+  - Filtra contactos sin clasificación
+- `addons/localization/l10n_cl_dte/scripts/cleanup_bad_migration.py` - Limpieza migración fallida (75 líneas)
+  - Elimina 3,616 contactos importados incorrectamente
+  - Protege contactos del sistema (IDs 1-3)
+  - Batch delete de 100 en 100
+- `addons/localization/l10n_cl_dte/scripts/import_clean_migration.py` - **Importación LIMPIA con filtros** (422 líneas)
+  - Filtro 1: Excluir child contacts (parent_id != NULL)
+  - Filtro 2: Validar nombres (excluir @, ., teléfonos)
+  - Filtro 3: Requerir clasificación (customer OR supplier)
+  - Transformaciones: mobile→phone, document_number→vat, boolean→rank, provincia→región
+  - Validación RUT Módulo 11 chileno
+  - Resultado: 2,844/2,882 importados (98.7% success)
+- `addons/localization/l10n_cl_dte/scripts/compare_migration_via_csv.py` - Validación integridad (248 líneas)
+  - Compara 50 contactos aleatorios CSV vs Odoo 19
+  - Valida 11 campos críticos (name, vat, email, phone, etc.)
+  - Resultado: 84% perfect match, 16% diferencias menores
+- `addons/localization/l10n_cl_dte/scripts/compare_migration_integrity.py` - Validación directa DB (251 líneas)
+  - Conecta directamente a PostgreSQL Odoo 11 y Odoo 19
+  - Compara datos en tiempo real
+  - Alternativa cuando hay acceso directo a ambas DBs

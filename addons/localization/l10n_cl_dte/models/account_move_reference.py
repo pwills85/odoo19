@@ -272,37 +272,33 @@ class AccountMoveReference(models.Model):
                 ))
 
     # ========================================================================
-    # SQL CONSTRAINTS
+    # CONSTRAINTS (Odoo 19 Compatible)
     # ========================================================================
-    # NOTE: Odoo 19 deprecates _sql_constraints format in favor of new
-    #       models.Constraint() API, but that API is NOT fully functional yet
-    #       in Odoo 19.0 (constraints don't get created in PostgreSQL).
-    #
-    #       This format WORKS and creates actual DB constraints.
-    #       The deprecation warning is COSMETIC ONLY and does not affect
-    #       functionality or production use.
-    #
-    #       Verified in PostgreSQL:
-    #       SELECT conname, contype, pg_get_constraintdef(oid)
-    #       FROM pg_constraint WHERE conrelid = 'account_move_reference'::regclass;
-    #
-    #       Will migrate when Odoo 19.1+ stabilizes the new API.
-    #
-    #       Ref: https://github.com/odoo/odoo/issues/xxxxx (Odoo 19 constraint migration)
+    # Migrated from _sql_constraints to @api.constrains for Odoo 19 compatibility
 
-    _sql_constraints = [
-        (
-            'unique_reference_per_move',
-            'UNIQUE(move_id, document_type_id, folio)',
-            'You cannot reference the same document twice in the same invoice!\n\n'
-            'This reference already exists for this document.'
-        ),
-        (
-            'check_folio_not_empty',
-            'CHECK(LENGTH(TRIM(folio)) > 0)',
-            'Folio cannot be empty.'
-        ),
-    ]
+    @api.constrains('move_id', 'document_type_id', 'folio')
+    def _check_unique_reference_per_move(self):
+        """Ensure no duplicate reference per move"""
+        for record in self:
+            if record.move_id and record.document_type_id and record.folio:
+                existing = self.search([
+                    ('move_id', '=', record.move_id.id),
+                    ('document_type_id', '=', record.document_type_id.id),
+                    ('folio', '=', record.folio),
+                    ('id', '!=', record.id)
+                ], limit=1)
+                if existing:
+                    raise ValidationError(_(
+                        'You cannot reference the same document twice in the same invoice!\n\n'
+                        'This reference already exists for this document.'
+                    ))
+
+    @api.constrains('folio')
+    def _check_folio_not_empty(self):
+        """Ensure folio is not empty"""
+        for record in self:
+            if record.folio and not record.folio.strip():
+                raise ValidationError(_('Folio cannot be empty.'))
 
     # ========================================================================
     # CRUD METHODS

@@ -38,6 +38,14 @@ from ..libs.structured_logging import get_dte_logger, log_dte_operation
 
 _logger = get_dte_logger(__name__)
 
+# Safe Redis exception handling (lazy import compatible)
+try:
+    import redis
+    RedisError = redis.RedisError
+except ImportError:
+    # If redis not installed, treat as generic exception
+    RedisError = Exception
+
 
 class AccountMoveDTE(models.Model):
     """
@@ -339,11 +347,21 @@ class AccountMoveDTE(models.Model):
     # SQL CONSTRAINTS - Sprint 1.4 (B-009)
     # ═══════════════════════════════════════════════════════════
 
-    _sql_constraints = [
-        ('dte_track_id_unique',
-         'UNIQUE(dte_track_id)',
-         'El Track ID del SII debe ser único. Este DTE ya fue enviado previamente.'),
-    ]
+    # Odoo 19: Using Constraint models instead of _sql_constraints
+    @api.constrains('dte_track_id')
+    def _check_unique_dte_track_id(self):
+        """Ensure DTE Track ID is unique"""
+        for record in self:
+            if record.dte_track_id:
+                existing = self.search([
+                    ('dte_track_id', '=', record.dte_track_id),
+                    ('id', '!=', record.id)
+                ], limit=1)
+                if existing:
+                    raise ValidationError(_(
+                        'El Track ID del SII debe ser único. '
+                        'Este DTE ya fue enviado previamente.'
+                    ))
 
     # ═══════════════════════════════════════════════════════════
     # CAMPOS COMPUTADOS
@@ -679,7 +697,7 @@ class AccountMoveDTE(models.Model):
                 }
             )
 
-        except redis.RedisError as e:
+        except RedisError as e:
             # FAIL-OPEN: If Redis unavailable, proceed without lock
             # Better to risk duplicate than block legitimate sends
             _logger.error(

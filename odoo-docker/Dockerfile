@@ -2,11 +2,16 @@
 # Multi-Stage Dockerfile - Odoo 19 CE + Chile Localization
 # ══════════════════════════════════════════════════════════════════════════════
 # Maintainer: EERGYGROUP <info@eergygroup.com>
-# Version: 19.0.1.0.3
+# Version: 19.0.1.0.4
 # Description: Professional multi-stage build for Odoo 19 with Chile localization
 # Based on: Official Odoo Docker (https://github.com/odoo/docker)
 #
 # Changelog:
+#   - 2025-11-07 (v1.0.4): Added ML/Data Science libraries for Financial Reports
+#     * numpy 1.24.4 (numerical computing for financial ratios)
+#     * scikit-learn 1.3.2 (ML models for trend analysis)
+#     * joblib 1.3.2 (ML model serialization)
+#     * PyJWT 2.8.0 (JWT authentication for APIs)
 #   - 2025-10-29 (v1.0.3): Updated PDF libraries for PDF417 barcode support
 #     * reportlab 3.6.0 → 4.0.4 (PDF417 barcode for TED)
 #     * qrcode 7.3.0 → 7.4.2 (improved QR generation)
@@ -146,10 +151,10 @@ CMD ["odoo"]
 FROM base AS chile
 
 LABEL maintainer="EERGYGROUP <info@eergygroup.com>"
-LABEL version="19.0.1.0.3"
-LABEL description="Odoo 19 CE + Chile Localization (DTE, Financial Reports, Payroll) + PDF417"
+LABEL version="19.0.1.0.4"
+LABEL description="Odoo 19 CE + Chile Localization (DTE, Financial Reports, Payroll) + PDF417 + ML"
 LABEL stage="chile"
-LABEL changelog="2025-10-29: PDF417 support (reportlab 4.0.4, qrcode 7.4.2, pillow 10.0.0)"
+LABEL changelog="2025-11-07: ML/DS libs (numpy 1.24.4, scikit-learn 1.3.2, joblib 1.3.2, PyJWT 2.8.0)"
 
 USER root
 

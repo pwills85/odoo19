@@ -1,53 +1,239 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Extensión de Vista Form de Stock Picking para DTE 52 -->
+    <!-- ========================================================================= -->
+    <!-- STOCK PICKING DTE 52 VIEWS - Guía de Despacho Electrónica                -->
+    <!-- ========================================================================= -->
+    <!-- Created: 2024-10-24                                                       -->
+    <!-- Enhanced: 2025-11-08 - FASE 1 DTE 52 Complete Implementation             -->
+    <!-- ========================================================================= -->
+
+    <!-- Form View Extension for Stock Picking with DTE 52 -->
     <record id="view_stock_picking_form_dte" model="ir.ui.view">
         <field name="name">stock.picking.form.dte</field>
         <field name="model">stock.picking</field>
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
-            
-            <!-- Agregar botón en header -->
+
+            <!-- Add DTE 52 buttons in header (after validate button) -->
             <xpath expr="//header/button[@name='button_validate']" position="after">
-                <button name="action_generar_dte_52" string="Generar Guía Electrónica (DTE 52)"
-                        type="object" class="btn-primary"
-                        invisible="not genera_dte_52 or state != 'done'"/>
+                <!-- Button: Generate DTE 52 -->
+                <button name="action_generar_dte_52"
+                        string="Generar DTE 52"
+                        type="object"
+                        class="btn-primary"
+                        invisible="dte_52_status != 'to_send' or not genera_dte_52 or state != 'done' or dte_52_folio"
+                        help="Genera la Guía de Despacho Electrónica (DTE 52)"/>
+
+                <!-- Button: Send to SII -->
+                <button name="action_send_to_sii"
+                        string="Enviar a SII"
+                        type="object"
+                        class="btn-success"
+                        invisible="dte_52_status != 'to_send' or not dte_52_folio"
+                        help="Envía el DTE 52 al Servicio de Impuestos Internos"/>
+
+                <!-- Button: Print DTE 52 -->
+                <button name="action_print_dte_52"
+                        string="Imprimir Guía"
+                        type="object"
+                        class="btn-info"
+                        invisible="not dte_52_folio"
+                        icon="fa-print"
+                        help="Imprime la Guía de Despacho con código PDF417"/>
             </xpath>
 
-            <!-- Agregar página DTE 52 -->
+            <!-- Add status bar field (optional - for visual status) -->
+            <xpath expr="//header/field[@name='state']" position="after">
+                <field name="dte_52_status"
+                       widget="statusbar"
+                       statusbar_visible="draft,to_send,sent,accepted"
+                       invisible="not genera_dte_52"/>
+            </xpath>
+
+            <!-- Add DTE 52 indicator in form title area -->
+            <xpath expr="//div[@class='oe_title']" position="inside">
+                <div class="o_row" invisible="not dte_52_folio">
+                    <span class="badge badge-success">
+                        DTE 52: <field name="dte_52_folio" readonly="1" class="oe_inline"/>
+                    </span>
+                </div>
+            </xpath>
+
+            <!-- Add DTE 52 tab page in notebook -->
             <xpath expr="//notebook" position="inside">
-                <page string="Guía Electrónica (DTE 52)" name="dte_52_page">
+                <page string="Guía Electrónica (DTE 52)"
+                      name="dte_52_page"
+                      invisible="not genera_dte_52">
+
+                    <!-- Status and Basic Info -->
                     <group>
-                        <group>
-                            <field name="genera_dte_52"/>
-                            <field name="dte_52_status" invisible="not genera_dte_52"/>
+                        <group string="Estado DTE 52">
+                            <field name="genera_dte_52"
+                                   widget="boolean_toggle"
+                                   help="Active esta opción para generar DTE 52 (Guía de Despacho Electrónica)"/>
+                            <field name="dte_52_status" readonly="1"/>
+                            <field name="dte_52_folio" readonly="1"/>
+                            <field name="dte_52_timestamp" readonly="1"/>
                         </group>
-                        <group>
-                            <field name="dte_52_folio" readonly="1"
-                                   invisible="not dte_52_folio"/>
-                            <field name="dte_52_timestamp" readonly="1"
-                                   invisible="not dte_52_timestamp"/>
-                        </group>
-                    </group>
-
-                    <group string="Datos del Traslado"
-                           invisible="not genera_dte_52">
-                        <group>
-                            <field name="tipo_traslado"/>
-                            <field name="patente_vehiculo"/>
-                        </group>
-                        <group>
-                            <field name="invoice_id" domain="[('partner_id', '=', partner_id)]"/>
+                        <group string="Seguimiento SII">
+                            <field name="dte_52_track_id" readonly="1"/>
+                            <field name="dte_52_sii_error"
+                                   readonly="1"
+                                   invisible="not dte_52_sii_error"
+                                   widget="text"/>
                         </group>
                     </group>
 
-                    <group string="XML DTE 52"
+                    <!-- Transport and Reference Data -->
+                    <group string="Datos del Traslado">
+                        <group>
+                            <field name="tipo_traslado"
+                                   required="genera_dte_52"
+                                   help="Seleccione el tipo de traslado según clasificación SII"/>
+                            <field name="patente_vehiculo"
+                                   placeholder="AA-BB-12"
+                                   help="Patente del vehículo (opcional)"/>
+                        </group>
+                        <group>
+                            <field name="invoice_id"
+                                   domain="[('partner_id', '=', partner_id), ('move_type', '=', 'out_invoice')]"
+                                   context="{'default_partner_id': partner_id}"
+                                   help="Factura relacionada con esta guía de despacho"/>
+                        </group>
+                    </group>
+
+                    <!-- XML and TED Section -->
+                    <group string="Documento Electrónico"
                            invisible="not dte_52_xml">
-                        <field name="dte_52_xml" filename="dte_52_filename" readonly="1"/>
+                        <group>
+                            <field name="dte_52_xml"
+                                   filename="dte_52_filename"
+                                   readonly="1"
+                                   help="Archivo XML firmado del DTE 52"/>
+                        </group>
+                        <group>
+                            <field name="dte_52_pdf417"
+                                   readonly="1"
+                                   invisible="not dte_52_pdf417"
+                                   help="Código PDF417 del Timbre Electrónico (TED)"/>
+                        </group>
                     </group>
+
+                    <!-- Help section for users -->
+                    <div class="alert alert-info"
+                         role="alert"
+                         invisible="dte_52_folio">
+                        <h4>Generar Guía de Despacho Electrónica</h4>
+                        <p>Para generar el DTE 52 (Guía de Despacho Electrónica):</p>
+                        <ol>
+                            <li>Marque la opción "Genera Guía Electrónica"</li>
+                            <li>Complete el tipo de traslado</li>
+                            <li>Valide la guía de despacho</li>
+                            <li>Haga clic en el botón "Generar DTE 52"</li>
+                        </ol>
+                        <p>
+                            <strong>Requisitos:</strong>
+                            <ul>
+                                <li>La empresa debe tener un CAF activo para DTE 52</li>
+                                <li>La empresa debe tener certificado digital configurado</li>
+                                <li>El destinatario debe tener RUT configurado</li>
+                            </ul>
+                        </p>
+                    </div>
+
+                    <!-- Success message -->
+                    <div class="alert alert-success"
+                         role="alert"
+                         invisible="not dte_52_folio and dte_52_status != 'accepted'">
+                        <h4>DTE 52 Generado Exitosamente</h4>
+                        <p>
+                            Folio: <strong><field name="dte_52_folio" readonly="1"/></strong><br/>
+                            Estado: <field name="dte_52_status" readonly="1"/><br/>
+                            Fecha: <field name="dte_52_timestamp" readonly="1"/>
+                        </p>
+                        <p invisible="dte_52_status == 'accepted'">
+                            Use el botón "Enviar a SII" para enviar el DTE al Servicio de Impuestos Internos.
+                        </p>
+                    </div>
+
                 </page>
             </xpath>
-            
+
         </field>
     </record>
+
+    <!-- Tree View Extension - Add DTE 52 indicator column -->
+    <record id="view_stock_picking_tree_dte" model="ir.ui.view">
+        <field name="name">stock.picking.tree.dte</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_internal_search"/>
+        <field name="arch" type="xml">
+
+            <!-- Add DTE 52 folio column after name -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="dte_52_folio"
+                       string="DTE 52"
+                       optional="show"
+                       decoration-success="dte_52_status == 'accepted'"
+                       decoration-warning="dte_52_status == 'sent'"
+                       decoration-info="dte_52_status == 'to_send'"/>
+            </xpath>
+
+            <!-- Add DTE 52 status badge -->
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="dte_52_status"
+                       string="Estado DTE"
+                       optional="hide"
+                       widget="badge"
+                       decoration-success="dte_52_status == 'accepted'"
+                       decoration-warning="dte_52_status in ['sent', 'to_send']"
+                       decoration-danger="dte_52_status == 'rejected'"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Search View Extension - Add DTE 52 filters -->
+    <record id="view_stock_picking_search_dte" model="ir.ui.view">
+        <field name="name">stock.picking.search.dte</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_internal_search"/>
+        <field name="arch" type="xml">
+
+            <!-- Add search fields -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="dte_52_folio" string="Folio DTE 52"/>
+                <field name="tipo_traslado" string="Tipo Traslado"/>
+            </xpath>
+
+            <!-- Add filters -->
+            <xpath expr="//filter[@name='late']" position="after">
+                <separator/>
+                <filter name="with_dte_52"
+                        string="Con DTE 52"
+                        domain="[('genera_dte_52', '=', True)]"/>
+                <filter name="dte_52_to_generate"
+                        string="DTE 52 Por Generar"
+                        domain="[('genera_dte_52', '=', True), ('dte_52_status', '=', 'to_send'), ('dte_52_folio', '=', False)]"/>
+                <filter name="dte_52_to_send"
+                        string="DTE 52 Por Enviar"
+                        domain="[('dte_52_status', '=', 'to_send'), ('dte_52_folio', '!=', False)]"/>
+                <filter name="dte_52_sent"
+                        string="DTE 52 Enviados"
+                        domain="[('dte_52_status', 'in', ['sent', 'accepted'])]"/>
+            </xpath>
+
+            <!-- Add group by -->
+            <xpath expr="//filter[@name='picking_type']" position="after">
+                <filter name="group_by_dte_status"
+                        string="Estado DTE 52"
+                        context="{'group_by': 'dte_52_status'}"/>
+                <filter name="group_by_tipo_traslado"
+                        string="Tipo Traslado"
+                        context="{'group_by': 'tipo_traslado'}"/>
+            </xpath>
+
+        </field>
+    </record>
+
 </odoo>

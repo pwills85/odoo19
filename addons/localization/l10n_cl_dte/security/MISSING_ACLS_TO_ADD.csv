@@ -1,0 +1,73 @@
+# Missing ACL Entries for l10n_cl_dte
+# Add these entries to ir.model.access.csv
+#
+# Total: 16 models requiring ACL definitions
+# Date: 2025-11-06
+#
+# Instructions:
+# 1. Copy lines below (excluding comments)
+# 2. Paste at end of security/ir.model.access.csv
+# 3. Verify model names match Python definitions
+# 4. Run: docker-compose restart odoo
+
+# ===================================================================
+# AI CHAT MODELS (4 entries)
+# ===================================================================
+access_ai_agent_selector_user,ai.agent.selector.user,model_ai_agent_selector,base.group_user,1,0,0,0
+access_ai_agent_selector_manager,ai.agent.selector.manager,model_ai_agent_selector,account.group_account_manager,1,1,1,1
+access_ai_chat_integration_user,ai.chat.integration.user,model_ai_chat_integration,base.group_user,1,1,1,0
+access_ai_chat_integration_manager,ai.chat.integration.manager,model_ai_chat_integration,account.group_account_manager,1,1,1,1
+access_ai_chat_session_user,ai.chat.session.user,model_ai_chat_session,base.group_user,1,1,1,1
+access_ai_chat_session_manager,ai.chat.session.manager,model_ai_chat_session,account.group_account_manager,1,1,1,1
+access_ai_chat_wizard_user,ai.chat.wizard.user,model_ai_chat_wizard,base.group_user,1,1,1,0
+access_ai_chat_wizard_manager,ai.chat.wizard.manager,model_ai_chat_wizard,account.group_account_manager,1,1,1,0
+
+# ===================================================================
+# WIZARD MODELS (2 entries)
+# ===================================================================
+access_dte_commercial_response_wizard_user,dte.commercial.response.wizard.user,model_dte_commercial_response_wizard,account.group_account_user,1,1,1,0
+access_dte_commercial_response_wizard_manager,dte.commercial.response.wizard.manager,model_dte_commercial_response_wizard,account.group_account_manager,1,1,1,1
+access_dte_service_integration_user,dte.service.integration.user,model_dte_service_integration,account.group_account_user,1,0,0,0
+access_dte_service_integration_manager,dte.service.integration.manager,model_dte_service_integration,account.group_account_manager,1,0,0,0
+
+# ===================================================================
+# RCV INTEGRATION (1 entry - missing integration model)
+# ===================================================================
+access_l10n_cl_rcv_integration_user,l10n_cl.rcv.integration.user,model_l10n_cl_rcv_integration,account.group_account_user,1,0,0,0
+access_l10n_cl_rcv_integration_manager,l10n_cl.rcv.integration.manager,model_l10n_cl_rcv_integration,account.group_account_manager,1,1,1,1
+
+# ===================================================================
+# RABBITMQ HELPER (1 entry - internal, restricted)
+# ===================================================================
+# NOTE: This is an internal model - consider making it _transient=True
+# For now, very restrictive ACL (only system admin)
+access_rabbitmq_helper_system,rabbitmq.helper.system,model_rabbitmq_helper,base.group_system,1,1,1,1
+
+# ===================================================================
+# IMPORTANT NOTES:
+# ===================================================================
+#
+# 1. BHE MODELS: Already have ACLs BUT verify names:
+#    - Python: l10n_cl.boleta_honorarios (underscore)
+#    - ACL CSV: l10n_cl.boleta.honorarios (dot)
+#    → Check if these match! If not, correct in CSV.
+#
+# 2. RCV MODELS: Similar issue - verify:
+#    - l10n_cl.rcv.entry (check dots vs underscores)
+#    - l10n_cl.rcv.period (check dots vs underscores)
+#    - l10n_cl.retencion_iue.tasa (check dots vs underscores)
+#
+# 3. RABBITMQ HELPER:
+#    - Consider adding _transient = True to model if wizard-like
+#    - Or keep very restrictive ACL (only system group)
+#
+# ===================================================================
+# VERIFICATION COMMAND:
+# ===================================================================
+#
+# After adding entries, verify:
+# python3 scripts/validate_odoo19_standards.py
+#
+# Expected result:
+# ✓ All models have ACL definitions
+#
