@@ -41,11 +41,19 @@ class HrAFP(models.Model):
         string='Activo',
         default=True
     )
-    
-    _sql_constraints = [
-        ('code_unique', 'UNIQUE(code)', 'El código de la AFP debe ser único'),
-    ]
-    
+
+    @api.constrains('code')
+    def _check_code_unique(self):
+        """Validar que el código sea único (migrado desde _sql_constraints en Odoo 19)"""
+        for afp in self:
+            if afp.code:
+                existing = self.search_count([
+                    ('code', '=', afp.code),
+                    ('id', '!=', afp.id)
+                ])
+                if existing:
+                    raise ValidationError(_('El código de la AFP debe ser único'))
+
     @api.constrains('rate', 'sis_rate')
     def _check_rates(self):
         """Validar que las tasas estén en rangos válidos"""

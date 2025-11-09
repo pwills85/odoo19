@@ -64,13 +64,20 @@ class L10nClLegalCaps(models.Model):
         string='Active',
         default=True
     )
-    
-    _sql_constraints = [
-        ('code_valid_from_unique', 
-         'UNIQUE(code, valid_from)', 
-         'Ya existe un tope con el mismo código y vigencia'),
-    ]
-    
+
+    @api.constrains('code', 'valid_from')
+    def _check_code_valid_from_unique(self):
+        """Validar que no existan duplicados de código+vigencia (migrado desde _sql_constraints en Odoo 19)"""
+        for cap in self:
+            if cap.code and cap.valid_from:
+                existing = self.search_count([
+                    ('code', '=', cap.code),
+                    ('valid_from', '=', cap.valid_from),
+                    ('id', '!=', cap.id)
+                ])
+                if existing:
+                    raise ValidationError(_('Ya existe un tope con el mismo código y vigencia'))
+
     @api.depends('code', 'amount', 'unit', 'valid_from')
     def _compute_name(self):
         """Generar nombre descriptivo"""

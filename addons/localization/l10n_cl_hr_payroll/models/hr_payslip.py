@@ -531,12 +531,20 @@ class HrPayslip(models.Model):
     # ═══════════════════════════════════════════════════════════
     # CONSTRAINTS
     # ═══════════════════════════════════════════════════════════
-    
-    _sql_constraints = [
-        ('number_unique', 'UNIQUE(number, company_id)', 
-         'El número de liquidación debe ser único por compañía'),
-    ]
-    
+
+    @api.constrains('number', 'company_id')
+    def _check_number_unique(self):
+        """Validar que el número sea único por compañía (migrado desde _sql_constraints en Odoo 19)"""
+        for payslip in self:
+            if payslip.number and payslip.company_id:
+                existing = self.search_count([
+                    ('number', '=', payslip.number),
+                    ('company_id', '=', payslip.company_id.id),
+                    ('id', '!=', payslip.id)
+                ])
+                if existing:
+                    raise ValidationError(_('El número de liquidación debe ser único por compañía'))
+
     @api.constrains('date_from', 'date_to')
     def _check_dates(self):
         """Validar fechas"""

@@ -130,11 +130,19 @@ class HrSalaryRuleCategory(models.Model):
     # ═══════════════════════════════════════════════════════════
     # CONSTRAINTS
     # ═══════════════════════════════════════════════════════════
-    
-    _sql_constraints = [
-        ('code_unique', 'UNIQUE(code)', 'El código debe ser único'),
-    ]
-    
+
+    @api.constrains('code')
+    def _check_code_unique(self):
+        """Validar que el código sea único (migrado desde _sql_constraints en Odoo 19)"""
+        for category in self:
+            if category.code:
+                existing = self.search_count([
+                    ('code', '=', category.code),
+                    ('id', '!=', category.id)
+                ])
+                if existing:
+                    raise ValidationError(_('El código debe ser único'))
+
     @api.constrains('parent_id')
     def _check_parent_recursion(self):
         """Evitar recursión infinita en jerarquía - Odoo 19 CE"""

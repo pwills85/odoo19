@@ -99,10 +99,6 @@ class HrEconomicIndicators(models.Model):
         required=True
     )
 
-    _sql_constraints = [
-        ('period_unique', 'UNIQUE(period)', 'Ya existe un indicador para este período'),
-    ]
-    
     @api.depends('period')
     def _compute_name(self):
         """Generar nombre del indicador"""
@@ -111,13 +107,27 @@ class HrEconomicIndicators(models.Model):
                 indicator.name = indicator.period.strftime('%B %Y')
             else:
                 indicator.name = 'Nuevo Indicador'
-    
+
     @api.constrains('period')
     def _check_period(self):
-        """Validar que el período sea primer día del mes"""
+        """
+        Validar período:
+        - Debe ser primer día del mes
+        - Debe ser único (migrado desde _sql_constraints en Odoo 19)
+        """
         for indicator in self:
+            # Validar primer día del mes
             if indicator.period and indicator.period.day != 1:
                 raise ValidationError(_('El período debe ser el primer día del mes'))
+
+            # Validar unicidad del período
+            if indicator.period:
+                existing = self.search_count([
+                    ('period', '=', indicator.period),
+                    ('id', '!=', indicator.id)
+                ])
+                if existing:
+                    raise ValidationError(_('Ya existe un indicador para este período'))
     
     @api.model
     def get_indicator_for_date(self, target_date):
