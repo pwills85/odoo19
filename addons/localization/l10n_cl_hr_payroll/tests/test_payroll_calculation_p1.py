@@ -103,7 +103,7 @@ class TestPayrollCalculationP1(TransactionCase):
         )
         cls.contract_apv = cls._create_contract(
             cls, cls.employee_apv, 1500000, 'apv',
-            apv_monto=50000, apv_regimen='a'
+            apv_monto=50000, apv_regimen='A'
         )
         
         # Estructura salarial
@@ -121,6 +121,13 @@ class TestPayrollCalculationP1(TransactionCase):
                 'TOTAL_HABERES', 'TOTAL_DESCUENTOS', 'NET'
             ])
         ])
+
+        if not salary_rules:
+            raise ValueError(
+                'No se encontraron reglas salariales. '
+                'Asegúrese de que el módulo l10n_cl_hr_payroll esté instalado y los datos cargados.'
+            )
+
         salary_rules.write({'struct_id': cls.payroll_structure.id})
     
     def _create_employee(self, name, rut):
@@ -185,10 +192,10 @@ class TestPayrollCalculationP1(TransactionCase):
         - Alcance líquido correcto
         """
         payslip = self._create_payslip(self.employee_low, self.contract_low)
-        
+
         # Obtener líneas
         lines = {line.code: line.total for line in payslip.line_ids}
-        
+
         # Validaciones
         sueldo_base = 600000
         
