@@ -158,13 +158,17 @@ result = -(base * (tasa_afp + comision))
             <field name="amount_python_compute">
 # Salud = 7% FONASA o plan ISAPRE sobre BASE_TRIBUTABLE
 base = categories.BASE_TRIBUTABLE
-tasa_salud = 0.07  # 7% legal mínimo
+legal_7pct = base * 0.07  # 7% legal mínimo
 
-# Si tiene ISAPRE, usar tasa del plan
-if contract.isapre_id and contract.isapre_plan_id:
-    tasa_salud = contract.isapre_plan_id.cotizacion_pactada / 100.0
-
-result = -(base * tasa_salud)
+# Si tiene ISAPRE, comparar plan en UF vs 7% legal
+if contract.isapre_id and contract.isapre_plan_uf and payslip.indicadores_id:
+    # Convertir plan UF a CLP
+    plan_clp = contract.isapre_plan_uf * payslip.indicadores_id.uf
+    # Se paga el mayor entre plan y 7% legal
+    result = -(max(plan_clp, legal_7pct))
+else:
+    # FONASA o sin plan ISAPRE: 7% legal
+    result = -legal_7pct
             </field>
             <field name="active" eval="True"/>
         </record>
