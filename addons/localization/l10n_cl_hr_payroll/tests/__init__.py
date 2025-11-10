@@ -10,6 +10,15 @@ from . import test_ley21735_reforma_pensiones  # Corrección profesional Ley 21.
 from . import test_previred_integration
 from . import test_payslip_validations
 
+# GAP-001: Proporcionalidad Asignación Familiar (2025-11-09)
+from . import test_asignacion_familiar_proporcional  # DFL 150 proporcionalidad
+
+# GAP-002: Eliminar hardcoded AFP cap (2025-11-09)
+from . import test_gap002_legal_caps_integration  # HR-GAP-002: Legal caps integration
+
+# GAP-003: Reforma Previsional 2025 - Gradualidad Aporte Empleador (2025-11-09)
+from . import test_gap003_reforma_gradual  # Reforma Ley 21.735 - Gradualidad 1.0%-8.5%
+
 # Existing tests
 from . import test_naming_integrity
 from . import test_tax_brackets

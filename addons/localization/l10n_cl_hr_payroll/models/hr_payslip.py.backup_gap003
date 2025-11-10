@@ -271,24 +271,6 @@ class HrPayslip(models.Model):
              'Vigencia: Desde 01-08-2025'
     )
 
-    # Aporte Empleador CRP (Cotización Rentabilidad Protegida)
-    employer_crp_ley21735 = fields.Monetary(
-        string='Aporte Empleador CRP (Ley 21.735)',
-        compute='_compute_reforma_ley21735',
-        store=True,
-        currency_field='currency_id',
-        readonly=True,
-        help='Cotización Rentabilidad Protegida - Transitorio 30 años (2025-2054). '
-             'Ley 21.735 Art. 2° - Componente gradual del aporte empleador.\n'
-             'Gradualidad oficial:\n'
-             '- 2025: 0.0% (no aplica)\n'
-             '- 2026: 0.9% (desde 01-08-2026)\n'
-             '- 2027-2054: 1.5% (absoluto)\n'
-             'Vigencia: Desde 01-08-2026. Finaliza: 31-07-2054.\n'
-             'Fuente: ChileAtiende + Superintendencia Pensiones'
-    )
-
-
     # Total Aporte Empleador Ley 21.735 (1%)
     employer_total_ley21735 = fields.Monetary(
         string='Total Aporte Empleador Ley 21.735 (1%)',
@@ -520,38 +502,32 @@ class HrPayslip(models.Model):
         """
         Cálculo Aporte Empleador Ley 21.735 - Reforma Sistema Pensiones
 
-        ACTUALIZADO: Implementa gradualidad 2025-2033 con distribución VARIABLE
-
         Normativa:
         - Ley 21.735 "Reforma del Sistema de Pensiones"
         - Vigencia: 01 Agosto 2025
-        - Gradualidad: 1.0% (2025) → 8.5% (2033+)
-        - Distribución VARIABLE por período (NO fija 10%/90%)
-
-        Componentes:
-        - CI: Cuenta Individual trabajador (capitalización AFP)
-        - CRP: Cotización Rentabilidad Protegida (transitorio 30 años)
-        - SSP: Seguro Social Previsional (FAPP + compensaciones)
+        - Aporte empleador: 1% total
+          * 0.1% Cuenta Individual trabajador
+          * 0.9% Seguro Social
 
         Aplicación:
-        - Remuneraciones afectas a cotización previsional
-        - Con tope imponible AFP 87.8 UF (2025)
-        - Período agosto 2025 en adelante
+        - Todas las remuneraciones afectas a cotización previsional
+        - Desde período agosto 2025 en adelante
+        - Sin tope (aplica sobre remuneración imponible completa)
 
         Ref Legal:
-        - Ley 21.735 Art. 2° (Aporte empleador gradual)
-        - D.L. 3.500 Art. 16 (Tope imponible AFP)
-        - Circular SP 2025 (Implementación gradualidad)
+        - Ley 21.735 Art. 2° (Aporte empleador)
+        - D.L. 3.500 (Sistema AFP)
+        - Circular Superintendencia Pensiones 2025
 
         Returns:
-            None (actualiza 4 campos compute: CI, CRP, SSP, Total)
+            None (actualiza campos compute)
         """
+        # Fecha vigencia Ley 21.735
         FECHA_VIGENCIA_LEY21735 = date(2025, 8, 1)
 
         for payslip in self:
             # Valores por defecto (no aplica)
             payslip.employer_cuenta_individual_ley21735 = 0.0
-            payslip.employer_crp_ley21735 = 0.0
             payslip.employer_seguro_social_ley21735 = 0.0
             payslip.employer_total_ley21735 = 0.0
             payslip.aplica_ley21735 = False
@@ -570,6 +546,7 @@ class HrPayslip(models.Model):
                 continue
 
             # Verificar vigencia Ley 21.735
+            # Aplica desde agosto 2025 en adelante
             if payslip.date_from < FECHA_VIGENCIA_LEY21735:
                 _logger.debug(
                     f"Payslip {payslip.name}: Período {payslip.date_from} anterior a "
@@ -580,31 +557,9 @@ class HrPayslip(models.Model):
             # Nómina afecta a Ley 21.735
             payslip.aplica_ley21735 = True
 
-            # Obtener año/mes para tabla gradualidad
-            year = payslip.date_from.year
-            month = payslip.date_from.month
-
-            # Obtener tasas graduales del período (usa arquitectura distribuida)
-            try:
-                tasas = payslip._get_tasa_reforma_gradual(year, month)
-            except ValidationError as e:
-                _logger.error(
-                    f"Payslip {payslip.name}: Error obteniendo tasas graduales: {str(e)}"
-                )
-                continue
-
-            # Obtener base imponible con tope AFP (usa arquitectura distribuida)
-            try:
-                base_imponible = payslip._get_base_imponible_ley21735()
-            except ValidationError as e:
-                _logger.error(
-                    f"Payslip {payslip.name}: Error obteniendo base imponible: {str(e)}"
-                )
-                # Graceful degradation: usar wage sin tope
-                base_imponible = payslip.contract_id.wage
-                _logger.warning(
-                    f"Payslip {payslip.name}: Usando wage sin tope como fallback (${base_imponible:,.0f})"
-                )
+            # Base de cálculo: Remuneración imponible
+            # Usar wage del contrato (puede ajustarse según estructura nómina)
+            base_imponible = payslip.contract_id.wage
 
             if not base_imponible or base_imponible <= 0:
                 _logger.warning(
@@ -613,305 +568,28 @@ class HrPayslip(models.Model):
                 )
                 continue
 
-            # Calcular aportes con distribución VARIABLE por período
-            aporte_ci = base_imponible * tasas['ci']
-            aporte_crp = base_imponible * tasas['crp']
-            aporte_ssp = base_imponible * tasas['ssp']
-            total_aporte = base_imponible * tasas['total']
+            # Cálculo aportes Ley 21.735
+            # 0.1% Cuenta Individual
+            aporte_cuenta_individual = base_imponible * 0.001  # 0.1%
 
-            # Asignar valores calculados (incluye nuevo campo CRP)
-            payslip.employer_cuenta_individual_ley21735 = aporte_ci
-            payslip.employer_crp_ley21735 = aporte_crp
-            payslip.employer_seguro_social_ley21735 = aporte_ssp
+            # 0.9% Seguro Social
+            aporte_seguro_social = base_imponible * 0.009  # 0.9%
+
+            # Total 1%
+            total_aporte = aporte_cuenta_individual + aporte_seguro_social
+
+            # Asignar valores calculados
+            payslip.employer_cuenta_individual_ley21735 = aporte_cuenta_individual
+            payslip.employer_seguro_social_ley21735 = aporte_seguro_social
             payslip.employer_total_ley21735 = total_aporte
 
             _logger.info(
-                f"Payslip {payslip.name}: Ley 21.735 aplicada (año {year}, mes {month:02d}). "
+                f"Payslip {payslip.name}: Ley 21.735 aplicada. "
                 f"Base: ${base_imponible:,.0f}, "
-                f"CI: ${aporte_ci:,.0f} ({tasas['ci']*100:.2f}%), "
-                f"CRP: ${aporte_crp:,.0f} ({tasas['crp']*100:.2f}%), "
-                f"SSP: ${aporte_ssp:,.0f} ({tasas['ssp']*100:.2f}%), "
-                f"Total: ${total_aporte:,.0f} ({tasas['total']*100:.1f}%)"
+                f"Cuenta Individual (0.1%): ${aporte_cuenta_individual:,.0f}, "
+                f"Seguro Social (0.9%): ${aporte_seguro_social:,.0f}, "
+                f"Total (1%): ${total_aporte:,.0f}"
             )
-
-    def _get_tasa_reforma_gradual(self, year: int, month: int) -> dict:
-        """
-        Obtener tasas graduales Reforma Ley 21.735 para año/mes específico
-
-        La reforma establece gradualidad de aporte empleador desde 1.0% (2025)
-        hasta 8.5% (2033+), con distribución VARIABLE entre componentes:
-        - CI: Cuenta Individual (capitalización AFP trabajador)
-        - CRP: Cotización Rentabilidad Protegida (transitorio 30 años)
-        - SSP: Seguro Social Previsional (FAPP + compensaciones)
-
-        CRÍTICO: Período fiscal reforma es agosto-julio (NO enero-diciembre).
-        Ejemplo: "Año 2026" = Agosto 2026 - Julio 2027
-
-        Normativa:
-        - Ley 21.735 Art. 2° transitorio (gradualidad 9 años oficiales)
-        - ChileAtiende (tabla confirmada con 4 fuentes convergentes)
-        - Superintendencia Pensiones (distribución CI/CRP/SSP)
-
-        Args:
-            year (int): Año nómina (2025-2033+)
-            month (int): Mes nómina (1-12)
-
-        Returns:
-            dict: {'total': float, 'ci': float, 'crp': float, 'ssp': float}
-                  Tasas en decimal (ej: 0.010 = 1.0%)
-
-        Raises:
-            ValidationError: Si año < 2025 o valores inválidos
-
-        Example:
-            >>> payslip._get_tasa_reforma_gradual(2025, 10)
-            {'total': 0.010, 'ci': 0.001, 'crp': 0.000, 'ssp': 0.009}
-            >>> payslip._get_tasa_reforma_gradual(2026, 8)  # Inicio año fiscal 2026
-            {'total': 0.035, 'ci': 0.001, 'crp': 0.009, 'ssp': 0.025}
-        """
-        self.ensure_one()
-
-        # Tabla oficial ChileAtiende (validada con 4 fuentes)
-        # NO MODIFICAR sin validación normativa formal
-        TASAS_GRADUALES_OFICIAL = {
-            2025: {'total': 0.010, 'ci': 0.001, 'crp': 0.000, 'ssp': 0.009},   # 1.0%
-            2026: {'total': 0.035, 'ci': 0.001, 'crp': 0.009, 'ssp': 0.025},   # 3.5%
-            2027: {'total': 0.0425, 'ci': 0.0025, 'crp': 0.015, 'ssp': 0.025}, # 4.25%
-            2028: {'total': 0.050, 'ci': 0.010, 'crp': 0.015, 'ssp': 0.025},   # 5.0%
-            2029: {'total': 0.057, 'ci': 0.017, 'crp': 0.015, 'ssp': 0.025},   # 5.7%
-            2030: {'total': 0.064, 'ci': 0.024, 'crp': 0.015, 'ssp': 0.025},   # 6.4%
-            2031: {'total': 0.071, 'ci': 0.031, 'crp': 0.015, 'ssp': 0.025},   # 7.1%
-            2032: {'total': 0.078, 'ci': 0.038, 'crp': 0.015, 'ssp': 0.025},   # 7.8%
-            2033: {'total': 0.085, 'ci': 0.045, 'crp': 0.015, 'ssp': 0.025},   # 8.5% (final)
-        }
-
-        # Validaciones
-        if year < 2025:
-            raise ValidationError(
-                f"Reforma Ley 21.735 NO aplica para año {year} (vigencia desde agosto 2025). "
-                f"Para períodos anteriores, aporte empleador es 0%."
-            )
-
-        if not (1 <= month <= 12):
-            raise ValidationError(f"Mes inválido: {month} (debe ser 1-12)")
-
-        # Determinar año fiscal reforma (período agosto-julio)
-        # Ejemplo: Agosto 2025 = año fiscal 2025
-        #          Julio 2026 = año fiscal 2025 (aún no cambia)
-        #          Agosto 2026 = año fiscal 2026 (nuevo período)
-        if month >= 8:
-            # Agosto-Diciembre: Usar año actual
-            year_fiscal = year
-        else:
-            # Enero-Julio: Usar año anterior (aún en período fiscal anterior)
-            year_fiscal = year - 1
-
-        # Obtener tasas del año fiscal correspondiente
-        if year_fiscal in TASAS_GRADUALES_OFICIAL:
-            tasas = TASAS_GRADUALES_OFICIAL[year_fiscal]
-        else:
-            # Año >= 2034: Mantener tasas finales 2033 (8.5% total)
-            tasas = TASAS_GRADUALES_OFICIAL[2033]
-            _logger.info(
-                f"Año fiscal {year_fiscal} > 2033: Usando tasas finales 8.5% "
-                f"(CI: 4.5%, CRP: 1.5%, SSP: 2.5%)"
-            )
-
-        # Validar coherencia (suma componentes = total)
-        suma_componentes = tasas['ci'] + tasas['crp'] + tasas['ssp']
-        if abs(suma_componentes - tasas['total']) > 0.0001:  # Tolerancia flotante
-            raise ValidationError(
-                f"ERROR INTERNO: Tabla gradualidad inconsistente para año fiscal {year_fiscal}. "
-                f"Total: {tasas['total']}, Suma componentes: {suma_componentes}. "
-                f"Contacte a soporte técnico."
-            )
-
-        _logger.debug(
-            f"Tasas Ley 21.735 - Año {year}, Mes {month:02d} (año fiscal {year_fiscal}): "
-            f"Total {tasas['total']*100:.2f}% = "
-            f"CI {tasas['ci']*100:.2f}% + "
-            f"CRP {tasas['crp']*100:.2f}% + "
-            f"SSP {tasas['ssp']*100:.2f}%"
-        )
-
-        return tasas
-
-    def _get_tope_afp_clp(self) -> float:
-        """
-        Obtener tope AFP en CLP para el período de la nómina
-
-        ARQUITECTURA DISTRIBUIDA (3 capas):
-        1. Tope AFP (UF) desde: l10n_cl.legal.caps (modelo parametrizable)
-        2. Valor UF (CLP) desde: hr.economic.indicators (AI service extrae de Previred)
-        3. Cálculo: tope_uf * valor_uf_clp
-
-        Esta arquitectura evita hardcodear valores y permite actualización
-        automática desde fuentes oficiales (AI-Service scraping Previred).
-
-        Normativa:
-        - D.L. 3.500 Art. 16 (Tope imponible AFP)
-        - Valor vigente 2025: 87.8 UF (puede cambiar anualmente)
-        - Fuente oficial: Superintendencia Pensiones
-
-        Returns:
-            float: Tope AFP en CLP para el mes de la nómina
-
-        Raises:
-            ValidationError: Si no se puede obtener tope o UF
-
-        Example:
-            >>> # Suponer UF = $38,000, Tope AFP = 87.8 UF
-            >>> payslip._get_tope_afp_clp()
-            3336400.0  # 87.8 * 38,000
-        """
-        self.ensure_one()
-
-        if not self.date_from:
-            raise ValidationError(
-                "No se puede calcular tope AFP: Liquidación sin fecha inicio (date_from)"
-            )
-
-        # Paso 1: Obtener tope AFP en UF desde l10n_cl.legal.caps
-        try:
-            LegalCaps = self.env['l10n_cl.legal.caps']
-            afp_tope_uf, unit = LegalCaps.get_cap('AFP_IMPONIBLE_CAP', self.date_from)
-
-            if unit != 'UF':
-                raise ValidationError(
-                    f"Tope AFP debe estar en UF, encontrado: {unit}. "
-                    f"Verifique configuración en Configuración > Topes Legales."
-                )
-
-            if not afp_tope_uf or afp_tope_uf <= 0:
-                raise ValidationError(
-                    f"Tope AFP inválido: {afp_tope_uf} UF para fecha {self.date_from}. "
-                    f"Configure en: Configuración > Topes Legales > AFP_IMPONIBLE_CAP"
-                )
-
-            _logger.debug(
-                f"Tope AFP obtenido: {afp_tope_uf} UF para período {self.date_from}"
-            )
-
-        except Exception as e:
-            raise ValidationError(
-                f"Error obteniendo tope AFP desde l10n_cl.legal.caps: {str(e)}\n\n"
-                f"Acción requerida:\n"
-                f"1. Ir a: Configuración > Topes Legales\n"
-                f"2. Verificar existencia de registro 'AFP_IMPONIBLE_CAP'\n"
-                f"3. Verificar rango de vigencia incluye {self.date_from}\n"
-                f"4. Valor esperado 2025: 87.8 UF"
-            )
-
-        # Paso 2: Obtener valor UF en CLP desde hr.economic.indicators
-        try:
-            indicator = self.env['hr.economic.indicators'].get_indicator_for_date(self.date_from)
-
-            if not indicator:
-                raise ValidationError(
-                    f"No hay indicadores económicos para {self.date_from.strftime('%Y-%m')}. "
-                    f"Configure en: Configuración > Indicadores Económicos"
-                )
-
-            valor_uf = indicator.uf
-
-            if not valor_uf or valor_uf <= 0:
-                raise ValidationError(
-                    f"Valor UF inválido: ${valor_uf:,.0f} para {self.date_from.strftime('%Y-%m')}. "
-                    f"Actualice indicadores en: Configuración > Indicadores Económicos"
-                )
-
-            _logger.debug(
-                f"Valor UF obtenido: ${valor_uf:,.2f} para {self.date_from.strftime('%Y-%m')}"
-            )
-
-        except ValidationError:
-            raise  # Re-raise ValidationError original
-        except Exception as e:
-            raise ValidationError(
-                f"Error obteniendo valor UF desde hr.economic.indicators: {str(e)}\n\n"
-                f"Acción requerida:\n"
-                f"1. Ir a: Configuración > Indicadores Económicos\n"
-                f"2. Ejecutar cron manual o esperar actualización automática\n"
-                f"3. Verificar integración con AI-Service está activa\n"
-                f"4. Período requerido: {self.date_from.strftime('%Y-%m')}"
-            )
-
-        # Paso 3: Calcular tope AFP en CLP
-        tope_afp_clp = afp_tope_uf * valor_uf
-
-        _logger.info(
-            f"Tope AFP calculado para {self.date_from.strftime('%Y-%m')}: "
-            f"{afp_tope_uf} UF × ${valor_uf:,.2f} = ${tope_afp_clp:,.0f}"
-        )
-
-        return tope_afp_clp
-
-    def _get_base_imponible_ley21735(self) -> float:
-        """
-        Obtener base imponible con tope AFP para cálculo Ley 21.735
-
-        Lógica:
-        1. Obtener wage del contrato (remuneración bruta)
-        2. Obtener tope AFP en CLP (usa arquitectura distribuida)
-        3. Aplicar tope: min(wage, tope_afp_clp)
-
-        Graceful degradation: Si falla obtención de tope, usar wage sin tope
-        y generar warning (evita bloquear nómina por configuración incompleta).
-
-        Returns:
-            float: Base imponible topeada para cálculo aportes Ley 21.735
-
-        Example:
-            >>> # Sueldo $5,000,000, Tope AFP $3,336,400
-            >>> payslip._get_base_imponible_ley21735()
-            3336400.0  # Topeado
-            >>>
-            >>> # Sueldo $2,000,000, Tope AFP $3,336,400
-            >>> payslip._get_base_imponible_ley21735()
-            2000000.0  # Sin tope (sueldo < tope)
-        """
-        self.ensure_one()
-
-        # Obtener wage del contrato
-        wage = self.contract_id.wage if self.contract_id else 0.0
-
-        if not wage or wage <= 0:
-            _logger.warning(
-                f"Nómina {self.name}: Wage inválido ({wage}), retornando base 0"
-            )
-            return 0.0
-
-        # Intentar obtener tope AFP
-        try:
-            tope_afp_clp = self._get_tope_afp_clp()
-        except ValidationError as e:
-            # Graceful degradation: Si falla tope, usar wage sin tope
-            _logger.warning(
-                f"Nómina {self.name}: Error obteniendo tope AFP: {str(e)}. "
-                f"Usando wage sin tope como fallback (${wage:,.0f})"
-            )
-            return wage
-
-        # Aplicar tope
-        base_topeada = min(wage, tope_afp_clp)
-
-        # Log si wage fue topeado (información relevante)
-        if base_topeada < wage:
-            _logger.info(
-                f"Nómina {self.name}: Wage ${wage:,.0f} excede tope AFP ${tope_afp_clp:,.0f}. "
-                f"Base topeada: ${base_topeada:,.0f} "
-                f"(diferencia: ${wage - base_topeada:,.0f})"
-            )
-        else:
-            _logger.debug(
-                f"Nómina {self.name}: Wage ${wage:,.0f} bajo tope AFP ${tope_afp_clp:,.0f}. "
-                f"Base sin tope: ${base_topeada:,.0f}"
-            )
-
-        return base_topeada
-
-
-
 
     @api.depends('contract_id', 'contract_id.date_start', 'contract_id.wage', 'date_from')
     def _compute_employer_reforma_2025(self):

@@ -168,14 +168,13 @@ class HrEconomicIndicators(models.Model):
     def fetch_from_ai_service(self, year, month):
         """
         Obtener indicadores desde AI-Service
-        
-        TODO: Implementar integración con AI-Service
-        Por ahora retorna error indicando que debe cargarse manualmente
-        
+
+        Fix GAP-002: Elimina hardcoded AFP cap (87.8 UF), usa tabla legal.caps
+
         Args:
             year: Año (2025)
             month: Mes (1-12)
-        
+
         Returns:
             Recordset hr.economic.indicators creado
         """
@@ -203,45 +202,49 @@ class HrEconomicIndicators(models.Model):
                 headers={"Authorization": f"Bearer {api_key}"},
                 timeout=60  # Puede tardar 15-30s en descargar PDF
             )
-            
+
             response.raise_for_status()
             result = response.json()
-            
+
             if not result.get('success'):
                 raise Exception(result.get('detail', 'Error desconocido'))
-            
+
             # Extraer indicadores
             data = result['indicators']
-            
+
             # Crear registro
             period_date = date(year, month, 1)
-            
+
+            # GAP-002: Obtener tope AFP desde tabla l10n_cl.legal.caps
+            afp_cap_uf = self._get_afp_cap_from_legal_table(period_date)
+
             indicator = self.create({
                 'period': period_date,
                 'uf': data.get('uf', 0),
                 'utm': data.get('utm', 0),
                 'uta': data.get('uta', 0),
                 'minimum_wage': data.get('sueldo_minimo', 0),
-                'afp_limit': data.get('afp_tope_uf', 87.8),
+                'afp_limit': afp_cap_uf,  # ✅ Desde tabla legal.caps
                 'family_allowance_t1': data.get('asig_fam_tramo_1', 0),
                 'family_allowance_t2': data.get('asig_fam_tramo_2', 0),
                 'family_allowance_t3': data.get('asig_fam_tramo_3', 0),
             })
-            
+
             _logger.info(
-                "✅ Indicadores %s creados desde AI-Service (ID: %d)",
+                "✅ Indicadores %s creados desde AI-Service (ID: %d, AFP cap: %.1f UF)",
                 period_date.strftime('%Y-%m'),
-                indicator.id
+                indicator.id,
+                afp_cap_uf
             )
-            
+
             return indicator
-            
+
         except Exception as e:
             _logger.error(
                 "❌ Error obteniendo indicadores desde AI-Service: %s",
                 str(e)
             )
-            
+
             raise UserError(_(
                 "No se pudieron obtener indicadores para %s-%02d\n\n"
                 "Error: %s\n\n"
@@ -250,6 +253,42 @@ class HrEconomicIndicators(models.Model):
                 "• Cargar indicadores manualmente\n"
                 "• Contactar soporte técnico"
             ) % (year, month, str(e)))
+
+    def _get_afp_cap_from_legal_table(self, target_date):
+        """
+        Obtener tope AFP desde tabla l10n_cl.legal.caps
+
+        Fix GAP-002: Elimina valores hardcoded, usa configuración parametrizable
+
+        Args:
+            target_date: Fecha para buscar tope AFP vigente
+
+        Returns:
+            float: Tope AFP en UF (ej: 83.1)
+
+        Raises:
+            ValidationError: Si no existe cap AFP configurado
+        """
+        LegalCaps = self.env['l10n_cl.legal.caps']
+
+        # Buscar cap AFP vigente para la fecha
+        afp_cap_uf, unit = LegalCaps.get_cap('AFP_IMPONIBLE_CAP', target_date)
+
+        if not afp_cap_uf:
+            raise ValidationError(_(
+                'Tope AFP no configurado para fecha %s.\n\n'
+                'Configure en: Nómina > Configuración > Topes Legales\n'
+                'Código: AFP_IMPONIBLE_CAP\n'
+                'Valor 2025: 83.1 UF'
+            ) % target_date)
+
+        # Validar unidad correcta
+        if unit != 'uf':
+            raise ValidationError(_(
+                'Tope AFP debe estar en UF, recibido: %s'
+            ) % unit)
+
+        return afp_cap_uf
     
     @api.model
     def _run_fetch_indicators_cron(self):
