@@ -1,171 +1,408 @@
-# Codex Agents Overview
+# AGENTS.md - Odoo 19 CE Chilean Localization
+**Standard:** AGENTS.md Convention 2025
+**Compatible:** Claude Code, GitHub Copilot CLI, OpenAI Codex CLI, Cursor, Windsurf
+**Project:** Odoo19 Enterprise-to-CE Migration + Chilean Localization
+**Version:** 2.0.0 - Armonizado Multi-CLI
 
-## Contexto del Proyecto OdooEnergy
+---
 
-### Arquitectura Clave
-- **Framework**: Odoo 19 CE
-- **Patrón**: Modular con herencia de modelos (`_inherit`)
-- **Estándares**: PEP8, Odoo coding standards
-- **Localización**: Chile (l10n_cl_*)
+## 🎯 Global Principles (Inherited from SuperClaude)
 
-### Decisiones Arquitectónicas Importantes
-1. Usar `_inherit` en lugar de modificar core directamente
-2. Siempre validar permisos con `@api.model` decorator
-3. Preferir computed fields sobre stored cuando sea posible
-4. Usar `@api.depends` para campos computados eficientes
-5. Implementar `_check` methods para validaciones complejas
+This project follows **SuperClaude** efficiency principles for consistent output across all AI coding assistants:
 
-### Patrones Comunes
-- **Nomenclatura**: `l10n_cl_*` para módulos de localización chilena
-- **Estructura**: `models/`, `views/`, `security/`, `reports/`
-- **DTE**: Módulos relacionados con Documentos Tributarios Electrónicos
-- **SII**: Integración con Servicio de Impuestos Internos de Chile
+### Output Economy & Token Optimization
+- **Concise over Verbose**: Use tables, headers, and structured markdown
+- **Reference over Repetition**: Use `file:line` notation instead of duplicating code
+- **Smart Context**: Include only necessary imports and context
+- **Structured Data**: Tables > Long lists for comparisons and metrics
 
-### Instrucciones de Eficiencia
+### Professional Standards
+- **Evidence-Based**: Always validate against official documentation
+- **Security-First**: OWASP Top 10 awareness, no hardcoded credentials
+- **Test-Driven**: Include test cases for critical functionality
+- **Performance-Aware**: Consider cost/performance tradeoffs
 
-#### Para Análisis de Código
-- Siempre referencia archivos con `file:line`
-- Usa tablas para comparaciones
-- Estructura respuestas con headers claros
-- Incluye contexto completo (imports, clases)
+### Communication Style
+- **Professional objectivity**: Facts over validation
+- **Clear hierarchy**: Use status indicators (✅⚠️❌🔴🟡🟢)
+- **Actionable**: Always provide next steps
+- **NO emojis** unless explicitly requested
 
-#### Para Generación de Código
-- Incluye solo imports necesarios
-- Usa docstrings concisos pero descriptivos
-- Sigue PEP8 estrictamente
-- Prefiere código legible sobre código compacto
+---
 
-#### Para Optimización de Tokens
-- Usa referencias `file:line` en lugar de código completo cuando sea posible
-- Estructura respuestas con headers para facilitar navegación
-- Usa tablas para datos estructurados (más eficiente que listas largas)
+## 📋 Project Context: Odoo19 Chilean Localization
 
-## Output Formatting Guidelines
+### Tech Stack
+```yaml
+Framework: Odoo 19 CE (migrated from Enterprise)
+Python: 3.11+
+Database: PostgreSQL 16
+Cache: Redis 7.4
+Container: Docker + Docker Compose
+AI Service: FastAPI + Claude API (Sonnet 4.5)
 
-### Markdown Structure
-- Use headers (##, ###) para organizar contenido
-- Emplea listas con viñetas (-) o numeradas (1.)
-- Incluye tablas cuando sea apropiado
-- Usa bloques de código con sintaxis highlighting
+Modules:
+  - l10n_cl_dte (Electronic Invoicing - DTE)
+  - l10n_cl_hr_payroll (Chilean Payroll)
+  - l10n_cl_financial_reports (Financial Reporting)
+```
 
-### Visual Elements
-- ✅ Emojis para estados: ✅ (éxito), ⚠️ (advertencia), ❌ (error), 🔴 (crítico)
-- 📊 Tablas para datos estructurados
-- 🔗 Enlaces a archivos usando formato `file:line`
-- 📝 Bloques de código con lenguaje específico
+### Architecture Principles
 
-### Professional Report Structure
+#### Odoo Design Patterns
+1. **Model Inheritance**: Use `_inherit` instead of modifying core
+2. **Security**: Always use `@api.model` decorator for permission validation
+3. **Computed Fields**: Prefer computed over stored when data changes frequently
+4. **Dependencies**: Use `@api.depends()` for efficient field computation
+5. **Validation**: Implement `@api.constrains` for complex business rules
 
-Cuando generes informes técnicos, sigue esta estructura:
+#### Module Structure
+```
+addons/localization/<module_name>/
+├── __init__.py
+├── __manifest__.py
+├── models/           # Business logic (ORM models)
+├── views/            # XML views (forms, trees, search)
+├── security/         # ir.model.access.csv, record rules
+├── data/             # Master data, sequences
+├── reports/          # QWeb reports, PDF generation
+└── tests/            # Unit tests (pytest + Odoo test framework)
+```
 
-1. **Executive Summary**
-   - Estado general (✅/⚠️/❌)
-   - Fecha y alcance
-   - Hallazgos clave (2-3 frases)
+### Chilean Localization Specifics
 
-2. **Technical Analysis**
-   - Contexto técnico
-   - Referencias de código (`file:line`)
-   - Implementación detallada
+#### DTE (Documentos Tributarios Electrónicos)
+- **DTE 33**: Factura Electrónica (Invoice)
+- **DTE 34**: Factura Exenta (Exempt Invoice)
+- **DTE 52**: Guía de Despacho (Delivery Guide)
+- **DTE 56**: Nota de Débito (Debit Note)
+- **DTE 61**: Nota de Crédito (Credit Note)
 
-3. **Findings**
-   - Issues críticos (🔴 Priority 1)
-   - Advertencias (🟡 Priority 2)
-   - Observaciones (🟢 Informational)
+**SII Integration:**
+- SOAP webservices for DTE validation
+- XMLDSig digital signatures (xmlsec)
+- CAF (Folios Authorization) management
+- Daily sales book (Libro de Ventas)
 
-4. **Recommendations**
-   - Acciones inmediatas
-   - Corto plazo
-   - Largo plazo
+#### Payroll (Nóminas)
+- **Economic Indicators**: UF, UTM, IPC, minimum wage (auto-sync from external APIs)
+- **Pension Funds**: AFP (10% mandatory contribution)
+- **Health Insurance**: ISAPRE, FONASA (7% mandatory)
+- **Voluntary Savings**: APV (tax benefits, calculation complexity)
+- **Previred Integration**: Monthly file submission (TXT format)
 
-5. **Code Examples**
-   - Código completo y ejecutable
-   - Comentarios descriptivos
-   - Referencias a archivos relacionados
+### Naming Conventions
+```python
+# Modules
+l10n_cl_dte                    # Chilean localization - DTE
+l10n_cl_hr_payroll             # Chilean localization - HR Payroll
 
-### Table Formatting
+# Models
+account.move.l10n_cl_dte       # Inheritance pattern
+hr.economic.indicators         # Descriptive naming
 
-Usa tablas para datos estructurados:
+# Fields
+l10n_cl_dte_type_id           # Prefixed with module
+l10n_cl_sii_barcode           # System identifier prefix
 
-| Campo | Valor | Estado | Notas |
-|-------|-------|--------|-------|
-| Ejemplo | Valor | ✅ | Detalles |
+# Methods
+_compute_l10n_cl_dte_amount   # Computed field pattern
+_validate_sii_response        # Private method convention
+```
 
-### Code Block Guidelines
+---
 
-- Siempre especifica el lenguaje: ```python, ```xml, ```bash
-- Incluye contexto completo (imports, clases)
-- Añade comentarios explicativos
-- Referencia archivos con `file_path:line_number`
+## 💻 Code Generation Guidelines
 
-## Agentes Especializados Codex CLI
+### Python (Odoo Models)
+```python
+# ALWAYS include necessary imports
+from odoo import models, fields, api
+from odoo.exceptions import UserError, ValidationError
 
-### Migrados de Claude Code (.claude/agents/)
+class HrPayslip(models.Model):
+    _inherit = 'hr.payslip'  # ✅ Inheritance pattern
 
-Estos agentes han sido migrados y mejorados desde `.claude/agents/` con optimizaciones según estándares Codex CLI:
+    # Field definition with proper attributes
+    l10n_cl_total_imponible = fields.Monetary(
+        string='Total Imponible',
+        compute='_compute_l10n_cl_total_imponible',
+        store=True,  # Only if needed for reporting/search
+        currency_field='currency_id',
+        help="Base salary for social security calculations"
+    )
 
-#### 1. Odoo Developer (`codex-odoo-dev`)
-- **Especialización**: Desarrollo Odoo 19 CE, localización chilena, módulos DTE
-- **Uso**: `codex-odoo-dev "implementa campo nuevo en account.move"`
-- **Configuración**: High reasoning, 16K context, 2048 output tokens
-- **Conocimiento crítico**: `.claude/agents/knowledge/*.md`
-- **Alcance**: l10n_cl_dte, l10n_cl_hr_payroll, l10n_cl_financial_reports
-- **Patrones**: `_inherit`, `@api.depends`, `libs/` pure Python
+    @api.depends('line_ids.total')  # ✅ Explicit dependencies
+    def _compute_l10n_cl_total_imponible(self):
+        """Compute total taxable amount for Chilean payroll."""
+        for payslip in self:
+            imponible_lines = payslip.line_ids.filtered(
+                lambda l: l.salary_rule_id.l10n_cl_is_imponible
+            )
+            payslip.l10n_cl_total_imponible = sum(imponible_lines.mapped('total'))
 
-#### 2. DTE Compliance Expert (`codex-dte-compliance`)
-- **Especialización**: Cumplimiento SII, validación DTE, regulaciones fiscales
-- **Uso**: `codex-dte-compliance "valida que DTE cumple Res. 36/2024"`
-- **Configuración**: High reasoning, 16K context, 1024 output tokens, **read-only**
-- **Conocimiento crítico**: `.claude/agents/knowledge/sii_regulatory_context.md`
-- **Alcance**: DTEs 33,34,52,56,61 (EERGYGROUP B2B)
-- **Validaciones**: RUT modulo 11, esquemas XSD, firmas digitales
-- **Read-only**: Solo validación, no modifica código
+    @api.constrains('l10n_cl_previred_file')  # ✅ Validation
+    def _check_previred_format(self):
+        """Validate Previred file format before submission."""
+        for record in self:
+            if record.l10n_cl_previred_file:
+                # Validation logic
+                if not self._validate_previred_structure(record.l10n_cl_previred_file):
+                    raise ValidationError("Invalid Previred file format")
+```
 
-#### 3. Test Automation Specialist (`codex-test-automation`)
-- **Especialización**: Testing automatizado, CI/CD, calidad
-- **Uso**: `codex-test-automation "crea tests para módulo l10n_cl_dte"`
-- **Configuración**: Medium reasoning, 8K context, 2048 output tokens
-- **Patrones**: TransactionCase, `@tagged`, fixtures, factories
-- **Targets**: 100% crítico, 90% lógica negocio, 70% UI
+### XML (Views)
+```xml
+<!-- views/hr_payslip_views.xml -->
+<odoo>
+    <record id="view_hr_payslip_form_l10n_cl" model="ir.ui.view">
+        <field name="name">hr.payslip.form.l10n_cl</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll.view_hr_payslip_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Chilean Localization" name="l10n_cl">
+                    <group>
+                        <field name="l10n_cl_total_imponible"/>
+                        <field name="l10n_cl_afp_amount"/>
+                        <field name="l10n_cl_isapre_amount"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+```
 
-#### 4. Docker DevOps Expert (`codex-docker-devops`)
-- **Especialización**: Docker, Docker Compose, despliegues producción
-- **Uso**: `codex-docker-devops "optimiza docker-compose.yml"`
-- **Configuración**: High reasoning, 8K context, 2048 output tokens
-- **Conocimiento**: Odoo 19 CLI completo (150+ comandos)
-- **Alcance**: docker-compose.yml, configs, CI/CD, monitoring
+### Testing
+```python
+# tests/test_payslip_calculations.py
+from odoo.tests import tagged, TransactionCase
+from odoo.exceptions import ValidationError
 
-#### 5. AI FastAPI Developer (`codex-ai-fastapi-dev`)
-- **Especialización**: Microservicios AI, FastAPI, optimización LLM
-- **Uso**: `codex-ai-fastapi-dev "optimiza prompt caching"`
-- **Configuración**: High reasoning, 16K context, 2048 output tokens
-- **Alcance**: ai-service/, plugins/, optimizaciones LLM
-- **Optimizaciones**: 90% cost reduction, streaming SSE, token pre-counting
-- **NO crítico path**: Solo chat, analytics, project matching
+@tagged('post_install', '-at_install', 'l10n_cl')
+class TestPayslipCalculations(TransactionCase):
 
-### Mejoras Aplicadas vs Claude Code
+    def setUp(self):
+        super().setUp()
+        # Setup test data
+        self.employee = self.env['hr.employee'].create({
+            'name': 'Test Employee',
+            'l10n_cl_afp_id': self.env.ref('l10n_cl_hr_payroll.afp_capital').id,
+        })
 
-| Mejora | Beneficio |
-|--------|-----------|
-| Context Window 16K | +100% contexto para proyectos grandes |
-| Output Tokens Optimizado | Respuestas más eficientes según uso |
-| Sandbox Read-Only | Seguridad para validaciones (DTE Compliance) |
-| Reasoning Ajustado | Balance óptimo velocidad/precisión |
-| Notas Descriptivas | Contexto completo del proyecto |
+    def test_total_imponible_calculation(self):
+        """Test total imponible calculation matches SII requirements."""
+        payslip = self.env['hr.payslip'].create({
+            'employee_id': self.employee.id,
+            # ... payslip data
+        })
+        payslip.compute_sheet()
 
-## Roles
-- **deep-engineering**: refactorización crítica, auditorías de seguridad y decisiones de arquitectura avanzada.
-- **quick-prototype**: experimentación rápida, guiones temporales y validaciones ligeras.
-- **creative-docs**: documentación técnica, resúmenes ejecutivos y comentarios de código.
+        # Validation
+        self.assertEqual(payslip.l10n_cl_total_imponible, 1000000,
+                        "Total imponible should match base salary")
+```
 
-## Workflow
-- Selecciona el perfil adecuado antes de iniciar cada sesión de Codex.
-- Revisa las políticas de aprobación asociadas a cada perfil para evitar bloqueos.
-- Mantén trazabilidad en Git enlazando cada uso de Codex con commits o issues relevantes.
+---
 
-## Style
-- Always follow PEP8.
-- Use descriptive comments in English.
-- Prefer clean architecture and modular design.
-- **Always format output as professional markdown with proper structure, tables, and visual elements.**
+## 📊 Analysis & Reporting Format
 
+### Code Analysis
+When analyzing code, ALWAYS use this format:
+
+```markdown
+## Analysis: <Component Name>
+
+**File:** `addons/localization/l10n_cl_dte/models/account_move.py:125`
+
+**Current Implementation:**
+- Uses inheritance pattern ✅
+- Missing error handling ⚠️
+- Performance concern: N+1 query 🔴
+
+**Code Reference:**
+```python
+# Line 125-130
+def _validate_dte(self):
+    for move in self:  # ⚠️ Potential N+1 if called in loop
+        move.l10n_cl_dte_status = self._call_sii_webservice()
+```
+
+**Recommendations:**
+1. 🔴 **CRITICAL**: Batch SII webservice calls
+2. 🟡 **MEDIUM**: Add retry logic with exponential backoff
+3. 🟢 **NICE-TO-HAVE**: Cache SII responses for 5 minutes
+```
+
+### Technical Reports
+Use this structure for professional reports:
+
+```markdown
+# 🎯 REPORT TITLE
+
+**Date:** YYYY-MM-DD
+**Scope:** <What was analyzed>
+**Status:** ✅ Success / ⚠️ Warning / ❌ Critical
+
+---
+
+## Executive Summary
+
+<2-3 sentence overview of findings>
+
+| Metric | Baseline | Current | Delta | Status |
+|--------|----------|---------|-------|--------|
+| Tests Passing | 180/200 | 195/200 | +15 | ✅ |
+| Coverage | 75% | 82% | +7% | ✅ |
+
+---
+
+## Detailed Analysis
+
+### Critical Issues 🔴
+
+1. **Issue Title** (`file:line`)
+   - **Problem**: Description
+   - **Impact**: Business/technical impact
+   - **Solution**: Specific fix
+
+### Warnings ⚠️
+
+### Observations 💡
+
+---
+
+## Recommendations
+
+**Immediate (P0):**
+1. Action 1
+2. Action 2
+
+**Short-term (P1):**
+1. Action 1
+
+**Long-term (P2):**
+1. Action 1
+```
+
+---
+
+## 🔗 File References & Navigation
+
+### Key Project Files
+```
+Documentation:
+  - /Users/pedro/Documents/odoo19/CLAUDE.md (Project README)
+  - /Users/pedro/Documents/odoo19/AGENTS.md (This file)
+  - .claude/project/*.md (Modular documentation)
+
+DTE Module:
+  - addons/localization/l10n_cl_dte/__manifest__.py
+  - addons/localization/l10n_cl_dte/models/account_move.py
+  - addons/localization/l10n_cl_dte/models/l10n_cl_dte_type.py
+  - addons/localization/l10n_cl_dte/wizards/validate_dte.py
+
+Payroll Module:
+  - addons/localization/l10n_cl_hr_payroll/__manifest__.py
+  - addons/localization/l10n_cl_hr_payroll/models/hr_payslip.py
+  - addons/localization/l10n_cl_hr_payroll/models/hr_economic_indicators.py
+  - addons/localization/l10n_cl_hr_payroll/models/hr_salary_rule.py
+
+AI Service:
+  - ai-service/app/main.py
+  - ai-service/app/engine.py
+  - ai-service/app/knowledge_base.py
+
+Infrastructure:
+  - docker-compose.yml
+  - config/odoo.conf
+  - .env (DO NOT commit - contains secrets)
+```
+
+### Reference Format
+When referencing code, use: `file_path:line_number`
+
+**Examples:**
+- `addons/localization/l10n_cl_dte/models/account_move.py:125`
+- `ai-service/app/main.py:45-60` (range)
+- `docker-compose.yml:12` (config files)
+
+---
+
+## 🚨 Security & Compliance
+
+### OWASP Top 10 Awareness
+- **SQL Injection**: Use ORM methods, NEVER raw SQL with user input
+- **XSS**: Sanitize all user inputs in views (`t-esc` in QWeb)
+- **Authentication**: Use Odoo's `@api.model` decorator
+- **Sensitive Data**: NO credentials in code (use environment variables)
+- **XML External Entities**: Validate XML strictly (DTE signatures)
+
+### Chilean Legal Compliance
+- **SII Resolution 80/2014**: DTE XML schema validation
+- **DL 824 Art. 54**: Electronic invoicing requirements
+- **Previred Circular 1/2018**: Payroll file format
+- **Labor Code Art. 42**: Payroll calculation rules
+
+---
+
+## 🛠️ Development Workflow
+
+### Before Coding
+1. Read relevant CLAUDE.md sections in `.claude/project/`
+2. Check existing tests in `tests/` directory
+3. Validate against SII/Previred documentation if applicable
+4. Review related code for patterns to follow
+
+### During Coding
+1. Follow PEP8 strictly (use linters)
+2. Add docstrings to all public methods
+3. Include inline comments for complex logic
+4. Use type hints when appropriate
+5. Test locally with `pytest` before committing
+
+### After Coding
+1. Run full test suite: `pytest addons/localization/<module>/tests/`
+2. Check code coverage: `pytest --cov`
+3. Validate XML syntax: `xmllint --noout views/*.xml`
+4. Update documentation if API changed
+5. Create meaningful git commit messages
+
+---
+
+## 📚 External References
+
+### Official Documentation
+- **Odoo 19 CE**: https://www.odoo.com/documentation/19.0/
+- **SII Chile**: https://www.sii.cl/servicios_online/1039-.html
+- **Previred**: https://www.previred.com/web/previred/home
+- **Chilean Labor Law**: https://www.bcn.cl/leychile/navegar?idNorma=207436
+
+### Chilean Compliance
+- SII Webservices: https://maullin.sii.cl/DTEWS/
+- DTE Schema: https://www.sii.cl/factura_electronica/formato_dte.pdf
+- Previred API: https://www.previred.com/web/previred/documentacion-tecnica
+
+---
+
+## ⚙️ CLI-Specific Notes
+
+### For Claude Code Users
+This file is read automatically by Claude Code alongside `~/.claude/CLAUDE.md` (SuperClaude global config). Both sets of instructions are combined.
+
+### For Copilot CLI Users
+This file is loaded automatically by Copilot CLI (as of August 2025). Use `--no-custom-instructions` flag to disable if needed.
+
+### For Codex CLI Users
+Codex CLI does NOT read this file automatically. Reference this file manually or configure custom instructions in `~/.codex/config.toml`.
+
+---
+
+**Last Updated:** 2025-11-09
+**Maintainer:** Pedro Troncoso Willz (@pwills85)
+**License:** LGPL-3 (Odoo modules)
+
+---
+
+*This AGENTS.md file follows the 2025 multi-CLI convention for maximum compatibility across Claude Code, GitHub Copilot CLI, OpenAI Codex CLI, Cursor, Windsurf, and other AI coding assistants.*

@@ -511,4 +511,84 @@ class Odoo11To19Migrator:
 
 ---
 
+## 📝 GIT WORKFLOW & CONVENTIONAL COMMITS
+
+### Commit Strategy
+
+**CRITICAL**: All commits MUST follow [Conventional Commits](https://www.conventionalcommits.org/)  
+**Full Guide**: [docs/COMMIT_STRATEGY.md](../../docs/COMMIT_STRATEGY.md)
+
+**Format**:
+```
+<tipo>(<scope>): <descripción corta (max 72 chars)>
+
+[cuerpo opcional]
+
+[Refs: #issue, hallazgo-id]
+```
+
+### Types & Scopes for Odoo Development
+
+**Types**:
+- `feat(scope)`: New feature
+- `fix(scope)`: Bug fix
+- `docs(scope)`: Documentation only
+- `test(scope)`: Add/modify tests
+- `i18n(scope)`: Translations
+- `refactor(scope)`: Code improvement without functionality change
+- `chore(scope)`: Maintenance (deps, configs)
+
+**Scopes**:
+- `dte` - l10n_cl_dte (DTEs 33,34,52,56,61)
+- `payroll` - l10n_cl_hr_payroll
+- `reports` - l10n_cl_financial_reports
+- `base` - l10n_cl_base
+- `libs` - Pure Python libraries
+
+### Real Examples from Project
+
+```bash
+# Breaking change in payroll
+feat(payroll)!: use validity range for legal caps instead of year field
+
+BREAKING CHANGE: Campo 'year' eliminado.
+Refs: H-007
+
+# Critical DTE bugfix
+fix(dte): remove _name duplication in account.move.dte
+
+Impact: P0 - Production blocker
+Refs: B-024
+
+# Test suite for security
+test(dte): add comprehensive XXE security tests (23 tests)
+
+Coverage: 95%+ en xml_signer
+Refs: XXE_TEST_EXECUTION_SUMMARY.md
+
+# i18n translations
+i18n(payroll): add es_CL and en_US translations
+
+Files: i18n/es_CL.po (187 lines), i18n/en_US.po (181 lines)
+Refs: H-003
+```
+
+### Atomic Commits Rule
+
+✅ **DO**: 1 commit = 1 logical change
+```bash
+feat(dte): add base models (account.move.dte)
+feat(dte): add CAF management wizard
+feat(dte): add XML generator for DTE 33
+test(dte): add test suite for XML generation
+```
+
+❌ **DON'T**: Mix unrelated changes
+```bash
+# Bad: 3 different changes in 1 commit
+git commit -m "fix: payroll bug and add DTE 39 and update docs"
+```
+
+---
+
 **Use this agent** when working on Odoo module development, Chilean localization features, DTE implementation, or any Odoo-specific tasks.

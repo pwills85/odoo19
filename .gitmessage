@@ -1,0 +1,81 @@
+# <tipo>(<scope>): <descripción corta (max 72 chars)>
+# |<----  Preferiblemente usar hasta 50 caracteres  ---->|
+
+
+# [cuerpo opcional - explicar QUÉ y POR QUÉ, no CÓMO]
+
+
+# [footer opcional]
+# Refs: #<issue>, <hallazgo-id>
+# BREAKING CHANGE: <descripción>
+
+# --- TIPOS ---
+# feat:     Nueva funcionalidad
+# fix:      Corrección de bug
+# docs:     Solo documentación
+# test:     Agregar/modificar tests
+# i18n:     Traducciones
+# refactor: Mejora de código (sin cambio funcionalidad)
+# perf:     Optimización de performance
+# style:    Formato (black, PEP8)
+# chore:    Mantenimiento (deps, configs)
+# build:    Cambios en build system
+# ci:       Cambios en CI/CD
+# revert:   Revertir commit previo
+#
+# --- SCOPES ---
+# dte, payroll, reports, base, ai, docker, ci, docs, tests, libs
+#
+# --- BREAKING CHANGE ---
+# Agregar '!' después del scope: feat(dte)!: ...
+# O en footer: BREAKING CHANGE: descripción
+#
+# --- EJEMPLOS REALES DEL PROYECTO ---
+#
+# feat(payroll)!: use validity range for legal caps instead of year field
+#
+# BREAKING CHANGE: Campo 'year' en l10n_cl.legal_caps eliminado.
+# Ahora se usa rango de vigencias (valid_from, valid_until).
+#
+# Refs: H-007
+#
+# ---
+#
+# fix(dte): remove _name duplication in account.move.dte
+#
+# Problema: Modelo account.move.dte tenía _name duplicado.
+# Solución: Eliminar _name duplicado, mantener solo uno.
+#
+# Impact: P0 - Bloqueante de producción
+# Refs: B-024
+#
+# ---
+#
+# test(l10n_cl_dte): add comprehensive XXE security tests (23 tests)
+#
+# Coverage:
+# - XXE entity expansion (5 tests)
+# - External entity injection (6 tests)
+# - Billion laughs attack (3 tests)
+#
+# Coverage total: 95%+ en xml_signer
+# Refs: XXE_TEST_EXECUTION_SUMMARY.md
+#
+# ---
+#
+# i18n(payroll): add es_CL and en_US translations
+#
+# Archivos:
+# - i18n/es_CL.po (187 líneas)
+# - i18n/en_US.po (181 líneas)
+#
+# Traducido:
+# - Wizard LRE (29 columnas)
+# - Legal Caps (5 códigos)
+# - Error messages
+#
+# Refs: H-003
+#
+# --- GUÍA COMPLETA ---
+# docs/COMMIT_STRATEGY.md
+# https://www.conventionalcommits.org/
