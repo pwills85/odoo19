@@ -275,10 +275,10 @@
                             <div class="o_kanban_card_header">
                                 <div class="o_kanban_card_header_title">
                                     <div class="o_primary">
-                                        <strong><t t-esc="record.project_id.value"/></strong>
+                                        <strong><t t-out="record.project_id.value"/></strong>
                                     </div>
                                     <div class="text-muted">
-                                        <t t-esc="record.date_to.value"/>
+                                        <t t-out="record.date_to.value"/>
                                     </div>
                                 </div>
                             </div>
@@ -288,12 +288,12 @@
                                 <div class="row">
                                     <div class="col-6">
                                         <div class="badge badge-primary">
-                                            CPI: <t t-esc="record.cost_performance_index.value"/>
+                                            CPI: <t t-out="record.cost_performance_index.value"/>
                                         </div>
                                     </div>
                                     <div class="col-6">
                                         <div class="badge badge-info">
-                                            SPI: <t t-esc="record.schedule_performance_index.value"/>
+                                            SPI: <t t-out="record.schedule_performance_index.value"/>
                                         </div>
                                     </div>
                                 </div>
@@ -307,7 +307,7 @@
                                                  t-att-aria-valuenow="record.percent_complete.value"
                                                  aria-valuemin="0" 
                                                  aria-valuemax="100">
-                                                <t t-esc="record.percent_complete.value"/>% Complete
+                                                <t t-out="record.percent_complete.value"/>% Complete
                                             </div>
                                         </div>
                                     </div>
@@ -319,7 +319,7 @@
                                         <span class="badge badge-pill"
                                               t-att-class="record.health_score.raw_value >= 80 ? 'badge-success' : 
                                                           record.health_score.raw_value >= 60 ? 'badge-warning' : 'badge-danger'">
-                                            Health: <t t-esc="record.health_score.value"/>
+                                            Health: <t t-out="record.health_score.value"/>
                                         </span>
                                     </div>
                                 </div>

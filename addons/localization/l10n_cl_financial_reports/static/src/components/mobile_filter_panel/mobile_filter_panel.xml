@@ -17,7 +17,7 @@
                             t-on-click="() => switchTab('advanced')">
                         <i class="fa fa-sliders"/> Avanzado
                         <span class="filter-count" t-if="activeFiltersCount > 0">
-                            <t t-esc="activeFiltersCount"/>
+                            <t t-out="activeFiltersCount"/>
                         </span>
                     </button>
                 </div>
@@ -34,7 +34,7 @@
                                 <button t-att-class="'period-button ' + (state.tempFilters.period_id === period.id ? 'selected' : '')"
                                         t-on-click="() => selectPeriod(period.id)">
                                     <i t-att-class="'fa ' + period.icon"/>
-                                    <span t-esc="period.label"/>
+                                    <span t-out="period.label"/>
                                 </button>
                             </t>
                         </div>
@@ -68,7 +68,7 @@
                             <t t-foreach="props.presets" t-as="preset" t-key="preset.id">
                                 <button class="preset-button" t-on-click="() => loadPreset(preset)">
                                     <i class="fa fa-bookmark-o"/>
-                                    <span t-esc="preset.name"/>
+                                    <span t-out="preset.name"/>
                                 </button>
                             </t>
                         </div>
@@ -175,7 +175,7 @@
                 <button class="btn btn-primary" t-on-click="applyFilters">
                     <i class="fa fa-check"/> Aplicar Filtros
                     <span t-if="activeFiltersCount > 0" class="badge">
-                        <t t-esc="activeFiltersCount"/>
+                        <t t-out="activeFiltersCount"/>
                     </span>
                 </button>
             </div>

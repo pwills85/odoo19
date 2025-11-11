@@ -27,7 +27,7 @@ def validate_api_key(func):
 class RatioAnalysisAPI(http.Controller):
     """REST API endpoints for financial ratio analysis"""
     
-    @http.route('/api/v1/ratio-analysis/health', type='json', auth='public', methods=['GET'], cors='*')
+    @http.route('/api/v1/ratio-analysis/health', type='jsonrpc', auth='public', methods=['GET'], cors='*')
     def health_check(self):
         """API health check endpoint"""
         return {
@@ -36,7 +36,7 @@ class RatioAnalysisAPI(http.Controller):
             'version': '1.0.0'
         }
     
-    @http.route('/api/v1/ratio-analysis/compute', type='json', auth='public', methods=['POST'], cors='*', csrf=True)
+    @http.route('/api/v1/ratio-analysis/compute', type='jsonrpc', auth='public', methods=['POST'], cors='*', csrf=True)
     @secure_api_endpoint(
         rate_limit_per_hour=50,
         rate_limit_per_minute=5,
@@ -130,7 +130,7 @@ class RatioAnalysisAPI(http.Controller):
                 'message': str(e)
             }
     
-    @http.route('/api/v1/ratio-analysis/<int:analysis_id>', type='json', auth='public', methods=['GET'], cors='*')
+    @http.route('/api/v1/ratio-analysis/<int:analysis_id>', type='jsonrpc', auth='public', methods=['GET'], cors='*')
     @validate_api_key
     def get_analysis(self, analysis_id, **kwargs):
         """Get a specific ratio analysis by ID"""
@@ -179,7 +179,7 @@ class RatioAnalysisAPI(http.Controller):
                 'message': str(e)
             }
     
-    @http.route('/api/v1/ratio-analysis/historical', type='json', auth='public', methods=['POST'], cors='*', csrf=True)
+    @http.route('/api/v1/ratio-analysis/historical', type='jsonrpc', auth='public', methods=['POST'], cors='*', csrf=True)
     @secure_api_endpoint(rate_limit_per_hour=100, require_jwt=True)
     def get_historical_ratios(self, **kwargs):
         """
@@ -243,7 +243,7 @@ class RatioAnalysisAPI(http.Controller):
                 'message': str(e)
             }
     
-    @http.route('/api/v1/ratio-analysis/benchmark', type='json', auth='public', methods=['POST'], cors='*', csrf=True)
+    @http.route('/api/v1/ratio-analysis/benchmark', type='jsonrpc', auth='public', methods=['POST'], cors='*', csrf=True)
     @secure_api_endpoint(
         rate_limit_per_hour=50,
         rate_limit_per_minute=10,
@@ -315,7 +315,7 @@ class RatioAnalysisAPI(http.Controller):
                 'message': str(e)
             }
     
-    @http.route('/api/v1/ratio-analysis/predict', type='json', auth='public', methods=['POST'], cors='*', csrf=True)
+    @http.route('/api/v1/ratio-analysis/predict', type='jsonrpc', auth='public', methods=['POST'], cors='*', csrf=True)
     @secure_api_endpoint(
         rate_limit_per_hour=30,
         rate_limit_per_minute=5,
@@ -391,7 +391,7 @@ class RatioAnalysisAPI(http.Controller):
                 'message': str(e)
             }
     
-    @http.route('/api/v1/ratio-analysis/alerts', type='json', auth='public', methods=['GET'], cors='*')
+    @http.route('/api/v1/ratio-analysis/alerts', type='jsonrpc', auth='public', methods=['GET'], cors='*')
     @validate_api_key
     def get_alerts(self, **kwargs):
         """Get active ratio alerts for a company"""
@@ -522,7 +522,7 @@ class RatioAnalysisAPI(http.Controller):
                 status=500
             )
     
-    @http.route('/api/v1/ratio-analysis/webhook/configure', type='json', auth='public', methods=['POST'], cors='*', csrf=True)
+    @http.route('/api/v1/ratio-analysis/webhook/configure', type='jsonrpc', auth='public', methods=['POST'], cors='*', csrf=True)
     @secure_api_endpoint(
         rate_limit_per_hour=10,
         rate_limit_per_minute=2,

@@ -18,7 +18,7 @@ class DashboardExportController(http.Controller):
     Controlador para exportación de dashboards financieros.
     """
     
-    @http.route('/financial/dashboard/export', type='json', auth='user', methods=['POST'])
+    @http.route('/financial/dashboard/export', type='jsonrpc', auth='user', methods=['POST'])
     def export_dashboard(self, layout_id, format='pdf', filters=None, options=None):
         """
         Exporta un dashboard completo.
@@ -62,7 +62,7 @@ class DashboardExportController(http.Controller):
                 'error': str(e)
             }
     
-    @http.route('/financial/widget/export', type='json', auth='user', methods=['POST'])
+    @http.route('/financial/widget/export', type='jsonrpc', auth='user', methods=['POST'])
     def export_widget(self, widget_id, format='xlsx', filters=None):
         """
         Exporta un widget individual.
@@ -188,7 +188,7 @@ class DashboardExportController(http.Controller):
             _logger.error(f"Error showing template preview: {str(e)}")
             return request.not_found()
     
-    @http.route('/financial/template/apply', type='json', auth='user', methods=['POST'])
+    @http.route('/financial/template/apply', type='jsonrpc', auth='user', methods=['POST'])
     def apply_template(self, template_id, user_id=None):
         """
         Aplica un template de dashboard.
@@ -221,7 +221,7 @@ class DashboardExportController(http.Controller):
                 'error': str(e)
             }
     
-    @http.route('/financial/template/create_from_layout', type='json', auth='user', methods=['POST'])
+    @http.route('/financial/template/create_from_layout', type='jsonrpc', auth='user', methods=['POST'])
     def create_template_from_layout(self, layout_id, name, description='', category_id=None, is_public=False):
         """
         Crea un template desde un layout existente.
@@ -266,7 +266,7 @@ class DashboardExportController(http.Controller):
                 'error': str(e)
             }
     
-    @http.route('/financial/template/rate', type='json', auth='user', methods=['POST'])
+    @http.route('/financial/template/rate', type='jsonrpc', auth='user', methods=['POST'])
     def rate_template(self, template_id, rating, comment=''):
         """
         Califica un template.
@@ -299,7 +299,7 @@ class DashboardExportController(http.Controller):
                 'error': str(e)
             }
     
-    @http.route('/financial/template/recommendations', type='json', auth='user')
+    @http.route('/financial/template/recommendations', type='jsonrpc', auth='user')
     def get_template_recommendations(self, limit=5):
         """
         Obtiene templates recomendados para el usuario.
@@ -343,7 +343,7 @@ class DashboardExportController(http.Controller):
                 'templates': []
             }
     
-    @http.route('/financial/widget/data/lazy', type='json', auth='user', methods=['POST'])
+    @http.route('/financial/widget/data/lazy', type='jsonrpc', auth='user', methods=['POST'])
     def get_widget_data_lazy(self, widget_id, filters=None):
         """
         Obtiene datos de un widget individual para lazy loading.
@@ -372,7 +372,7 @@ class DashboardExportController(http.Controller):
                 'error': str(e)
             }
     
-    @http.route('/financial/dashboard/performance', type='json', auth='user')
+    @http.route('/financial/dashboard/performance', type='jsonrpc', auth='user')
     def get_performance_metrics(self):
         """
         Obtiene métricas de performance del dashboard.

@@ -36,10 +36,10 @@
                 <div class="tab-content" t-if="state.activeTab === 'overview'" >
                     <div class="metrics-grid">
                         <div class="mobile-widget metric-card" t-foreach="props.widgets.filter(w => w.type === 'metric')" t-as="widget" t-key="widget.id">
-                            <div class="metric-value" t-esc="widget.value"/>
-                            <div class="metric-label" t-esc="widget.label"/>
+                            <div class="metric-value" t-out="widget.value"/>
+                            <div class="metric-label" t-out="widget.label"/>
                             <div t-att-class="'metric-change ' + (widget.change > 0 ? 'positive' : 'negative')">
-                                <span t-esc="widget.change > 0 ? '+' : ''"/><span t-esc="widget.change"/>%
+                                <span t-out="widget.change > 0 ? '+' : ''"/><span t-out="widget.change"/>%
                             </div>
                         </div>
                     </div>
@@ -58,7 +58,7 @@
                 <div class="tab-content" t-if="state.activeTab === 'charts'">
                     <div class="charts-container">
                         <div class="mobile-widget" t-foreach="props.widgets.filter(w => w.type === 'chart')" t-as="widget" t-key="widget.id">
-                            <div class="widget-title" t-esc="widget.title"/>
+                            <div class="widget-title" t-out="widget.title"/>
                             <div class="chart-container">
                                 <!-- Chart will be rendered here by chart component -->
                                 <div t-att-data-widget-id="widget.id" class="chart-placeholder">
@@ -77,8 +77,8 @@
                                 <i t-att-class="'fa fa-' + report.icon"/>
                             </div>
                             <div class="report-info">
-                                <div class="report-name" t-esc="report.name"/>
-                                <div class="report-date" t-esc="report.date"/>
+                                <div class="report-name" t-out="report.name"/>
+                                <div class="report-date" t-out="report.date"/>
                             </div>
                             <button class="btn btn-sm btn-primary" t-on-click="() => env.bus.trigger('action:open-report', report)">
                                 Open

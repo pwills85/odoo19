@@ -6,7 +6,7 @@
             <div class="o_table_widget_header">
                 <div class="o_table_widget_title">
                     <i t-att-class="widgetIcon" class="me-2"/>
-                    <span t-esc="widgetTitle"/>
+                    <span t-out="widgetTitle"/>
                 </div>
                 <div class="o_table_widget_actions">
                     <!-- Búsqueda -->
@@ -52,7 +52,7 @@
                 <div t-elif="state.hasError" class="o_table_error">
                     <div class="alert alert-danger" role="alert">
                         <i class="fa fa-exclamation-triangle me-2"/>
-                        <span t-esc="state.errorMessage"/>
+                        <span t-out="state.errorMessage"/>
                     </div>
                     <button 
                         class="btn btn-primary btn-sm"
@@ -78,7 +78,7 @@
                                             'sorted-desc': state.sortColumn?.field === column.field and state.sortDirection === 'desc'
                                         }"
                                         t-on-click="() => onColumnSort(column)">
-                                        <span t-esc="column.header"/>
+                                        <span t-out="column.header"/>
                                         <i t-if="column.sortable" 
                                            class="fa fa-sort ms-1"
                                            t-att-class="{
@@ -102,7 +102,7 @@
                                         t-as="column" 
                                         t-key="column.field"
                                         t-att-class="'text-' + (column.align || 'start')">
-                                        <span t-esc="formatCellValue(row[column.field], column)"/>
+                                        <span t-out="formatCellValue(row[column.field], column)"/>
                                     </td>
                                 </tr>
                                 
@@ -121,7 +121,7 @@
                     <!-- Paginación -->
                     <div t-if="showPagination" class="o_table_pagination">
                         <div class="o_table_pagination_info">
-                            <span t-esc="paginationInfo"/>
+                            <span t-out="paginationInfo"/>
                         </div>
                         <nav>
                             <ul class="pagination pagination-sm mb-0">
@@ -149,7 +149,7 @@
                                     t-att-class="{'active': page === state.currentPage}">
                                     <a class="page-link" href="#" 
                                        t-on-click.prevent="() => onPageChange(page)">
-                                        <span t-esc="page"/>
+                                        <span t-out="page"/>
                                     </a>
                                 </li>
                                 

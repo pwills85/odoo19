@@ -179,7 +179,7 @@
                                 Para efectos legales y tributarios, debe presentarse formalmente ante el Servicio de Impuestos Internos (SII).
                             </p>
                             <p class="text-muted small">
-                                Generado el: <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y %H:%M')"/> | Sistema: Odoo 19 - EERGYGROUP
+                                Generado el: <span t-out="datetime.datetime.now().strftime('%d/%m/%Y %H:%M')"/> | Sistema: Odoo 19 - EERGYGROUP
                             </p>
                         </div>
                     </div>

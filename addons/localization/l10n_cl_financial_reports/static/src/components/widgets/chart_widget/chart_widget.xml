@@ -6,7 +6,7 @@
             <div class="o_chart_widget_header">
                 <div class="o_chart_widget_title">
                     <i t-att-class="widgetIcon" class="me-2"/>
-                    <span t-esc="widgetTitle"/>
+                    <span t-out="widgetTitle"/>
                 </div>
                 <div class="o_chart_widget_actions">
                     <button 
@@ -39,7 +39,7 @@
                 <div t-elif="state.hasError" class="o_chart_error_container">
                     <div class="alert alert-danger" role="alert">
                         <i class="fa fa-exclamation-triangle me-2"/>
-                        <span t-esc="state.errorMessage"/>
+                        <span t-out="state.errorMessage"/>
                     </div>
                     <button 
                         class="btn btn-primary btn-sm"
