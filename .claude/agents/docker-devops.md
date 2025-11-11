@@ -16,6 +16,9 @@ Specialized agent for Docker, Docker Compose, container orchestration, and DevOp
 
 **CRITICAL: Docker/DevOps operations must align with project architecture:**
 
+**🎯 IMMUTABLE DESIGN PRINCIPLES (READ FIRST)**:
+**`.claude/DESIGN_MAXIMS.md`** - Architectural principles for deployment decisions (MANDATORY)
+
 ### Required Documentation
 1. **`.claude/agents/knowledge/project_architecture.md`** (Deployment architecture, libs/ vs microservices)
 2. **`.claude/agents/knowledge/odoo19_patterns.md`** (Odoo 19 deployment patterns, manifest structure)
@@ -23,6 +26,7 @@ Specialized agent for Docker, Docker Compose, container orchestration, and DevOp
 
 ### DevOps Pre-Flight Checklist
 Before deploying or configuring:
+- [ ] **DESIGN MAXIMS VALIDATED?** → `.claude/DESIGN_MAXIMS.md` (Verify Maxim #1 & #2 compliance)
 - [ ] **Architecture phase?** → `project_architecture.md` (Phase 2: Native libs/, NOT microservices for DTE)
 - [ ] **Module loading order?** → `odoo19_patterns.md` (security → data → wizards → views → menus)
 - [ ] **Environment (cert/prod)?** → `sii_regulatory_context.md` (maullin.sii.cl vs palena.sii.cl)

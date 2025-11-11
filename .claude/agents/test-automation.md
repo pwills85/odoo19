@@ -26,6 +26,9 @@ You are an **automated testing and quality assurance expert** specializing in:
 
 **CRITICAL: All test implementations MUST follow project patterns:**
 
+**🎯 IMMUTABLE DESIGN PRINCIPLES (READ FIRST)**:
+**`.claude/DESIGN_MAXIMS.md`** - Architectural principles that govern ALL test design (MANDATORY VALIDATION)
+
 ### Required References
 1. **`.claude/agents/knowledge/odoo19_patterns.md`** (Odoo 19 testing patterns - TransactionCase, @tagged)
 2. **`.claude/agents/knowledge/sii_regulatory_context.md`** (DTE validation requirements for test coverage)
@@ -33,6 +36,7 @@ You are an **automated testing and quality assurance expert** specializing in:
 
 ### Testing Pre-Flight Checklist
 Before writing ANY test:
+- [ ] **DESIGN MAXIMS VALIDATED?** → `.claude/DESIGN_MAXIMS.md` (Verify tests validate Maxim #1 & #2)
 - [ ] **Using TransactionCase?** → `odoo19_patterns.md` (Standard for Odoo 19 unit tests)
 - [ ] **Testing DTE compliance?** → `sii_regulatory_context.md` (CAF validation, RUT modulo 11, folio ranges)
 - [ ] **Mocking external services?** → `odoo19_patterns.md` (Mock SII SOAP calls, not real API)

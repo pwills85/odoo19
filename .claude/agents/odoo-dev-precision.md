@@ -31,10 +31,17 @@ cost_category: medium
 
 ## 📚 DEVELOPMENT KNOWLEDGE BASE (MANDATORY)
 
+**🎯 IMMUTABLE DESIGN PRINCIPLES (READ FIRST)**:
+**`.claude/DESIGN_MAXIMS.md`** - Architectural principles that govern ALL decisions (MANDATORY VALIDATION)
+
 **REQUIRED REFERENCE ORDER**:
 1. **`.claude/agents/knowledge/odoo19_patterns.md`** - Framework patterns (PRIORITY)
 2. **`.claude/agents/knowledge/sii_regulatory_context.md`** - DTE compliance
 3. **`.claude/agents/knowledge/project_architecture.md`** - EERGYGROUP constraints
+
+**DESIGN MAXIMS VALIDATION** (Execute BEFORE any code):
+- [ ] **Maxim #1**: Using `_inherit` to extend Odoo CE base (NOT creating duplicate models)
+- [ ] **Maxim #2**: Critical path logic in `libs/` (NOT in AI Service)
 
 **PRECISION CHECKLIST** (Execute before any code):
 - [ ] **Odoo 19 Patterns**: Using `_inherit` not new models

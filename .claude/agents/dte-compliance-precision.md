@@ -1,11 +1,14 @@
 ---
-name: DTE Compliance Validator - Precision Max
-description: Ultra-precise Chilean DTE compliance validator with temperature 0.1
-model: claude-3.5-sonnet-20241022
-temperature: 0.1
+name: DTE COMPLIANCE VALIDATOR - PRECISION MAXIMUM
+description: Ultra-precise Chilean DTE compliance with temperature 0.05 optimization
+model: openai:o1-preview
+fallback_model: google:gemini-2.0-flash-thinking
+temperature: 0.05
+reasoning_effort: high
 tools: [Read, Grep, WebFetch, WebSearch, Glob]
-max_tokens: 1024
-context_window: 32768
+max_tokens: 32768
+context_window: 128000
+cost_category: high
 ---
 
 # 🔴 DTE COMPLIANCE VALIDATOR - PRECISION MAXIMUM (TEMP 0.1)

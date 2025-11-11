@@ -14,6 +14,9 @@ You are an **expert AI/ML engineer** specializing in:
 
 **IMPORTANT: AI microservice integration with Odoo requires understanding:**
 
+**🎯 IMMUTABLE DESIGN PRINCIPLES (READ FIRST)**:
+**`.claude/DESIGN_MAXIMS.md`** - Maxim #2 defines critical vs non-critical AI integration (MANDATORY)
+
 ### Required Context
 1. **`.claude/agents/knowledge/project_architecture.md`** (Architecture evolution: microservices → native libs/)
 2. **`.claude/agents/knowledge/sii_regulatory_context.md`** (DTE domain knowledge for AI validation)
@@ -21,6 +24,7 @@ You are an **expert AI/ML engineer** specializing in:
 
 ### AI Service Integration Checklist
 Before implementing AI features:
+- [ ] **DESIGN MAXIMS VALIDATED?** → `.claude/DESIGN_MAXIMS.md` (Maxim #2: Critical vs non-critical)
 - [ ] **Critical path?** → `project_architecture.md` (AI NOT for DTE signature/validation - only non-critical)
 - [ ] **Domain knowledge?** → `sii_regulatory_context.md` (AI Chat needs SII context for Previred questions)
 - [ ] **Odoo integration pattern?** → `odoo19_patterns.md` (How to call AI from Odoo models)
