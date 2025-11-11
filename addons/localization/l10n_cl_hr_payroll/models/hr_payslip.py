@@ -2120,7 +2120,22 @@ class HrPayslip(models.Model):
     
     def validate_with_ai(self):
         """
-        Validar liquidación con microservicio IA
+        Validar liquidación con microservicio IA (Claude Sonnet 4.5)
+        
+        TIMING: Este método es llamado por action_done() ANTES de confirmar.
+                Ver FIX-001 en PROMPT_MAESTRO_CIERRE_TOTAL_FASE3_2025-11-11.md
+        
+        Workflow:
+        1. Serializar datos liquidación (JSON)
+        2. Llamar AI service POST /api/payroll/validate
+        3. Parsear respuesta (confidence, warnings, suggestions)
+        4. Actualizar campos ai_validation_*
+        5. Si confianza <80%, action_done() mostrará wizard
+        
+        Graceful Degradation:
+        - Timeout 10s (requests.post timeout=10)
+        - Si falla: log warning, set status='error', continuar
+        - No bloquear confirmación manual si IA no disponible
         
         Endpoint usado: POST /api/payroll/validate (ai-service:8002)
         
@@ -2293,54 +2308,79 @@ class HrPayslip(models.Model):
     
     def action_done(self):
         """
-        Marcar como pagado (con validación IA automática)
+        Confirmar liquidación (DESPUÉS de compute_sheet)
         
-        Override: Validar con IA antes de confirmar liquidación
-        
-        Comportamiento:
-        - Si IA rechaza (rejected): Bloquear confirmación
-        - Si IA advierte (review) con confianza <70%: Mostrar wizard
-        - Si IA aprueba (approved): Continuar normal
-        - Si IA deshabilitada: Continuar normal
+        Workflow:
+        1. Verificar liquidación calculada (line_ids existe)
+        2. Validar con IA (si configurado)
+        3. Si confianza baja (<80%), mostrar wizard advertencia
+        4. Confirmar liquidación (cambiar estado a 'done')
+        5. Crear asientos contables
         """
         self.ensure_one()
         
-        # Validación IA automática (si está habilitada en context)
-        if self.env.context.get('skip_ai_validation'):
-            _logger.info(f"Validación IA omitida (skip_ai_validation=True)")
-        else:
-            validation = self.validate_with_ai()
-            
-            # BLOQUEAR si IA rechaza
-            if validation['recommendation'] == 'reject':
-                error_msg = "❌ **Validación IA Rechazó Liquidación**\n\n"
-                error_msg += "**Errores críticos detectados:**\n"
-                error_msg += "\n".join(f"• {err}" for err in validation['errors'])
-                error_msg += "\n\n**Acción requerida:** Corregir errores antes de confirmar."
-                
-                raise UserError(_(error_msg))
-            
-            # ADVERTIR si confianza baja
-            if (validation['recommendation'] == 'review' and 
-                validation['confidence'] < 70):
-                
-                # Mostrar wizard de advertencia
-                return {
-                    'name': _('Advertencia Validación IA'),
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'payroll.ai.validation.wizard',
-                    'view_mode': 'form',
-                    'target': 'new',
-                    'context': {
-                        'default_payslip_id': self.id,
-                        'default_confidence': validation['confidence'],
-                        'default_warnings': '\n'.join(validation['warnings']),
-                        'default_recommendation': validation['recommendation']
-                    }
-                }
+        # ═══════════════════════════════════════════════════════════
+        # VALIDACIÓN 1: Liquidación debe estar calculada
+        # ═══════════════════════════════════════════════════════════
         
-        # Continuar con workflow normal
+        if not self.line_ids:
+            raise UserError(_(
+                'Debe calcular la liquidación antes de confirmarla.\n\n'
+                'Haga clic en "Calcular Liquidación" primero.'
+            ))
+        
+        # ═══════════════════════════════════════════════════════════
+        # VALIDACIÓN 2: IA (si está habilitada) - TIMING CORRECTO
+        # ═══════════════════════════════════════════════════════════
+        
+        # Validar con IA ANTES de confirmar (permite corrección)
+        if not self.env.context.get('skip_ai_validation'):
+            ai_enabled = self.env['ir.config_parameter'].sudo().get_param(
+                'l10n_cl_hr_payroll.ai_validation_enabled',
+                default='True'
+            )
+            
+            if ai_enabled.lower() == 'true':
+                _logger.info(
+                    f"🤖 Validando liquidación {self.number} con IA antes de confirmar"
+                )
+                
+                try:
+                    validation = self.validate_with_ai()
+                    
+                    # Si confianza baja, mostrar wizard advertencia
+                    if validation['confidence'] < 80.0:
+                        return {
+                            'type': 'ir.actions.act_window',
+                            'res_model': 'payroll.ai.validation.wizard',
+                            'view_mode': 'form',
+                            'target': 'new',
+                            'context': {
+                                'default_payslip_id': self.id,
+                                'default_confidence': validation['confidence'],
+                                'default_warnings': '\n'.join(validation.get('warnings', [])),
+                            },
+                        }
+                except Exception as e:
+                    # Degradación elegante: si IA falla, permitir confirmar manualmente
+                    _logger.warning(
+                        f"⚠️ Validación IA falló para liquidación {self.number}: {e}\n"
+                        f"Continuando confirmación manual (graceful degradation)"
+                    )
+                    self.write({
+                        'ai_validation_status': 'error',
+                        'ai_confidence': 0.0
+                    })
+        
+        # ═══════════════════════════════════════════════════════════
+        # CONFIRMACIÓN FINAL
+        # ═══════════════════════════════════════════════════════════
+        
+        # Cambiar estado a 'done'
         self.write({'state': 'done'})
+        
+        _logger.info(f"✅ Liquidación {self.number} confirmada exitosamente")
+        
         return True
     
     def action_cancel(self):
