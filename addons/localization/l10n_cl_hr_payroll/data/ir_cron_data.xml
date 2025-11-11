@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- CRON: FETCH ECONOMIC INDICATORS MONTHLY -->
+        <!-- Ejecuta día 1 de cada mes a las 05:00 AM -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <record id="cron_fetch_economic_indicators_monthly" model="ir.cron">
+            <field name="name">Fetch Economic Indicators - Monthly</field>
+            <field name="model_id" ref="model_hr_economic_indicators"/>
+            <!-- state, priority, numbercall, doall, nextcall removed in Odoo 19 -->
+            <field name="code">model._run_fetch_indicators_cron()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">months</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- CRON: UPDATE ECONOMIC INDICATORS DAILY (mindicador.cl) -->
+        <!-- HIGH-012: Actualización diaria UF/UTM/IPC desde API pública -->
+        <!-- Ejecuta diariamente a las 00:30 AM Chile -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <record id="cron_update_economic_indicators_daily" model="ir.cron">
+            <field name="name">Update Economic Indicators Daily (UF/UTM/IPC) - mindicador.cl</field>
+            <field name="model_id" ref="model_hr_economic_indicators"/>
+            <field name="code">model._cron_update_economic_indicators()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

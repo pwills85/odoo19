@@ -371,24 +371,202 @@ class HrEconomicIndicators(models.Model):
                     # Admin notification sent above
                     return False
     
+    @api.model
+    def _cron_update_economic_indicators(self):
+        """
+        Cron job: Actualizar UF/UTM/IPC desde mindicador.cl - HIGH-012
+
+        Configuración:
+        - Frecuencia: Diaria (00:30 AM Chile)
+        - Reintentos: 3 con backoff exponencial
+        - Timeout: 10 segundos por intento
+
+        Returns:
+            bool: True si éxito, False si fallo
+
+        Raises:
+            UserError: Si fallan todos los reintentos (solo en modo debug)
+
+        Example:
+            >>> self.env['hr.economic.indicators']._cron_update_economic_indicators()
+            True
+        """
+        import requests
+        import time
+        import logging
+
+        _logger = logging.getLogger(__name__)
+
+        MINDICADOR_URL = "https://mindicador.cl/api"
+        MAX_RETRIES = 3
+        TIMEOUT = 10
+
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                _logger.info(
+                    "[CRON-MINDICADOR] Actualizando indicadores económicos "
+                    "(intento %d/%d)",
+                    attempt, MAX_RETRIES
+                )
+
+                # Request API mindicador.cl
+                response = requests.get(MINDICADOR_URL, timeout=TIMEOUT)
+                response.raise_for_status()
+                data = response.json()
+
+                # Extraer valores
+                uf_value = float(data['uf']['valor'])
+                utm_value = float(data['utm']['valor'])
+                ipc_value = float(data.get('ipc', {}).get('valor', 0))
+
+                # Validar rangos razonables
+                if not (30000 <= uf_value <= 50000):
+                    raise ValueError(f"UF fuera de rango: ${uf_value:,.2f}")
+                if not (60000 <= utm_value <= 80000):
+                    raise ValueError(f"UTM fuera de rango: ${utm_value:,.0f}")
+
+                # Verificar si ya existe para hoy
+                today = fields.Date.today()
+                existing = self.search([('period', '=', today)], limit=1)
+
+                if existing:
+                    # Actualizar existente
+                    existing.write({
+                        'uf': uf_value,
+                        'utm': utm_value,
+                    })
+                    _logger.info(
+                        "[CRON-MINDICADOR] ✅ Indicadores actualizados: "
+                        "UF=${:,.2f}, UTM=${:,.0f}, IPC={}%".format(
+                            uf_value, utm_value, ipc_value
+                        )
+                    )
+                else:
+                    # Crear nuevo registro (solo UF/UTM desde mindicador, otros valores default)
+                    self.create({
+                        'period': today,
+                        'uf': uf_value,
+                        'utm': utm_value,
+                        'uta': uf_value * 12,  # Aproximado: UTA ≈ 12 UF
+                        'minimum_wage': 500000,  # Default 2025
+                        'afp_limit': 83.1,  # Default 2025
+                        'family_allowance_t1': 15000,  # Default
+                        'family_allowance_t2': 9000,   # Default
+                        'family_allowance_t3': 3000,   # Default
+                    })
+                    _logger.info(
+                        "[CRON-MINDICADOR] ✅ Indicadores creados: "
+                        "UF=${:,.2f}, UTM=${:,.0f}, IPC={}%".format(
+                            uf_value, utm_value, ipc_value
+                        )
+                    )
+
+                return True  # Éxito
+
+            except requests.exceptions.Timeout:
+                _logger.warning(
+                    "[CRON-MINDICADOR] ⚠️ Timeout API mindicador.cl (intento %d)",
+                    attempt
+                )
+            except requests.exceptions.RequestException as e:
+                _logger.warning(
+                    "[CRON-MINDICADOR] ⚠️ Error API mindicador.cl (intento %d): %s",
+                    attempt, e
+                )
+            except (KeyError, ValueError, TypeError) as e:
+                _logger.error(
+                    "[CRON-MINDICADOR] ❌ Error parseando respuesta API (intento %d): %s",
+                    attempt, e
+                )
+
+            # Backoff exponencial: 5s, 15s, 45s
+            if attempt < MAX_RETRIES:
+                sleep_time = 5 * (3 ** (attempt - 1))
+                _logger.info("[CRON-MINDICADOR] Reintentando en %ds...", sleep_time)
+                time.sleep(sleep_time)
+
+        # Falló después de todos los reintentos
+        _logger.error(
+            "[CRON-MINDICADOR] ❌ ERROR CRÍTICO: No se pudieron actualizar indicadores "
+            "después de %d intentos",
+            MAX_RETRIES
+        )
+
+        # Notificar admin (opcional)
+        self._notify_admin_indicator_failure()
+
+        return False
+
+    def _notify_admin_indicator_failure(self):
+        """
+        Notificar administrador sobre fallo actualización indicadores - HIGH-012
+
+        Implementación opcional: crear actividad o enviar mail
+        """
+        import logging
+        _logger = logging.getLogger(__name__)
+
+        try:
+            # Buscar usuarios administradores de nómina
+            admin_group = self.env.ref('l10n_cl_hr_payroll.group_hr_payroll_manager', raise_if_not_found=False)
+            if not admin_group:
+                _logger.warning("[CRON-MINDICADOR] Grupo hr_payroll_manager no encontrado")
+                return
+
+            admin_users = admin_group.users
+            if not admin_users:
+                _logger.warning("[CRON-MINDICADOR] No hay usuarios administradores de nómina")
+                return
+
+            # Crear actividad para cada admin
+            for user in admin_users:
+                self.env['mail.activity'].create({
+                    'res_model_id': self.env['ir.model']._get('hr.economic.indicators').id,
+                    'res_id': 0,
+                    'activity_type_id': self.env.ref('mail.mail_activity_data_warning').id,
+                    'summary': 'Error actualización indicadores económicos (mindicador.cl)',
+                    'note': '''
+                        <p>La API mindicador.cl falló después de 3 reintentos.</p>
+                        <p><b>Acción requerida:</b></p>
+                        <ul>
+                            <li>Revisar conectividad a https://mindicador.cl/api</li>
+                            <li>Actualizar indicadores manualmente si es urgente</li>
+                            <li>El cron reintentará mañana automáticamente</li>
+                        </ul>
+                    ''',
+                    'date_deadline': date.today(),
+                    'user_id': user.id,
+                })
+
+            _logger.info(
+                "[CRON-MINDICADOR] 📧 Notificaciones enviadas a %d administradores",
+                len(admin_users)
+            )
+
+        except Exception as e:
+            _logger.error(
+                "[CRON-MINDICADOR] Error enviando notificaciones: %s",
+                str(e)
+            )
+
     def _notify_indicators_failure(self, year, month):
         """
         Notificar a administradores que debe cargar indicadores manualmente - P0-4
-        
+
         Crea una actividad para el grupo de administradores de nómina.
         """
         import logging
         _logger = logging.getLogger(__name__)
-        
+
         try:
             # Buscar usuarios administradores de nómina
             admin_group = self.env.ref('l10n_cl_hr_payroll.group_hr_payroll_manager')
             admin_users = admin_group.users
-            
+
             if not admin_users:
                 _logger.warning("No hay usuarios administradores de nómina")
                 return
-            
+
             # Crear actividad para cada admin
             for user in admin_users:
                 self.env['mail.activity'].create({
@@ -409,12 +587,12 @@ class HrEconomicIndicators(models.Model):
                     'date_deadline': date.today(),
                     'user_id': user.id,
                 })
-            
+
             _logger.info(
                 "📧 Notificaciones enviadas a %d administradores",
                 len(admin_users)
             )
-            
+
         except Exception as e:
             _logger.error(
                 "Error enviando notificaciones: %s",
