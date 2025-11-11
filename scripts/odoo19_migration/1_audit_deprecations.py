@@ -340,28 +340,28 @@ def generate_markdown_report(findings: List[Dict], stats: Dict, output_path: str
         # Plan de Acción Sugerido
         f.write("## ✅ PLAN DE ACCIÓN SUGERIDO\n\n")
         f.write("### Fase 1: Críticos (P0) - Ejecutar INMEDIATAMENTE\n\n")
-        p0_findings = [f for f in findings if f['priority'] == 'P0']
+        p0_findings = [finding for finding in findings if finding['priority'] == 'P0']
         by_pattern_p0 = defaultdict(int)
-        for f in p0_findings:
-            by_pattern_p0[f['name']] += 1
+        for finding in p0_findings:
+            by_pattern_p0[finding['name']] += 1
         
         for pattern_name, count in by_pattern_p0.items():
             f.write(f"- [ ] **{pattern_name}**: {count} ocurrencias\n")
         
         f.write("\n### Fase 2: Altos (P1) - Ejecutar en las próximas 2 semanas\n\n")
-        p1_findings = [f for f in findings if f['priority'] == 'P1']
+        p1_findings = [finding for finding in findings if finding['priority'] == 'P1']
         by_pattern_p1 = defaultdict(int)
-        for f in p1_findings:
-            by_pattern_p1[f['name']] += 1
+        for finding in p1_findings:
+            by_pattern_p1[finding['name']] += 1
         
         for pattern_name, count in by_pattern_p1.items():
             f.write(f"- [ ] **{pattern_name}**: {count} ocurrencias\n")
         
         f.write("\n### Fase 3: Medios (P2) - Planificar para el próximo mes\n\n")
-        p2_findings = [f for f in findings if f['priority'] == 'P2']
+        p2_findings = [finding for finding in findings if finding['priority'] == 'P2']
         by_pattern_p2 = defaultdict(int)
-        for f in p2_findings:
-            by_pattern_p2[f['name']] += 1
+        for finding in p2_findings:
+            by_pattern_p2[finding['name']] += 1
         
         for pattern_name, count in by_pattern_p2.items():
             f.write(f"- [ ] **{pattern_name}**: {count} ocurrencias\n")

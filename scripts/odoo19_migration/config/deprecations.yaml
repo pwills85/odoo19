@@ -222,6 +222,7 @@ deprecations:
     priority: P1
     severity: changed_behavior
     deadline: "2025-06-01"
+    regex_search: "@api\\.depends\\("
     replacement_strategy: "audit_only"  # Solo auditoría, no cambio automático
     files_include: "*.py"
     paths_include:
@@ -251,6 +252,7 @@ deprecations:
     category: i18n
     priority: P2
     severity: best_practice
+    regex_search: "_(\\(|\\s)['\"][^'\"]+['\"]\\)"
     replacement_strategy: "audit_only"
     files_include: "*.py"
     paths_include:
