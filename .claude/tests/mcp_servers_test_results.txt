@@ -1,0 +1,14 @@
+MCP Servers Test Results - Tue Nov 11 00:03:39 -03 2025
+====================================
+
+PASS: mcp.json exists
+PASS: Valid JSON syntax
+PASS: postgres server configured
+PASS: filesystem server configured
+PASS: git server configured
+PASS: npx available (v11.6.2)
+PASS: Node.js available (v25.1.0)
+SUMMARY:
+  Passed: 7
+  Warnings: 0
+  Failed: 0
