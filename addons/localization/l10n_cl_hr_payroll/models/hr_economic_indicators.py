@@ -2,6 +2,7 @@
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
+from odoo.tools import ormcache
 from datetime import date
 
 
@@ -159,11 +160,101 @@ class HrEconomicIndicators(models.Model):
     def get_indicator_for_payslip(self, payslip_date):
         """
         Obtener indicador para cálculo de nómina
-        
+
         Alias de get_indicator_for_date con mensaje más específico
         """
         return self.get_indicator_for_date(payslip_date)
-    
+
+    @ormcache('reference_date')
+    def _get_uf_value_cached(self, reference_date):
+        """
+        Obtener UF con cache (TTL 24 horas) - HIGH-013
+
+        Args:
+            reference_date (date): Fecha referencia
+
+        Returns:
+            float: Valor UF en pesos
+
+        Cache:
+            - TTL: 24 horas automático
+            - Key: hr.economic.indicators._get_uf_value_cached(YYYY-MM-DD)
+            - Invalidación: Automática al crear/write
+
+        Example:
+            >>> self._get_uf_value_cached(date(2025, 11, 15))
+            38500.50
+        """
+        import logging
+        _logger = logging.getLogger(__name__)
+
+        indicator = self.search([
+            ('period', '<=', reference_date)
+        ], order='period desc', limit=1)
+
+        if indicator and indicator.uf:
+            return indicator.uf
+
+        # Valor por defecto (2025)
+        _logger.warning(
+            "UF no encontrada para %s, usando default $38,000",
+            reference_date
+        )
+        return 38000.0
+
+    @ormcache('reference_date')
+    def _get_utm_value_cached(self, reference_date):
+        """
+        Obtener UTM con cache (TTL 24 horas) - HIGH-013
+
+        Args:
+            reference_date (date): Fecha referencia
+
+        Returns:
+            float: Valor UTM en pesos
+
+        Cache:
+            - TTL: 24 horas automático
+            - Key: hr.economic.indicators._get_utm_value_cached(YYYY-MM-DD)
+            - Invalidación: Automática al crear/write
+
+        Example:
+            >>> self._get_utm_value_cached(date(2025, 11, 15))
+            67200.0
+        """
+        import logging
+        _logger = logging.getLogger(__name__)
+
+        indicator = self.search([
+            ('period', '<=', reference_date)
+        ], order='period desc', limit=1)
+
+        if indicator and indicator.utm:
+            return indicator.utm
+
+        # Valor por defecto (2025)
+        _logger.warning(
+            "UTM no encontrada para %s, usando default $67,000",
+            reference_date
+        )
+        return 67000.0
+
+    def create(self, vals):
+        """Invalidar cache al crear indicador - HIGH-013"""
+        result = super().create(vals)
+        # Invalidar cache UF/UTM
+        self._get_uf_value_cached.clear_cache(self)
+        self._get_utm_value_cached.clear_cache(self)
+        return result
+
+    def write(self, vals):
+        """Invalidar cache al actualizar indicador - HIGH-013"""
+        result = super().write(vals)
+        if any(key in vals for key in ['uf', 'utm', 'period']):
+            self._get_uf_value_cached.clear_cache(self)
+            self._get_utm_value_cached.clear_cache(self)
+        return result
+
     @api.model
     def fetch_from_ai_service(self, year, month):
         """

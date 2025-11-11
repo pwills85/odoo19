@@ -223,27 +223,20 @@ class HrPayslipAportesEmpleador(models.Model):
     
     def _get_uf_value(self, reference_date):
         """
-        Obtener valor UF vigente
-        
+        Obtener valor UF vigente con cache - HIGH-013
+
+        DEPRECATED: Usar directamente _get_uf_value_cached()
+        Mantener por compatibilidad legacy
+
         Args:
             reference_date (date): Fecha de referencia
-        
+
         Returns:
             float: Valor UF en pesos
         """
-        # Buscar UF en indicadores económicos
-        indicator = self.env['hr.economic.indicators'].search([
-            ('period', '<=', reference_date)
-        ], order='period desc', limit=1)
-        
-        if indicator and indicator.uf:
-            return indicator.uf
-        
-        # Valor por defecto (2025)
-        _logger.warning(
-            f"UF no encontrada para {reference_date}, usando valor por defecto $38,000"
-        )
-        return 38000.0
+        # Usar método cached para mejor performance
+        indicators = self.env['hr.economic.indicators']
+        return indicators._get_uf_value_cached(reference_date)
     
     def _get_tasa_seguro_cesantia_empleador(self):
         """
