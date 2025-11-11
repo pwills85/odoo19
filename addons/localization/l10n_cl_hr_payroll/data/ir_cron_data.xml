@@ -32,5 +32,20 @@
             <field name="active" eval="True"/>
         </record>
 
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- CRON: UPDATE AFP RATES MONTHLY -->
+        <!-- HIGH-007: Actualización mensual comisiones AFP desde SP API -->
+        <!-- Ejecuta día 1 de cada mes a las 01:00 AM Chile -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <record id="cron_update_afp_rates_monthly" model="ir.cron">
+            <field name="name">Update AFP Commission Rates Monthly - Superintendencia Pensiones</field>
+            <field name="model_id" ref="model_hr_afp"/>
+            <field name="code">model._cron_update_afp_rates()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">months</field>
+            <field name="active" eval="True"/>
+        </record>
+
     </data>
 </odoo>

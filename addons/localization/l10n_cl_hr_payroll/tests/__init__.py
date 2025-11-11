@@ -21,6 +21,7 @@ from . import test_gap003_reforma_gradual  # Reforma Ley 21.735 - Gradualidad 1.
 
 # P1 FIXES: Cierre Brechas Sprint 1 (2025-11-11)
 from . import test_sis_rate_fix  # HIGH-004: Corrección SIS 1.53% → 1.57%
+from . import test_afp_auto_update  # HIGH-007: Auto-actualización AFP rates desde SP API
 
 # Existing tests
 from . import test_naming_integrity
