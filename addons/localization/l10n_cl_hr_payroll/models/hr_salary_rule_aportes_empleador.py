@@ -5,7 +5,7 @@ Aportes del Empleador Chile - Reforma Previsional 2025
 
 Costos laborales obligatorios del empleador (NO se descuentan al trabajador):
 
-1. Seguro de Invalidez y Sobrevivencia (SIS): 1.53%
+1. Seguro de Invalidez y Sobrevivencia (SIS): 1.57%
    - Base: Remuneración imponible
    - Tope: 87.8 UF
    - Destino: AFP
@@ -44,7 +44,7 @@ class HrPayslipAportesEmpleador(models.Model):
     # ═══════════════════════════════════════════════════════════
     
     aporte_sis_amount = fields.Monetary(
-        string='SIS (1.53%)',
+        string='SIS (1.57%)',
         currency_field='company_currency_id',
         compute='_compute_aporte_sis',
         store=True,
@@ -84,7 +84,7 @@ class HrPayslipAportesEmpleador(models.Model):
         """
         Calcular Seguro de Invalidez y Sobrevivencia (SIS)
         
-        Tasa: 1.53% sobre imponible
+        Tasa: 1.57% sobre imponible (D.L. 3.500, Art. 68)
         Tope: 87.8 UF
         """
         for payslip in self:
@@ -96,8 +96,8 @@ class HrPayslipAportesEmpleador(models.Model):
             tope_afp_clp = payslip._get_tope_afp_clp()
             base_imponible = min(payslip.total_imponible, tope_afp_clp)
             
-            # Calcular 1.53%
-            payslip.aporte_sis_amount = base_imponible * 0.0153
+            # Calcular 1.57% (Tasa correcta según D.L. 3.500)
+            payslip.aporte_sis_amount = base_imponible * 0.0157
             
             _logger.debug(
                 f"SIS calculado: ${payslip.aporte_sis_amount:,.0f} "

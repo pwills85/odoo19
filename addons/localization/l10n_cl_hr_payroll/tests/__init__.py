@@ -19,6 +19,9 @@ from . import test_gap002_legal_caps_integration  # HR-GAP-002: Legal caps integ
 # GAP-003: Reforma Previsional 2025 - Gradualidad Aporte Empleador (2025-11-09)
 from . import test_gap003_reforma_gradual  # Reforma Ley 21.735 - Gradualidad 1.0%-8.5%
 
+# P1 FIXES: Cierre Brechas Sprint 1 (2025-11-11)
+from . import test_sis_rate_fix  # HIGH-004: Corrección SIS 1.53% → 1.57%
+
 # Existing tests
 from . import test_naming_integrity
 from . import test_tax_brackets
