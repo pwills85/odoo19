@@ -69,6 +69,7 @@ Licencia: LGPL-3
     'external_dependencies': {
         'python': [
             'requests',          # HTTP client para microservicios
+            'python-dotenv',     # ✅ Environment variables management (FIX-002)
         ],
     },
     'data': [

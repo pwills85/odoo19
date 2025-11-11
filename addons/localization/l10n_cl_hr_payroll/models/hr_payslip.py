@@ -1,11 +1,29 @@
 # -*- coding: utf-8 -*-
 
+import os
+from dotenv import load_dotenv
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
 from datetime import date
 import logging
 
+# Cargar variables de entorno (solo una vez al inicio del módulo)
+load_dotenv()
+
+# Constantes de configuración (leer de .env)
+AI_SERVICE_URL = os.getenv('AI_SERVICE_URL', 'http://ai-service:8000')
+AI_SERVICE_API_KEY = os.getenv('AI_SERVICE_API_KEY', '')
+AI_SERVICE_TIMEOUT = int(os.getenv('AI_SERVICE_TIMEOUT', '10'))
+AI_SERVICE_VERIFY_SSL = os.getenv('AI_SERVICE_VERIFY_SSL', 'true').lower() == 'true'
+
 _logger = logging.getLogger(__name__)
+
+# Advertir si SSL deshabilitado
+if not AI_SERVICE_VERIFY_SSL:
+    _logger.warning(
+        "⚠️ SSL verification DISABLED for AI service. "
+        "Use only in development. NEVER in production."
+    )
 
 
 class BrowsableObject(dict):
@@ -2158,7 +2176,6 @@ class HrPayslip(models.Model):
         """
         self.ensure_one()
         
-        import os
         import requests
         
         # Verificar si validación IA está habilitada
@@ -2183,9 +2200,23 @@ class HrPayslip(models.Model):
                 "recommendation": "approve"
             }
         
-        # Configuración AI-Service
-        ai_service_url = os.getenv('AI_SERVICE_URL', 'http://ai-service:8002')
-        api_key = os.getenv('AI_SERVICE_API_KEY', '')
+        # Verificar credenciales configuradas
+        if not AI_SERVICE_API_KEY:
+            _logger.warning(
+                "⚠️ AI_SERVICE_API_KEY no configurada en .env. "
+                "Validación IA deshabilitada."
+            )
+            self.write({
+                'ai_validation_status': 'skipped',
+                'ai_confidence': 0.0
+            })
+            return {
+                "success": True,
+                "confidence": 0,
+                "errors": [],
+                "warnings": ["AI_SERVICE_API_KEY no configurada"],
+                "recommendation": "approve"
+            }
         
         # Preparar payload para AI-Service
         payload = {
@@ -2217,12 +2248,19 @@ class HrPayslip(models.Model):
         )
         
         try:
-            # Llamar endpoint AI-Service
+            # Headers con API Key cifrada
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {AI_SERVICE_API_KEY}',
+            }
+            
+            # Llamar endpoint AI-Service con SSL verification
             response = requests.post(
-                f"{ai_service_url}/api/payroll/validate",
+                f"{AI_SERVICE_URL}/api/payroll/validate",
                 json=payload,
-                headers={"Authorization": f"Bearer {api_key}"} if api_key else {},
-                timeout=30  # 30s timeout
+                headers=headers,
+                timeout=AI_SERVICE_TIMEOUT,
+                verify=AI_SERVICE_VERIFY_SSL,  # ✅ SSL verification
             )
             
             response.raise_for_status()

@@ -76,9 +76,51 @@ THIS MODULE
 ### Requirements
 
 - Odoo 19.0 CE
-- Python dependencies: `requests`
+- Python dependencies: `requests`, `python-dotenv`
 - Optional: Payroll Microservice (FastAPI)
 - Optional: AI Service
+
+---
+
+## 🔐 Security Configuration
+
+### Environment Variables
+
+This module requires secure credentials configuration via `.env` file:
+
+1. **Copy template:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Complete with real values:**
+   ```bash
+   # Edit .env file
+   AI_SERVICE_API_KEY=sk-ant-api03-xxxxxxxxxxxx
+   PREVIRED_USERNAME=your_username
+   PREVIRED_PASSWORD=your_password_here
+   ```
+
+3. **NEVER commit `.env` to git** (already in .gitignore)
+
+### API Key Generation
+
+**AI Service (Claude):**
+```bash
+# Generate API key at https://console.anthropic.com
+# Format: sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+**Previred:**
+```bash
+# Request credentials at https://www.previred.com/
+# Use sandbox credentials for development
+```
+
+### SSL Configuration
+
+- **Production:** Always use `AI_SERVICE_VERIFY_SSL=true`
+- **Development:** Can use `AI_SERVICE_VERIFY_SSL=false` for local testing only
 
 ---
 
