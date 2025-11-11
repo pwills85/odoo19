@@ -61,8 +61,8 @@ Licencia: LGPL-3
     'depends': [
         'base',
         'hr',                    # ✅ CE base - RRHH
-        # 'hr_contract' REMOVED - stub created in models/hr_contract_stub_ce.py
-        'hr_holidays',           # Vacaciones
+        'hr_contract',           # ✅ Contratos (Odoo 19 CE base module)
+        'hr_holidays',           # ✅ Time Off (Odoo 19 CE base module)
         'account',               # ✅ CE base - Contabilidad
         'l10n_cl',               # ✅ Localización Chile (plan contable, RUT)
     ],
@@ -91,7 +91,6 @@ Licencia: LGPL-3
         'data/hr_salary_rules_ley21735.xml',         # Ley 21.735 Reforma Pensiones
         
         # Vistas
-        'views/hr_contract_stub_views.xml',         # CE stub views (PRIMERO)
         'views/hr_payroll_structure_views.xml',
         'views/hr_salary_rule_views.xml',
         'views/hr_payslip_run_views.xml',
