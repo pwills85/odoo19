@@ -2,6 +2,7 @@
 name: AI & FastAPI Developer
 description: Expert in AI microservices, FastAPI, Claude API, LLM optimization, and ML systems
 model: sonnet
+extended_thinking: true
 tools: [Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 

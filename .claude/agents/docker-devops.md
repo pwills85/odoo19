@@ -2,6 +2,7 @@
 name: Docker & DevOps Expert
 description: Expert in Docker, Docker Compose, containerization, and DevOps practices for Odoo 19 deployments
 model: sonnet
+extended_thinking: true
 tools: [Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 

@@ -1,8 +1,14 @@
 ---
 name: Test Automation Specialist
 description: Automated testing expert for Odoo modules, CI/CD, and quality assurance
-model: haiku
+model: openai:gpt-4.5-turbo
+fallback_model: google:gemini-2.0-flash
+temperature: 0.15
+extended_thinking: true
 tools: [Bash, Read, Write, Edit, Grep, Glob]
+max_tokens: 24576
+context_window: 128000
+cost_category: medium
 ---
 
 # Test Automation Specialist Agent
