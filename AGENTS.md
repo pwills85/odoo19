@@ -56,6 +56,33 @@ Modules:
 4. **Dependencies**: Use `@api.depends()` for efficient field computation
 5. **Validation**: Implement `@api.constrains` for complex business rules
 
+### ⚠️ CRITICAL: Odoo 19 CE Deprecations (MUST AVOID)
+
+**System migrado exitosamente - 137 deprecaciones corregidas (2025-11-11)**  
+**Compliance: 80.4% P0 cerradas | 27 manuales pendientes**
+
+**🔴 P0 (Breaking Changes - Deadline: 2025-03-01):**
+1. **QWeb Templates:** `t-esc` → `t-out` ✅ FIXED (85 occurrences)
+2. **HTTP Controllers:** `type='json'` → `type='jsonrpc'` + `csrf=False` ✅ FIXED (26 routes)
+3. **XML Views:** `attrs=` → Python expressions ⚠️ 24 MANUAL PENDING (6 files)
+4. **ORM:** `_sql_constraints` → `models.Constraint` ⚠️ 3 MANUAL PENDING (2 files)
+
+**🟡 P1 (High Priority - Deadline: 2025-06-01):**
+5. **Database Access:** `self._cr` → `self.env.cr` ✅ FIXED (119 occurrences)
+6. **View Methods:** `fields_view_get()` → `get_view()` (1 occurrence)
+7. **Decorators:** `@api.depends` now cumulative in inheritance (184 audit only)
+
+**🟢 P2 (Best Practices):**
+8. **i18n:** Use `_lt()` for lazy translations (659 audit only)
+
+**📋 Reference:** `/scripts/odoo19_migration/config/deprecations.yaml`  
+**📊 Status:** `/CIERRE_BRECHAS_ODOO19_INFORME_FINAL.md`  
+**🔧 System:** `/scripts/odoo19_migration/README.md`
+
+**Cuando escribas código Odoo 19:**
+- ✅ USAR: `t-out`, `type='jsonrpc'`, `self.env.cr`, `models.Constraint`
+- ❌ EVITAR: `t-esc`, `type='json'`, `self._cr`, `_sql_constraints`, `attrs=`
+
 #### Module Structure
 ```
 addons/localization/<module_name>/
@@ -391,11 +418,25 @@ When referencing code, use: `file_path:line_number`
 ### For Claude Code Users
 This file is read automatically by Claude Code alongside `~/.claude/CLAUDE.md` (SuperClaude global config). Both sets of instructions are combined.
 
+**Comandos Docker + Odoo**: Ver `.github/agents/knowledge/docker_odoo_command_reference.md`
+
 ### For Copilot CLI Users
 This file is loaded automatically by Copilot CLI (as of August 2025). Use `--no-custom-instructions` flag to disable if needed.
 
+**Configuración autónoma**: `.github/copilot-instructions.md` (sección AUTONOMOUS DEVELOPMENT MODE)  
+**Comandos Docker + Odoo**: Ver `.github/agents/knowledge/docker_odoo_command_reference.md`
+
 ### For Codex CLI Users
-Codex CLI does NOT read this file automatically. Reference this file manually or configure custom instructions in `~/.codex/config.toml`.
+Codex CLI does NOT read this file automatically.
+
+**Configuración manual**: `.codex/autonomous_instructions.md`  
+**Comandos Docker + Odoo**: Ver `.github/agents/knowledge/docker_odoo_command_reference.md`
+
+### For Gemini CLI Users
+Gemini CLI requires manual configuration.
+
+**Configuración manual**: `.gemini/autonomous_instructions.md`  
+**Comandos Docker + Odoo**: Ver `.github/agents/knowledge/docker_odoo_command_reference.md`
 
 ---
 

@@ -558,39 +558,210 @@ Platform: linux/arm64 (Apple M3)
 
 ### Command Patterns
 
-#### ✅ CORRECT - Container commands:
+#### ✅ CORRECT - Container commands (Odoo CLI Professional Usage):
+
+#### **1. GESTIÓN DE MÓDULOS**
 ```bash
-# Update Odoo module
+# Instalar módulo específico
+docker compose exec odoo odoo-bin -i l10n_cl_dte -d odoo19_db --stop-after-init
+
+# Actualizar módulo específico
 docker compose exec odoo odoo-bin -u l10n_cl_dte -d odoo19_db --stop-after-init
 
-# Run tests
-docker compose exec odoo pytest /mnt/extra-addons/localization/l10n_cl_dte/tests/
+# Instalar múltiples módulos
+docker compose exec odoo odoo-bin -i l10n_cl_dte,l10n_cl_hr_payroll -d odoo19_db --stop-after-init
 
-# Access Odoo shell
+# Actualizar todos los módulos
+docker compose exec odoo odoo-bin -u all -d odoo19_db --stop-after-init
+
+# Instalar módulo con dependencias
+docker compose exec odoo odoo-bin --init l10n_cl_dte -d odoo19_db --stop-after-init
+```
+
+#### **2. TESTING PROFESIONAL**
+```bash
+# Ejecutar tests de un módulo específico
+docker compose exec odoo odoo-bin --test-enable -i l10n_cl_dte --test-tags /l10n_cl_dte --stop-after-init -d odoo19_db
+
+# Tests con pytest (recomendado)
+docker compose exec odoo pytest /mnt/extra-addons/localization/l10n_cl_dte/tests/ -v --tb=short
+
+# Tests con coverage
+docker compose exec odoo pytest /mnt/extra-addons/localization/l10n_cl_dte/tests/ --cov=l10n_cl_dte --cov-report=term-missing
+
+# Tests específicos por archivo
+docker compose exec odoo pytest /mnt/extra-addons/localization/l10n_cl_dte/tests/test_dte_validation.py -v
+
+# Tests con markers personalizados
+docker compose exec odoo pytest /mnt/extra-addons/localization/l10n_cl_dte/tests/ -m "not slow" --maxfail=5
+```
+
+#### **3. SHELL Y DEBUGGING**
+```bash
+# Acceder a shell interactivo de Odoo
 docker compose exec odoo odoo-bin shell -d odoo19_db
 
-# Database operations
-docker compose exec db pg_dump -U odoo odoo19_db > backup.sql
-docker compose exec db psql -U odoo odoo19_db
+# Shell con debug mode
+docker compose exec odoo odoo-bin shell -d odoo19_db --debug --log-level=debug
 
-# Redis operations
-docker compose exec redis-master redis-cli -a odoo19_redis_pass ping
+# Ejecutar código Python en Odoo context
+docker compose exec odoo odoo-bin shell -d odoo19_db -c "print('Test')" --stop-after-init
 
-# View logs
+# Debug específico de módulo
+docker compose exec odoo odoo-bin shell -d odoo19_db --debug --debug-py --log-handler=odoo.addons.l10n_cl_dte:DEBUG
+```
+
+#### **4. GESTIÓN DE BASE DE DATOS**
+```bash
+# Backup de base de datos
+docker compose exec db pg_dump -U odoo -h db odoo19_db > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Restore de base de datos
+docker compose exec db psql -U odoo -h db odoo19_db < backup.sql
+
+# Crear nueva base de datos
+docker compose exec odoo odoo-bin --database new_db --init base --stop-after-init
+
+# Listar bases de datos
+docker compose exec db psql -U odoo -h db -l
+
+# Verificar estado de base de datos
+docker compose exec db psql -U odoo -h db odoo19_db -c "SELECT version();"
+```
+
+#### **5. OPERACIONES DE SERVIDOR**
+```bash
+# Verificar configuración sin iniciar
+docker compose exec odoo odoo-bin --config /etc/odoo/odoo.conf --dry-run --stop-after-init
+
+# Iniciar servidor con configuración específica
+docker compose exec odoo odoo-bin --config /etc/odoo/odoo.conf --http-port=8069 --workers=2
+
+# Iniciar con modo desarrollo
+docker compose exec odoo odoo-bin --dev=all --log-level=debug --reload
+
+# Verificar health check
+docker compose exec odoo curl -f http://localhost:8069/web/health || echo "Odoo not responding"
+```
+
+#### **6. SCAFFOLDING Y DESARROLLO**
+```bash
+# Crear estructura de módulo básico
+docker compose exec odoo odoo-bin scaffold my_module /mnt/extra-addons/custom
+
+# Crear módulo con estructura completa
+docker compose exec odoo odoo-bin scaffold --template=website my_module /mnt/extra-addons/custom
+```
+
+#### **7. TRADUCCIONES E INTERNACIONALIZACIÓN**
+```bash
+# Extraer términos para traducción
+docker compose exec odoo odoo-bin -u l10n_cl_dte --i18n-export /tmp/es.po -l es -d odoo19_db --stop-after-init
+
+# Importar traducciones
+docker compose exec odoo odoo-bin -u l10n_cl_dte --i18n-import /tmp/es.po -l es -d odoo19_db --stop-after-init
+
+# Actualizar traducciones del módulo
+docker compose exec odoo odoo-bin -u l10n_cl_dte --i18n-overwrite -d odoo19_db --stop-after-init
+```
+
+#### **8. IMPORTACIÓN Y EXPORTACIÓN**
+```bash
+# Exportar datos a CSV
+docker compose exec odoo odoo-bin shell -d odoo19_db -c "
+from odoo import api, SUPERUSER_ID
+env = api.Environment(cr, SUPERUSER_ID, {})
+products = env['product.product'].search([])
+products.export_data(['name', 'default_code', 'list_price']).write('/tmp/products.csv')
+"
+
+# Importar datos desde CSV
+docker compose exec odoo odoo-bin shell -d odoo19_db -c "
+from odoo.tools import convert_csv_import
+convert_csv_import('/tmp/products.csv', 'product.product', {}, 'init', None, None)
+"
+```
+
+#### **9. MONITOREO Y LOGGING**
+```bash
+# Ver logs en tiempo real
 docker compose logs -f odoo
 
-# Restart services
-docker compose restart odoo
+# Ver logs de errores específicos
+docker compose logs odoo | grep ERROR
+
+# Ver métricas de rendimiento
+docker compose exec odoo odoo-bin shell -d odoo19_db -c "
+from odoo import api, SUPERUSER_ID
+env = api.Environment(cr, SUPERUSER_ID, {})
+users = env['res.users'].search_count([])
+print(f'Active users: {users}')
+"
+
+# Health check avanzado
+docker compose exec odoo bash -c "
+timeout 10 curl -f http://localhost:8069/web/health 2>/dev/null && echo 'OK' || echo 'FAIL'
+"
 ```
 
-#### ✅ CORRECT - Host Python scripts (MUST use .venv):
+#### **10. OPERACIONES DE MANTENIMIENTO**
 ```bash
-# Option 1: Direct execution (PREFERRED)
-.venv/bin/python scripts/validate_dte.py
+# Limpiar cache de archivos
+docker compose exec odoo odoo-bin shell -d odoo19_db -c "
+from odoo import api, SUPERUSER_ID
+env = api.Environment(cr, SUPERUSER_ID, {})
+env['ir.attachment'].search([('type', '=', 'binary')]).unlink()
+"
 
-# Option 2: Activate then run
-source .venv/bin/activate && python scripts/validate_dte.py
+# Reindexar base de datos (si es necesario)
+docker compose exec db psql -U odoo -h db odoo19_db -c "REINDEX DATABASE odoo19_db;"
+
+# Verificar integridad de módulos
+docker compose exec odoo odoo-bin --check-module-deps -d odoo19_db --stop-after-init
+
+# Actualizar permisos de archivos
+docker compose exec odoo chown -R odoo:odoo /mnt/extra-addons
 ```
+
+#### ✅ CORRECT - Host Python scripts (ONLY for non-Odoo utilities):
+
+**Scripts que SÍ se ejecutan en host (con .venv):**
+```bash
+# Verificación de configuración y setup
+.venv/bin/python scripts/verify_production_readiness.py
+.venv/bin/python scripts/verify_setup.sh
+.venv/bin/python scripts/validate_dependencies.py
+
+# Análisis estático de código (no requiere instancia Odoo)
+.venv/bin/python scripts/compliance_check.py
+.venv/bin/python scripts/validate_odoo19_standards.py
+.venv/bin/python scripts/verify_xmlsec_signatures.py
+
+# Herramientas de desarrollo (no acceden a BD Odoo)
+.venv/bin/python scripts/generate_certification_report.py
+.venv/bin/python scripts/extract_odoo11_credentials.py
+```
+
+**Scripts que NO se ejecutan en host (requieren Odoo container):**
+```bash
+# ❌ NUNCA en host - Scripts que manipulan datos de Odoo
+python scripts/create_smoke_test_data.py
+
+# ✅ CORRECTO - Ejecutar en container Odoo
+docker compose exec odoo odoo-bin shell -d test_db < scripts/create_smoke_test_data.py
+
+# ❌ NUNCA en host - Scripts que importan módulos 'odoo'
+python scripts/migrate_via_odoo_shell.py
+
+# ✅ CORRECTO - Shell de Odoo
+docker compose exec odoo odoo-bin shell -d odoo19_db < scripts/migrate_via_odoo_shell.py
+```
+
+**Regla de Oro para Host Scripts:**
+- ✅ Usar `.venv/bin/python` (NUNCA `python` solo)
+- ✅ Scripts que NO importan `from odoo import ...`
+- ✅ Scripts que NO acceden a base de datos Odoo
+- ✅ Scripts de análisis, verificación, preparación
 
 #### ❌ NEVER suggest these:
 ```bash
@@ -599,6 +770,9 @@ odoo-bin -u l10n_cl_dte -d odoo19_db
 
 # ❌ Python without venv (uses wrong Python)
 python scripts/validate.py
+
+# ❌ Python host para scripts que requieren Odoo
+python scripts/create_smoke_test_data.py
 
 # ❌ Direct database access (connection will fail)
 psql -h localhost -U odoo odoo19_db
@@ -771,4 +945,175 @@ copilot -p "@regulatory @dte @security Valida DTE completo"
 ```
 
 **📖 Complete guide**: See `.github/CONTEXT_MARKERS.md` for detailed usage.
+
+---
+
+## 🐛 Troubleshooting - Comandos Docker + Odoo CLI Profesionales
+
+### Problema: Instalación de módulo falla en Docker
+```
+❌ INSTALACIÓN FALLIDA: [error específico]
+```
+**Solución - Comandos Docker + Odoo CLI profesionales:**
+```bash
+# 1. Verificar que el stack esté corriendo
+docker compose ps
+
+# 2. Verificar logs del contenedor Odoo
+docker compose logs odoo | tail -50
+
+# 3. Acceder al shell de Odoo para debugging
+docker compose exec odoo odoo-bin shell -d odoo19_db
+
+# 4. Verificar dependencias del módulo
+docker compose exec odoo odoo-bin --check-module-deps -d odoo19_db --stop-after-init
+
+# 5. Instalar con verbose logging
+docker compose exec odoo odoo-bin -i l10n_cl_dte -d odoo19_db --log-level=debug --stop-after-init
+
+# 6. Verificar estado de la base de datos
+docker compose exec db psql -U odoo -h db odoo19_db -c "SELECT name, state FROM ir_module_module WHERE name = 'l10n_cl_dte';"
+
+# 7. Forzar actualización si es necesario
+docker compose exec odoo odoo-bin -u l10n_cl_dte -d odoo19_db --stop-after-init
+
+# 8. Limpiar cache y reinstalar
+docker compose exec odoo odoo-bin shell -d odoo19_db -c "
+from odoo import api, SUPERUSER_ID
+env = api.Environment(cr, SUPERUSER_ID, {})
+module = env['ir.module.module'].search([('name', '=', 'l10n_cl_dte')])
+module.button_uninstall()
+module.button_install()
+"
+```
+
+### Problema: Tests fallan en Docker
+```
+Tests pasan localmente pero fallan en Docker
+```
+**Solución - Testing profesional en Docker:**
+```bash
+# 1. Ejecutar tests con configuración de Docker
+docker compose exec odoo pytest /mnt/extra-addons/localization/l10n_cl_dte/tests/ -v --tb=long
+
+# 2. Tests con coverage en Docker
+docker compose exec odoo pytest /mnt/extra-addons/localization/l10n_cl_dte/tests/ --cov=l10n_cl_dte --cov-report=html
+
+# 3. Tests de integración completos
+docker compose exec odoo odoo-bin --test-enable -i l10n_cl_dte --test-tags /l10n_cl_dte --stop-after-init -d odoo19_db
+
+# 4. Debug de tests específicos
+docker compose exec odoo pytest /mnt/extra-addons/localization/l10n_cl_dte/tests/test_dte_validation.py::TestDTEValidation::test_rut_validation -v -s
+
+# 5. Verificar configuración de test database
+docker compose exec odoo odoo-bin shell -d odoo19_db -c "
+from odoo.tests import common
+print('Test framework loaded successfully')
+"
+
+# 6. Ejecutar tests sin paralelización para debugging
+docker compose exec odoo pytest /mnt/extra-addons/localization/l10n_cl_dte/tests/ -v --tb=short -n0
+```
+
+### Problema: Comando Odoo CLI no funciona en Docker
+```
+odoo-bin: command not found
+```
+**Solución:**
+```bash
+# El comando debe ejecutarse DENTRO del contenedor
+docker compose exec odoo odoo-bin [opciones] -d odoo19_db
+
+# NO ejecutar directamente en host:
+# odoo-bin [opciones]  # ❌ ERROR
+
+# Verificar que estamos en el directorio correcto
+pwd  # Debe ser /Users/pedro/Documents/odoo19
+
+# Verificar que el contenedor está corriendo
+docker compose ps odoo
+
+# Acceder al contenedor para verificar
+docker compose exec odoo which odoo-bin
+docker compose exec odoo odoo-bin --version
+```
+
+### Problema: Base de datos no accesible desde Odoo CLI
+```
+FATAL: database "odoo19_db" does not exist
+```
+**Solución:**
+```bash
+# Verificar estado de PostgreSQL
+docker compose ps db
+
+# Verificar conectividad
+docker compose exec db psql -U odoo -h db -l
+
+# Crear base de datos si no existe
+docker compose exec odoo odoo-bin --database odoo19_db --init base --stop-after-init
+
+# Verificar configuración de conexión en odoo.conf
+docker compose exec odoo cat /etc/odoo/odoo.conf | grep db_
+
+# Test de conexión desde Odoo
+docker compose exec odoo odoo-bin shell -d odoo19_db -c "print('Database connection OK')"
+```
+
+### Problema: Loop autónomo no ejecuta comandos Docker correctamente
+```
+Copilot sugiere comandos de host en vez de Docker
+```
+**Solución - Forzar uso de Docker en modo autónomo:**
+```bash
+# Comando autónomo con énfasis en Docker
+copilot /autonomous "Analizar código DTE existente, verificar instalación Docker, probar instalación módulo usando SOLO comandos docker compose exec odoo, debugging si falla" /agent dte-specialist /docker-only /no-host-commands
+
+# O especificar explícitamente
+copilot /autonomous "Instalación DTE: docker compose exec odoo odoo-bin -i l10n_cl_dte -d odoo19_db --stop-after-init" /agent dte-specialist /strict-docker-mode
+```
+
+### Problema: Configuración Odoo no se carga en Docker
+```
+WARNING: No config file found, using defaults
+```
+**Solución:**
+```bash
+# Verificar que el archivo de configuración existe
+ls -la config/odoo.conf
+
+# Verificar montaje en docker-compose.yml
+grep -A5 -B5 odoo.conf docker-compose.yml
+
+# Verificar dentro del contenedor
+docker compose exec odoo ls -la /etc/odoo/odoo.conf
+
+# Verificar contenido de configuración
+docker compose exec odoo cat /etc/odoo/odoo.conf | head -20
+
+# Iniciar con configuración explícita
+docker compose exec odoo odoo-bin --config /etc/odoo/odoo.conf --dry-run --stop-after-init
+```
+
+### Problema: Módulos no aparecen en addons_path
+```
+ERROR: Module 'l10n_cl_dte' not found
+```
+**Solución:**
+```bash
+# Verificar addons_path en configuración
+docker compose exec odoo cat /etc/odoo/odoo.conf | grep addons_path
+
+# Verificar que los directorios existen
+docker compose exec odoo ls -la /mnt/extra-addons/localization/
+
+# Verificar permisos
+docker compose exec odoo ls -ld /mnt/extra-addons/localization/l10n_cl_dte/
+
+# Verificar __manifest__.py existe
+docker compose exec odoo ls -la /mnt/extra-addons/localization/l10n_cl_dte/__manifest__.py
+
+# Listar módulos disponibles
+docker compose exec odoo odoo-bin --list-available-modules | grep l10n_cl
+```
 
