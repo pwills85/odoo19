@@ -21,6 +21,12 @@
                             type="object" 
                             class="oe_highlight"
                             invisible="state != 'draft'"/>
+                    <button name="validate_with_ai"
+                            string="Validar con IA"
+                            type="object"
+                            class="btn-primary"
+                            icon="fa-magic"
+                            invisible="state not in ['draft', 'verify'] or ai_validation_status == 'disabled'"/>
                     <button name="action_done" 
                             string="Marcar como Pagado" 
                             type="object" 
@@ -37,6 +43,22 @@
                     <field name="state" widget="statusbar" statusbar_visible="draft,verify,done"/>
                 </header>
                 <sheet>
+                    <!-- AI Validation Button -->
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="validate_with_ai"
+                                icon="fa-magic"
+                                invisible="ai_validation_status == 'disabled'">
+                            <field name="ai_validation_status" widget="badge"
+                                   decoration-success="ai_validation_status == 'approved'"
+                                   decoration-warning="ai_validation_status in ['review', 'pending']"
+                                   decoration-danger="ai_validation_status == 'rejected'"
+                                   decoration-info="ai_validation_status == 'pending'"/>
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Validación IA</span>
+                            </div>
+                        </button>
+                    </div>
+                    
                     <div class="oe_title">
                         <h1>
                             <field name="number" readonly="1" placeholder="Número automático"/>
@@ -111,6 +133,54 @@
                                     <field name="computed_by" readonly="1"/>
                                 </group>
                             </group>
+                        </page>
+                        
+                        <!-- AI Validation Tab -->
+                        <page string="Validación IA" name="ai_validation"
+                              invisible="ai_validation_status == 'disabled'">
+                            <group>
+                                <group string="Estado Validación">
+                                    <field name="ai_validation_status" widget="badge"
+                                           decoration-success="ai_validation_status == 'approved'"
+                                           decoration-warning="ai_validation_status == 'review'"
+                                           decoration-danger="ai_validation_status == 'rejected'"
+                                           decoration-info="ai_validation_status == 'pending'"/>
+                                    <field name="ai_confidence" widget="progressbar"/>
+                                    <field name="ai_validation_date" readonly="1"/>
+                                </group>
+                                <group string="Resultados">
+                                    <field name="ai_errors" widget="text"
+                                           invisible="not ai_errors"
+                                           class="text-danger"/>
+                                    <field name="ai_warnings" widget="text"
+                                           invisible="not ai_warnings"
+                                           class="text-warning"/>
+                                </group>
+                            </group>
+                            
+                            <div class="alert alert-info" role="alert"
+                                 invisible="ai_validation_status != 'pending'">
+                                <p><i class="fa fa-info-circle"/> Esta liquidación aún no ha sido validada con IA.</p>
+                                <p>Click en <b>"Validar con IA"</b> para obtener validación automática.</p>
+                            </div>
+                            
+                            <div class="alert alert-success" role="alert"
+                                 invisible="ai_validation_status != 'approved'">
+                                <p><i class="fa fa-check-circle"/> ✅ <b>Validación IA Aprobada</b></p>
+                                <p>Confianza: <field name="ai_confidence" nolabel="1"/>%</p>
+                            </div>
+                            
+                            <div class="alert alert-warning" role="alert"
+                                 invisible="ai_validation_status != 'review'">
+                                <p><i class="fa fa-exclamation-triangle"/> ⚠️ <b>Requiere Revisión Manual</b></p>
+                                <p>Revise las advertencias arriba antes de confirmar.</p>
+                            </div>
+                            
+                            <div class="alert alert-danger" role="alert"
+                                 invisible="ai_validation_status != 'rejected'">
+                                <p><i class="fa fa-times-circle"/> ❌ <b>Validación Rechazada</b></p>
+                                <p>Corrija los errores críticos arriba antes de intentar confirmar.</p>
+                            </div>
                         </page>
                     </notebook>
                 </sheet>

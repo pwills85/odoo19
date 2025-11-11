@@ -999,6 +999,41 @@ class HrPayslip(models.Model):
         store=True,
         readonly=True
     )
+    
+    # ═══════════════════════════════════════════════════════════
+    # VALIDACIÓN IA (AI-Service Integration)
+    # ═══════════════════════════════════════════════════════════
+    
+    ai_validation_status = fields.Selection([
+        ('pending', 'Pendiente'),
+        ('approved', 'Aprobado IA'),
+        ('review', 'Requiere Revisión'),
+        ('rejected', 'Rechazado IA'),
+        ('disabled', 'Validación IA Deshabilitada')
+    ], string='Estado Validación IA', default='pending', copy=False,
+       help='Estado de validación con AI-Service')
+    
+    ai_confidence = fields.Float(
+        string='Confianza IA (%)',
+        default=0.0,
+        help="Nivel de confianza de la validación IA (0-100)"
+    )
+    
+    ai_warnings = fields.Text(
+        string='Advertencias IA',
+        help="Advertencias detectadas por IA (no bloquean confirmación)"
+    )
+    
+    ai_errors = fields.Text(
+        string='Errores IA',
+        help="Errores críticos detectados por IA (bloquean confirmación)"
+    )
+    
+    ai_validation_date = fields.Datetime(
+        string='Fecha Validación IA',
+        readonly=True,
+        help='Fecha y hora de última validación IA'
+    )
 
     company_currency_id = fields.Many2one(
         'res.currency',
@@ -2080,6 +2115,174 @@ class HrPayslip(models.Model):
     # NO duplicar aquí (causaba bug: retornaba dict en lugar de BrowsableObject)
 
     # ═══════════════════════════════════════════════════════════
+    # VALIDACIÓN IA - AI-SERVICE INTEGRATION
+    # ═══════════════════════════════════════════════════════════
+    
+    def validate_with_ai(self):
+        """
+        Validar liquidación con microservicio IA
+        
+        Endpoint usado: POST /api/payroll/validate (ai-service:8002)
+        
+        Detecta:
+        - Descuentos excesivos (>40% bruto)
+        - Salarios atípicos para cargo
+        - Errores cálculo AFP/Salud/Impuesto
+        - Totales inconsistentes
+        - Campos obligatorios vacíos
+        
+        Returns:
+            dict: Resultado validación IA
+            {
+                "success": bool,
+                "confidence": float (0-100),
+                "errors": List[str],
+                "warnings": List[str],
+                "recommendation": "approve"|"review"|"reject"
+            }
+        """
+        self.ensure_one()
+        
+        import os
+        import requests
+        
+        # Verificar si validación IA está habilitada
+        ai_enabled = self.env['ir.config_parameter'].sudo().get_param(
+            'l10n_cl_hr_payroll.ai_validation_enabled',
+            default='True'
+        )
+        
+        if ai_enabled.lower() != 'true':
+            _logger.info(
+                f"Validación IA deshabilitada para payslip {self.id}"
+            )
+            self.write({
+                'ai_validation_status': 'disabled',
+                'ai_confidence': 0.0
+            })
+            return {
+                "success": True,
+                "confidence": 0,
+                "errors": [],
+                "warnings": ["Validación IA deshabilitada en configuración"],
+                "recommendation": "approve"
+            }
+        
+        # Configuración AI-Service
+        ai_service_url = os.getenv('AI_SERVICE_URL', 'http://ai-service:8002')
+        api_key = os.getenv('AI_SERVICE_API_KEY', '')
+        
+        # Preparar payload para AI-Service
+        payload = {
+            "employee_id": self.employee_id.id,
+            "employee_name": self.employee_id.name,
+            "wage": float(self.contract_id.wage) if self.contract_id else 0,
+            "lines": [
+                {
+                    "code": line.code,
+                    "name": line.name,
+                    "category": line.category_id.code if line.category_id else '',
+                    "amount": float(line.amount),
+                    "total": float(line.total)
+                }
+                for line in self.line_ids
+            ],
+            "period": f"{self.date_from.year}-{self.date_from.month:02d}",
+            "date_from": self.date_from.isoformat(),
+            "date_to": self.date_to.isoformat(),
+            "total_imponible": float(self.total_imponible) if self.total_imponible else 0,
+            "total_haberes": float(sum(self.line_ids.filtered(lambda l: l.amount > 0).mapped('total'))),
+            "total_descuentos": float(abs(sum(self.line_ids.filtered(lambda l: l.amount < 0).mapped('total')))),
+            "total_liquido": float(self.net_wage) if self.net_wage else 0
+        }
+        
+        _logger.info(
+            f"Validando liquidación {self.number or self.id} con IA "
+            f"(empleado: {self.employee_id.name})"
+        )
+        
+        try:
+            # Llamar endpoint AI-Service
+            response = requests.post(
+                f"{ai_service_url}/api/payroll/validate",
+                json=payload,
+                headers={"Authorization": f"Bearer {api_key}"} if api_key else {},
+                timeout=30  # 30s timeout
+            )
+            
+            response.raise_for_status()
+            result = response.json()
+            
+            # Extraer resultados
+            success = result.get('success', False)
+            confidence = result.get('confidence', 0.0)
+            errors = result.get('errors', [])
+            warnings = result.get('warnings', [])
+            recommendation = result.get('recommendation', 'review')
+            
+            # Mapear recommendation a status
+            status_map = {
+                'approve': 'approved',
+                'review': 'review',
+                'reject': 'rejected'
+            }
+            validation_status = status_map.get(recommendation, 'review')
+            
+            # Actualizar campos
+            self.write({
+                'ai_validation_status': validation_status,
+                'ai_confidence': confidence,
+                'ai_warnings': '\n'.join(warnings) if warnings else False,
+                'ai_errors': '\n'.join(errors) if errors else False,
+                'ai_validation_date': fields.Datetime.now()
+            })
+            
+            # Mensaje en chatter
+            icon_map = {
+                'approved': '✅',
+                'review': '⚠️',
+                'rejected': '❌'
+            }
+            icon = icon_map.get(validation_status, '🤖')
+            
+            self.message_post(
+                body=f"{icon} <b>Validación IA Completada</b><br/>"
+                     f"<b>Confianza:</b> {confidence:.1f}%<br/>"
+                     f"<b>Recomendación:</b> {recommendation}<br/>"
+                     f"<b>Errores:</b> {len(errors)}<br/>"
+                     f"<b>Advertencias:</b> {len(warnings)}",
+                message_type='notification',
+                subtype_xmlid='mail.mt_note'
+            )
+            
+            _logger.info(
+                f"✅ Validación IA completada: {validation_status} "
+                f"(confianza: {confidence:.1f}%, errores: {len(errors)})"
+            )
+            
+            return result
+            
+        except requests.exceptions.RequestException as e:
+            _logger.warning(
+                f"⚠️ Error llamando AI-Service: {str(e)}"
+            )
+            
+            # Graceful degradation: No bloquear si IA falla
+            self.write({
+                'ai_validation_status': 'pending',
+                'ai_confidence': 0.0,
+                'ai_warnings': f"No se pudo conectar con AI-Service: {str(e)[:100]}"
+            })
+            
+            return {
+                "success": False,
+                "confidence": 0,
+                "errors": [],
+                "warnings": [f"Error AI-Service: {str(e)[:100]}"],
+                "recommendation": "review"
+            }
+
+    # ═══════════════════════════════════════════════════════════
     # WORKFLOW
     # ═══════════════════════════════════════════════════════════
     
@@ -2089,7 +2292,54 @@ class HrPayslip(models.Model):
         return True
     
     def action_done(self):
-        """Marcar como pagado"""
+        """
+        Marcar como pagado (con validación IA automática)
+        
+        Override: Validar con IA antes de confirmar liquidación
+        
+        Comportamiento:
+        - Si IA rechaza (rejected): Bloquear confirmación
+        - Si IA advierte (review) con confianza <70%: Mostrar wizard
+        - Si IA aprueba (approved): Continuar normal
+        - Si IA deshabilitada: Continuar normal
+        """
+        self.ensure_one()
+        
+        # Validación IA automática (si está habilitada en context)
+        if self.env.context.get('skip_ai_validation'):
+            _logger.info(f"Validación IA omitida (skip_ai_validation=True)")
+        else:
+            validation = self.validate_with_ai()
+            
+            # BLOQUEAR si IA rechaza
+            if validation['recommendation'] == 'reject':
+                error_msg = "❌ **Validación IA Rechazó Liquidación**\n\n"
+                error_msg += "**Errores críticos detectados:**\n"
+                error_msg += "\n".join(f"• {err}" for err in validation['errors'])
+                error_msg += "\n\n**Acción requerida:** Corregir errores antes de confirmar."
+                
+                raise UserError(_(error_msg))
+            
+            # ADVERTIR si confianza baja
+            if (validation['recommendation'] == 'review' and 
+                validation['confidence'] < 70):
+                
+                # Mostrar wizard de advertencia
+                return {
+                    'name': _('Advertencia Validación IA'),
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'payroll.ai.validation.wizard',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'context': {
+                        'default_payslip_id': self.id,
+                        'default_confidence': validation['confidence'],
+                        'default_warnings': '\n'.join(validation['warnings']),
+                        'default_recommendation': validation['recommendation']
+                    }
+                }
+        
+        # Continuar con workflow normal
         self.write({'state': 'done'})
         return True
     

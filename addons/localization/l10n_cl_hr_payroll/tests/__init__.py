@@ -32,3 +32,6 @@ from . import test_payslip_totals
 from . import test_calculations_sprint32
 from . import test_payroll_calculation_p1
 from . import test_lre_generation
+
+# AI Integration Tests (2025-11-11)
+from . import test_ai_validation_integration  # AI-Service payslip validation
