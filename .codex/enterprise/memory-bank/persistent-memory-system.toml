@@ -1,0 +1,96 @@
+# Sistema de Memoria Persistente Enterprise
+# Arquitectura de memoria con vectorización y persistencia avanzada
+
+[memory_config]
+# Configuración principal de memoria
+system_enabled = true
+primary_storage = "vector_db"
+backup_storage = "sqlite"
+retention_policy = "adaptive"  # adaptive, fixed, unlimited
+
+[vector_memory]
+# Memoria vectorizada para recuperación semántica
+enabled = true
+vector_dimension = 3072  # Para text-embedding-3-large
+index_type = "hnsw"  # HNSW para velocidad, IVF para memoria
+similarity_metric = "cosine"
+persist_path = ".codex/enterprise/memory-bank/vector-memory.db"
+
+[conversation_memory]
+# Memoria de conversaciones por contexto
+enabled = true
+max_sessions_per_context = 100
+context_window_days = 90
+compression_enabled = true
+compression_threshold = 5000  # caracteres
+
+[project_memory]
+# Memoria específica del proyecto Odoo19
+enabled = true
+domain_knowledge = [
+    "odoo_architecture",
+    "chilean_regulations",
+    "dte_compliance",
+    "payroll_calculations",
+    "testing_patterns"
+]
+
+code_patterns = [
+    "model_inheritance",
+    "api_decorators",
+    "validation_methods",
+    "security_patterns"
+]
+
+[adaptive_cache]
+# Cache inteligente con aprendizaje
+enabled = true
+cache_strategy = "lfu"  # least frequently used
+max_cache_size = "2GB"
+ttl_base = "24h"
+ttl_adaptive = true
+
+# Cache por tipo de contenido
+code_cache_ttl = "48h"
+doc_cache_ttl = "168h"  # 1 semana
+context_cache_ttl = "24h"
+
+[context_persistence]
+# Persistencia de contexto entre sesiones
+enabled = true
+auto_save_interval = "30s"
+context_snapshot_frequency = "5min"
+max_snapshots_per_session = 20
+
+[learning_memory]
+# Memoria de aprendizaje del sistema
+enabled = true
+pattern_recognition = true
+user_preference_learning = true
+performance_analytics = true
+
+success_patterns = []
+failure_patterns = []
+optimization_opportunities = []
+
+[memory_optimization]
+# Optimizaciones de rendimiento
+memory_pool_size = "1GB"
+garbage_collection_interval = "10min"
+defragmentation_schedule = "weekly"
+backup_compression = "lz4"
+
+[enterprise_features]
+# Características enterprise
+audit_trail = true
+data_encryption = true
+multi_tenant_isolation = false  # Single project
+access_control = true
+backup_redundancy = true
+
+[monitoring]
+# Monitoreo de memoria
+metrics_collection = true
+performance_alerts = true
+memory_usage_tracking = true
+cache_hit_rate_monitoring = true

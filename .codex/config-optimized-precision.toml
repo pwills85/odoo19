@@ -39,7 +39,7 @@ USO: Validaciones DTE, compliance SII, auditorías regulatorias
 
 # Perfil crítico: Payroll compliance con precisión máxima
 [profiles.payroll-precision-max]
-model = "gpt-4-turbo-2024-04-09"
+model = "gpt-4-turbo-preview"
 model_reasoning_effort = "high"
 model_context_window = 24576        # Contexto amplio para cálculos complejos
 model_max_output_tokens = 1536       # Output preciso para cálculos
@@ -93,7 +93,7 @@ USO: Desarrollo Odoo, implementación de features
 
 # Perfil optimizado: Testing con precisión alta
 [profiles.test-precision-high]
-model = "gpt-4-turbo-2024-04-09"
+model = "gpt-4-turbo-preview"
 model_reasoning_effort = "medium"
 model_context_window = 16384        # Contexto para suites de testing
 model_max_output_tokens = 1536       # Output preciso para tests
@@ -151,7 +151,7 @@ USO: Validaciones DTE finales antes de envío SII
 
 # Sub-Agente: Calculador nómina con precisión crítica
 [profiles.payroll-calculator-precision]
-model = "gpt-4-turbo-2024-04-09"
+model = "gpt-4-turbo-preview"
 model_reasoning_effort = "high"
 model_context_window = 24576        # Contexto amplio para cálculos complejos
 model_max_output_tokens = 512        # Output mínimo para cálculos exactos
@@ -169,7 +169,7 @@ USO: Cálculos finales de nómina antes de pago
 
 # Sub-Agente: Analizador de seguridad con precisión crítica
 [profiles.security-analyzer-precision]
-model = "gpt-4-turbo-2024-04-09"
+model = "gpt-4-turbo-preview"
 model_reasoning_effort = "high"
 model_context_window = 20480        # Contexto amplio para análisis de seguridad
 model_max_output_tokens = 1024       # Output detallado para vulnerabilidades
@@ -227,7 +227,7 @@ USO: Desarrollo Odoo, módulos, localización chilena
 
 # Sub-Agente Test Automation - Optimizado para precisión de testing
 [profiles.test-automation-precision]
-model = "gpt-4-turbo-2024-04-09"
+model = "gpt-4-turbo-preview"
 model_reasoning_effort = "medium"
 model_context_window = 16384        # Suites de testing
 model_max_output_tokens = 2048       # Tests completos
@@ -263,7 +263,7 @@ USO: Docker, DevOps, configuración de producción
 
 # Sub-Agente AI FastAPI - Optimizado para precisión de APIs
 [profiles.ai-fastapi-precision]
-model = "gpt-4-turbo-2024-04-09"
+model = "gpt-4-turbo-preview"
 model_reasoning_effort = "high"
 model_context_window = 24576        # Microservicios grandes
 model_max_output_tokens = 2048       # Código completo

@@ -136,7 +136,17 @@
       "WebFetch(domain:www.retirum.cl)",
       "Bash(source /tmp/audit_session.env)",
       "Bash(docker network inspect:*)",
-      "Bash(docker stats:*)"
+      "Bash(docker stats:*)",
+      "WebFetch(domain:code.claude.com)",
+      "Bash(./.claude/tests/run_all_tests.sh)",
+      "Bash(bash:*)",
+      "Bash(python -m pytest tests/unit/test_project_matcher_async.py -v -m unit --tb=short)",
+      "Bash(python -m pytest tests/unit/test_analytics_tracker.py -v --tb=short)",
+      "Bash(docker compose exec ai-service pytest:*)",
+      "Bash(docker compose exec:*)",
+      "Bash(docker compose logs:*)",
+      "Bash(source:*)",
+      "Bash(python -m pytest:*)"
     ],
     "deny": [],
     "ask": []

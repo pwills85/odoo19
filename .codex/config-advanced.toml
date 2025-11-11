@@ -1,0 +1,104 @@
+# 🚀 CODEX CLI ADVANCED CONFIGURATION - GPT-4.5-turbo
+# Optimizado basado en investigación de foros y documentación oficial
+
+[core]
+name = "Codex Enterprise Advanced"
+version = "4.5.0-advanced"
+environment = "production"
+project_root = "/Users/pedro/Documents/odoo19"
+
+[model]
+# 🚀 NUEVO: GPT-4.5-turbo con contexto expandido
+default = "gpt-4.5-turbo"
+fallback = "o1-preview-optimized"
+strategy = "intelligent"
+
+[model.versions]
+gpt_4_5_turbo = "gpt-4.5-turbo"           # NUEVO: Modelo principal avanzado
+o1_preview = "o1-preview-optimized"      # NUEVO: Para reasoning complejo
+gpt_4_turbo = "gpt-4-turbo-2024-11-20"   # Updated: Contexto expandido
+
+[model.selection_rules]
+compliance_tasks = "gpt_4_5_turbo"       # Mejor precisión regulatoria
+code_generation = "gpt_4_5_turbo"        # Mejor calidad de código
+reasoning_complex = "o1_preview"         # Reasoning avanzado
+general_development = "gpt_4_turbo"      # Balance óptimo
+
+[temperature]
+# 🎯 OPTIMIZADO: Control de precisión avanzado
+strategy = "dynamic_precision"
+compliance = 0.05                        # Máxima precisión para compliance
+code_critical = 0.1                      # Alta precisión para código
+analysis = 0.2                           # Análisis balanceado
+creative = 0.7                           # Creatividad controlada
+
+[temperature.dynamic]
+enabled = true
+context_awareness = true
+task_complexity_adjustment = true
+quality_threshold = 0.95
+
+[sampling]
+# ⚙️ NUEVO: Parámetros avanzados de sampling
+top_p = 0.9
+top_k = 50
+frequency_penalty = 0.1
+presence_penalty = 0.1
+repetition_penalty = 1.05
+
+[context]
+# 📈 EXPANDIDO: Contexto maximizado
+max_tokens = 256000                       # 256K tokens (vs 128K anterior)
+chunking_strategy = "semantic_intelligent"
+compression_enabled = true
+memory_optimization = true
+
+[reasoning]
+# 🧠 NUEVO: Chain-of-thought avanzado
+chain_of_thought = true
+thinking_budget = 16000                   # Presupuesto de reasoning
+step_by_step_validation = true
+uncertainty_detection = true
+
+[tools]
+# 🔧 EXPANDIDO: Tools integradas avanzadas
+enabled = true
+code_interpreter = true                   # NUEVO: Ejecución de código
+file_search = true                        # NUEVO: Búsqueda inteligente
+parallel_tool_calls = true                # NUEVO: Ejecución paralela
+tool_choice = "auto_max"                  # Optimizado
+
+[output]
+# 📝 NUEVO: Formato de salida estructurado
+response_format = "json_schema"           # Validación de esquema
+structured_output = true
+validation_enabled = true
+error_correction = true
+
+[performance]
+# ⚡ OPTIMIZACIONES: Performance enterprise
+streaming_enabled = true
+batch_processing = true
+caching_intelligent = true
+rate_limiting_smart = true
+
+[monitoring]
+# 📊 NUEVO: Analytics avanzados
+performance_tracking = true
+cost_monitoring = true
+quality_metrics = true
+usage_analytics = true
+
+[enterprise]
+# 🏢 FEATURES: Enterprise-grade
+audit_logging = true
+compliance_mode = true
+security_enhanced = true
+scalability_optimized = true
+
+[chilean_specialization]
+# 🇨🇱 OPTIMIZADO: Especialización chilena mejorada
+sii_compliance_expert = true
+dte_master = true
+tax_regulation_current = true
+legal_references_updated = true
