@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./.claude/test_settings.sh)",
+      "Bash(cat:*)",
+      "Bash(python3:*)",
+      "Bash(rm:*)",
+      "Bash(for file in .claude/mcp.json .claude/settings.json .claude/settings.local.json .claude/settings.optimized.json)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(/dev/null)",
+      "Bash(done)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
