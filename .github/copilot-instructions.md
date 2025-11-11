@@ -19,9 +19,39 @@
 
 ---
 
+## ⚠️ CRITICAL: Odoo 19 CE Deprecations (MUST VALIDATE FIRST)
+
+**Sistema migrado exitosamente - 137 automáticas ✅ | 27 manuales pendientes ⚠️**
+
+**🔴 P0 Breaking Changes (Deadline: 2025-03-01):**
+1. ❌ `t-esc` → ✅ `t-out` (85 FIXED)
+2. ❌ `type='json'` → ✅ `type='jsonrpc'` + `csrf=False` (26 FIXED)
+3. ❌ `attrs={}` → ✅ Python expressions (24 MANUAL PENDING)
+4. ❌ `_sql_constraints` → ✅ `models.Constraint` (3 MANUAL PENDING)
+
+**🟡 P1 High Priority (Deadline: 2025-06-01):**
+5. ❌ `self._cr` → ✅ `self.env.cr` (119 FIXED)
+6. ❌ `fields_view_get()` → ✅ `get_view()` (1 pending)
+
+**📋 GUÍAS COMPLETAS:**
+- **Detalle:** `.claude/project/ODOO19_DEPRECATIONS_CRITICAL.md`
+- **Quick ref:** `.github/agents/knowledge/odoo19_deprecations_reference.md`
+- **Config:** `scripts/odoo19_migration/config/deprecations.yaml`
+- **Status:** `CIERRE_BRECHAS_ODOO19_INFORME_FINAL.md`
+
+**⚠️ VALIDAR SIEMPRE ANTES DE COMMITEAR**
+
+---
+
 ## 📚 Knowledge Base (MANDATORY)
 
 All implementations MUST reference these knowledge base files:
+
+### `.github/agents/knowledge/odoo19_deprecations_reference.md` ⚠️ NEW
+- **Odoo 19 CE deprecations** (breaking changes)
+- Before/after examples
+- Migration status and pending work
+- **MUST VALIDATE** all new code against this
 
 ### `.github/agents/knowledge/sii_regulatory_context.md`
 - SII regulations and DTE requirements
