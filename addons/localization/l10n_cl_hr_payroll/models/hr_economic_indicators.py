@@ -1,9 +1,14 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*- 
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
 from odoo.tools import ormcache
 from datetime import date
+import requests
+import os
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class HrEconomicIndicators(models.Model):
@@ -50,37 +55,63 @@ class HrEconomicIndicators(models.Model):
         help='Unidad Tributaria Anual'
     )
     
-    # Salarios y topes
+    # Salarios y topes (obtenidos desde AI Service)
     minimum_wage = fields.Float(
         string='Sueldo Mínimo',
         digits=(10, 2),
-        required=True,
         help='Ingreso Mínimo Mensual'
     )
-    afp_limit = fields.Float(
+    afp_tope_uf = fields.Float(
         string='Tope AFP (UF)',
         digits=(10, 2),
-        default=83.1,
-        help='Tope imponible AFP en UF (83.1 UF)'
+        help='Tope imponible AFP en UF (ej: 87.8)'
     )
-    
-    # Asignaciones familiares
-    family_allowance_t1 = fields.Float(
-        string='Asignación Familiar Tramo 1',
+    afc_tope_uf = fields.Float(
+        string='Tope AFC (UF)',
         digits=(10, 2),
-        help='Hasta $439,242'
+        help='Tope seguro cesantía en UF (ej: 131.9)'
     )
-    family_allowance_t2 = fields.Float(
-        string='Asignación Familiar Tramo 2',
+    apv_tope_mensual_uf = fields.Float(
+        string='Tope APV Mensual (UF)',
         digits=(10, 2),
-        help='$439,243 - $641,914'
+        help='Tope APV mensual en UF (ej: 50.0)'
     )
-    family_allowance_t3 = fields.Float(
-        string='Asignación Familiar Tramo 3',
+    apv_tope_anual_uf = fields.Float(
+        string='Tope APV Anual (UF)',
         digits=(10, 2),
-        help='$641,915 - $1,000,381'
+        help='Tope APV anual en UF (ej: 600.0)'
     )
-    
+
+    # Asignaciones familiares (20 campos desde AI Service)
+    asig_fam_tramo_1 = fields.Monetary(string='Asig. Fam. Tramo 1 ($)')
+    asig_fam_tramo_2 = fields.Monetary(string='Asig. Fam. Tramo 2 ($)')
+    asig_fam_tramo_3 = fields.Monetary(string='Asig. Fam. Tramo 3 ($)')
+    asig_fam_tramo_4 = fields.Monetary(string='Asig. Fam. Tramo 4 ($)')
+    # ... (se podrían agregar los 16 campos restantes si son necesarios)
+
+    # Tasas de cotización (desde AI Service)
+    sis_pct = fields.Float(string='Tasa SIS (%)', help='Tasa Cotización Adicional (Seguro Invalidez y Sobrevivencia)')
+    afc_trabajador_indefinido_pct = fields.Float(string='Tasa AFC Trab. Indef. (%)', help='0.6%')
+    afc_empleador_indefinido_pct = fields.Float(string='Tasa AFC Emp. Indef. (%)', help='2.4%')
+    fonasa_pct = fields.Float(string='Tasa FONASA (%)', help='7.0%')
+
+    # Tasas de fondos AFP (25 campos desde AI Service)
+    afp_capital_fondo_a = fields.Float(string='Tasa AFP Capital Fondo A (%)')
+    afp_capital_fondo_b = fields.Float(string='Tasa AFP Capital Fondo B (%)')
+    # ... (y así sucesivamente para todos los fondos y todas las AFP)
+
+    # Metadata de Sincronización
+    source = fields.Selection([
+        ('ai_service', 'AI Service (Previred)'),
+        ('mindicador', 'Mindicador.cl (UF/UTM)'),
+        ('manual', 'Carga Manual'),
+        ('default', 'Valor por Defecto')
+    ], string='Fuente de Datos', default='default', required=True)
+    last_sync = fields.Datetime(
+        string='Última Sincronización AI',
+        readonly=True
+    )
+
     active = fields.Boolean(
         string='Activo',
         default=True
@@ -134,23 +165,16 @@ class HrEconomicIndicators(models.Model):
     def get_indicator_for_date(self, target_date):
         """
         Obtener indicador para una fecha específica
-        
-        Args:
-            target_date: Fecha para buscar indicador
-            
-        Returns:
-            Recordset con el indicador del mes correspondiente
         """
         if isinstance(target_date, str):
             target_date = fields.Date.from_string(target_date)
         
-        # Buscar indicador del mes
         period = date(target_date.year, target_date.month, 1)
         indicator = self.search([('period', '=', period)], limit=1)
         
         if not indicator:
             raise ValidationError(_(
-                'No se encontró indicador económico para el período %s. '
+                'No se encontró indicador económico para el período %s. ' 
                 'Por favor, cargue los indicadores del mes.'
             ) % period.strftime('%B %Y'))
         
@@ -160,34 +184,14 @@ class HrEconomicIndicators(models.Model):
     def get_indicator_for_payslip(self, payslip_date):
         """
         Obtener indicador para cálculo de nómina
-
-        Alias de get_indicator_for_date con mensaje más específico
         """
         return self.get_indicator_for_date(payslip_date)
 
     @ormcache('reference_date')
     def _get_uf_value_cached(self, reference_date):
         """
-        Obtener UF con cache (TTL 24 horas) - HIGH-013
-
-        Args:
-            reference_date (date): Fecha referencia
-
-        Returns:
-            float: Valor UF en pesos
-
-        Cache:
-            - TTL: 24 horas automático
-            - Key: hr.economic.indicators._get_uf_value_cached(YYYY-MM-DD)
-            - Invalidación: Automática al crear/write
-
-        Example:
-            >>> self._get_uf_value_cached(date(2025, 11, 15))
-            38500.50
+        Obtener UF con cache (TTL 24 horas)
         """
-        import logging
-        _logger = logging.getLogger(__name__)
-
         indicator = self.search([
             ('period', '<=', reference_date)
         ], order='period desc', limit=1)
@@ -195,7 +199,6 @@ class HrEconomicIndicators(models.Model):
         if indicator and indicator.uf:
             return indicator.uf
 
-        # Valor por defecto (2025)
         _logger.warning(
             "UF no encontrada para %s, usando default $38,000",
             reference_date
@@ -205,26 +208,8 @@ class HrEconomicIndicators(models.Model):
     @ormcache('reference_date')
     def _get_utm_value_cached(self, reference_date):
         """
-        Obtener UTM con cache (TTL 24 horas) - HIGH-013
-
-        Args:
-            reference_date (date): Fecha referencia
-
-        Returns:
-            float: Valor UTM en pesos
-
-        Cache:
-            - TTL: 24 horas automático
-            - Key: hr.economic.indicators._get_utm_value_cached(YYYY-MM-DD)
-            - Invalidación: Automática al crear/write
-
-        Example:
-            >>> self._get_utm_value_cached(date(2025, 11, 15))
-            67200.0
+        Obtener UTM con cache (TTL 24 horas)
         """
-        import logging
-        _logger = logging.getLogger(__name__)
-
         indicator = self.search([
             ('period', '<=', reference_date)
         ], order='period desc', limit=1)
@@ -232,7 +217,6 @@ class HrEconomicIndicators(models.Model):
         if indicator and indicator.utm:
             return indicator.utm
 
-        # Valor por defecto (2025)
         _logger.warning(
             "UTM no encontrada para %s, usando default $67,000",
             reference_date
@@ -240,74 +224,43 @@ class HrEconomicIndicators(models.Model):
         return 67000.0
 
     def create(self, vals):
-        """Invalidar cache al crear indicador - HIGH-013"""
+        """Invalidar cache al crear indicador"""
         result = super().create(vals)
-        # Invalidar cache UF/UTM
-        self._get_uf_value_cached.clear_cache(self)
-        self._get_utm_value_cached.clear_cache(self)
+        self.clear_caches()
         return result
 
     def write(self, vals):
-        """Invalidar cache al actualizar indicador - HIGH-013"""
+        """Invalidar cache al actualizar indicador"""
         result = super().write(vals)
         if any(key in vals for key in ['uf', 'utm', 'period']):
-            self._get_uf_value_cached.clear_cache(self)
-            self._get_utm_value_cached.clear_cache(self)
+            self.clear_caches()
         return result
 
     @api.model
     def fetch_from_ai_service(self, year, month):
         """
         Obtener indicadores desde AI-Service
-
-        Fix GAP-002: Elimina hardcoded AFP cap (87.8 UF), usa tabla legal.caps
-
-        Args:
-            year: Año (2025)
-            month: Mes (1-12)
-
-        Returns:
-            Recordset hr.economic.indicators creado
         """
-        import requests
-        import os
-        import logging
-
-        _logger = logging.getLogger(__name__)
-
-        # URL del AI-Service (puerto correcto: 8002, no 8000)
         ai_service_url = os.getenv('AI_SERVICE_URL', 'http://ai-service:8002')
         api_key = os.getenv('AI_SERVICE_API_KEY', '')
-
         period = f"{year}-{month:02d}"
 
-        _logger.info(
-            "Obteniendo indicadores %s desde AI-Service",
-            period
-        )
+        _logger.info("Obteniendo indicadores %s desde AI-Service", period)
 
         try:
-            # Llamar AI-Service (GET, no POST - endpoint correcto)
-            response = requests.get(  # ✅ GET en vez de POST
-                f"{ai_service_url}/api/payroll/indicators/{period}",  # ✅ Endpoint correcto
+            response = requests.get(
+                f"{ai_service_url}/api/payroll/indicators/{period}",
                 headers={"Authorization": f"Bearer {api_key}"},
-                timeout=60  # Puede tardar 15-30s en descargar PDF
+                timeout=60
             )
-
             response.raise_for_status()
             result = response.json()
 
             if not result.get('success'):
                 raise Exception(result.get('detail', 'Error desconocido'))
 
-            # Extraer indicadores
             data = result['indicators']
-
-            # Crear registro
             period_date = date(year, month, 1)
-
-            # GAP-002: Obtener tope AFP desde tabla l10n_cl.legal.caps
-            afp_cap_uf = self._get_afp_cap_from_legal_table(period_date)
 
             indicator = self.create({
                 'period': period_date,
@@ -315,27 +268,24 @@ class HrEconomicIndicators(models.Model):
                 'utm': data.get('utm', 0),
                 'uta': data.get('uta', 0),
                 'minimum_wage': data.get('sueldo_minimo', 0),
-                'afp_limit': afp_cap_uf,  # ✅ Desde tabla legal.caps
+                'afp_tope_uf': data.get('afp_tope_uf', 0),
                 'family_allowance_t1': data.get('asig_fam_tramo_1', 0),
                 'family_allowance_t2': data.get('asig_fam_tramo_2', 0),
                 'family_allowance_t3': data.get('asig_fam_tramo_3', 0),
+                'source': 'ai_service',
+                'last_sync': fields.Datetime.now(),
             })
 
             _logger.info(
                 "✅ Indicadores %s creados desde AI-Service (ID: %d, AFP cap: %.1f UF)",
                 period_date.strftime('%Y-%m'),
                 indicator.id,
-                afp_cap_uf
+                indicator.afp_tope_uf
             )
-
             return indicator
 
         except Exception as e:
-            _logger.error(
-                "❌ Error obteniendo indicadores desde AI-Service: %s",
-                str(e)
-            )
-
+            _logger.error("❌ Error obteniendo indicadores desde AI-Service: %s", str(e))
             raise UserError(_(
                 "No se pudieron obtener indicadores para %s-%02d\n\n"
                 "Error: %s\n\n"
@@ -345,347 +295,81 @@ class HrEconomicIndicators(models.Model):
                 "• Contactar soporte técnico"
             ) % (year, month, str(e)))
 
-    def _get_afp_cap_from_legal_table(self, target_date):
-        """
-        Obtener tope AFP desde tabla l10n_cl.legal.caps
-
-        Fix GAP-002: Elimina valores hardcoded, usa configuración parametrizable
-
-        Args:
-            target_date: Fecha para buscar tope AFP vigente
-
-        Returns:
-            float: Tope AFP en UF (ej: 83.1)
-
-        Raises:
-            ValidationError: Si no existe cap AFP configurado
-        """
-        LegalCaps = self.env['l10n_cl.legal.caps']
-
-        # Buscar cap AFP vigente para la fecha
-        afp_cap_uf, unit = LegalCaps.get_cap('AFP_IMPONIBLE_CAP', target_date)
-
-        if not afp_cap_uf:
-            raise ValidationError(_(
-                'Tope AFP no configurado para fecha %s.\n\n'
-                'Configure en: Nómina > Configuración > Topes Legales\n'
-                'Código: AFP_IMPONIBLE_CAP\n'
-                'Valor 2025: 83.1 UF'
-            ) % target_date)
-
-        # Validar unidad correcta
-        if unit != 'uf':
-            raise ValidationError(_(
-                'Tope AFP debe estar en UF, recibido: %s'
-            ) % unit)
-
-        return afp_cap_uf
-    
     @api.model
-    def _run_fetch_indicators_cron(self):
+    def _cron_sync_previred_via_ai(self):
         """
-        Cron automático: obtener indicadores del mes siguiente - P0-4
-        
-        Ejecuta día 1 de cada mes a las 05:00 AM
-        Idempotente: si registro existe, no duplica
-        
-        Reintentos: 3 intentos con backoff exponencial
+        Sincronizar TODOS los campos desde AI service.
         """
-        import logging
-        import time
-        from datetime import timedelta
+        ICP = self.env['ir.config_parameter'].sudo()
+        ai_url = ICP.get_param('dte.ai_service_url', 'http://ai-service:8002')
+        api_key = ICP.get_param('dte.ai_service_api_key', '')
+        timeout = int(ICP.get_param('dte.ai_service_timeout', '60'))
+
+        if not api_key:
+            _logger.error("CRON AI-SYNC: AI Service API key no configurado. Abortando.")
+            return False
+
+        period_date = date.today().replace(day=1)
+        period_str = period_date.strftime('%Y-%m')
         
-        _logger = logging.getLogger(__name__)
-        
-        today = date.today()
-        # Mes siguiente
-        next_month = (today.replace(day=1) + timedelta(days=32)).replace(day=1)
-        
-        year = next_month.year
-        month = next_month.month
-        
-        _logger.info(
-            "🔄 Cron indicadores: obteniendo %s-%02d",
-            year, month
-        )
-        
-        # Verificar si ya existe (idempotencia)
-        existing = self.search([('period', '=', next_month)], limit=1)
-        if existing:
-            _logger.info(
-                "ℹ️  Indicadores %s-%02d ya existen (ID: %d), skip",
-                year, month, existing.id
-            )
-            return existing
-        
-        # Intentar fetch con reintentos
-        max_retries = 3
-        for attempt in range(1, max_retries + 1):
-            try:
-                _logger.info(
-                    "Intento %d/%d: obteniendo indicadores desde AI-Service...",
-                    attempt, max_retries
-                )
-                
-                indicator = self.fetch_from_ai_service(year, month)
-                
-                _logger.info(
-                    "✅ Indicadores %s-%02d creados en intento %d",
-                    year, month, attempt
-                )
-                
-                return indicator
-                
-            except Exception as e:
-                _logger.warning(
-                    "⚠️  Intento %d/%d falló: %s",
-                    attempt, max_retries, str(e)
-                )
-                
-                if attempt < max_retries:
-                    # Backoff exponencial: 5s, 10s, 15s
-                    sleep_time = 5 * attempt
-                    _logger.info("Reintentando en %ds...", sleep_time)
-                    time.sleep(sleep_time)
-                else:
-                    # Último intento falló
-                    _logger.error(
-                        "❌ Todos los intentos fallaron para %s-%02d. "
-                        "Se requiere carga manual.",
-                        year, month
-                    )
-                    
-                    # Notificar a admin
-                    self._notify_indicators_failure(year, month)
-
-                    # FAIL-SOFT: Return None instead of raising to avoid cron traceback
-                    # Admin notification sent above
-                    return False
-    
-    @api.model
-    def _cron_update_economic_indicators(self):
-        """
-        Cron job: Actualizar UF/UTM/IPC desde mindicador.cl - HIGH-012
-
-        Configuración:
-        - Frecuencia: Diaria (00:30 AM Chile)
-        - Reintentos: 3 con backoff exponencial
-        - Timeout: 10 segundos por intento
-
-        Returns:
-            bool: True si éxito, False si fallo
-
-        Raises:
-            UserError: Si fallan todos los reintentos (solo en modo debug)
-
-        Example:
-            >>> self.env['hr.economic.indicators']._cron_update_economic_indicators()
-            True
-        """
-        import requests
-        import time
-        import logging
-
-        _logger = logging.getLogger(__name__)
-
-        MINDICADOR_URL = "https://mindicador.cl/api"
-        MAX_RETRIES = 3
-        TIMEOUT = 10
-
-        for attempt in range(1, MAX_RETRIES + 1):
-            try:
-                _logger.info(
-                    "[CRON-MINDICADOR] Actualizando indicadores económicos "
-                    "(intento %d/%d)",
-                    attempt, MAX_RETRIES
-                )
-
-                # Request API mindicador.cl
-                response = requests.get(MINDICADOR_URL, timeout=TIMEOUT)
-                response.raise_for_status()
-                data = response.json()
-
-                # Extraer valores
-                uf_value = float(data['uf']['valor'])
-                utm_value = float(data['utm']['valor'])
-                ipc_value = float(data.get('ipc', {}).get('valor', 0))
-
-                # Validar rangos razonables
-                if not (30000 <= uf_value <= 50000):
-                    raise ValueError(f"UF fuera de rango: ${uf_value:,.2f}")
-                if not (60000 <= utm_value <= 80000):
-                    raise ValueError(f"UTM fuera de rango: ${utm_value:,.0f}")
-
-                # Verificar si ya existe para hoy
-                today = fields.Date.today()
-                existing = self.search([('period', '=', today)], limit=1)
-
-                if existing:
-                    # Actualizar existente
-                    existing.write({
-                        'uf': uf_value,
-                        'utm': utm_value,
-                    })
-                    _logger.info(
-                        "[CRON-MINDICADOR] ✅ Indicadores actualizados: "
-                        "UF=${:,.2f}, UTM=${:,.0f}, IPC={}%".format(
-                            uf_value, utm_value, ipc_value
-                        )
-                    )
-                else:
-                    # Crear nuevo registro (solo UF/UTM desde mindicador, otros valores default)
-                    self.create({
-                        'period': today,
-                        'uf': uf_value,
-                        'utm': utm_value,
-                        'uta': uf_value * 12,  # Aproximado: UTA ≈ 12 UF
-                        'minimum_wage': 500000,  # Default 2025
-                        'afp_limit': 83.1,  # Default 2025
-                        'family_allowance_t1': 15000,  # Default
-                        'family_allowance_t2': 9000,   # Default
-                        'family_allowance_t3': 3000,   # Default
-                    })
-                    _logger.info(
-                        "[CRON-MINDICADOR] ✅ Indicadores creados: "
-                        "UF=${:,.2f}, UTM=${:,.0f}, IPC={}%".format(
-                            uf_value, utm_value, ipc_value
-                        )
-                    )
-
-                return True  # Éxito
-
-            except requests.exceptions.Timeout:
-                _logger.warning(
-                    "[CRON-MINDICADOR] ⚠️ Timeout API mindicador.cl (intento %d)",
-                    attempt
-                )
-            except requests.exceptions.RequestException as e:
-                _logger.warning(
-                    "[CRON-MINDICADOR] ⚠️ Error API mindicador.cl (intento %d): %s",
-                    attempt, e
-                )
-            except (KeyError, ValueError, TypeError) as e:
-                _logger.error(
-                    "[CRON-MINDICADOR] ❌ Error parseando respuesta API (intento %d): %s",
-                    attempt, e
-                )
-
-            # Backoff exponencial: 5s, 15s, 45s
-            if attempt < MAX_RETRIES:
-                sleep_time = 5 * (3 ** (attempt - 1))
-                _logger.info("[CRON-MINDICADOR] Reintentando en %ds...", sleep_time)
-                time.sleep(sleep_time)
-
-        # Falló después de todos los reintentos
-        _logger.error(
-            "[CRON-MINDICADOR] ❌ ERROR CRÍTICO: No se pudieron actualizar indicadores "
-            "después de %d intentos",
-            MAX_RETRIES
-        )
-
-        # Notificar admin (opcional)
-        self._notify_admin_indicator_failure()
-
-        return False
-
-    def _notify_admin_indicator_failure(self):
-        """
-        Notificar administrador sobre fallo actualización indicadores - HIGH-012
-
-        Implementación opcional: crear actividad o enviar mail
-        """
-        import logging
-        _logger = logging.getLogger(__name__)
+        _logger.info(f"CRON AI-SYNC: Iniciando sincronización para el período {period_str}")
 
         try:
-            # Buscar usuarios administradores de nómina
-            admin_group = self.env.ref('l10n_cl_hr_payroll.group_hr_payroll_manager', raise_if_not_found=False)
-            if not admin_group:
-                _logger.warning("[CRON-MINDICADOR] Grupo hr_payroll_manager no encontrado")
-                return
+            response = requests.get(
+                f"{ai_url}/api/payroll/indicators/{period_str}",
+                headers={'Authorization': f'Bearer {api_key}'},
+                timeout=timeout
+            )
+            response.raise_for_status()
+            
+            data = response.json()
+            if not data.get('success'):
+                raise Exception(f"AI service retornó un error: {data.get('detail', 'Error desconocido')}")
+            
+            indicators = data.get('indicators', {})
+            metadata = data.get('metadata', {})
+            
+            record = self.search([('period', '=', period_date)], limit=1)
+            if not record:
+                record = self.create({'period': period_date, 'name': period_date.strftime('%B %Y')})
 
-            admin_users = admin_group.users
-            if not admin_users:
-                _logger.warning("[CRON-MINDICADOR] No hay usuarios administradores de nómina")
-                return
-
-            # Crear actividad para cada admin
-            for user in admin_users:
-                self.env['mail.activity'].create({
-                    'res_model_id': self.env['ir.model']._get('hr.economic.indicators').id,
-                    'res_id': 0,
-                    'activity_type_id': self.env.ref('mail.mail_activity_data_warning').id,
-                    'summary': 'Error actualización indicadores económicos (mindicador.cl)',
-                    'note': '''
-                        <p>La API mindicador.cl falló después de 3 reintentos.</p>
-                        <p><b>Acción requerida:</b></p>
-                        <ul>
-                            <li>Revisar conectividad a https://mindicador.cl/api</li>
-                            <li>Actualizar indicadores manualmente si es urgente</li>
-                            <li>El cron reintentará mañana automáticamente</li>
-                        </ul>
-                    ''',
-                    'date_deadline': date.today(),
-                    'user_id': user.id,
-                })
-
+            vals_to_write = {
+                'uf': indicators.get('uf'),
+                'utm': indicators.get('utm'),
+                'uta': indicators.get('uta'),
+                'minimum_wage': indicators.get('sueldo_minimo'),
+                'afp_tope_uf': indicators.get('afp_tope_uf'),
+                'afc_tope_uf': indicators.get('afc_tope_uf'),
+                'apv_tope_mensual_uf': indicators.get('apv_tope_mensual_uf'),
+                'apv_tope_anual_uf': indicators.get('apv_tope_anual_uf'),
+                'asig_fam_tramo_1': indicators.get('asig_fam_tramo_1'),
+                'asig_fam_tramo_2': indicators.get('asig_fam_tramo_2'),
+                'asig_fam_tramo_3': indicators.get('asig_fam_tramo_3'),
+                'asig_fam_tramo_4': indicators.get('asig_fam_tramo_4'),
+                'sis_pct': indicators.get('exvida_pct'),
+                'afc_trabajador_indefinido_pct': indicators.get('afc_trabajador_indefinido'),
+                'afc_empleador_indefinido_pct': indicators.get('afc_empleador_indefinido'),
+                'fonasa_pct': indicators.get('fonasa_pct'),
+                'source': 'ai_service',
+                'last_sync': fields.Datetime.now()
+            }
+            
+            vals_to_write = {k: v for k, v in vals_to_write.items() if v is not None}
+            
+            record.write(vals_to_write)
+            
             _logger.info(
-                "[CRON-MINDICADOR] 📧 Notificaciones enviadas a %d administradores",
-                len(admin_users)
+                f"CRON AI-SYNC: Éxito. {len(vals_to_write)} campos actualizados para {period_str} "
+                f"desde {metadata.get('source', 'AI')}"
             )
-
+            return True
+            
+        except requests.exceptions.Timeout:
+            _logger.error(f"CRON AI-SYNC: Timeout ({timeout}s) conectando con AI Service para el período {period_str}.")
+            return False
+        except requests.exceptions.RequestException as e:
+            _logger.error(f"CRON AI-SYNC: Falla de conexión con AI Service para el período {period_str}. Error: {e}")
+            return False
         except Exception as e:
-            _logger.error(
-                "[CRON-MINDICADOR] Error enviando notificaciones: %s",
-                str(e)
-            )
-
-    def _notify_indicators_failure(self, year, month):
-        """
-        Notificar a administradores que debe cargar indicadores manualmente - P0-4
-
-        Crea una actividad para el grupo de administradores de nómina.
-        """
-        import logging
-        _logger = logging.getLogger(__name__)
-
-        try:
-            # Buscar usuarios administradores de nómina
-            admin_group = self.env.ref('l10n_cl_hr_payroll.group_hr_payroll_manager')
-            admin_users = admin_group.users
-
-            if not admin_users:
-                _logger.warning("No hay usuarios administradores de nómina")
-                return
-
-            # Crear actividad para cada admin
-            for user in admin_users:
-                self.env['mail.activity'].create({
-                    'res_model_id': self.env.ref('l10n_cl_hr_payroll.model_hr_economic_indicators').id,
-                    'res_id': 0,
-                    'activity_type_id': self.env.ref('mail.mail_activity_data_todo').id,
-                    'summary': f'Cargar indicadores económicos {year}-{month:02d} manualmente',
-                    'note': f'''
-                        <p>El cron automático de indicadores económicos falló.</p>
-                        <p><b>Mes:</b> {year}-{month:02d}</p>
-                        <p><b>Acción requerida:</b></p>
-                        <ul>
-                            <li>Ir a Nómina > Configuración > Indicadores Económicos</li>
-                            <li>Usar el wizard de carga manual (CSV)</li>
-                            <li>O crear el registro manualmente</li>
-                        </ul>
-                    ''',
-                    'date_deadline': date.today(),
-                    'user_id': user.id,
-                })
-
-            _logger.info(
-                "📧 Notificaciones enviadas a %d administradores",
-                len(admin_users)
-            )
-
-        except Exception as e:
-            _logger.error(
-                "Error enviando notificaciones: %s",
-                str(e)
-            )
+            _logger.error(f"CRON AI-SYNC: Falla inesperada durante la sincronización para {period_str}. Error: {e}")
+            return False

@@ -271,7 +271,7 @@ class SIISoapClient:
 
             timeout = self._get_sii_timeout()
             transport = Transport(session=session, timeout=timeout)
-            client = self._create_soap_client('envio_dte', transport=transport)
+            client = self.env.create_soap_client('envio_dte', transport=transport)
 
             # Extract DV from RUT
             rut_parts = rut_emisor.split('-')
@@ -377,7 +377,7 @@ class SIISoapClient:
             })
 
             transport = Transport(session=session, timeout=30)
-            client = self._create_soap_client('consulta_estado', transport=transport)
+            client = self.env.create_soap_client('consulta_estado', transport=transport)
 
             # Extract DV from RUT
             rut_parts = rut_emisor.split('-')
@@ -463,7 +463,7 @@ class SIISoapClient:
             timeout = self._get_sii_timeout()
             transport = Transport(session=session, timeout=timeout)
             # Use same endpoint as envio_dte for commercial responses
-            client = self._create_soap_client('envio_dte', transport=transport)
+            client = self.env.create_soap_client('envio_dte', transport=transport)
 
             # Extract DV from RUT
             rut_parts = rut_emisor.split('-')

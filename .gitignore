@@ -104,3 +104,5 @@ htmlcov/
 
 # Test baseline outputs
 baseline_tests_*.txt
+# Backups de migración
+*.backup_*

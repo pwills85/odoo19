@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
+# CE Stub for hr.contract (MUST be first)
+from . import hr_contract_stub
+
 # Maestros (primero)
 from . import hr_afp
 from . import hr_isapre
 from . import hr_apv
 from . import l10n_cl_apv_institution
-from . import l10n_cl_legal_caps
 from . import hr_economic_indicators
 from . import hr_tax_bracket
 from . import hr_salary_rule_category

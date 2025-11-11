@@ -608,15 +608,15 @@ class RatioPredictionML(models.Model):
                 # Check for critical alerts
                 if 'critical' in thresholds:
                     if 'min' in thresholds and value < thresholds['critical']:
-                        self._create_critical_alert(pred)
+                        self.env.create_critical_alert(pred)
                     elif 'max' in thresholds and value > thresholds['critical']:
-                        self._create_critical_alert(pred)
+                        self.env.create_critical_alert(pred)
                 
                 # Check for warning alerts
                 elif 'min' in thresholds and value < thresholds['min']:
-                    self._create_warning_alert(pred)
+                    self.env.create_warning_alert(pred)
                 elif 'max' in thresholds and value > thresholds['max']:
-                    self._create_warning_alert(pred)
+                    self.env.create_warning_alert(pred)
     
     def _create_critical_alert(self, prediction):
         """Create critical alert activity"""

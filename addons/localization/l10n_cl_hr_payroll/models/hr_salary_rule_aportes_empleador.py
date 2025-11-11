@@ -26,6 +26,7 @@ Técnica Odoo 19 CE: Reglas salariales con categoría APORTE_EMPLEADOR
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+from odoo.tools import ormcache
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -186,40 +187,58 @@ class HrPayslipAportesEmpleador(models.Model):
     # HELPER METHODS
     # ═══════════════════════════════════════════════════════════
     
+    def _get_economic_indicators(self):
+        """Helper para obtener el registro de indicadores económicos del período."""
+        self.ensure_one()
+        if not self.date_to:
+            raise ValidationError(_("La liquidación debe tener una fecha de término para obtener los indicadores."))
+        
+        indicators = self.env['hr.economic.indicators'].get_indicator_for_date(self.date_to)
+        if not indicators:
+            raise UserError(_("No se encontraron indicadores económicos para el período de la liquidación."))
+        return indicators
+
+    @ormcache('self.date_to')
     def _get_tope_afp_clp(self):
         """
-        Obtener tope AFP en pesos chilenos (87.8 UF)
-        
-        Returns:
-            float: Tope en CLP
+        Obtener tope AFP en pesos chilenos dinámicamente desde hr.economic.indicators.
         """
         self.ensure_one()
+        indicators = self._get_economic_indicators()
         
-        # Obtener UF del día
-        uf_value = self._get_uf_value(self.date_to or fields.Date.today())
+        tope_uf = indicators.afp_tope_uf
+        if not tope_uf or tope_uf <= 0:
+            _logger.warning(f"Tope AFP (UF) no encontrado en indicadores para {indicators.period}. Usando fallback de 87.8.")
+            tope_uf = 87.8 # Fallback de seguridad
+
+        tope_clp = tope_uf * indicators.uf
         
-        # Tope 87.8 UF
-        tope = 87.8 * uf_value
-        
-        return tope
+        _logger.info(
+            f"Tope AFP calculado para Payslip {self.number}: {tope_uf} UF * ${indicators.uf:,.2f} = ${tope_clp:,.0f}",
+            extra={'payslip_id': self.id, 'source': indicators.source, 'last_sync': indicators.last_sync}
+        )
+        return tope_clp
     
+    @ormcache('self.date_to')
     def _get_tope_cesantia_clp(self):
         """
-        Obtener tope Seguro Cesantía en pesos chilenos (131.9 UF - Actualizado 2025)
-        
-        Returns:
-            float: Tope en CLP
+        Obtener tope Seguro Cesantía en pesos chilenos dinámicamente desde hr.economic.indicators.
         """
         self.ensure_one()
-        
-        # Obtener UF del día
-        uf_value = self._get_uf_value(self.date_to or fields.Date.today())
-        
-        # Tope 131.9 UF (Actualizado 2025)
-        # Ref: Superintendencia de Pensiones
-        tope = 131.9 * uf_value
-        
-        return tope
+        indicators = self._get_economic_indicators()
+
+        tope_uf = indicators.afc_tope_uf
+        if not tope_uf or tope_uf <= 0:
+            _logger.warning(f"Tope AFC (UF) no encontrado en indicadores para {indicators.period}. Usando fallback de 131.9.")
+            tope_uf = 131.9 # Fallback de seguridad
+
+        tope_clp = tope_uf * indicators.uf
+
+        _logger.info(
+            f"Tope AFC calculado para Payslip {self.number}: {tope_uf} UF * ${indicators.uf:,.2f} = ${tope_clp:,.0f}",
+            extra={'payslip_id': self.id, 'source': indicators.source, 'last_sync': indicators.last_sync}
+        )
+        return tope_clp
     
     def _get_uf_value(self, reference_date):
         """

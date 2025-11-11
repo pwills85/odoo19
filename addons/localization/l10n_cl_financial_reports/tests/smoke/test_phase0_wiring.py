@@ -92,7 +92,7 @@ class TestPhase0Wiring(TransactionCase):
         """Test creación F29 y ejecución action_calculate con datos sintéticos"""
 
         # Crear datos sintéticos de prueba
-        self._create_synthetic_invoice_data()
+        self.env.create_synthetic_invoice_data()
 
         # Crear F29
         f29 = self.env['l10n_cl.f29'].create({
@@ -118,7 +118,7 @@ class TestPhase0Wiring(TransactionCase):
         """Test creación F22 y ejecución action_calculate con datos sintéticos"""
 
         # Crear datos sintéticos de prueba
-        self._create_synthetic_income_data()
+        self.env.create_synthetic_income_data()
 
         # Crear F22
         f22 = self.env['l10n_cl.f22'].create({

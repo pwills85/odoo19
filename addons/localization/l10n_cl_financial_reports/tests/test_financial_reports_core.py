@@ -61,7 +61,7 @@ class TestAccountFinancialReportCore(TransactionCase):
         })
         
         # Crear algunos movimientos contables de prueba
-        self._create_test_moves()
+        self.env.create_test_moves()
         
     def _create_test_moves(self):
         """Crear movimientos contables de prueba"""

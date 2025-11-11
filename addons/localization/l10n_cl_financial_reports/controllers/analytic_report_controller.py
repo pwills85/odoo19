@@ -46,19 +46,19 @@ class AnalyticReportController(http.Controller):
             formats = self._get_excel_formats(workbook)
             
             # Hoja de resumen
-            self._create_summary_sheet(workbook, report_data, formats)
+            self.env.create_summary_sheet(workbook, report_data, formats)
             
             # Hoja por cada proyecto
             for project_id, project_data in report_data['data'].items():
                 sheet_name = f"{project_data['analytic_account_code'][:20]}"
-                self._create_project_sheet(workbook, sheet_name, project_data, formats)
+                self.env.create_project_sheet(workbook, sheet_name, project_data, formats)
             
             # Hoja de comparación
-            self._create_comparison_sheet(workbook, report_data, formats)
+            self.env.create_comparison_sheet(workbook, report_data, formats)
             
             # Hoja de timesheet consolidado
             if include_timesheet:
-                self._create_timesheet_sheet(workbook, report_data, formats)
+                self.env.create_timesheet_sheet(workbook, report_data, formats)
             
             workbook.close()
             output.seek(0)

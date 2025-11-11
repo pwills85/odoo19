@@ -191,7 +191,7 @@ class TestPayrollCalculationP1(TransactionCase):
         - Impuesto Único = 0 (bajo tramo exento)
         - Alcance líquido correcto
         """
-        payslip = self._create_payslip(self.employee_low, self.contract_low)
+        payslip = self.env.create_payslip(self.employee_low, self.contract_low)
 
         # Obtener líneas
         lines = {line.code: line.total for line in payslip.line_ids}
@@ -248,7 +248,7 @@ class TestPayrollCalculationP1(TransactionCase):
     #     - Descuentos previsionales sobre base con tope
     #     - Impuesto Único sobre renta alta
     #     """
-    #     payslip = self._create_payslip(self.employee_high, self.contract_high)
+    #     payslip = self.env.create_payslip(self.employee_high, self.contract_high)
         
     #     # Obtener líneas
     #     lines = {line.code: line.total for line in payslip.line_ids}
@@ -290,7 +290,7 @@ class TestPayrollCalculationP1(TransactionCase):
     #     - Total descuentos incluye APV
     #     - Líquido refleja descuento APV
     #     """
-    #     payslip = self._create_payslip(self.employee_apv, self.contract_apv)
+    #     payslip = self.env.create_payslip(self.employee_apv, self.contract_apv)
         
     #     # Obtener líneas
     #     lines = {line.code: line.total for line in payslip.line_ids}
@@ -317,7 +317,7 @@ class TestPayrollCalculationP1(TransactionCase):
         - Total Descuentos = suma de líneas negativas
         - Líquido = Haberes - Descuentos
         """
-        payslip = self._create_payslip(self.employee_low, self.contract_low)
+        payslip = self.env.create_payslip(self.employee_low, self.contract_low)
         
         # Calcular manualmente
         haberes_manual = sum([l.total for l in payslip.line_ids if l.total > 0])

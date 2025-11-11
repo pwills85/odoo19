@@ -15,7 +15,6 @@ class TestPrevired105Validation(TransactionCase):
             'name': 'Test Employee',
             'identification_id': '12345678-9',
             'birthday': '1990-01-01',
-            'gender': 'male',
         })
         
         # Create AFP

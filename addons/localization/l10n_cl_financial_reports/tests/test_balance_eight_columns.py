@@ -98,7 +98,7 @@ class TestBalanceEightColumns(TransactionCase):
         """Test balance con movimientos contables"""
         # Crear movimientos de prueba
         # Asiento 1: Aporte de capital
-        self._create_move(self.date_from, [
+        self.env.create_move(self.date_from, [
             {
                 'account_id': self.account_cash.id,
                 'debit': 1000000.0,
@@ -112,7 +112,7 @@ class TestBalanceEightColumns(TransactionCase):
         ])
         
         # Asiento 2: Venta al contado
-        self._create_move(self.date_from + timedelta(days=5), [
+        self.env.create_move(self.date_from + timedelta(days=5), [
             {
                 'account_id': self.account_cash.id,
                 'debit': 500000.0,
@@ -126,7 +126,7 @@ class TestBalanceEightColumns(TransactionCase):
         ])
         
         # Asiento 3: Pago de gastos
-        self._create_move(self.date_from + timedelta(days=10), [
+        self.env.create_move(self.date_from + timedelta(days=10), [
             {
                 'account_id': self.account_expenses.id,
                 'debit': 200000.0,
@@ -173,7 +173,7 @@ class TestBalanceEightColumns(TransactionCase):
         # Crear movimientos en diferentes meses
         for month in range(1, 4):
             date_move = date(2024, month, 15)
-            self._create_move(date_move, [
+            self.env.create_move(date_move, [
                 {
                     'account_id': self.account_receivable.id,
                     'debit': 100000.0 * month,
@@ -253,10 +253,10 @@ class TestBalanceEightColumns(TransactionCase):
     def test_07_balance_filters(self):
         """Test filtros del balance"""
         # Crear cuenta con saldo cero
-        account_zero = self._create_account('1999', 'Cuenta Sin Movimiento', self.account_type_asset)
+        account_zero = self.env.create_account('1999', 'Cuenta Sin Movimiento', self.account_type_asset)
         
         # Crear movimiento
-        self._create_move(self.date_from, [
+        self.env.create_move(self.date_from, [
             {
                 'account_id': self.account_cash.id,
                 'debit': 1000.0,
@@ -299,7 +299,7 @@ class TestBalanceEightColumns(TransactionCase):
         # Crear 100 cuentas
         accounts = []
         for i in range(100):
-            account = self._create_account(f'1{i:03d}', f'Cuenta Test {i}', self.account_type_asset)
+            account = self.env.create_account(f'1{i:03d}', f'Cuenta Test {i}', self.account_type_asset)
             accounts.append(account)
         
         # Crear 50 movimientos
@@ -316,7 +316,7 @@ class TestBalanceEightColumns(TransactionCase):
                     'credit': 1000.0 * (i + 1),
                 },
             ]
-            self._create_move(self.date_from + timedelta(days=i % 30), lines)
+            self.env.create_move(self.date_from + timedelta(days=i % 30), lines)
         
         # Medir tiempo de cálculo
         balance = self.env['account.balance.eight.columns'].with_company(self.company).create({
@@ -381,7 +381,7 @@ class TestBalanceEightColumns(TransactionCase):
         })
         
         # Crear cuentas en company2
-        account_cash_c2 = self._create_account('1110', 'Caja C2', self.account_type_asset)
+        account_cash_c2 = self.env.create_account('1110', 'Caja C2', self.account_type_asset)
         account_cash_c2.company_id = company2
         
         # Balance debe filtrar por compañía

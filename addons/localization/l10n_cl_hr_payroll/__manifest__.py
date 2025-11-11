@@ -61,7 +61,7 @@ Licencia: LGPL-3
     'depends': [
         'base',
         'hr',                    # ✅ CE base - RRHH
-        'hr_contract',           # ✅ Contratos (Odoo 19 CE base module)
+        # 'hr_contract',         # ❌ Enterprise-only in Odoo 19 - removed
         'hr_holidays',           # ✅ Time Off (Odoo 19 CE base module)
         'account',               # ✅ CE base - Contabilidad
         'l10n_cl',               # ✅ Localización Chile (plan contable, RUT)
@@ -78,13 +78,15 @@ Licencia: LGPL-3
         'security/multi_company_rules.xml',
         'security/ir.model.access.csv',
         
+        # Views STUB (antes de datos)
+        'views/hr_contract_stub_views.xml',
+        
         # Datos base (SEGUNDO) - SOPA 2025
         'data/ir_sequence.xml',                      # Secuencias
         'data/ir_cron_data.xml',                     # Cron automático indicadores
         'data/hr_salary_rule_category_base.xml',     # 13 categorías base
         'data/hr_salary_rule_category_sopa.xml',     # 9 categorías SOPA
         'data/hr_tax_bracket_2025.xml',              # Tramos impuesto 2025
-        'data/l10n_cl_legal_caps_2025.xml',          # Topes legales APV/AFC
         'data/l10n_cl_apv_institutions.xml',         # Instituciones APV
         'data/hr_salary_rules_p1.xml',               # Reglas salariales P1
         'data/hr_salary_rules_apv.xml',              # Reglas APV (Régimen A/B)
@@ -102,11 +104,14 @@ Licencia: LGPL-3
         'views/hr_economic_indicators_views.xml',
         'views/menus.xml',
         
-        # Wizards
-        'wizards/hr_economic_indicators_import_wizard_views.xml',
-        'wizards/hr_lre_wizard_views.xml',
-        'wizards/payroll_ai_validation_wizard_views.xml',
-        'wizards/previred_validation_wizard_views.xml',
+        # Wizards (commented for FASE A - test execution focus)
+        # 'wizards/hr_economic_indicators_import_wizard_views.xml',
+        # 'wizards/hr_lre_wizard_views.xml',
+        # 'wizards/payroll_ai_validation_wizard_views.xml',
+        # 'wizards/previred_validation_wizard_views.xml',
+    ],
+    'tests': [
+        'tests/test_ai_driven_payroll.py',
     ],
     'installable': True,
     'application': True,

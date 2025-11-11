@@ -149,7 +149,7 @@ class BudgetComparisonService:
         
         # Agregar totales si hay líneas
         if lines:
-            lines.append(self._create_total_line(lines, "TOTAL GENERAL"))
+            lines.append(self.env.create_total_line(lines, "TOTAL GENERAL"))
         
         return lines
     
@@ -268,7 +268,7 @@ class BudgetComparisonService:
         # Total general
         if lines:
             main_lines = [l for l in lines if l['hierarchy_level'] == 1]
-            lines.append(self._create_total_line(main_lines, "TOTAL PRESUPUESTO"))
+            lines.append(self.env.create_total_line(main_lines, "TOTAL PRESUPUESTO"))
         
         return lines
     
@@ -332,7 +332,7 @@ class BudgetComparisonService:
         
         # Total
         if lines:
-            lines.append(self._create_total_line(lines, "TOTAL ANALÍTICO"))
+            lines.append(self.env.create_total_line(lines, "TOTAL ANALÍTICO"))
         
         return lines
     
@@ -411,7 +411,7 @@ class BudgetComparisonService:
         
         # Total
         if lines:
-            lines.append(self._create_total_line(lines, "TOTAL DEPARTAMENTOS"))
+            lines.append(self.env.create_total_line(lines, "TOTAL DEPARTAMENTOS"))
         
         return lines
     
@@ -819,14 +819,14 @@ class BudgetComparisonService:
             workbook = Workbook(output, {'in_memory': True})
             
             # Hoja principal
-            self._create_comparison_sheet(workbook, report)
+            self.env.create_comparison_sheet(workbook, report)
             
             # Hoja de análisis
             if report.show_variance_analysis:
-                self._create_variance_analysis_sheet(workbook, report)
+                self.env.create_variance_analysis_sheet(workbook, report)
             
             # Hoja de gráficos
-            self._create_charts_sheet(workbook, report)
+            self.env.create_charts_sheet(workbook, report)
             
             workbook.close()
             output.seek(0)

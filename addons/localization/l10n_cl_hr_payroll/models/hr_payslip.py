@@ -758,29 +758,12 @@ class HrPayslip(models.Model):
         """
         Obtener tope AFP en CLP para el período de la nómina
 
-        ARQUITECTURA DISTRIBUIDA (3 capas):
-        1. Tope AFP (UF) desde: l10n_cl.legal.caps (modelo parametrizable)
-        2. Valor UF (CLP) desde: hr.economic.indicators (AI service extrae de Previred)
-        3. Cálculo: tope_uf * valor_uf_clp
+        ARQUITECTURA DISTRIBUIDA (2 capas):
+        1. Valor UF y Tope AFP (UF) desde: hr.economic.indicators (AI service lo nutre)
+        2. Cálculo: tope_uf * valor_uf_clp
 
         Esta arquitectura evita hardcodear valores y permite actualización
         automática desde fuentes oficiales (AI-Service scraping Previred).
-
-        Normativa:
-        - D.L. 3.500 Art. 16 (Tope imponible AFP)
-        - Valor vigente 2025: 87.8 UF (puede cambiar anualmente)
-        - Fuente oficial: Superintendencia Pensiones
-
-        Returns:
-            float: Tope AFP en CLP para el mes de la nómina
-
-        Raises:
-            ValidationError: Si no se puede obtener tope o UF
-
-        Example:
-            >>> # Suponer UF = $38,000, Tope AFP = 87.8 UF
-            >>> payslip._get_tope_afp_clp()
-            3336400.0  # 87.8 * 38,000
         """
         self.ensure_one()
 
@@ -789,80 +772,31 @@ class HrPayslip(models.Model):
                 "No se puede calcular tope AFP: Liquidación sin fecha inicio (date_from)"
             )
 
-        # Paso 1: Obtener tope AFP en UF desde l10n_cl.legal.caps
         try:
-            LegalCaps = self.env['l10n_cl.legal.caps']
-            afp_tope_uf, unit = LegalCaps.get_cap('AFP_IMPONIBLE_CAP', self.date_from)
-
-            if unit != 'UF':
-                raise ValidationError(
-                    f"Tope AFP debe estar en UF, encontrado: {unit}. "
-                    f"Verifique configuración en Configuración > Topes Legales."
-                )
-
-            if not afp_tope_uf or afp_tope_uf <= 0:
-                raise ValidationError(
-                    f"Tope AFP inválido: {afp_tope_uf} UF para fecha {self.date_from}. "
-                    f"Configure en: Configuración > Topes Legales > AFP_IMPONIBLE_CAP"
-                )
-
-            _logger.debug(
-                f"Tope AFP obtenido: {afp_tope_uf} UF para período {self.date_from}"
-            )
-
-        except Exception as e:
-            raise ValidationError(
-                f"Error obteniendo tope AFP desde l10n_cl.legal.caps: {str(e)}\n\n"
-                f"Acción requerida:\n"
-                f"1. Ir a: Configuración > Topes Legales\n"
-                f"2. Verificar existencia de registro 'AFP_IMPONIBLE_CAP'\n"
-                f"3. Verificar rango de vigencia incluye {self.date_from}\n"
-                f"4. Valor esperado 2025: 87.8 UF"
-            )
-
-        # Paso 2: Obtener valor UF en CLP desde hr.economic.indicators
-        try:
-            indicator = self.env['hr.economic.indicators'].get_indicator_for_date(self.date_from)
-
+            indicator = self.indicadores_id or self.env['hr.economic.indicators'].get_indicator_for_date(self.date_from)
             if not indicator:
-                raise ValidationError(
-                    f"No hay indicadores económicos para {self.date_from.strftime('%Y-%m')}. "
-                    f"Configure en: Configuración > Indicadores Económicos"
-                )
+                raise ValidationError(f"No hay indicadores para el período {self.date_from.strftime('%Y-%m')}.")
 
+            afp_tope_uf = indicator.afp_tope_uf
             valor_uf = indicator.uf
 
+            if not afp_tope_uf or afp_tope_uf <= 0:
+                raise ValidationError(f"Valor de Tope AFP (UF) inválido: {afp_tope_uf} para el período.")
             if not valor_uf or valor_uf <= 0:
-                raise ValidationError(
-                    f"Valor UF inválido: ${valor_uf:,.0f} para {self.date_from.strftime('%Y-%m')}. "
-                    f"Actualice indicadores en: Configuración > Indicadores Económicos"
-                )
+                raise ValidationError(f"Valor de UF inválido: {valor_uf} para el período.")
 
-            _logger.debug(
-                f"Valor UF obtenido: ${valor_uf:,.2f} para {self.date_from.strftime('%Y-%m')}"
+            tope_afp_clp = afp_tope_uf * valor_uf
+
+            _logger.info(
+                f"Tope AFP calculado para {self.date_from.strftime('%Y-%m')}: "
+                f"{afp_tope_uf} UF × ${valor_uf:,.2f} = ${tope_afp_clp:,.0f} (Fuente: {indicator.source})"
             )
+            return tope_afp_clp
 
         except ValidationError:
-            raise  # Re-raise ValidationError original
+            raise
         except Exception as e:
-            raise ValidationError(
-                f"Error obteniendo valor UF desde hr.economic.indicators: {str(e)}\n\n"
-                f"Acción requerida:\n"
-                f"1. Ir a: Configuración > Indicadores Económicos\n"
-                f"2. Ejecutar cron manual o esperar actualización automática\n"
-                f"3. Verificar integración con AI-Service está activa\n"
-                f"4. Período requerido: {self.date_from.strftime('%Y-%m')}"
-            )
-
-        # Paso 3: Calcular tope AFP en CLP
-        tope_afp_clp = afp_tope_uf * valor_uf
-
-        _logger.info(
-            f"Tope AFP calculado para {self.date_from.strftime('%Y-%m')}: "
-            f"{afp_tope_uf} UF × ${valor_uf:,.2f} = ${tope_afp_clp:,.0f}"
-        )
-
-        return tope_afp_clp
+            raise ValidationError(f"Error inesperado al calcular tope AFP: {e}")
 
     def _get_base_imponible_ley21735(self) -> float:
         """
@@ -1112,45 +1046,21 @@ class HrPayslip(models.Model):
     def _validate_payslip_before_confirm(self):
         """
         P0-4: Validaciones obligatorias antes de confirmar nómina
-
-        CRÍTICO: Prevenir confirmación con datos incompletos
-        que causarían errores en Previred o incumplimiento legal.
-
-        Validaciones:
-        1. AFP cap aplicado correctamente (sueldos altos)
-        2. Reforma 2025 aplicada (contratos nuevos)
-        3. Indicadores económicos presentes
-        4. RUT trabajador válido
-        5. AFP asignada
-
-        Raises:
-            ValidationError: Si cualquier validación crítica falla
         """
         for payslip in self.filtered(lambda p: p.state == 'done'):
             errors = []
 
-            # 1. Validar AFP cap (sueldos altos > ~81.6 UF)
-            if payslip.contract_id and payslip.contract_id.wage > 2800000:
-                # Sueldo alto: verificar que se aplicó tope AFP
-                # Nota: Este es un check heurístico, el valor exacto depende de UF
-                if payslip.indicadores_id:
-                    try:
-                        cap_uf, _ = self.env['l10n_cl.legal.caps'].get_cap(
-                            'AFP_IMPONIBLE_CAP',
-                            payslip.date_to
-                        )
-                        cap_clp = cap_uf * payslip.indicadores_id.uf
-
-                        if payslip.contract_id.wage > cap_clp:
-                            # Sueldo excede cap: debe estar aplicado
-                            # (Validación indirecta: si hay línea AFP, ok)
-                            _logger.warning(
-                                f"Nómina {payslip.name}: Sueldo ${payslip.contract_id.wage:,.0f} "
-                                f"excede tope AFP ${cap_clp:,.0f} - Verificar aplicación de cap"
-                            )
-                    except Exception as e:
-                        _logger.warning(f"No se pudo validar cap AFP: {e}")
-
+            # 1. Validar AFP cap (sueldos altos)
+            try:
+                tope_afp_clp = self._get_tope_afp_clp()
+                if payslip.contract_id and payslip.contract_id.wage > tope_afp_clp:
+                    _logger.warning(
+                        f"Nómina {payslip.name}: Sueldo ${payslip.contract_id.wage:,.0f} "
+                        f"excede tope AFP ${tope_afp_clp:,.0f} - Verificar aplicación de cap."
+                    )
+            except (UserError, ValidationError) as e:
+                errors.append(f"⚠️ No se pudo validar el tope de AFP: {e}")
+            
             # 2. Validar reforma 2025 (contratos nuevos)
             if payslip.contract_id and payslip.contract_id.date_start:
                 reforma_vigencia = fields.Date.from_string('2025-01-01')
@@ -1169,25 +1079,17 @@ class HrPayslip(models.Model):
                     f"{payslip.date_from.strftime('%Y-%m')}. "
                     f"Configure en: Configuración > Indicadores Económicos"
                 )
-            else:
-                # Validar UF presente
-                if not payslip.indicadores_id.uf or payslip.indicadores_id.uf <= 0:
-                    errors.append(
-                        f"⚠️ Indicador UF inválido para {payslip.date_from.strftime('%Y-%m')}"
-                    )
-
+            
             # 4. Validar RUT trabajador (Previred)
             if not payslip.employee_id.identification_id:
                 errors.append(
-                    f"⚠️ Trabajador {payslip.employee_id.name} no tiene RUT configurado. "
-                    f"Configure en: Empleados > {payslip.employee_id.name} > RUT"
+                    f"⚠️ Trabajador {payslip.employee_id.name} no tiene RUT configurado."
                 )
 
             # 5. Validar AFP asignada
             if not payslip.contract_id or not payslip.contract_id.afp_id:
                 errors.append(
-                    f"⚠️ Contrato no tiene AFP asignada. "
-                    f"Configure en: Contratos > AFP"
+                    f"⚠️ Contrato no tiene AFP asignada."
                 )
 
             # Si hay errores críticos, bloquear confirmación
@@ -1562,21 +1464,6 @@ class HrPayslip(models.Model):
         self.invalidate_recordset(['line_ids'])
 
         # ═══════════════════════════════════════════════════════════
-        # PROCESAMIENTO ADICIONAL (COMPATIBILIDAD)
-        # ═══════════════════════════════════════════════════════════
-
-        # Gratificación y asignación familiar (si no están en reglas)
-        if not self.line_ids.filtered(lambda l: l.code == 'GRAT'):
-            self._compute_gratification_lines()
-
-        if not self.line_ids.filtered(lambda l: l.code == 'ASIG_FAM'):
-            self._compute_family_allowance_lines()
-
-        # Aportes empleador (si no están en reglas)
-        if not self.line_ids.filtered(lambda l: l.code in ['APORTE_EMP_AFP', 'AFC_EMP']):
-            self._compute_employer_contribution_lines()
-
-        # ═══════════════════════════════════════════════════════════
         # RECOMPUTAR TOTALES FINALES
         # ═══════════════════════════════════════════════════════════
 
@@ -1604,14 +1491,14 @@ class HrPayslip(models.Model):
         """
         Calcular AFP usando total_imponible
         
-        Aplica tope de 87.8 UF según legislación chilena.
+        Aplica tope legal vigente dinámicamente.
         Usa total_imponible para considerar todos los haberes imponibles.
         """
-        # Tope AFP: 87.8 UF (actualizado 2025)
-        afp_limit_clp = self.indicadores_id.uf * self.indicadores_id.afp_limit
+        # Obtener tope AFP dinámicamente
+        tope_afp_clp = self._get_tope_afp_clp()
         
         # Base imponible con tope
-        imponible_afp = min(self.total_imponible, afp_limit_clp)
+        imponible_afp = min(self.total_imponible, tope_afp_clp)
         
         # Calcular AFP
         afp_amount = imponible_afp * (self.contract_id.afp_rate / 100)
