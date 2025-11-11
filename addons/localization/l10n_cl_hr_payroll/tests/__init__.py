@@ -36,3 +36,4 @@ from . import test_lre_generation
 # AI Integration Tests (2025-11-11)
 from . import test_ai_validation_integration  # AI-Service payslip validation
 from . import test_ai_validation_timing  # FIX-001: AI validation timing (Phase 3B)
+from . import test_ai_service_ssl  # FIX-003: SSL certificate verification (Phase 3B)
