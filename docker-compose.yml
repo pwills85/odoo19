@@ -57,6 +57,7 @@ services:
     image: redis:7-alpine
     container_name: odoo19_redis_replica_1
     restart: unless-stopped
+    profiles: ["production", "ha"]  # 🎯 Solo para producción/alta disponibilidad
     command: redis-server /usr/local/etc/redis/redis.conf
     depends_on:
       - redis-master
@@ -78,6 +79,7 @@ services:
     image: redis:7-alpine
     container_name: odoo19_redis_replica_2
     restart: unless-stopped
+    profiles: ["production", "ha"]  # 🎯 Solo para producción/alta disponibilidad
     command: redis-server /usr/local/etc/redis/redis.conf
     depends_on:
       - redis-master
@@ -99,6 +101,7 @@ services:
     image: redis:7-alpine
     container_name: odoo19_redis_sentinel_1
     restart: unless-stopped
+    profiles: ["production", "ha"]  # 🎯 Solo para producción/alta disponibilidad
     command: >
       sh -c "cp /usr/local/etc/redis/sentinel.conf /tmp/sentinel.conf &&
              chmod 644 /tmp/sentinel.conf &&
@@ -124,6 +127,7 @@ services:
     image: redis:7-alpine
     container_name: odoo19_redis_sentinel_2
     restart: unless-stopped
+    profiles: ["production", "ha"]  # 🎯 Solo para producción/alta disponibilidad
     command: >
       sh -c "cp /usr/local/etc/redis/sentinel.conf /tmp/sentinel.conf &&
              chmod 644 /tmp/sentinel.conf &&
@@ -149,6 +153,7 @@ services:
     image: redis:7-alpine
     container_name: odoo19_redis_sentinel_3
     restart: unless-stopped
+    profiles: ["production", "ha"]  # 🎯 Solo para producción/alta disponibilidad
     command: >
       sh -c "cp /usr/local/etc/redis/sentinel.conf /tmp/sentinel.conf &&
              chmod 644 /tmp/sentinel.conf &&
@@ -314,9 +319,10 @@ services:
     restart: unless-stopped
     depends_on:
       - redis-master
-      - redis-sentinel-1
-      - redis-sentinel-2
-      - redis-sentinel-3
+      # Sentinels solo en modo HA (profiles: production/ha)
+      # - redis-sentinel-1
+      # - redis-sentinel-2
+      # - redis-sentinel-3
     environment:
       # AI Service Authentication
       - API_KEY=${AI_SERVICE_API_KEY:-default_ai_api_key}
@@ -397,6 +403,7 @@ services:
     image: prom/prometheus:latest
     container_name: odoo19_prometheus
     restart: unless-stopped
+    profiles: ["monitoring"]  # 🎯 Solo cuando necesites métricas
     user: "nobody"  # Security: Run as non-root
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -428,6 +435,7 @@ services:
     image: prom/alertmanager:latest
     container_name: odoo19_alertmanager
     restart: unless-stopped
+    profiles: ["monitoring"]  # 🎯 Solo cuando necesites alertas
     user: "nobody"  # Security: Run as non-root
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'

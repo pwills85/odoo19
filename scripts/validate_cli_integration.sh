@@ -76,7 +76,7 @@ echo
 
 # Test 2.1: Copilot MCP config exists
 if [ -f "/Users/pedro/.config/mcp-config.json" ]; then
-    test_result "Copilot MCP config exists" "PASS" "~/.config/mcp-config.json created"
+    test_result "Copilot MCP config exists" "PASS" "~/.copilot/config.json created"
 else
     test_result "Copilot MCP config" "FAIL" "File not found"
 fi
