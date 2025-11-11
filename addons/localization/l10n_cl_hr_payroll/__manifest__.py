@@ -106,6 +106,7 @@ Licencia: LGPL-3
         'wizards/hr_economic_indicators_import_wizard_views.xml',
         'wizards/hr_lre_wizard_views.xml',
         'wizards/payroll_ai_validation_wizard_views.xml',
+        'wizards/previred_validation_wizard_views.xml',
     ],
     'installable': True,
     'application': True,

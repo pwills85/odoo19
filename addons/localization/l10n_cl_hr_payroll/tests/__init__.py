@@ -37,3 +37,6 @@ from . import test_lre_generation
 from . import test_ai_validation_integration  # AI-Service payslip validation
 from . import test_ai_validation_timing  # FIX-001: AI validation timing (Phase 3B)
 from . import test_ai_service_ssl  # FIX-003: SSL certificate verification (Phase 3B)
+
+# Previred Integration Tests (Phase 3B)
+from . import test_previred_105_validation  # HIGH-010: Previred 105-field validation

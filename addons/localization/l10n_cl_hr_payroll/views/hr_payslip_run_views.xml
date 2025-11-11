@@ -38,6 +38,13 @@
                     <button name="action_compute_all" string="Calcular Todas"
                             type="object" class="oe_highlight"
                             invisible="state != 'processing'"/>
+                    
+                    <button name="%(wizards.action_previred_validation_wizard)d" 
+                            string="Validar Previred"
+                            type="action"
+                            class="btn-warning"
+                            invisible="state not in ['processing', 'done']"
+                            context="{'default_payslip_run_id': active_id}"/>
 
                     <button name="action_confirm_all" string="Confirmar Todas"
                             type="object" class="oe_highlight"
