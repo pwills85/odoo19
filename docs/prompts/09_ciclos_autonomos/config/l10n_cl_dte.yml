@@ -1,0 +1,177 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# CONFIGURACIÓN CICLO AUTÓNOMO - FACTURACIÓN ELECTRÓNICA CHILE (DTE)
+# ═══════════════════════════════════════════════════════════════════════════
+
+modulo:
+  nombre: "l10n_cl_dte"
+  tipo: "modulo_odoo"
+  path: "addons/localization/l10n_cl_dte/"
+  lenguaje: "python"
+  framework: "Odoo 19 CE"
+  
+descripcion: "Facturación electrónica chilena - DTE SII compliance"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CRITERIOS ÉXITO PERSONALIZADOS
+# ═══════════════════════════════════════════════════════════════════════════
+
+criterios_exito:
+  compliance_odoo19:
+    P0: 100     # OBLIGATORIO - Deprecaciones breaking changes
+    P1: 95      # ALTO - Deprecaciones futuras
+  
+  tests:
+    coverage: 90          # Compliance SII requiere alta cobertura
+    passing_rate: 100
+  
+  brechas:
+    P0_cerradas: 100
+    P1_cerradas: 95
+    P2_cerradas: 80
+  
+  calidad_codigo:
+    pep8_errors: 0
+    docstrings_coverage: 80
+    type_hints_coverage: 70
+  
+  seguridad:
+    vulnerabilidades_criticas: 0
+    vulnerabilidades_altas: 0
+    xml_security_score: 100  # Firmas digitales críticas
+  
+  localizacion_chilena:
+    sii_schemas_valid: 100   # Todos los XML deben validar contra schemas SII
+    firmas_digitales_ok: true
+    caf_management_ok: true
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ITERACIONES MÁXIMAS
+# ═══════════════════════════════════════════════════════════════════════════
+
+iteraciones:
+  P0: 5
+  P1: 3
+  P2: 1
+
+# ═══════════════════════════════════════════════════════════════════════════
+# VALIDACIONES ESPECÍFICAS
+# ═══════════════════════════════════════════════════════════════════════════
+
+validaciones:
+  # Tests Odoo
+  tests_odoo:
+    comando: "pytest addons/localization/l10n_cl_dte/tests/ --cov=addons/localization/l10n_cl_dte/ --cov-report=json -v"
+    criterio_exito: "coverage >= 90 AND passing_rate == 100"
+  
+  # Compliance Odoo 19 P0
+  compliance_p0:
+    comandos:
+      t_esc: "grep -r 't-esc' addons/localization/l10n_cl_dte/views/ | wc -l"
+      type_json: "grep -r \"type=['\\\"']json['\\\"']\" addons/localization/l10n_cl_dte/controllers/ | wc -l"
+      attrs: "grep -r 'attrs=' addons/localization/l10n_cl_dte/views/ | wc -l"
+      sql_constraints: "grep -r '_sql_constraints' addons/localization/l10n_cl_dte/models/ | wc -l"
+    criterio_exito: "ALL == 0"
+  
+  # Compliance Odoo 19 P1
+  compliance_p1:
+    comandos:
+      self_cr: "grep -r 'self\\._cr' addons/localization/l10n_cl_dte/models/ | wc -l"
+      fields_view_get: "grep -r 'fields_view_get' addons/localization/l10n_cl_dte/models/ | wc -l"
+    criterio_exito: "ALL <= 2"  # Máximo 5% (2/40 archivos aprox)
+  
+  # Validación XML schemas SII
+  sii_schemas:
+    comando: "xmllint --noout --schema addons/localization/l10n_cl_dte/data/sii_schemas/DTE_v10.xsd addons/localization/l10n_cl_dte/data/dte_examples/*.xml"
+    criterio_exito: "exit_code == 0"
+  
+  # Firmas digitales (xmlsec)
+  digital_signatures:
+    comando: "python -c 'from lxml import etree; import xmlsec; print(\"OK\")'"
+    criterio_exito: "output == 'OK'"
+  
+  # Linting
+  linting:
+    comando: "flake8 addons/localization/l10n_cl_dte/ --count --statistics --exclude=__pycache__"
+    criterio_exito: "errors == 0"
+  
+  # Smoke test Odoo
+  smoke_test:
+    comando: |
+      docker-compose run --rm odoo \
+        odoo-bin -c /etc/odoo/odoo.conf \
+        --test-enable \
+        --test-tags=/l10n_cl_dte \
+        --stop-after-init \
+        --log-level=error
+    criterio_exito: "exit_code == 0"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# RESTRICCIONES ESPECÍFICAS
+# ═══════════════════════════════════════════════════════════════════════════
+
+restricciones:
+  - "NO modificar schemas SII (solo lectura): data/sii_schemas/*"
+  - "NO eliminar archivos de certificados: data/caf/*"
+  - "NO modificar __manifest__.py sin aprobación"
+  - "NO cambiar lógica firmas digitales sin auditoría previa"
+  - "SÍ agregar tests para cada DTE type (33,34,52,56,61)"
+  - "SÍ validar XML output contra schemas SII tras cada cambio"
+  - "SÍ mantener backward compatibility con versiones anteriores DTE"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ARCHIVOS CRÍTICOS (Requieren aprobación manual)
+# ═══════════════════════════════════════════════════════════════════════════
+
+archivos_criticos:
+  - "models/account_move.py"
+  - "models/l10n_cl_dte_sii.py"
+  - "models/l10n_cl_caf.py"
+  - "wizards/validate_dte.py"
+  - "data/sii_schemas/*"
+  - "__manifest__.py"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DEPENDENCIAS EXTERNAS
+# ═══════════════════════════════════════════════════════════════════════════
+
+dependencias:
+  python:
+    - "xmlsec>=1.3.13"
+    - "lxml>=4.9.0"
+    - "zeep>=4.2.0"    # SOAP client para SII
+    - "cryptography>=41.0.0"
+  
+  system:
+    - "xmlsec1"
+    - "xmllint"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# MEMORIA INTELIGENTE - Configuración
+# ═══════════════════════════════════════════════════════════════════════════
+
+memoria:
+  habilitar: true
+  guardar_fixes_exitosos: true
+  guardar_estrategias_fallidas: true
+  extraer_patrones: true
+  dias_retencion: 365  # Compliance requiere auditoría histórica
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NOTIFICACIONES
+# ═══════════════════════════════════════════════════════════════════════════
+
+notificaciones:
+  slack:
+    habilitar: true
+    webhook: "${SLACK_WEBHOOK_URL}"
+    eventos:
+      - "ciclo_completado"
+      - "brecha_p0_no_cerrada"
+      - "validacion_sii_fallida"
+      - "firma_digital_error"
+  
+  email:
+    habilitar: true
+    destinatarios:
+      - "compliance@eergygroup.com"
+

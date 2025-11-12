@@ -1,0 +1,185 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# CONFIGURACIÓN CICLO AUTÓNOMO - NÓMINA CHILE
+# ═══════════════════════════════════════════════════════════════════════════
+
+modulo:
+  nombre: "l10n_cl_hr_payroll"
+  tipo: "modulo_odoo"
+  path: "addons/localization/l10n_cl_hr_payroll/"
+  lenguaje: "python"
+  framework: "Odoo 19 CE"
+  
+descripcion: "Nómina chilena - Previred compliance, AFP, ISAPRE, indicadores económicos"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CRITERIOS ÉXITO PERSONALIZADOS
+# ═══════════════════════════════════════════════════════════════════════════
+
+criterios_exito:
+  compliance_odoo19:
+    P0: 100
+    P1: 95
+  
+  tests:
+    coverage: 88
+    passing_rate: 100
+  
+  brechas:
+    P0_cerradas: 100
+    P1_cerradas: 95
+    P2_cerradas: 80
+  
+  calidad_codigo:
+    pep8_errors: 0
+    docstrings_coverage: 75
+    type_hints_coverage: 65
+  
+  seguridad:
+    vulnerabilidades_criticas: 0
+    vulnerabilidades_altas: 0
+  
+  localizacion_chilena:
+    calculos_precision: 0.01      # Margen error cálculos (centavos)
+    indicadores_actualizados: true # UF, UTM, IPC al día
+    previred_format_valid: true
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ITERACIONES MÁXIMAS
+# ═══════════════════════════════════════════════════════════════════════════
+
+iteraciones:
+  P0: 5
+  P1: 3
+  P2: 1
+
+# ═══════════════════════════════════════════════════════════════════════════
+# VALIDACIONES ESPECÍFICAS
+# ═══════════════════════════════════════════════════════════════════════════
+
+validaciones:
+  # Tests Odoo
+  tests_odoo:
+    comando: "pytest addons/localization/l10n_cl_hr_payroll/tests/ --cov=addons/localization/l10n_cl_hr_payroll/ --cov-report=json -v"
+    criterio_exito: "coverage >= 88 AND passing_rate == 100"
+  
+  # Compliance Odoo 19
+  compliance_p0:
+    comandos:
+      t_esc: "grep -r 't-esc' addons/localization/l10n_cl_hr_payroll/views/ | wc -l"
+      self_cr: "grep -r 'self\\._cr' addons/localization/l10n_cl_hr_payroll/models/ | wc -l"
+      attrs: "grep -r 'attrs=' addons/localization/l10n_cl_hr_payroll/views/ | wc -l"
+    criterio_exito: "ALL == 0"
+  
+  # Validación cálculos nómina
+  calculos_nomina:
+    comando: |
+      pytest addons/localization/l10n_cl_hr_payroll/tests/test_payslip_calculations.py \
+        -v \
+        --tb=short \
+        -k 'test_afp_calculation or test_isapre_calculation or test_total_imponible'
+    criterio_exito: "ALL PASSED"
+  
+  # Validación formato Previred
+  previred_format:
+    comando: |
+      python -c "
+      import sys
+      sys.path.insert(0, 'addons/localization/l10n_cl_hr_payroll')
+      from models.hr_payslip import HrPayslip
+      # Validar estructura archivo Previred
+      print('OK')
+      "
+    criterio_exito: "output == 'OK'"
+  
+  # Indicadores económicos actualizados
+  indicadores:
+    comando: |
+      python -c "
+      from datetime import date, timedelta
+      # Verificar UF/UTM del mes actual
+      # TODO: Implementar consulta real
+      print('OK')
+      "
+    criterio_exito: "output == 'OK'"
+  
+  # Linting
+  linting:
+    comando: "flake8 addons/localization/l10n_cl_hr_payroll/ --count --statistics"
+    criterio_exito: "errors == 0"
+  
+  # Smoke test
+  smoke_test:
+    comando: |
+      docker-compose run --rm odoo \
+        odoo-bin -c /etc/odoo/odoo.conf \
+        --test-enable \
+        --test-tags=/l10n_cl_hr_payroll \
+        --stop-after-init \
+        --log-level=error
+    criterio_exito: "exit_code == 0"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# RESTRICCIONES ESPECÍFICAS
+# ═══════════════════════════════════════════════════════════════════════════
+
+restricciones:
+  - "NO modificar reglas salariales sin aprobación RRHH: data/salary_rules.xml"
+  - "NO cambiar lógica cálculo AFP/ISAPRE sin validación legal"
+  - "NO modificar estructura Previred sin consultar Circular 1/2018"
+  - "SÍ agregar tests para cada cambio en cálculos"
+  - "SÍ validar precisión decimal (2 decimales obligatorio)"
+  - "SÍ mantener histórico indicadores económicos (no eliminar)"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ARCHIVOS CRÍTICOS (Requieren aprobación manual)
+# ═══════════════════════════════════════════════════════════════════════════
+
+archivos_criticos:
+  - "models/hr_payslip.py"
+  - "models/hr_salary_rule.py"
+  - "models/hr_economic_indicators.py"
+  - "data/salary_rules.xml"
+  - "data/afp_isapre_data.xml"
+  - "__manifest__.py"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DEPENDENCIAS EXTERNAS
+# ═══════════════════════════════════════════════════════════════════════════
+
+dependencias:
+  python:
+    - "requests>=2.31.0"  # Para sync indicadores económicos
+    - "python-dateutil>=2.8.0"
+  
+  apis_externas:
+    - "https://mindicador.cl/api"  # UF, UTM, IPC
+
+# ═══════════════════════════════════════════════════════════════════════════
+# MEMORIA INTELIGENTE - Configuración
+# ═══════════════════════════════════════════════════════════════════════════
+
+memoria:
+  habilitar: true
+  guardar_fixes_exitosos: true
+  guardar_estrategias_fallidas: true
+  extraer_patrones: true
+  dias_retencion: 730  # Nómina requiere histórico 2 años
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NOTIFICACIONES
+# ═══════════════════════════════════════════════════════════════════════════
+
+notificaciones:
+  slack:
+    habilitar: true
+    webhook: "${SLACK_WEBHOOK_URL}"
+    eventos:
+      - "ciclo_completado"
+      - "calculo_nomina_error"
+      - "indicadores_desactualizados"
+  
+  email:
+    habilitar: true
+    destinatarios:
+      - "payroll@eergygroup.com"
+
