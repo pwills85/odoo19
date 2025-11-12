@@ -21,18 +21,6 @@ class HrPayslip(models.Model):
     _order = 'date_from desc, id desc'
     
     # ═══════════════════════════════════════════════════════════
-    # CREATE - Asignar número secuencial
-    # ═══════════════════════════════════════════════════════════
-    
-    @api.model_create_multi
-    def create(self, vals_list):
-        """Asignar número secuencial automático - Odoo 19 CE"""
-        for vals in vals_list:
-            if vals.get('number', '/') == '/' or not vals.get('number'):
-                vals['number'] = self.env['ir.sequence'].next_by_code('hr.payslip') or '/'
-        return super(HrPayslip, self).create(vals_list)
-    
-    # ═══════════════════════════════════════════════════════════
     # CAMPOS BÁSICOS
     # ═══════════════════════════════════════════════════════════
     
@@ -554,14 +542,15 @@ class HrPayslip(models.Model):
                     except Exception as e:
                         _logger.warning(f"No se pudo validar cap AFP: {e}")
 
-            # 2. Validar reforma 2025 (contratos nuevos)
+            # 2. Validar Ley 21.735 (contratos nuevos desde agosto 2025)
+            # CORREGIDO (AUDIT C-2): employer_reforma_2025 -> employer_total_ley21735
             if payslip.contract_id and payslip.contract_id.date_start:
-                reforma_vigencia = fields.Date.from_string('2025-01-01')
+                reforma_vigencia = fields.Date.from_string('2025-08-01')  # ✅ Fecha correcta Ley 21.735
                 if payslip.contract_id.date_start >= reforma_vigencia:
-                    if not payslip.employer_reforma_2025 or payslip.employer_reforma_2025 == 0:
+                    if not payslip.employer_total_ley21735 or payslip.employer_total_ley21735 == 0:
                         errors.append(
                             f"⚠️ Contrato desde {payslip.contract_id.date_start} "
-                            f"debe tener aporte Reforma 2025 (1% empleador). "
+                            f"debe tener aporte Ley 21.735 (1% empleador). "
                             f"Recalcule la liquidación."
                         )
 
@@ -580,10 +569,11 @@ class HrPayslip(models.Model):
                     )
 
             # 4. Validar RUT trabajador (Previred)
-            if not payslip.employee_id.identification_id:
+            # CORREGIDO (AUDIT C-4): identification_id -> vat (campo estándar Odoo para RUT)
+            if not payslip.employee_id.vat:
                 errors.append(
                     f"⚠️ Trabajador {payslip.employee_id.name} no tiene RUT configurado. "
-                    f"Configure en: Empleados > {payslip.employee_id.name} > RUT"
+                    f"Configure en: Empleados > {payslip.employee_id.name} > Identificación (RUT)"
                 )
 
             # 5. Validar AFP asignada
@@ -636,14 +626,22 @@ class HrPayslip(models.Model):
     
     @api.model_create_multi
     def create(self, vals_list):
-        """Generar número secuencial al crear"""
+        """
+        Asignar nombre y número secuencial al crear - Odoo 19 CE
+
+        Corrige duplicación de método create() (AUDIT C-1)
+        Combina lógica de asignación de name y number.
+        """
         for vals in vals_list:
+            # Asignar nombre si es nuevo o no existe
             if vals.get('name', 'Nuevo') == 'Nuevo':
                 vals['name'] = self.env['ir.sequence'].next_by_code('hr.payslip') or 'Nuevo'
-            
-            if not vals.get('number'):
-                vals['number'] = vals['name']
-        
+
+            # Asignar número si no existe o es default
+            if vals.get('number', '/') == '/' or not vals.get('number'):
+                # Prioridad: usar name si ya está asignado, sino generar nuevo
+                vals['number'] = vals.get('name') or self.env['ir.sequence'].next_by_code('hr.payslip') or '/'
+
         return super().create(vals_list)
     
     def action_compute_sheet(self):

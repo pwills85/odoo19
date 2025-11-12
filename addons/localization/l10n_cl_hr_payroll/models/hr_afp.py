@@ -23,6 +23,7 @@ class HrAFP(models.Model):
     code = fields.Char(
         string='Código',
         required=True,
+        index=True,  # AUDIT A-1: Agregar índice para búsquedas frecuentes
         help='Código único de la AFP (para Previred)'
     )
     rate = fields.Float(

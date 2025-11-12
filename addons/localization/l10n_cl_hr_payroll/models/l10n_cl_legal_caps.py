@@ -33,7 +33,7 @@ class L10nClLegalCaps(models.Model):
         ('AFC_CAP', 'AFC - Tope Imponible'),
         ('AFP_IMPONIBLE_CAP', 'AFP - Tope Imponible'),
         ('GRATIFICATION_CAP', 'Gratificación - Tope Legal'),
-    ], string='Code', required=True)
+    ], string='Code', required=True, index=True)  # AUDIT A-1: Agregar índice
     
     amount = fields.Float(
         string='Amount',
@@ -51,12 +51,14 @@ class L10nClLegalCaps(models.Model):
     valid_from = fields.Date(
         string='Valid From',
         required=True,
+        index=True,  # AUDIT A-1: Agregar índice para búsquedas frecuentes
         default=lambda self: date.today().replace(month=1, day=1),
         help='Fecha inicio de vigencia (primer día del mes)'
     )
-    
+
     valid_until = fields.Date(
         string='Valid Until',
+        index=True,  # AUDIT A-1: Agregar índice para búsquedas frecuentes
         help='Fecha fin de vigencia (vacío = indefinido)'
     )
     

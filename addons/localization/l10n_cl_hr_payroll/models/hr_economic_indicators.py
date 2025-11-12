@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError  # AUDIT C-3: Agregar UserError
 from datetime import date
 
 
@@ -26,6 +26,7 @@ class HrEconomicIndicators(models.Model):
     period = fields.Date(
         string='Período',
         required=True,
+        index=True,  # AUDIT A-1: Agregar índice para búsquedas frecuentes
         help='Primer día del mes del indicador'
     )
     

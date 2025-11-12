@@ -62,11 +62,13 @@ class HrTaxBracket(models.Model):
     vigencia_desde = fields.Date(
         string='Vigente Desde',
         required=True,
+        index=True,  # AUDIT A-1: Agregar índice para búsquedas frecuentes
         default=lambda self: date.today().replace(month=1, day=1),
         help='Fecha inicio de vigencia (primer día del mes)'
     )
     vigencia_hasta = fields.Date(
         string='Vigente Hasta',
+        index=True,  # AUDIT A-1: Agregar índice para búsquedas frecuentes
         help='Fecha fin de vigencia (vacío = indefinido)'
     )
     
@@ -195,7 +197,8 @@ class HrTaxBracket(models.Model):
                     bracket = b
                     break
             else:
-                if b.desde <= base_utm < b.hasta:
+                # AUDIT A-8: Corregir comparación - debe ser <= para incluir límite superior
+                if b.desde <= base_utm <= b.hasta:
                     bracket = b
                     break
         

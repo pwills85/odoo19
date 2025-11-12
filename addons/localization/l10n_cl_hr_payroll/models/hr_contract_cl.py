@@ -2,6 +2,9 @@
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+import logging
+
+_logger = logging.getLogger(__name__)  # AUDIT C-7: Agregar logger
 
 
 class HrContractCL(models.Model):
@@ -23,6 +26,7 @@ class HrContractCL(models.Model):
     afp_id = fields.Many2one(
         'hr.afp',
         string='AFP',
+        ondelete='restrict',  # AUDIT A-5: Prevenir borrado de AFP en uso
         help='Administradora de Fondos de Pensiones'
     )
     afp_rate = fields.Float(
@@ -42,6 +46,7 @@ class HrContractCL(models.Model):
     isapre_id = fields.Many2one(
         'hr.isapre',
         string='ISAPRE',
+        ondelete='restrict',  # AUDIT A-5: Prevenir borrado de ISAPRE en uso
         help='Institución de Salud Previsional'
     )
     isapre_plan_uf = fields.Float(
@@ -70,6 +75,7 @@ class HrContractCL(models.Model):
     l10n_cl_apv_institution_id = fields.Many2one(
         'l10n_cl.apv.institution',
         string='APV Institution',
+        ondelete='restrict',  # AUDIT A-5: Prevenir borrado de institución APV en uso
         help='Institución receptora del APV'
     )
     l10n_cl_apv_regime = fields.Selection([
@@ -166,3 +172,78 @@ class HrContractCL(models.Model):
                 raise ValidationError(_("Las cargas maternales no pueden ser negativas"))
             if contract.family_allowance_invalid < 0:
                 raise ValidationError(_("Las cargas inválidas no pueden ser negativas"))
+
+    @api.constrains('colacion', 'movilizacion')
+    def _check_art41_allowances(self):
+        """
+        Validar tope Art. 41 CT - Colación y Movilización (AUDIT C-7)
+
+        Las asignaciones de colación y movilización son exentas de impuesto
+        hasta un tope conjunto de 5 UTM mensuales (Art. 41 Código del Trabajo).
+
+        Ref Legal:
+        - Art. 41 del Código del Trabajo
+        - Circular SII sobre asignaciones no constitutivas de renta
+        """
+        for contract in self:
+            # Solo validar si hay al menos una asignación
+            if not contract.colacion and not contract.movilizacion:
+                continue
+
+            try:
+                # Obtener UTM del período actual
+                indicator = self.env['hr.economic.indicators'].get_indicator_for_date(
+                    fields.Date.today()
+                )
+                max_exempt_utm = 5  # 5 UTM según normativa
+                max_exempt_clp = indicator.utm * max_exempt_utm
+
+                total_art41 = (contract.colacion or 0) + (contract.movilizacion or 0)
+
+                # Si excede el tope, ADVERTIR (no bloquear, solo informar)
+                if total_art41 > max_exempt_clp:
+                    excess = total_art41 - max_exempt_clp
+
+                    _logger.warning(
+                        "Contrato %s (ID: %d): Asignaciones Art. 41 exceden tope exento. "
+                        "Colación: $%s, Movilización: $%s, Total: $%s, "
+                        "Tope (5 UTM): $%s, Exceso tributable: $%s",
+                        contract.name or contract.id,
+                        contract.id,
+                        f"{contract.colacion:,.0f}" if contract.colacion else "0",
+                        f"{contract.movilizacion:,.0f}" if contract.movilizacion else "0",
+                        f"{total_art41:,.0f}",
+                        f"{max_exempt_clp:,.0f}",
+                        f"{excess:,.0f}"
+                    )
+
+                    # Mostrar mensaje al usuario (warning, no error)
+                    return {
+                        'warning': {
+                            'title': _('Atención: Asignaciones Art. 41 CT'),
+                            'message': _(
+                                "Las asignaciones de colación y movilización exceden el tope exento:\n\n"
+                                "• Colación: $%s\n"
+                                "• Movilización: $%s\n"
+                                "• Total: $%s\n\n"
+                                "Tope exento conjunto (5 UTM): $%s\n"
+                                "Exceso tributable: $%s\n\n"
+                                "El exceso de $%s será afecto a impuesto único."
+                            ) % (
+                                f"{contract.colacion:,.0f}" if contract.colacion else "0",
+                                f"{contract.movilizacion:,.0f}" if contract.movilizacion else "0",
+                                f"{total_art41:,.0f}",
+                                f"{max_exempt_clp:,.0f}",
+                                f"{excess:,.0f}",
+                                f"{excess:,.0f}"
+                            )
+                        }
+                    }
+
+            except Exception as e:
+                # Si no hay indicadores económicos, solo loguear warning
+                # No bloquear operación
+                _logger.warning(
+                    "No se pudo validar tope Art. 41 para contrato %s: %s",
+                    contract.id, str(e)
+                )
