@@ -9,10 +9,84 @@
          ═════════════════════════════════════════════════════════════ -->
 
     <!-- ══════════════════════════════════════════════════════════════
-         DASHBOARD VIEW REMOVED - Deprecated in Odoo 19
-         Now using Kanban view (view_dte_dashboard_kanban) as primary dashboard
-         Migration: 2025-11-12 - Converted <dashboard> to <kanban class="o_kanban_dashboard">
+         DASHBOARD VIEW - Vista Principal con KPIs
          ══════════════════════════════════════════════════════════════ -->
+    <record id="view_dte_dashboard_dashboard" model="ir.ui.view">
+        <field name="name">l10n_cl.dte_dashboard.dashboard</field>
+        <field name="model">l10n_cl.dte_dashboard</field>
+        <field name="arch" type="xml">
+            <dashboard string="Dashboard Central DTEs">
+                <view type="graph" ref="view_dte_dashboard_graph_bar"/>
+                <group>
+                    <!-- Fila 1: KPIs Principales -->
+                    <aggregate name="dtes_aceptados_30d" field="dtes_aceptados_30d"
+                               string="DTEs Aceptados (30d)"
+                               help="DTEs aceptados por el SII en los últimos 30 días"
+                               clickable="1"
+                               domain="[('l10n_cl_dte_status', '=', 'accepted')]"
+                               widget="statinfo"
+                               icon="fa-check-circle"
+                               bg_color="#27ae60"/>
+
+                    <aggregate name="dtes_rechazados_30d" field="dtes_rechazados_30d"
+                               string="DTEs Rechazados (30d)"
+                               help="DTEs rechazados por el SII en los últimos 30 días"
+                               clickable="1"
+                               domain="[('l10n_cl_dte_status', '=', 'rejected')]"
+                               widget="statinfo"
+                               icon="fa-times-circle"
+                               bg_color="#e74c3c"/>
+
+                    <aggregate name="dtes_pendientes" field="dtes_pendientes"
+                               string="DTEs Pendientes"
+                               help="DTEs pendientes de envío al SII"
+                               clickable="1"
+                               domain="[('l10n_cl_dte_status', 'in', ['draft', 'to_send'])]"
+                               widget="statinfo"
+                               icon="fa-clock-o"
+                               bg_color="#f39c12"/>
+
+                    <aggregate name="monto_facturado_mes" field="monto_facturado_mes"
+                               string="Monto Facturado Mes"
+                               help="Monto total facturado con DTEs aceptados en el mes actual"
+                               widget="monetary"
+                               icon="fa-money"
+                               bg_color="#3498db"/>
+                </group>
+
+                <group>
+                    <!-- Fila 2: Indicadores Adicionales -->
+                    <aggregate name="total_dtes_emitidos_mes" field="total_dtes_emitidos_mes"
+                               string="Total DTEs Mes"
+                               help="Total de DTEs emitidos en el mes actual"
+                               widget="statinfo"
+                               icon="fa-file-text"/>
+
+                    <aggregate name="dtes_con_reparos" field="dtes_con_reparos"
+                               string="DTEs con Reparos"
+                               help="DTEs que requieren acción del usuario"
+                               clickable="1"
+                               widget="statinfo"
+                               icon="fa-exclamation-triangle"
+                               bg_color="#e67e22"/>
+
+                    <aggregate name="tasa_aceptacion_30d" field="tasa_aceptacion_30d"
+                               string="Tasa Aceptación"
+                               help="Porcentaje de DTEs aceptados sobre el total"
+                               widget="percentage"
+                               icon="fa-line-chart"
+                               bg_color="#16a085"/>
+
+                    <aggregate name="tasa_rechazo_30d" field="tasa_rechazo_30d"
+                               string="Tasa Rechazo"
+                               help="Porcentaje de DTEs rechazados sobre el total"
+                               widget="percentage"
+                               icon="fa-area-chart"
+                               bg_color="#c0392b"/>
+                </group>
+            </dashboard>
+        </field>
+    </record>
 
     <!-- ══════════════════════════════════════════════════════════════
          KANBAN VIEW - Vista Tarjetas
@@ -344,7 +418,7 @@
     <record id="action_dte_dashboard" model="ir.actions.act_window">
         <field name="name">Dashboard Central DTEs</field>
         <field name="res_model">l10n_cl.dte_dashboard</field>
-        <field name="view_mode">kanban,graph,list,form</field>
+        <field name="view_mode">kanban,dashboard,graph,list,form</field>
         <field name="context">{
             'search_default_filter_my_company': 1,
         }</field>
