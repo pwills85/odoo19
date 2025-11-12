@@ -12,7 +12,10 @@
       "Bash(bash:*)",
       "Bash(python3:*)",
       "Bash(docker compose logs:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(done)",
+      "Bash(copilot:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

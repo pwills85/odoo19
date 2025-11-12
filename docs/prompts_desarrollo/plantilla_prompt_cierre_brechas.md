@@ -8,6 +8,30 @@
 
 Adicional a las instrucciones específicas, todo desarrollo debe adherirse a las siguientes directrices generales:
 
+0.  **✅ Compliance Odoo 19 CE (CRÍTICO - Validar SIEMPRE):**
+    - **Checklist completo:** `docs/prompts_desarrollo/CHECKLIST_ODOO19_VALIDACIONES.md`
+    - **Guía deprecaciones:** `.claude/project/ODOO19_DEPRECATIONS_CRITICAL.md`
+    
+    **Validaciones P0 Obligatorias (Deadline: 2025-03-01):**
+    - ✅ NO usar `t-esc` en templates XML → Usar `t-out`
+    - ✅ NO usar `type='json'` en routes → Usar `type='jsonrpc'` + `csrf=False`
+    - ⚠️ NO usar `attrs=` en XML views → Usar expresiones Python directas
+    - ⚠️ NO usar `_sql_constraints` → Usar `models.Constraint`
+    - ⚠️ NO usar `<dashboard>` tags → Convertir a `<kanban class="o_kanban_dashboard">`
+    
+    **Validaciones P1 (Deadline: 2025-06-01):**
+    - ✅ NO usar `self._cr` → Usar `self.env.cr`
+    - ⚠️ NO usar `fields_view_get()` → Usar `get_view()`
+    - 📋 Revisar `@api.depends` en herencias (comportamiento acumulativo)
+    
+    **Comando pre-commit (EJECUTAR ANTES DE COMMITEAR):**
+    ```bash
+    # Detectar deprecaciones en cambios
+    git diff --cached | grep -E "t-esc|type='json'|attrs=|self\._cr|fields_view_get"
+    
+    # Esperado: 0 matches (excepto en comentarios/docs)
+    ```
+
 1.  **Alcance Funcional de DTEs:** El desarrollo y las pruebas deben cubrir el siguiente set de documentos:
     *   **Venta:** Factura Afecta a IVA, Factura Exenta de IVA, Nota de Crédito, Nota de Débito, Guía de Despacho.
     *   **Compra:** Factura Afecta a IVA, Factura Exenta de IVA, Nota de Crédito, Nota de Débito, Guía de Despacho, Boleta de Honorarios Electrónica y de papel (antiguas).
@@ -36,12 +60,35 @@ Adicional a las instrucciones específicas, todo desarrollo debe adherirse a las
 5.  **Asegúrate** de que el código refactorizado sigue las guías de estilo de Odoo y PEP8. No dejes código comentado.
 
 **CRITERIOS DE ACEPTACIÓN (VERIFICACIÓN):**
+
+0.  **✅ Compliance Odoo 19 CE (VALIDAR PRIMERO):**
+    ```bash
+    # Validar código modificado NO contiene deprecaciones
+    grep -rn "t-esc\|type='json'\|attrs=\|self\._cr\|fields_view_get" \
+      l10n_cl_dte/models/account_move.py --color=always
+    
+    # Esperado: 0 matches (código limpio Odoo 19 CE)
+    ```
+
 1.  El problema N+1 debe estar resuelto. El número de consultas a la base de datos debe ser constante e independiente del número de líneas de la factura.
+
 2.  Todos los tests existentes relacionados con la validación de facturas (`account.move`) deben pasar exitosamente.
+
 3.  **Crea un nuevo test unitario** en `l10n_cl_dte/tests/test_dte_performance.py` que específicamente valide este escenario: crea una factura con 200 líneas y mide (o comprueba) que la generación del DTE se completa eficientemente y sin un número excesivo de consultas.
+
 4.  Ejecuta el linter (`pylint` o `ruff` según la configuración del proyecto) y asegúrate de que no introduce nuevos errores o advertencias.
+
+5.  **Validación Odoo 19 CE post-cambios:**
+    ```bash
+    # Auditoría automática módulo modificado
+    python3 scripts/odoo19_migration/1_audit_deprecations.py \
+      --target l10n_cl_dte/
+    
+    # Esperado: 0 deprecaciones P0/P1 en archivos modificados
+    ```
 
 **ENTREGABLE:**
 - Código modificado en los archivos correspondientes.
 - Nuevo archivo de test o test modificado que cubra el caso de uso.
 - Un commit siguiendo las convenciones del proyecto. El mensaje del commit debe ser: `refactor(l10n_cl_dte): Optimize DTE line processing to fix N+1 issue`.
+- **Validación Odoo 19 CE:** Confirmar 0 deprecaciones P0/P1 introducidas (ejecutar `python3 scripts/odoo19_migration/1_audit_deprecations.py --target l10n_cl_dte/`)

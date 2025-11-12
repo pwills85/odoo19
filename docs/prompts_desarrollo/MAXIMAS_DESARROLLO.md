@@ -2,7 +2,41 @@
 
 Estas directrices son **no negociables** y aplican a todos los prompts de desarrollo.
 
+---
 
+## 🚨 MÁXIMA #0: Compliance Odoo 19 CE (CRÍTICO)
+
+**NO NEGOCIABLE - Validar en CADA commit**
+
+**Checklist completo:** `docs/prompts_desarrollo/CHECKLIST_ODOO19_VALIDACIONES.md`  
+**Guía deprecaciones:** `.claude/project/ODOO19_DEPRECATIONS_CRITICAL.md`
+
+### Validaciones P0 - Breaking Changes (Deadline: 2025-03-01)
+
+- ✅ NO usar `t-esc` en templates XML → Usar `t-out`
+- ✅ NO usar `type='json'` en routes → Usar `type='jsonrpc'` + `csrf=False`
+- ⚠️ NO usar `attrs=` en XML views → Usar expresiones Python directas
+- ⚠️ NO usar `_sql_constraints` → Usar `models.Constraint`
+- ⚠️ NO usar `<dashboard>` tags → Convertir a `<kanban class="o_kanban_dashboard">`
+
+### Validaciones P1 - High Priority (Deadline: 2025-06-01)
+
+- ✅ NO usar `self._cr` → Usar `self.env.cr` (thread-safe, multi-company)
+- ⚠️ NO usar `fields_view_get()` → Usar `get_view()`
+- 📋 Revisar `@api.depends` en herencias (comportamiento acumulativo en Odoo 19)
+
+### Comando Validación Pre-Commit
+
+```bash
+# Detectar deprecaciones antes de commitear
+git diff --cached | grep -E "t-esc|type='json'|attrs=|self\._cr|fields_view_get|_sql_constraints"
+
+# Esperado: 0 matches (código limpio Odoo 19 CE)
+```
+
+**Compliance actual:** 80.4% P0 | 8.8% P1 (27 deprecaciones manuales pendientes)
+
+---
 ## 1. Plataforma y Versionado
 
 - Usar exclusivamente APIs y patrones soportados por **Odoo 19 Community Edition**.
