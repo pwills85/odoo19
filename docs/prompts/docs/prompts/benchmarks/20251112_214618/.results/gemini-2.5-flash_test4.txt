@@ -1,0 +1,4 @@
+[0;34m[TEST 1/15][0m Testing gemini-2.5-flash - Generación SQL
+[0;32m✅[0m gemini-2.5-flash completado en 56s
+[1;33m📊[0m Tokens (estimado): 128 | Chars: 1054 | Velocidad: 2 tok/s
+56|128|1054

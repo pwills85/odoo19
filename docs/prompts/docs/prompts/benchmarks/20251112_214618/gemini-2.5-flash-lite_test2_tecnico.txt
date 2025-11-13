@@ -1,0 +1,10 @@
+Loaded cached credentials.
+En Odoo 19 CE, el patrón MVC organiza la aplicación:
+
+1.  **Modelo**: Clases Python (`models.Model`) que definen la estructura de datos y la lógica de negocio (ej. `account.move` para facturas). Interactúa con la base de datos.
+2.  **Vista**: Archivos XML que describen la interfaz de usuario (UI) y cómo se presentan los datos (ej. vistas de formulario, árbol).
+3.  **Controlador**: Métodos Python (`@http.route` o acciones ORM) que manejan las peticiones del usuario, orquestan la interacción entre Modelo y Vista.
+
+**Flujo**: El usuario interactúa con la Vista. El Controlador recibe la petición, consulta/modifica el Modelo, y luego instruye a la Vista para que muestre los datos actualizados.
+
+**Ejemplo (Facturación)**: Al abrir una factura, el Controlador obtiene el registro `account.move` (Modelo) y lo muestra en su Vista de formulario. Al pulsar "Validar", el Controlador ejecuta el método `action_post` del Modelo y actualiza la Vista.

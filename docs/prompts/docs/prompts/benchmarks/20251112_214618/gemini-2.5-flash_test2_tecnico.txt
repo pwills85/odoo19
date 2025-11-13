@@ -1,0 +1,10 @@
+Loaded cached credentials.
+Odoo 19 CE adapta el patrón MVC:
+
+1.  **Model:** Clases Python (`models.Model`) que definen la estructura de datos, lógica de negocio y persistencia (ej: `account.move` para facturas).
+2.  **View:** Archivos XML que describen la interfaz de usuario (formularios, listas) para mostrar y editar datos (ej: `account.move.form`).
+3.  **Controller:** Principalmente el ORM de Odoo, que gestiona las interacciones entre Vistas y Modelos, aplicando reglas de negocio y manipulando la base de datos. También existen controladores HTTP para rutas web.
+
+**Flujo de Datos:** El usuario interactúa con una **View**. La **View** envía la acción al **Controller** (ORM). El **Controller** usa el **Model** para procesar la lógica y la base de datos. El **Model** devuelve los datos al **Controller**, que los pasa a la **View** para actualizar la interfaz.
+
+**Ejemplo:** Al crear una factura, la **View** (`account.move.form`) envía datos al **Controller** (ORM). El **Controller** usa el **Model** (`account.move`) para validar y guardar la factura en la base de datos, y luego actualiza la **View**.

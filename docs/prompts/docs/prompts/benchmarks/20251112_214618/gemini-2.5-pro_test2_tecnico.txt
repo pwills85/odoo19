@@ -1,0 +1,13 @@
+Loaded cached credentials.
+En Odoo 19, el patrón MVC (Modelo-Vista-Controlador) se adapta de la siguiente manera:
+
+1.  **Modelo**: Son las clases de Python que heredan de `models.Model`. Definen la estructura de los datos (campos), las reglas de negocio y la lógica de persistencia en la base de datos.
+
+2.  **Vista**: Son archivos XML que declaran la estructura de la interfaz de usuario (formularios, listas, kanbans). No contienen lógica, solo definen cómo se deben presentar los datos del modelo.
+
+3.  **Controlador**: Es el propio framework de Odoo. Procesa las acciones del usuario (clics en botones, guardado de registros), invoca los métodos correspondientes en el Modelo (a través del ORM) y selecciona la Vista adecuada para renderizar la respuesta.
+
+**Flujo de datos**: El usuario interactúa con una **Vista**. El **Controlador** (framework) intercepta la acción y llama a un método del **Modelo**. El Modelo modifica los datos y el Controlador actualiza la **Vista** para reflejar el cambio.
+
+**Ejemplo en facturación**:
+Al validar una factura (Modelo `account.move`) desde su **Vista** de formulario, el **Controlador** ejecuta el método `action_post()`, que cambia el estado de la factura en la base de datos y refresca la **Vista** para mostrarla como "Publicada".

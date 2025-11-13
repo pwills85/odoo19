@@ -1,0 +1,19 @@
+Loaded cached credentials.
+Aquí tienes la consulta SQL para PostgreSQL que busca facturas de cliente (`account_move`) del último mes, agrupadas por socio, calculando el total facturado y ordenando de mayor a menor. Se asume que las facturas deben estar en estado `posted`.
+
+```sql
+SELECT
+    partner_id,
+    SUM(amount_total) AS total_facturado
+FROM
+    account_move
+WHERE
+    type = 'out_invoice'
+    AND state = 'posted'
+    AND date >= date_trunc('month', CURRENT_DATE - INTERVAL '1 month')
+    AND date < date_trunc('month', CURRENT_DATE)
+GROUP BY
+    partner_id
+ORDER BY
+    total_facturado DESC;
+```

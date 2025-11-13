@@ -1,0 +1,4 @@
+[0;34m[TEST 1/15][0m Testing gemini-2.5-flash - Explicación técnica
+[0;32m✅[0m gemini-2.5-flash completado en 55s
+[1;33m📊[0m Tokens (estimado): 213 | Chars: 1123 | Velocidad: 3 tok/s
+55|213|1123

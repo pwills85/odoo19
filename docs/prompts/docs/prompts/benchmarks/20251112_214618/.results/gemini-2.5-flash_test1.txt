@@ -1,0 +1,4 @@
+[0;34m[TEST 1/15][0m Testing gemini-2.5-flash - Pregunta simple
+[0;32m✅[0m gemini-2.5-flash completado en 6s
+[1;33m📊[0m Tokens (estimado): 11 | Chars: 60 | Velocidad: 1 tok/s
+6|11|60

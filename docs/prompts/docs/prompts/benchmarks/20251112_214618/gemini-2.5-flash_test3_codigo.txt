@@ -1,0 +1,18 @@
+Loaded cached credentials.
+**Análisis de Código Odoo:**
+
+1.  **Issues de Performance (N+1 queries):**
+    *   `self.env['res.partner'].browse(move.partner_id.id)`: Genera una consulta por cada `move` para obtener el `partner`.
+    *   `self.env['product.product'].browse(line.product_id.id)`: Genera una consulta por cada `line` dentro del bucle, causando un grave problema N+1.
+
+2.  **Deprecaciones Odoo 19 / Malas Prácticas:**
+    *   `self._cr.execute(...)`: El uso directo de `_cr.execute` es una mala práctica. Bypassea el ORM, la caché, los derechos de acceso y la multi-compañía.
+    *   `move.partner_id.id`: Acceder al `.id` de un Many2one para luego `browse` es redundante; `move.partner_id` ya es un recordset.
+
+3.  **Riesgos de Seguridad:**
+    *   `self._cr.execute(...)`: Al saltarse el ORM, esta inserción no respeta las ACLs de Odoo, permitiendo potencialmente la escritura de datos sin las validaciones de seguridad adecuadas.
+
+4.  **Mejoras Recomendadas:**
+    *   **Optimizar consultas:** Usar `move.partner_id` directamente. Para `product`, obtener todos los `product_id` de `line_ids` y luego hacer un `browse` o `search` único.
+    *   **Usar ORM:** Reemplazar `self._cr.execute` con `self.env['dte.log'].create({'move_id': move.id, 'product_id': product.id})` (asumiendo `dte.log` es un modelo Odoo).
+    *   **Batching:** Procesar las líneas de factura de forma más eficiente, por ejemplo, usando `mapped` para obtener los `product_id`s y luego filtrar los productos con `dte_code` en una sola operación.

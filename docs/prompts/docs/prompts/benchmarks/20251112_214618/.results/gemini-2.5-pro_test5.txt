@@ -1,0 +1,4 @@
+[0;34m[TEST 1/15][0m Testing gemini-2.5-pro - Multi-step reasoning
+[0;32m✅[0m gemini-2.5-pro completado en 91s
+[1;33m📊[0m Tokens (estimado): 421 | Chars: 2255 | Velocidad: 4 tok/s
+91|421|2255
