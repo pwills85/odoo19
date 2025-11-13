@@ -1,0 +1,102 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# GitHub Advanced Security Configuration
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Configuración para GitHub Advanced Security features:
+# - Secret scanning
+# - Dependency review
+# - Code scanning (CodeQL)
+#
+# Referencia: https://docs.github.com/en/code-security
+#
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SECRET SCANNING
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Patrones de secretos a detectar (además de los predeterminados de GitHub)
+secret-scanning:
+  # Habilitar escaneo de secretos en push y PRs
+  push-protection: true
+  
+  # Patrones personalizados para secretos específicos del proyecto
+  custom-patterns:
+    - name: "SII Certificate Password"
+      pattern: "sii.*password|sii.*passwd|sii.*pwd"
+      severity: "high"
+    
+    - name: "Odoo Database Password"
+      pattern: "db_password|database_password|odoo_db_pass"
+      severity: "high"
+    
+    - name: "API Keys"
+      pattern: "(?i)(api[_-]?key|apikey|api_key)\s*[:=]\s*['\"]?[a-zA-Z0-9]{20,}['\"]?"
+      severity: "medium"
+    
+    - name: "Chilean RUT"
+      pattern: "\d{1,2}\.\d{3}\.\d{3}-[\dkK]"
+      severity: "low"  # RUTs pueden aparecer en código de ejemplo
+
+# ══════════════════════════════════════════════════════════════════════════════
+# DEPENDENCY REVIEW
+# ══════════════════════════════════════════════════════════════════════════════
+
+dependency-review:
+  # Revisar dependencias en todos los PRs
+  fail-on-severity: "high"
+  
+  # Severidades a bloquear
+  block-severities:
+    - "critical"
+    - "high"
+  
+  # Permitir dependencias conocidas seguras
+  allow-licenses:
+    - "MIT"
+    - "Apache-2.0"
+    - "BSD-3-Clause"
+    - "LGPL-3.0"
+    - "LGPL-2.1"
+  
+  # Bloquear licencias problemáticas
+  deny-licenses:
+    - "GPL-3.0"  # Puede requerir cambios según política de la empresa
+    - "AGPL-3.0"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CODE SCANNING (CodeQL)
+# ══════════════════════════════════════════════════════════════════════════════
+
+code-scanning:
+  # Habilitar CodeQL en push y PRs
+  enabled: true
+  
+  # Lenguajes a analizar
+  languages:
+    - python
+  
+  # Severidad mínima para bloquear merge
+  fail-on-severity: "high"
+  
+  # Categorías a revisar
+  categories:
+    - "security"
+    - "error"
+    - "warning"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# NOTIFICACIONES
+# ══════════════════════════════════════════════════════════════════════════════
+
+notifications:
+  # Notificar al propietario del repositorio
+  on-finding:
+    - "critical"
+    - "high"
+  
+  # Canales de notificación
+  channels:
+    - "email"
+    - "github"
+
