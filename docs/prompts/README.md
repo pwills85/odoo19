@@ -167,11 +167,34 @@ Sistema organizado de prompts para desarrollo, auditoría y cierre de brechas de
 
 **Si eres un agente nuevo (Claude, Copilot CLI, Gemini, etc.), lee esto PRIMERO:**
 
-### 🤖 GitHub Copilot CLI - Modo Autónomo (NUEVO)
+### 🤖 GitHub Copilot CLI - Modo Autónomo
 
 **Copilot CLI puede ejecutar tareas complejas de forma autónoma hasta completarlas.**
 
 📖 **Guía completa:** [COPILOT_CLI_AUTONOMO.md](COPILOT_CLI_AUTONOMO.md)
+
+---
+
+### 🚀 Google Gemini CLI - Modo Autónomo ⭐ **NUEVO - RECOMENDADO**
+
+**Gemini CLI ofrece capacidades superiores con 3 modos aprobación, sandbox y 3 modelos optimizados.**
+
+📖 **Guía completa:** [GEMINI_CLI_AUTONOMO.md](GEMINI_CLI_AUTONOMO.md)  
+📝 **Quick Reference:** [GEMINI_COMANDOS_QUICK_REF.sh](GEMINI_COMANDOS_QUICK_REF.sh)
+
+**Ventajas sobre Copilot:**
+- ✅ 3 modos: default/auto_edit/yolo (vs 1)
+- ✅ Sandbox mode (ejecución segura)
+- ✅ Output JSON nativo (parsing fácil)
+- ✅ 3 modelos: flash-lite/flash/pro
+- ✅ Context 1-2M tokens (vs 128K)
+- ✅ 76% más barato
+
+**Recomendación:** Usar Gemini CLI para nuevos desarrollos
+
+**Versión:** 0.0.354+  
+**Proveedor:** GitHub (Microsoft)  
+**Modelos:** GPT-4o, GPT-4-turbo
 
 **Inicio rápido:**
 ```bash
@@ -190,6 +213,100 @@ copilot
 - ✅ Genera reportes estructurados (Markdown, JSON)
 - ✅ Integración nativa con GitHub (repos, PRs, issues)
 - ✅ Contexto persistente del proyecto (lee documentación, conoce stack)
+
+---
+
+### 🤖 Codex CLI - Modo No Interactivo (NUEVO)
+
+**Codex CLI ejecuta tareas específicas de forma no interactiva con sandbox de seguridad.**
+
+📖 **Guía completa:** [../../INVESTIGACION_CODEX_CLI_CAPACIDADES.md](../../INVESTIGACION_CODEX_CLI_CAPACIDADES.md)
+
+**Versión:** 0.57.0  
+**Proveedor:** OpenAI  
+**Modelos disponibles (cuenta ChatGPT):** gpt-4-turbo-2024-04-09, gpt-3.5-turbo
+
+**Inicio rápido:**
+```bash
+# Modo no interactivo (exec): ejecución directa sin aprobación
+codex exec "Analiza módulo l10n_cl_dte para deprecaciones Odoo 19 CE y genera reporte compliance"
+
+# Modo interactivo: conversación con context retention
+codex
+> Analiza archivo models/account_move.py
+> [Codex analiza y responde, mantiene contexto]
+
+# Con configuración específica
+codex exec -m gpt-4-turbo "Audita seguridad en ai-service/" --profile security-max
+
+# Modo apply: aplicar cambios directamente
+codex apply --profile dte-precision-max
+> Corrige deprecaciones t-esc a t-out en views/
+```
+
+**Características clave:**
+- ✅ Sandbox de seguridad multi-nivel (read-only, workspace-write, danger-full-access)
+- ✅ Sistema de perfiles TOML avanzado (14 perfiles especializados)
+- ✅ Model Context Protocol (MCP) support experimental
+- ✅ Features opcionales: web search, image analysis, ghost commits
+- ✅ Modo no interactivo (exec) para automatización
+- ✅ Reasoning effort configurable (low, medium, high)
+
+**⚠️ Limitaciones cuenta ChatGPT:**
+- ❌ NO soporta: gpt-4o, gpt-4, claude-3.5-sonnet, o1-preview
+- ✅ SOLO soporta: gpt-4-turbo-2024-04-09, gpt-3.5-turbo
+
+**Comandos principales:**
+
+```bash
+# CORE
+codex                    # Modo interactivo (conversación)
+codex exec "task"        # Modo no interactivo (ejecución directa)
+codex apply              # Aplicar cambios propuestos
+codex resume             # Resumir conversación actual
+
+# CONFIGURACIÓN
+codex config show        # Ver configuración actual
+codex config set model gpt-4-turbo-2024-04-09  # Cambiar modelo
+codex --profile NAME     # Usar perfil específico
+
+# MCP (Model Context Protocol)
+codex mcp list           # Listar servidores MCP
+codex mcp add SERVER     # Agregar servidor MCP
+
+# FEATURES
+codex features list      # Ver features disponibles
+codex features set NAME true/false  # Activar/desactivar feature
+
+# SANDBOX
+codex sandbox status     # Ver estado sandbox actual
+codex --sandbox-access workspace-write exec "task"  # Sandbox write
+```
+
+**Perfiles especializados (configurados):**
+
+| Perfil | Modelo | Temp | Uso |
+|--------|--------|------|-----|
+| `dte-precision-max` | gpt-4-turbo | 0.05 | DTE compliance crítico |
+| `payroll-compliance` | gpt-4-turbo | 0.05 | Cálculos nómina |
+| `security-max` | gpt-4-turbo | 0.1 | Auditorías seguridad |
+| `odoo-dev` | gpt-4-turbo | 0.15 | Desarrollo general |
+| `test-automation` | gpt-4-turbo | 0.1 | Testing masivo |
+
+**Casos de uso vs Copilot CLI:**
+
+| Caso | Copilot CLI | Codex CLI |
+|------|------------|-----------|
+| Auditoría compliance | ✅ Mejor (integración GitHub) | ⚠️ Bueno |
+| Desarrollo autónomo | ✅ Mejor (multi-tool) | ⚠️ Limitado |
+| Análisis rápido no interactivo | ⚠️ Requiere flags | ✅ Mejor (exec) |
+| Sandbox seguridad | ⚠️ Básico | ✅ Mejor (3 niveles) |
+| Perfiles especializados | ❌ No soporta | ✅ Mejor (TOML) |
+| MCP support | ❌ No | ✅ Experimental |
+
+**Recomendación de uso:**
+- **Copilot CLI**: Auditorías compliance, desarrollo multi-archivo, integración GitHub
+- **Codex CLI**: Análisis rápidos, scripts automatizados, testing con perfiles especializados
 
 ---
 
