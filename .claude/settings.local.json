@@ -15,7 +15,14 @@
       "Bash(find:*)",
       "Bash(done)",
       "Bash(copilot:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(/Users/pedro/Documents/odoo19/docs/prompts/08_scripts/test_v2_syntax.sh)",
+      "Bash(tree:*)",
+      "Bash(cat:*)",
+      "Bash(./TEST_CLI_VALIDATION_20251112.sh)",
+      "Bash(gemini --version)",
+      "Bash(gemini:*)",
+      "Bash(./GEMINI_PERFORMANCE_BENCHMARK_20251112.sh)"
     ],
     "deny": [],
     "ask": []
