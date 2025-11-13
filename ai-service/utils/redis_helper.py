@@ -141,15 +141,24 @@ def _get_sentinel_client(read_only: bool = False) -> redis.Redis:
                        sentinel_count=len(sentinel_hosts))
 
         except redis.ConnectionError as e:
-            logger.error("redis_sentinel_connection_failed",
-                        sentinel_hosts=sentinel_hosts,
-                        error=str(e))
-            raise
+            logger.warning("redis_sentinel_connection_failed_fallback_to_standalone",
+                          sentinel_hosts=sentinel_hosts,
+                          error=str(e),
+                          fallback_host=os.getenv('REDIS_HOST', 'redis-master'))
+            # Reset failed sentinel instance to allow fallback to work on subsequent calls
+            _sentinel_instance = None
+            # Graceful fallback to standalone Redis (PRODUCTION-READY PATTERN)
+            # This allows cache to function even without Sentinel HA
+            return _get_direct_client()
 
         except Exception as e:
-            logger.error("redis_sentinel_initialization_failed",
-                        error=str(e))
-            raise
+            logger.error("redis_sentinel_initialization_failed_fallback_to_standalone",
+                        error=str(e),
+                        fallback_host=os.getenv('REDIS_HOST', 'redis-master'))
+            # Reset failed sentinel instance
+            _sentinel_instance = None
+            # Fallback to standalone Redis for any initialization error
+            return _get_direct_client()
 
     # Return appropriate client
     if read_only:

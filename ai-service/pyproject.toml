@@ -81,6 +81,9 @@ markers = [
     "api: API endpoint tests",
     "database: Database interaction tests",
     "asyncio: Asynchronous tests (using pytest-asyncio)",
+    "health: Health check endpoint tests",
+    "redis: Redis cache/connection tests",
+    "fast: Fast running tests (<1s execution time)",
 ]
 
 # Coverage Configuration

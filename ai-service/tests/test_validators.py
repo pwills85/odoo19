@@ -5,7 +5,7 @@ Tests with @pytest.parametrize for RUT validation and other validators
 """
 
 import pytest
-from validators.rut_validator import validate_rut, calculate_rut_dv
+from utils.validators import validate_rut, calculate_rut_dv
 
 
 class TestRUTValidator:

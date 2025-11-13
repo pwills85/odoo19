@@ -8,8 +8,9 @@ from fastapi import FastAPI, Depends, HTTPException, Security, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Dict, Any, List
+from contextlib import asynccontextmanager
 import re
 import time
 from datetime import datetime, timezone
@@ -42,10 +43,36 @@ logger = structlog.get_logger()
 SERVICE_START_TIME = time.time()
 
 # ═══════════════════════════════════════════════════════════
+# LIFESPAN CONTEXT MANAGER (FastAPI 0.93+)
+# Replaces deprecated @app.on_event("startup"/"shutdown")
+# ═══════════════════════════════════════════════════════════
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan context manager for application startup and shutdown.
+
+    FastAPI 0.93+ modern pattern replacing deprecated @app.on_event().
+    Provides proper async resource management with context manager protocol.
+
+    Yields during application lifetime, cleanup on exit.
+    """
+    # Startup: Log service initialization
+    logger.info("ai_service_starting",
+                version=settings.app_version,
+                anthropic_model=settings.anthropic_model)
+
+    yield  # Application runs here
+
+    # Shutdown: Log service termination
+    logger.info("ai_service_stopping")
+
+# ═══════════════════════════════════════════════════════════
 # FASTAPI APP
 # ═══════════════════════════════════════════════════════════
 
 app = FastAPI(
+    lifespan=lifespan,
     title=settings.app_name,
     version=settings.app_version,
     description="Microservicio de IA para validación y análisis de DTEs",
@@ -216,7 +243,7 @@ class DTEValidationRequest(BaseModel):
     company_id: int = Field(..., gt=0, description="ID de la compañía (debe ser positivo)")
     history: Optional[List[Dict]] = Field(default=[], max_items=100, description="Historial de validaciones (máximo 100)")
 
-    @validator('dte_data')
+    @field_validator('dte_data')
     def validate_dte_data(cls, v):
         """
         Validar estructura y datos del DTE con reglas de negocio chilenas.
@@ -357,7 +384,7 @@ class DTEValidationRequest(BaseModel):
         else:
             return str(dv_num)
 
-    @validator('history')
+    @field_validator('history')
     def validate_history_size(cls, v):
         """
         Limitar tamaño total del history para evitar OOM.
@@ -401,7 +428,7 @@ class POMatchRequest(BaseModel):
     invoice_data: Dict[str, Any] = Field(..., description="Datos de la factura")
     pending_pos: List[Dict[str, Any]] = Field(..., max_items=200, description="Órdenes de compra pendientes (máximo 200)")
     
-    @validator('pending_pos')
+    @field_validator('pending_pos')
     def validate_pending_pos(cls, v):
         """Validar que la lista no esté vacía"""
         if not v:
@@ -422,7 +449,7 @@ class PayrollValidationRequest(BaseModel):
     wage: float = Field(..., gt=0, description="Sueldo base (debe ser > 0)")
     lines: List[Dict[str, Any]] = Field(..., min_items=1, max_items=100, description="Líneas liquidación (1-100)")
 
-    @validator('wage')
+    @field_validator('wage')
     def validate_wage(cls, v):
         """
         Validar sueldo contra normativa chilena (P0-4).
@@ -460,7 +487,7 @@ class PayrollValidationRequest(BaseModel):
 
         return v
 
-    @validator('period')
+    @field_validator('period')
     def validate_period(cls, v):
         """
         Validar período de liquidación (P0-4).
@@ -505,7 +532,7 @@ class PayrollValidationRequest(BaseModel):
 
         return v
 
-    @validator('lines')
+    @field_validator('lines')
     def validate_lines(cls, v):
         """
         Validar estructura de líneas de liquidación (P0-4).
@@ -551,8 +578,9 @@ class PreviredIndicatorsResponse(BaseModel):
 # ENDPOINTS
 # ═══════════════════════════════════════════════════════════
 
+@limiter.limit("1000/minute")  # High limit for monitoring tools
 @app.get("/health")
-async def health_check():
+async def health_check(request: Request):
     """
     Enhanced health check endpoint with comprehensive dependency validation.
 
@@ -756,8 +784,9 @@ async def health_check():
     )
 
 
+@limiter.limit("1000/minute")  # High limit for orchestrator probes
 @app.get("/ready")
-async def readiness_check():
+async def readiness_check(request: Request):
     """
     Readiness probe for Kubernetes/orchestrators.
 
@@ -807,8 +836,9 @@ async def readiness_check():
         )
 
 
+@limiter.limit("1000/minute")  # High limit for orchestrator probes
 @app.get("/live")
-async def liveness_check():
+async def liveness_check(request: Request):
     """
     Liveness probe for Kubernetes/orchestrators.
 
@@ -827,8 +857,9 @@ async def liveness_check():
     }
 
 
+@limiter.limit("1000/minute")  # High limit for Prometheus scraping
 @app.get("/metrics")
-async def metrics():
+async def metrics(request: Request):
     """
     Prometheus metrics endpoint.
 
@@ -859,8 +890,10 @@ async def metrics():
         )
 
 
+@limiter.limit("100/minute")  # Moderate limit for authenticated cost queries
 @app.get("/metrics/costs")
 async def metrics_costs(
+    request: Request,
     period: str = "today",
     _: None = Depends(verify_api_key)
 ):
@@ -1381,29 +1414,86 @@ def get_orchestrator():
             settings.anthropic_model
         )
 
-        # ✅ FIX [H2/P1]: Redis with error handling, graceful degradation, and connection pool
-        try:
-            from redis.connection import ConnectionPool
+        # ✅ FIX [P0-3]: Redis with ROBUST error handling, retry logic, graceful degradation, and connection pool
+        redis_client = None
+        max_retries = 3
+        retry_delay = 1  # seconds
 
-            # Create connection pool for efficient resource management
-            redis_pool = ConnectionPool(
-                host=os.getenv('REDIS_HOST', 'redis'),
-                port=int(os.getenv('REDIS_PORT', 6379)),
-                db=int(os.getenv('REDIS_DB', 0)),
-                max_connections=20,  # ✅ FIX [P1 CICLO3]: Connection pool
-                socket_connect_timeout=5,
-                socket_keepalive=True,
-                decode_responses=False
+        for attempt in range(1, max_retries + 1):
+            try:
+                from redis.connection import ConnectionPool
+
+                # Create connection pool for efficient resource management
+                redis_pool = ConnectionPool(
+                    host=os.getenv('REDIS_HOST', 'redis'),
+                    port=int(os.getenv('REDIS_PORT', 6379)),
+                    db=int(os.getenv('REDIS_DB', 0)),
+                    max_connections=20,  # Connection pool optimization
+                    socket_connect_timeout=5,
+                    socket_keepalive=True,
+                    health_check_interval=30,  # Health check every 30s
+                    decode_responses=False
+                )
+
+                redis_client = redis.Redis(connection_pool=redis_pool)
+
+                # Test connection with timeout
+                redis_client.ping()
+                logger.info(
+                    "redis_connected",
+                    pool_size=20,
+                    host=os.getenv('REDIS_HOST', 'redis'),
+                    attempt=attempt
+                )
+                break  # Success, exit retry loop
+
+            except redis.ConnectionError as e:
+                logger.warning(
+                    "redis_connection_error",
+                    error=str(e),
+                    attempt=attempt,
+                    max_retries=max_retries
+                )
+                if attempt < max_retries:
+                    import time
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                else:
+                    logger.error(
+                        "redis_connection_failed_all_retries",
+                        error=str(e),
+                        mode="graceful_degradation"
+                    )
+                    redis_client = None
+
+            except redis.TimeoutError as e:
+                logger.warning(
+                    "redis_timeout_error",
+                    error=str(e),
+                    attempt=attempt
+                )
+                if attempt >= max_retries:
+                    redis_client = None
+
+            except Exception as e:
+                logger.exception(
+                    "redis_unexpected_error",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                    attempt=attempt
+                )
+                if attempt >= max_retries:
+                    redis_client = None
+
+        # Final status log
+        if redis_client is None:
+            logger.warning(
+                "service_starting_no_cache_mode",
+                message="AI Service running WITHOUT Redis cache (graceful degradation). "
+                        "Performance may be reduced. Check Redis connection."
             )
-
-            redis_client = redis.Redis(connection_pool=redis_pool)
-
-            # Test connection
-            redis_client.ping()
-            logger.info("✅ Redis connected successfully with connection pool (max_connections=20)")
-        except (redis.ConnectionError, redis.TimeoutError, Exception) as e:
-            logger.warning(f"⚠️ Redis unavailable: {e}. Running in no-cache mode (graceful degradation)")
-            redis_client = None  # Graceful degradation: continue without cache
+        else:
+            logger.info("service_starting_with_cache", cache_mode="redis_enabled")
 
         slack_token = os.getenv('SLACK_TOKEN')
         
@@ -1469,6 +1559,7 @@ async def trigger_sii_monitoring(
         )
 
 
+@limiter.limit("100/minute")  # Frequent status checks allowed
 @app.get(
     "/api/ai/sii/status",
     tags=["SII Monitoring"],
@@ -1476,6 +1567,7 @@ async def trigger_sii_monitoring(
     description="Obtiene estado actual del sistema de monitoreo"
 )
 async def get_sii_monitoring_status(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     """
@@ -1547,18 +1639,6 @@ async def get_sii_monitoring_status(
             detail=str(e)
         )
 
-@app.on_event("startup")
-async def startup_event():
-    """Inicialización al arrancar el servicio"""
-    logger.info("ai_service_starting",
-                version=settings.app_version,
-                anthropic_model=settings.anthropic_model)
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Limpieza al detener el servicio"""
-    logger.info("ai_service_stopping")
-
 # ═══════════════════════════════════════════════════════════
 # [NEW] CHAT SUPPORT ENDPOINTS - Added 2025-10-22
 # ═══════════════════════════════════════════════════════════
@@ -1577,7 +1657,7 @@ class ChatMessageRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=5000, description="Mensaje del usuario (1-5000 caracteres)")
     user_context: Optional[Dict[str, Any]] = Field(None, description="Contexto del usuario (opcional)")
 
-    @validator('session_id')
+    @field_validator('session_id')
     def validate_session_id(cls, v):
         """Validar formato UUID si se proporciona"""
         if v:
@@ -1588,7 +1668,7 @@ class ChatMessageRequest(BaseModel):
                 raise ValueError(f"session_id debe ser un UUID válido: {v}")
         return v
 
-    @validator('message')
+    @field_validator('message')
     def validate_message(cls, v):
         """
         Validar y sanitizar mensaje (P0-4).
@@ -1916,6 +1996,7 @@ async def send_chat_message_stream(
     )
 
 
+@limiter.limit("50/minute")  # Moderate limit for session creation
 @app.post(
     "/api/chat/session/new",
     response_model=NewSessionResponse,
@@ -1924,6 +2005,7 @@ async def send_chat_message_stream(
     description="Start new conversation with AI assistant"
 )
 async def create_chat_session(
+    http_request: Request,
     request: NewSessionRequest,
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
@@ -1955,6 +2037,7 @@ async def create_chat_session(
     )
 
 
+@limiter.limit("50/minute")  # Moderate limit for history retrieval
 @app.get(
     "/api/chat/session/{session_id}",
     tags=["Chat Support"],
@@ -1962,6 +2045,7 @@ async def create_chat_session(
     description="Retrieve conversation history for a session"
 )
 async def get_conversation_history(
+    request: Request,
     session_id: str,
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
@@ -1994,6 +2078,7 @@ async def get_conversation_history(
         )
 
 
+@limiter.limit("50/minute")  # Moderate limit for session deletion
 @app.delete(
     "/api/chat/session/{session_id}",
     tags=["Chat Support"],
@@ -2001,6 +2086,7 @@ async def get_conversation_history(
     description="Delete conversation history and context for a session"
 )
 async def clear_chat_session(
+    request: Request,
     session_id: str,
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
@@ -2033,6 +2119,7 @@ async def clear_chat_session(
         )
 
 
+@limiter.limit("30/minute")  # Moderate limit for knowledge base searches
 @app.get(
     "/api/chat/knowledge/search",
     tags=["Chat Support"],
@@ -2040,6 +2127,7 @@ async def clear_chat_session(
     description="Search DTE documentation knowledge base"
 )
 async def search_knowledge_base(
+    request: Request,
     query: str,
     top_k: int = 3,
     credentials: HTTPAuthorizationCredentials = Depends(security)
