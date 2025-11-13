@@ -376,6 +376,15 @@ docker compose exec odoo odoo-bin --test-enable -i {MODULE} \
 **Tarea:**
 Consolidar reportes de todos los agentes:
 
+**MEJORA v2.2:** Validación Cruzada GPT-5 (Opcional)
+Después de consolidación Sonnet 4.5, ejecutar validación independiente con GPT-5 para detectar:
+- Duplicados no detectados
+- Priorizaciones incorrectas
+- Estimaciones fuera de rango
+- Gaps en análisis
+
+Ver: Fase 2.5 Validación GPT-5 más abajo.
+
 **Inputs:**
 - compliance_report_{MODULE}_{DATE}.md (Agent_Compliance)
 - backend_report_{MODULE}_{DATE}.md (Agent_Backend)
@@ -613,6 +622,213 @@ Consolidar reportes de todos los agentes:
 
 ---
 
-**Template Version:** 1.0.0
+### Fase 2.5: Validación Cruzada GPT-5 (Opcional v2.2)
+
+**MEJORA v2.2:** Validación independiente post-consolidación para aumentar confiabilidad.
+
+```markdown
+## Prompt para Agent_Validator_GPT5
+
+**Rol:** Validador Independiente (Cross-Model Validation)
+
+**Tarea:**
+Analizar CONSOLIDATED_REPORT_360_{DATE}.md como auditor externo para detectar:
+
+### CHECKLIST VALIDACIÓN:
+
+**1. Duplicados Ocultos:**
+- ¿Hay issues reportados por múltiples agentes que no se consolidaron correctamente?
+- ¿Diferentes nombres pero mismo problema? (ej: 'attrs deprecado' vs 'Python expressions')
+- ¿Hallazgos solapados en diferentes módulos?
+
+**2. Priorización Correcta:**
+- ¿P0 realmente críticos? (breaking changes Odoo 19, deadlines SII)
+- ¿P1 bien priorizados según impacto vs esfuerzo?
+- ¿Algún P2 debería ser P1 por impacto negocio?
+- ¿Prioridad alineada con compliance P0 deadline (2025-03-01)?
+
+**3. Estimaciones Realistas:**
+- ¿Horas realistas comparado benchmarks industria?
+- ¿Se consideró testing, documentación, deployment?
+- ¿Estimaciones incluyen refactoring indirecto (code adjacent)?
+- Ejemplo: attrs= 33 ocurrencias → 6.5h (¿suficiente para todos?)
+
+**4. Gaps en Análisis:**
+- ¿Falta algún dominio crítico? (seguridad, performance, UX, DevOps)
+- ¿Análisis demasiado superficial en alguna área?
+- ¿Se revisaron archivos clave? (models/, views/, controllers/)
+- ¿Se validó compliance con TODOS los patrones Odoo 19?
+
+**5. Coherencia Cross-Domain:**
+- ¿Hallazgo backend impacta frontend pero no se detectó?
+- ¿Fix frontend requiere cambio backend pero no se menciona?
+- ¿Migración P0 rompe tests pero no se planificó re-testeo?
+
+### OUTPUT TABLA VALIDACIÓN:
+
+| Issue ID | Problema Detectado | Severidad | Recomendación Correctiva |
+|----------|-------------------|-----------|--------------------------|
+| H-P0-01 (attrs=) | OK, consolidado correctamente (33 → 1 issue) | ✅ | Ninguna |
+| H-P0-02 (complejidad) | Estimación 8h parece baja (método 24 complejidad) | ⚠️ | Aumentar a 10-12h |
+| Duplicado oculto | self._cr reportado Compliance + Backend sin merge | 🔴 | Consolidar en 1 issue |
+| Gap seguridad | No se auditó SQL injection en controllers/ | 🟡 | Agregar revisión seguridad |
+| ... | ... | ... | ... |
+
+**SCORE VALIDACIÓN:** {X}/100
+
+**Criterios score:**
+- 90-100: EXCELENTE (mínimos ajustes)
+- 80-89: BUENO (ajustes menores recomendados)
+- 70-79: ACEPTABLE (requiere revisión)
+- <70: RECHAZAR (re-consolidar con hallazgos GPT-5)
+
+**RECOMENDACIÓN FINAL:** [APROBAR | REVISAR | RECHAZAR]
+
+**Justificación:** {explicación 2-3 líneas}
+
+**Acciones correctivas (si aplica):**
+1. Merge duplicados: H-P1-05 + H-P1-12 (mismo issue)
+2. Re-priorizar: H-P2-03 → H-P1 (impacto subestimado)
+3. Ajustar estimaciones: Sprint 1 15h → 18h
+4. Agregar hallazgo: SQL injection controllers/webhook.py
+```
+
+### Integración Workflow Validación GPT-5
+
+```bash
+# En ciclo_completo_auditoria.sh - FASE 4
+
+log "🔍 FASE 4: Validación cruzada GPT-5..."
+
+copilot -p "$(cat << 'EOF'
+Valida CONSOLIDATED_REPORT_360_${DATE}.md siguiendo TEMPLATE_MULTI_AGENT_ORCHESTRATION.md Fase 2.5:
+
+CHECKLIST:
+1. Duplicados ocultos
+2. Priorización correcta
+3. Estimaciones realistas
+4. Gaps análisis
+5. Coherencia cross-domain
+
+OUTPUT: validation_gpt5_${DATE}.md en docs/prompts/06_outputs/
+EOF
+)" --model gpt-5 --allow-all-paths
+
+success "✅ Fase 4 completada"
+
+# Leer score validación
+VALIDATION_SCORE=$(grep "SCORE VALIDACIÓN:" "${OUTPUT_DIR}/validation_gpt5_${DATE}.md" | awk '{print $3}' | cut -d/ -f1)
+
+if [ "$VALIDATION_SCORE" -lt 80 ]; then
+    warn "⚠️ Score validación GPT-5: ${VALIDATION_SCORE}/100 (< 80)"
+    warn "Revisar hallazgos validación antes de aprobar consolidación"
+fi
+```
+
+### Ejemplo Output Validación GPT-5
+
+```markdown
+# 🔍 VALIDACIÓN GPT-5 - CONSOLIDATED_REPORT_360_2025-11-12
+
+**Fecha validación:** 2025-11-12 16:45:00
+**Modelo:** GPT-5 (temperature 0.1)
+**Reporte validado:** CONSOLIDATED_REPORT_360_2025-11-12.md
+
+---
+
+## ✅ RESULTADO VALIDACIÓN
+
+**Score:** 87/100 (BUENO - ajustes menores recomendados)
+**Recomendación:** APROBAR con correcciones sugeridas
+
+---
+
+## 📊 HALLAZGOS VALIDACIÓN
+
+| Issue ID | Problema Detectado | Severidad | Acción Correctiva |
+|----------|-------------------|-----------|-------------------|
+| H-P0-01 (attrs=) | ✅ OK - Bien consolidado (Compliance + Frontend → 1 issue) | ✅ | Ninguna |
+| H-P0-03 (_sql_constraints) | ✅ OK - Detectado correctamente (3 occurrences) | ✅ | Ninguna |
+| H-P1-04 (self._cr) | ⚠️ DUPLICADO NO CONSOLIDADO - Backend + Compliance reportan separado | 🔴 CRÍTICO | Merge en 1 issue (13 total occurrences) |
+| Estimación Sprint 1 | ⚠️ 15h parece bajo (incluye refactor complejidad 24) | ⚠️ | Aumentar a 18-20h |
+| Gap seguridad | ⚠️ No se auditó SQL injection en controllers/webhook.py | 🟡 | Agregar revisión endpoint seguridad |
+| H-P2-07 (performance) | ⚠️ Debería ser P1 (N+1 queries impacta UX directamente) | 🟠 | Re-priorizar P2 → P1 |
+
+**Total hallazgos validación:** 6 (1 crítico, 2 warnings, 3 menores)
+
+---
+
+## 🎯 ANÁLISIS DETALLADO
+
+### 1. Duplicados (Score: 7/10)
+
+**Encontrado 1 duplicado crítico:**
+- `self._cr` reportado por:
+  - Agent_Compliance: 13 occurrences (P1)
+  - Agent_Backend: "self._cr deprecated" (P1)
+
+**Acción:** Consolidar en **H-P1-UNIFIED-01** con 13 occurrences totales
+
+### 2. Priorización (Score: 9/10)
+
+**Bien priorizado:**
+- ✅ P0 attrs= deadline 2025-03-01 (correcto)
+- ✅ P0 complejidad 24 (correcto, impide mantenimiento)
+
+**Re-priorizar:**
+- ⚠️ H-P2-07 (N+1 queries) → **P1**
+  - Justificación: Impacta UX directamente (120s load time)
+  - Esfuerzo bajo (4h) vs impacto alto
+
+### 3. Estimaciones (Score: 8/10)
+
+**Ajustes recomendados:**
+
+| Sprint/Issue | Estimado | Recomendado | Razón |
+|-------------|----------|-------------|-------|
+| Sprint 1 total | 15h | 18-20h | Refactoring complejidad 24 subestimado |
+| H-P0-02 (refactor) | 8h | 10h | Incluir tests + docs |
+| H-P1-04 (self._cr) | - | 2h | Merge duplicado, agregar esfuerzo |
+
+### 4. Gaps Análisis (Score: 8/10)
+
+**Detectado:**
+- ⚠️ **Seguridad controllers/**: No se auditó SQL injection en webhook.py
+- ⚠️ **Performance queries:** Solo se detectó N+1, no se analizó query complexity
+- ℹ️ **DevOps:** No se auditó Docker healthchecks, resource limits
+
+**Recomendación:** Agregar Agent_Security en próximo ciclo
+
+### 5. Coherencia Cross-Domain (Score: 10/10)
+
+✅ Excelente coherencia:
+- attrs= impacta Compliance + Frontend → bien consolidado
+- Complejidad backend requiere más tests → detectado
+- _sql_constraints backend impacta compliance → OK
+
+---
+
+## ✅ ACCIÓN RECOMENDADA
+
+**APROBAR consolidación** con las siguientes correcciones:
+
+1. **CRÍTICO:** Merge duplicado self._cr (H-P1-04)
+2. **IMPORTANTE:** Aumentar estimación Sprint 1 a 18-20h
+3. **DESEABLE:** Re-priorizar N+1 queries P2 → P1
+4. **NICE-TO-HAVE:** Agregar auditoría seguridad controllers/
+
+**Timeline:** 30 minutos correcciones → Re-generar consolidación v2
+
+---
+
+**Validado por:** GPT-5 (temperature 0.1)
+**Duración validación:** 2m 34s
+**Costo:** $0.15 Premium
+```
+
+---
+
+**Template Version:** 1.0.1 (v2.2 - Validación GPT-5 integrada)
 **Creado:** 2025-11-12
+**Actualizado:** 2025-11-12 (MEJORA 5)
 **Mantenedor:** Pedro Troncoso (@pwills85)
