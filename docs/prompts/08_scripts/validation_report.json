@@ -1,0 +1,532 @@
+{
+  "timestamp": "2025-11-12",
+  "total_templates": 8,
+  "valid_templates": 6,
+  "average_score": 78.75,
+  "templates": [
+    {
+      "name": "TEMPLATE_AUDITORIA.md",
+      "path": "/Users/pedro/Documents/odoo19/docs/prompts/04_templates/TEMPLATE_AUDITORIA.md",
+      "is_valid": true,
+      "score": 72.0,
+      "metadata": {
+        "variables": [
+          "[FECHA]",
+          "[MODULO]"
+        ]
+      },
+      "issues": {
+        "errors": 0,
+        "warnings": 5,
+        "infos": 3,
+        "details": [
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_CONTEXT",
+            "message": "Missing required section: context (pattern: ^##\\s+(?:CONTEXTO|\ud83d\udccb CONTEXTO DE USO|CONTEXTO CR\u00cdTICO))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_INSTRUCTIONS",
+            "message": "Missing required section: instructions (pattern: ^##\\s+(?:INSTRUCCIONES|\ud83d\udce5 INSTRUCCIONES PARA EL AGENTE|CRITERIOS DE AUDITOR\u00cdA))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_OUTPUT",
+            "message": "Missing required section: output (pattern: ^##\\s+(?:OUTPUT|\u2705 OUTPUT FINAL|ENTREGABLE|DELIVERABLES))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_SUCCESS_CRITERIA",
+            "message": "Missing recommended section: success_criteria",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_VERSION",
+            "message": "Template should have a version field",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "MISSING_LEVEL",
+            "message": "Template should specify priority level (P0-P4)",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable [FECHA] may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable [MODULO] may not have a default or description",
+            "line_number": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "TEMPLATE_CIERRE_BRECHA.md",
+      "path": "/Users/pedro/Documents/odoo19/docs/prompts/04_templates/TEMPLATE_CIERRE_BRECHA.md",
+      "is_valid": true,
+      "score": 74.0,
+      "metadata": {
+        "variables": []
+      },
+      "issues": {
+        "errors": 0,
+        "warnings": 5,
+        "infos": 1,
+        "details": [
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_CONTEXT",
+            "message": "Missing required section: context (pattern: ^##\\s+(?:CONTEXTO|\ud83d\udccb CONTEXTO DE USO|CONTEXTO CR\u00cdTICO))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_INSTRUCTIONS",
+            "message": "Missing required section: instructions (pattern: ^##\\s+(?:INSTRUCCIONES|\ud83d\udce5 INSTRUCCIONES PARA EL AGENTE|CRITERIOS DE AUDITOR\u00cdA))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_OUTPUT",
+            "message": "Missing required section: output (pattern: ^##\\s+(?:OUTPUT|\u2705 OUTPUT FINAL|ENTREGABLE|DELIVERABLES))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_SUCCESS_CRITERIA",
+            "message": "Missing required section: success_criteria (pattern: ^##\\s+(?:CRITERIOS|\ud83c\udfaf CRITERIOS DE \u00c9XITO|CRITERIOS DE ACEPTACI\u00d3N))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_VERSION",
+            "message": "Template should have a version field",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "MISSING_LEVEL",
+            "message": "Template should specify priority level (P0-P4)",
+            "line_number": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "TEMPLATE_FEATURE_DISCOVERY.md",
+      "path": "/Users/pedro/Documents/odoo19/docs/prompts/04_templates/TEMPLATE_FEATURE_DISCOVERY.md",
+      "is_valid": true,
+      "score": 85.0,
+      "metadata": {
+        "version": "1.0",
+        "level": "P3",
+        "agent": "Agent_Strategist",
+        "variables": []
+      },
+      "issues": {
+        "errors": 0,
+        "warnings": 3,
+        "infos": 0,
+        "details": [
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_OUTPUT",
+            "message": "Missing required section: output (pattern: ^##\\s+(?:OUTPUT|\u2705 OUTPUT FINAL|ENTREGABLE|DELIVERABLES))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "INVALID_TEMPLATE_REF",
+            "message": "Reference to unknown template: TEMPLATE_FEATURE_IMPLEMENTATION.md",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "INVALID_TEMPLATE_REF",
+            "message": "Reference to unknown template: TEMPLATE_FEATURE_IMPLEMENTATION.md",
+            "line_number": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "TEMPLATE_INVESTIGACION_P2.md",
+      "path": "/Users/pedro/Documents/odoo19/docs/prompts/04_templates/TEMPLATE_INVESTIGACION_P2.md",
+      "is_valid": true,
+      "score": 100.0,
+      "metadata": {
+        "version": "2.0.0",
+        "level": "P2",
+        "agent": "Agent_Explorer",
+        "variables": []
+      },
+      "issues": {
+        "errors": 0,
+        "warnings": 0,
+        "infos": 0,
+        "details": []
+      }
+    },
+    {
+      "name": "TEMPLATE_MULTI_AGENT_ORCHESTRATION.md",
+      "path": "/Users/pedro/Documents/odoo19/docs/prompts/04_templates/TEMPLATE_MULTI_AGENT_ORCHESTRATION.md",
+      "is_valid": false,
+      "score": 64.0,
+      "metadata": {
+        "version": "1.0.0",
+        "level": "P4",
+        "variables": [
+          "{FECHA}",
+          "{LISTA_MODULOS}",
+          "{MODULO}",
+          "{RESTRICCIONES}",
+          "{X}",
+          "{N}",
+          "{VALIDATION_SCORE}",
+          "{H}",
+          "{MODULE}",
+          "{PROJECT}",
+          "{DATE}",
+          "{Y}",
+          "{OUTPUT_DIR}"
+        ]
+      },
+      "issues": {
+        "errors": 0,
+        "warnings": 5,
+        "infos": 11,
+        "details": [
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_CONTEXT",
+            "message": "Missing required section: context (pattern: ^##\\s+(?:CONTEXTO|\ud83d\udccb CONTEXTO DE USO|CONTEXTO CR\u00cdTICO))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_INSTRUCTIONS",
+            "message": "Missing required section: instructions (pattern: ^##\\s+(?:INSTRUCCIONES|\ud83d\udce5 INSTRUCCIONES PARA EL AGENTE|CRITERIOS DE AUDITOR\u00cdA))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_OUTPUT",
+            "message": "Missing required section: output (pattern: ^##\\s+(?:OUTPUT|\u2705 OUTPUT FINAL|ENTREGABLE|DELIVERABLES))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_SUCCESS_CRITERIA",
+            "message": "Missing recommended section: success_criteria",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {FECHA} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {LISTA_MODULOS} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {MODULO} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {RESTRICCIONES} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {VALIDATION_SCORE} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {H} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {MODULE} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {PROJECT} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {DATE} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {Y} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {OUTPUT_DIR} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "INVALID_TEMPLATE_REF",
+            "message": "Reference to unknown template: TEMPLATE_TESTING.md",
+            "line_number": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "TEMPLATE_P4_DEEP_ANALYSIS.md",
+      "path": "/Users/pedro/Documents/odoo19/docs/prompts/04_templates/TEMPLATE_P4_DEEP_ANALYSIS.md",
+      "is_valid": false,
+      "score": 69.0,
+      "metadata": {
+        "version": "1.0.0",
+        "level": "P4",
+        "variables": [
+          "{FECHA}",
+          "{MODULE_PATH}",
+          "{N}",
+          "{X}",
+          "{AGENTE}",
+          "{MODULE}",
+          "{DATE}",
+          "{MODULE_NAME}",
+          "{Y}",
+          "{Z}",
+          "{VERSION}"
+        ]
+      },
+      "issues": {
+        "errors": 0,
+        "warnings": 4,
+        "infos": 11,
+        "details": [
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_CONTEXT",
+            "message": "Missing required section: context (pattern: ^##\\s+(?:CONTEXTO|\ud83d\udccb CONTEXTO DE USO|CONTEXTO CR\u00cdTICO))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_INSTRUCTIONS",
+            "message": "Missing required section: instructions (pattern: ^##\\s+(?:INSTRUCCIONES|\ud83d\udce5 INSTRUCCIONES PARA EL AGENTE|CRITERIOS DE AUDITOR\u00cdA))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_OUTPUT",
+            "message": "Missing required section: output (pattern: ^##\\s+(?:OUTPUT|\u2705 OUTPUT FINAL|ENTREGABLE|DELIVERABLES))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_SUCCESS_CRITERIA",
+            "message": "Missing recommended section: success_criteria",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {FECHA} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {MODULE_PATH} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {N} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {X} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {AGENTE} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {MODULE} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {DATE} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {MODULE_NAME} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {Y} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {Z} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {VERSION} may not have a default or description",
+            "line_number": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "TEMPLATE_P4_INFRASTRUCTURE_AUDIT.md",
+      "path": "/Users/pedro/Documents/odoo19/docs/prompts/04_templates/TEMPLATE_P4_INFRASTRUCTURE_AUDIT.md",
+      "is_valid": true,
+      "score": 76.0,
+      "metadata": {
+        "version": "1.0.0",
+        "level": "P4",
+        "variables": [
+          "{N}",
+          "{X}",
+          "{CLAUDE_API_KEY}",
+          "{DB_PASSWORD}"
+        ]
+      },
+      "issues": {
+        "errors": 0,
+        "warnings": 4,
+        "infos": 4,
+        "details": [
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_CONTEXT",
+            "message": "Missing required section: context (pattern: ^##\\s+(?:CONTEXTO|\ud83d\udccb CONTEXTO DE USO|CONTEXTO CR\u00cdTICO))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_INSTRUCTIONS",
+            "message": "Missing required section: instructions (pattern: ^##\\s+(?:INSTRUCCIONES|\ud83d\udce5 INSTRUCCIONES PARA EL AGENTE|CRITERIOS DE AUDITOR\u00cdA))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_OUTPUT",
+            "message": "Missing required section: output (pattern: ^##\\s+(?:OUTPUT|\u2705 OUTPUT FINAL|ENTREGABLE|DELIVERABLES))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_SUCCESS_CRITERIA",
+            "message": "Missing recommended section: success_criteria",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {N} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {X} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {CLAUDE_API_KEY} may not have a default or description",
+            "line_number": null
+          },
+          {
+            "severity": "info",
+            "rule_id": "UNDEFINED_VARIABLE",
+            "message": "Variable {DB_PASSWORD} may not have a default or description",
+            "line_number": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "TEMPLATE_RE_AUDITORIA_COMPARATIVA.md",
+      "path": "/Users/pedro/Documents/odoo19/docs/prompts/04_templates/TEMPLATE_RE_AUDITORIA_COMPARATIVA.md",
+      "is_valid": true,
+      "score": 90.0,
+      "metadata": {
+        "version": "1.0.0",
+        "level": "P3",
+        "agent": "Agent_Validator",
+        "variables": []
+      },
+      "issues": {
+        "errors": 0,
+        "warnings": 2,
+        "infos": 0,
+        "details": [
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_INSTRUCTIONS",
+            "message": "Missing required section: instructions (pattern: ^##\\s+(?:INSTRUCCIONES|\ud83d\udce5 INSTRUCCIONES PARA EL AGENTE|CRITERIOS DE AUDITOR\u00cdA))",
+            "line_number": null
+          },
+          {
+            "severity": "warning",
+            "rule_id": "MISSING_SECTION_OUTPUT",
+            "message": "Missing required section: output (pattern: ^##\\s+(?:OUTPUT|\u2705 OUTPUT FINAL|ENTREGABLE|DELIVERABLES))",
+            "line_number": null
+          }
+        ]
+      }
+    }
+  ]
+}

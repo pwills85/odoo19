@@ -1,0 +1,93 @@
+{
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": ":rotating_light: Critical P0 Issue Detected",
+        "emoji": true
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "<!channel> A critical P0 issue requires immediate attention!"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "fields": [
+        {
+          "type": "mrkdwn",
+          "text": "*File:*\n`{{FILE}}`"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*Line:*\n{{LINE}}"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*Sprint:*\n{{SPRINT_ID}}"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*Detected:*\n<!date^{{TIMESTAMP_UNIX}}^{date_short_pretty} at {time}|{{TIMESTAMP_ISO}}>"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*Issue Description:*\n{{ISSUE}}"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*Code Snippet:*\n```python\n{{CODE_SNIPPET}}\n```"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "context",
+      "elements": [
+        {
+          "type": "mrkdwn",
+          "text": ":warning: *Action Required:* This issue must be resolved before the next release."
+        }
+      ]
+    },
+    {
+      "type": "actions",
+      "elements": [
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "View in Codebase",
+            "emoji": true
+          },
+          "url": "{{FILE_URL}}",
+          "style": "danger"
+        },
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Create Ticket",
+            "emoji": true
+          },
+          "url": "{{TICKET_URL}}"
+        }
+      ]
+    }
+  ]
+}
