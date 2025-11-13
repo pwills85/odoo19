@@ -1,0 +1,76 @@
+# Cache Manager Configuration
+# ===========================
+# Configuration for intelligent audit result caching system
+#
+# Author: Claude Code
+# Version: 1.0.0
+# Date: 2025-11-12
+
+# Cache Time-To-Live (days)
+# How long cache entries remain valid before expiring
+ttl_days: 7
+
+# Gzip Compression Level (1-9)
+# Higher = better compression but slower
+# 6 is optimal balance for JSON data
+compression_level: 6
+
+# Auto-Pruning
+# Automatically delete expired entries on each operation
+auto_prune: true
+
+# Maximum Cache Size (MB)
+# Warning threshold for cache directory size
+# Does NOT enforce hard limit, just warns
+max_cache_size_mb: 500
+
+# Cost Per Audit (USD)
+# Used for ROI calculations and savings tracking
+# Update based on actual agent costs
+cost_per_audit_usd: 3.50
+
+# Target Hit Rate (0.0 - 1.0)
+# Goal for cache effectiveness
+# 0.60 = 60% of requests should hit cache
+target_hit_rate: 0.60
+
+# Performance Thresholds
+performance:
+  # Maximum acceptable overhead per cache operation (ms)
+  max_overhead_ms: 50
+
+  # Target compression ratio (original/compressed)
+  # 0.70 = compressed size should be 30% of original
+  target_compression_ratio: 0.70
+
+# Analytics
+analytics:
+  # Keep last N response times for averaging
+  max_response_samples: 1000
+
+  # Days of history to show in dashboard
+  dashboard_history_days: 7
+
+  # Enable detailed logging
+  verbose_logging: false
+
+# Git Integration
+git:
+  # Use short SHA (12 chars) for cache keys
+  short_sha_length: 12
+
+  # Fallback behavior when Git not available
+  # "no-git" = use static string (not recommended for production)
+  # "timestamp" = use current timestamp (disables caching effectively)
+  no_git_fallback: "no-git"
+
+# Advanced Options
+advanced:
+  # Parallel pruning (experimental)
+  parallel_prune: false
+
+  # Validate cache integrity on read
+  validate_on_read: true
+
+  # Auto-invalidate on template version mismatch
+  strict_version_check: true
