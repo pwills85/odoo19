@@ -569,13 +569,20 @@ class AnalyticsTracker:
             return 0
 
 
+import threading
+
+# ✅ FIX [H4 CICLO3]: Thread-safe singleton with Lock
+_analytics_lock = threading.Lock()
+
 def get_analytics_tracker() -> AnalyticsTracker:
     """
-    Get global analytics tracker instance (singleton pattern).
+    Get global analytics tracker instance (thread-safe singleton pattern).
 
     Returns:
         AnalyticsTracker instance
     """
     if not hasattr(get_analytics_tracker, "_instance"):
-        get_analytics_tracker._instance = AnalyticsTracker()
+        with _analytics_lock:  # ✅ Thread-safe double-check locking
+            if not hasattr(get_analytics_tracker, "_instance"):
+                get_analytics_tracker._instance = AnalyticsTracker()
     return get_analytics_tracker._instance
