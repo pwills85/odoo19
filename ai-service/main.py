@@ -1325,14 +1325,31 @@ def get_orchestrator():
             settings.anthropic_api_key,
             settings.anthropic_model
         )
-        
-        redis_client = redis.Redis(
-            host=os.getenv('REDIS_HOST', 'redis'),
-            port=int(os.getenv('REDIS_PORT', 6379)),
-            db=int(os.getenv('REDIS_DB', 0)),
-            decode_responses=False
-        )
-        
+
+        # ✅ FIX [H2/P1]: Redis with error handling, graceful degradation, and connection pool
+        try:
+            from redis.connection import ConnectionPool
+
+            # Create connection pool for efficient resource management
+            redis_pool = ConnectionPool(
+                host=os.getenv('REDIS_HOST', 'redis'),
+                port=int(os.getenv('REDIS_PORT', 6379)),
+                db=int(os.getenv('REDIS_DB', 0)),
+                max_connections=20,  # ✅ FIX [P1 CICLO3]: Connection pool
+                socket_connect_timeout=5,
+                socket_keepalive=True,
+                decode_responses=False
+            )
+
+            redis_client = redis.Redis(connection_pool=redis_pool)
+
+            # Test connection
+            redis_client.ping()
+            logger.info("✅ Redis connected successfully with connection pool (max_connections=20)")
+        except (redis.ConnectionError, redis.TimeoutError, Exception) as e:
+            logger.warning(f"⚠️ Redis unavailable: {e}. Running in no-cache mode (graceful degradation)")
+            redis_client = None  # Graceful degradation: continue without cache
+
         slack_token = os.getenv('SLACK_TOKEN')
         
         _orchestrator = MonitoringOrchestrator(
