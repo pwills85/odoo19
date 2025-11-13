@@ -34,7 +34,8 @@
       "Bash(./docs/prompts/08_scripts/wait_for_audit_reports.sh:*)",
       "Bash(docker compose ps:*)",
       "Bash(curl:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(docker compose:*)"
     ],
     "deny": [],
     "ask": []
