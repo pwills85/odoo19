@@ -1,0 +1,6 @@
+cli|model|duration|words
+gemini|gemini-2.5-flash-lite|139.498262000|      64
+gemini|gemini-2.5-flash|31.705313000|      69
+gemini|gemini-2.5-pro|28.530311000|      99
+copilot|gpt-4|12.844003000|      96
+codex|gpt-4-turbo|9.687920000|     235

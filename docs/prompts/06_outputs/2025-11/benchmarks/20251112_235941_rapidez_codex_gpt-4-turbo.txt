@@ -1,0 +1,21 @@
+OpenAI Codex v0.57.0 (research preview)
+--------
+workdir: /Users/pedro/Documents/odoo19
+model: gpt-5-codex
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: high
+reasoning summaries: auto
+session id: 019a7b3f-6e83-7972-a9f2-6d92ef3e5c84
+--------
+user
+¿Cuál es la diferencia entre t-esc y t-out en Odoo 19? Responde en máximo 3 oraciones.
+
+thinking
+**Explaining difference between t-esc and t-out**
+codex
+En Odoo 19, `t-esc` era la directiva clásica para imprimir texto escapado en QWeb, pero quedó obsoleta porque solo manejaba el contenido textual del nodo y generaba inconsistencias cuando se necesitaba la misma expresión en atributos o estructuras condicionales. El nuevo `t-out` evalúa y renderiza expresiones en cualquier parte del elemento (contenido, atributos, combinaciones) aplicando automáticamente las reglas de escape/contexto, lo que unifica el comportamiento y evita fugas XSS. Por eso todas las plantillas de Odoo 19 deben migrar de `t-esc` a `t-out` para cumplir con las deprecaciones oficiales.
+tokens used
+1.544
+En Odoo 19, `t-esc` era la directiva clásica para imprimir texto escapado en QWeb, pero quedó obsoleta porque solo manejaba el contenido textual del nodo y generaba inconsistencias cuando se necesitaba la misma expresión en atributos o estructuras condicionales. El nuevo `t-out` evalúa y renderiza expresiones en cualquier parte del elemento (contenido, atributos, combinaciones) aplicando automáticamente las reglas de escape/contexto, lo que unifica el comportamiento y evita fugas XSS. Por eso todas las plantillas de Odoo 19 deben migrar de `t-esc` a `t-out` para cumplir con las deprecaciones oficiales.

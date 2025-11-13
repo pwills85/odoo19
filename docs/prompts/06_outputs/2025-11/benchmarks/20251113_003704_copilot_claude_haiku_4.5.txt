@@ -1,0 +1,9 @@
+En Odoo 19, `t-esc` fue deprecado y reemplazado por `t-out`, que es el nuevo estándar para escapar contenido en templates QWeb. La diferencia principal es que `t-out` es más seguro contra XSS y es la forma recomendada en Odoo 19, mientras que `t-esc` es legacy de versiones anteriores.
+
+
+Total usage est:       0.33 Premium requests
+Total duration (API):  2.1s
+Total duration (wall): 6.4s
+Total code changes:    0 lines added, 0 lines removed
+Usage by model:
+    claude-haiku-4.5     34.1k input, 97 output, 0 cache read, 0 cache write (Est. 0.33 Premium requests)

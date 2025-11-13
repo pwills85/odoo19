@@ -1,0 +1,3 @@
+YOLO mode is enabled. All tool calls will be automatically approved.
+Loaded cached credentials.
+En Odoo 19, `t-esc` muestra el valor de una expresión y lo escapa en HTML para prevenir ataques de seguridad (XSS), siendo la directiva estándar recomendada. `t-out` es una directiva obsoleta que funciona exactamente como un alias de `t-esc`, por lo que su uso ya no se aconseja.

@@ -1,0 +1,3 @@
+YOLO mode is enabled. All tool calls will be automatically approved.
+Loaded cached credentials.
+`t-esc` y `t-out` se usan para mostrar contenido dinámico en plantillas QWeb de Odoo. `t-esc` (obsoleto en Odoo 19) y `t-out` (el estándar actual) escapan automáticamente el HTML para prevenir XSS. La diferencia clave es que `t-out` permite, de forma controlada, renderizar HTML sin escapar usando `markupsafe.Markup`, lo que lo hace más flexible y seguro.
