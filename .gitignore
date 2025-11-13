@@ -160,6 +160,10 @@ INVESTIGACION_*.md
 MODELOS_*.md
 RESULTADOS_TEST_*.md
 
+# Temporary migration code (obsolete addons from Enterprise migration)
+docs/upgrade_enterprise_to_odoo19CE/utils_and_scripts/temp/
+**/temp/addons_temp_obsoletos/
+
 # Metrics and outputs (temporary)
 docs/prompts/06_outputs/metrics_history.json
 docs/prompts/06_outputs/*.json
