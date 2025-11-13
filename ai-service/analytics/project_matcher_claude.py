@@ -41,6 +41,18 @@ class ProjectMatcherClaude:
         self.client = anthropic.AsyncAnthropic(api_key=anthropic_api_key)
         self.model = settings.anthropic_model
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((
+            anthropic.RateLimitError,
+            anthropic.APIConnectionError,
+            anthropic.InternalServerError
+        )),
+        before_sleep=lambda retry_state: logger.warning(
+            "project_matcher_retry: attempt=%d", retry_state.attempt_number
+        )
+    )
     async def suggest_project(
         self,
         partner_name: str,
@@ -50,10 +62,11 @@ class ProjectMatcherClaude:
         historical_purchases: Optional[List[Dict]] = None
     ) -> Dict:
         """
-        Sugiere proyecto basado en análisis semántico de factura.
-        
-        NOTA: Cache no aplicado en método async debido a limitaciones del decorator.
-        Ver suggest_project_sync para versión con cache.
+        Sugiere proyecto basado en análisis semántico de factura (async).
+
+        Retry strategy:
+        - Max 3 attempts on rate limit, connection errors, internal errors
+        - Exponential backoff: 2s, 4s, 8s
 
         Args:
             partner_name: Nombre del proveedor
@@ -69,6 +82,10 @@ class ProjectMatcherClaude:
                 'confidence': float (0-100),
                 'reasoning': str
             }
+
+        Raises:
+            anthropic.APIError: If API call fails after retries
+            ValueError: If response parsing fails
         """
         # Construir contexto rico para Claude
         context = self._build_context(
@@ -93,7 +110,7 @@ class ProjectMatcherClaude:
 
             # Parsear respuesta JSON con helper robusto
             from utils.llm_helpers import extract_json_from_llm_response
-            
+
             response_text = response.content[0].text
             result = extract_json_from_llm_response(response_text)
 
@@ -106,6 +123,10 @@ class ProjectMatcherClaude:
 
             return result
 
+        except (anthropic.RateLimitError, anthropic.APIConnectionError, anthropic.InternalServerError):
+            # Re-raise estas excepciones para que el retry decorator las maneje
+            raise
+
         except ValueError as e:
             logger.error("Failed to parse Claude response: %s", str(e))
             return {
@@ -116,7 +137,8 @@ class ProjectMatcherClaude:
             }
 
         except anthropic.APIError as e:
-            logger.error("Anthropic API error: %s", str(e))
+            # Otros errores de API que NO deberían hacer retry
+            logger.error("Anthropic API error (non-retryable): %s", str(e))
             return {
                 'project_id': None,
                 'project_name': None,
@@ -250,74 +272,3 @@ Analiza la factura del proveedor y determina a qué proyecto pertenece con la ma
 - Solo devolver JSON, sin texto adicional
 """
 
-    @cache_method(ttl_seconds=1800)  # Cache 30 minutos (proyectos cambian poco)
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=2, max=10),
-        retry=retry_if_exception_type((
-            anthropic.RateLimitError,
-            anthropic.APIConnectionError,
-            anthropic.InternalServerError
-        )),
-        before_sleep=lambda retry_state: logger.warning(
-            "project_matcher_retry: attempt=%d", retry_state.attempt_number
-        )
-    )
-    def suggest_project_sync(
-        self,
-        partner_name: str,
-        partner_vat: str,
-        invoice_lines: List[Dict],
-        available_projects: List[Dict],
-        historical_purchases: Optional[List[Dict]] = None
-    ) -> Dict:
-        """
-        Versión síncrona de suggest_project con cache LLM.
-
-        Wrapper para compatibilidad con código síncrono.
-        Cache TTL: 1800 segundos (30 minutos) - proyectos cambian poco.
-        """
-        from utils.llm_helpers import extract_json_from_llm_response
-        
-        # Build context
-        context = self._build_context(
-            partner_name=partner_name,
-            partner_vat=partner_vat,
-            invoice_lines=invoice_lines,
-            available_projects=available_projects,
-            historical_purchases=historical_purchases or []
-        )
-
-        prompt = self._build_prompt(context)
-
-        try:
-            from config import settings
-
-            # NOTE: This is a sync wrapper - use asyncio to run async client
-            import asyncio
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                response = loop.run_until_complete(
-                    self.client.messages.create(
-                        model=self.model,
-                        max_tokens=settings.analytics_matching_max_tokens,
-                        temperature=0.1,
-                        messages=[{"role": "user", "content": prompt}]
-                    )
-                )
-            finally:
-                loop.close()
-
-            response_text = response.content[0].text
-            result = extract_json_from_llm_response(response_text)
-
-            return result
-
-        except Exception as e:
-            logger.error("project_matcher_error", error=str(e))
-            return {
-                "project_id": None,
-                "confidence": 0.0,
-                "reasoning": f"Error: {str(e)}"
-            }

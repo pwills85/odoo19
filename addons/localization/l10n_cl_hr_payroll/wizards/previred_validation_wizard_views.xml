@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="previred_validation_wizard_form" model="ir.ui.view">
+        <field name="name">previred.validation.wizard.form</field>
+        <field name="model">previred.validation.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Validación Previred (105 Campos)">
+                <header>
+                    <button name="action_validate" 
+                            string="Validar"
+                            type="object"
+                            class="btn-primary"
+                            attrs="{'invisible': [('validation_status', '!=', 'pending')]}"/>
+                    
+                    <button name="action_generate_lre" 
+                            string="Generar LRE"
+                            type="object"
+                            class="btn-success"
+                            attrs="{'invisible': ['|', ('validation_status', '!=', 'passed'), ('can_generate_lre', '=', False)]}"/>
+                    
+                    <field name="validation_status" widget="statusbar"/>
+                </header>
+                
+                <sheet>
+                    <group>
+                        <field name="payslip_run_id" readonly="1"/>
+                        <field name="error_count" attrs="{'invisible': [('error_count', '=', 0)]}"/>
+                        <field name="warning_count" attrs="{'invisible': [('warning_count', '=', 0)]}"/>
+                        <field name="can_generate_lre" invisible="1"/>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Resultado Validación">
+                            <field name="validation_result" 
+                                   widget="text"
+                                   nolabel="1"
+                                   attrs="{'invisible': [('validation_result', '=', False)]}"/>
+                        </page>
+                        
+                        <page string="Campos Faltantes" 
+                              attrs="{'invisible': [('missing_fields', '=', False)]}">
+                            <field name="missing_fields" 
+                                   widget="text"
+                                   nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <record id="action_previred_validation_wizard" model="ir.actions.act_window">
+        <field name="name">Validar Previred (105 Campos)</field>
+        <field name="res_model">previred.validation.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

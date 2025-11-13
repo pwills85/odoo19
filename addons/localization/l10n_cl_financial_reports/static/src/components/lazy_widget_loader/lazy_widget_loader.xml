@@ -55,7 +55,7 @@
                         <h5 class="alert-heading">
                             <i class="fa fa-exclamation-triangle"/> Error Loading Widget
                         </h5>
-                        <p t-esc="state.errorMessage"/>
+                        <p t-out="state.errorMessage"/>
                         <button class="btn btn-sm btn-danger mt-2" 
                                 t-on-click="loadWidgetData">
                             <i class="fa fa-refresh"/> Retry

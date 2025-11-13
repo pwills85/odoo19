@@ -449,8 +449,8 @@ class FinancialDashboardServiceOptimized(models.AbstractModel):
             AND indexdef LIKE %s
             LIMIT 1
         """
-        self._cr.execute(query, [table, f'%{column}%'])
-        return bool(self._cr.fetchone())
+        self.env.cr.execute(query, [table, f'%{column}%'])
+        return bool(self.env.cr.fetchone())
 
     @api.model
     def _check_large_tables(self):
@@ -468,10 +468,10 @@ class FinancialDashboardServiceOptimized(models.AbstractModel):
             ORDER BY n_live_tup DESC
         """
 
-        self._cr.execute(query)
+        self.env.cr.execute(query)
         large_tables = []
 
-        for row in self._cr.fetchall():
+        for row in self.env.cr.fetchall():
             if row[1] in ['account_move', 'account_move_line']:
                 large_tables.append(f"{row[1]} ({row[3]:,} rows)")
 

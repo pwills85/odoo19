@@ -9,6 +9,9 @@ import logging
 # F-002: Validación firma digital CAF (Gap Closure P0)
 from odoo.addons.l10n_cl_dte.libs.caf_signature_validator import get_validator
 
+# XXE Protection
+from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
+
 # F-005: Encriptación RSASK (Gap Closure P0)
 from odoo.addons.l10n_cl_dte.tools.encryption_helper import get_encryption_helper
 
@@ -400,8 +403,8 @@ class DTECAF(models.Model):
             else:
                 caf_data = caf_file_b64
 
-            # Parsear XML
-            root = etree.fromstring(caf_data)
+            # Parsear XML (XXE protected)
+            root = fromstring_safe(caf_data)
 
             # Extraer datos (estructura aproximada del CAF del SII)
             # Nota: La estructura exacta puede variar

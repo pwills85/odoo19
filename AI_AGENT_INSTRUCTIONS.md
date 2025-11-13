@@ -774,6 +774,132 @@ if not schema.validate(xml_doc):
 - [ ] Performance validado (p95 < 500ms)
 - [ ] Documentación actualizada
 - [ ] CHANGELOG.md actualizado
+- [ ] **Commit sigue Conventional Commits** (ver [docs/COMMIT_STRATEGY.md](docs/COMMIT_STRATEGY.md))
+
+---
+
+## 📝 GIT WORKFLOW & CONVENTIONAL COMMITS
+
+### Formato de Commit Obligatorio
+
+**Convención**: [Conventional Commits](https://www.conventionalcommits.org/)  
+**Guía completa**: [docs/COMMIT_STRATEGY.md](docs/COMMIT_STRATEGY.md)
+
+```
+<tipo>(<scope>): <descripción corta (max 72 chars)>
+
+[cuerpo opcional - explicar QUÉ y POR QUÉ]
+
+[Refs: #issue, hallazgo-id]
+```
+
+### Tipos Principales
+
+- `feat(scope)`: Nueva funcionalidad
+- `fix(scope)`: Corrección de bug
+- `docs(scope)`: Solo documentación
+- `test(scope)`: Agregar/modificar tests
+- `i18n(scope)`: Traducciones
+- `refactor(scope)`: Mejora sin cambiar funcionalidad
+- `chore(scope)`: Mantenimiento (deps, configs)
+
+### Scopes del Proyecto
+
+- `dte` - l10n_cl_dte (DTEs 33,34,52,56,61)
+- `payroll` - l10n_cl_hr_payroll (Nómina Chile)
+- `reports` - l10n_cl_financial_reports
+- `ai` - ai-service (microservicio IA)
+- `docker` - Docker Compose
+- `docs` - Documentación
+
+### Ejemplos Reales del Proyecto
+
+```bash
+# Feature con breaking change
+feat(payroll)!: use validity range for legal caps instead of year field
+
+Refs: H-007 (AUDITORIA_NOMINA_P0_P1_TABLA_EVIDENCIAS.md)
+
+# Bugfix crítico
+fix(dte): remove _name duplication in account.move.dte
+
+Impact: P0 - Bloqueante de producción
+Refs: B-024 (RATIFICACION_ESTADO_REAL_L10N_CL_DTE.md:756)
+
+# Test suite completo
+test(l10n_cl_dte): add comprehensive XXE security tests (23 tests)
+
+Coverage: 95%+ en xml_signer
+Refs: XXE_TEST_EXECUTION_SUMMARY.md
+
+# Traducciones
+i18n(payroll): add es_CL and en_US translations
+
+Archivos: i18n/es_CL.po (187 líneas), i18n/en_US.po (181 líneas)
+Refs: H-003
+
+# Documentación ejecutiva
+docs(payroll): add P0/P1 gap closure report
+
+Documentación: RESUMEN_EJECUTIVO_CIERRE_P0_P1_NOMINA.md
+Audiencia: Stakeholders + equipo técnico
+```
+
+### ❌ Anti-Patrones (NO HACER)
+
+```bash
+# ❌ Genérico (no dice QUÉ cambió)
+git commit -m "fix"
+git commit -m "updates"
+git commit -m "cambios varios"
+
+# ❌ Multi-scope (mezcla cambios no relacionados)
+git commit -m "fix: payroll bug and add DTE 39 support and update docs"
+
+# ❌ Sin contexto técnico
+git commit -m "fix(dte): arreglar bug"
+
+# ❌ Commits masivos (>500 LOC - no atómico)
+git commit -m "feat(dte): implement complete DTE module"
+    (3,000 líneas en 50 archivos)
+```
+
+### Atomicidad de Commits
+
+**Regla de Oro**: 1 commit = 1 cambio lógico
+
+```bash
+# ✅ CORRECTO: Dividir en commits atómicos
+git commit -m "feat(dte): add base models (account.move.dte)"
+git commit -m "feat(dte): add CAF management wizard"
+git commit -m "feat(dte): add XML generator for DTE 33"
+git commit -m "test(dte): add test suite for XML generation"
+git commit -m "docs(dte): add configuration guide"
+
+# ❌ INCORRECTO: Todo en 1 commit
+git commit -m "feat(dte): implement complete DTE module"
+```
+
+### Referencias y Trazabilidad
+
+**Siempre incluir `Refs:` cuando aplique**:
+
+```bash
+# Referencia a hallazgo de auditoría
+git commit -m "fix(payroll): correct field name in allowance processing
+
+Refs: H-007 (AUDITORIA_NOMINA_P0_P1_TABLA_EVIDENCIAS.md)"
+
+# Referencia a issue de GitHub
+git commit -m "feat(dte): add retry logic for SII timeout
+
+Refs: #42"
+
+# Referencia a documento técnico
+git commit -m "docs(dte): add email reception configuration guide
+
+Refs: GUIA_CONFIGURACION_RECEPCION_DTE_EMAIL.md"
+```
 
 ---
 

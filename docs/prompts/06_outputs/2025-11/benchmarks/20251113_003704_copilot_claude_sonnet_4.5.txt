@@ -1,0 +1,9 @@
+En Odoo 19, **`t-esc`** está deprecado y debe reemplazarse por **`t-out`**, que es la nueva directiva para renderizar contenido escapando HTML automáticamente (prevención XSS). Ambos hacen lo mismo (escapar HTML), pero `t-out` es el estándar moderno y `t-esc` será removido en futuras versiones.
+
+
+Total usage est:       1 Premium request
+Total duration (API):  5.3s
+Total duration (wall): 10.2s
+Total code changes:    0 lines added, 0 lines removed
+Usage by model:
+    claude-sonnet-4.5    34.3k input, 100 output, 0 cache read, 0 cache write (Est. 1 Premium request)

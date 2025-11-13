@@ -1,0 +1,76 @@
+{
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": ":clipboard: Audit Complete - {{SPRINT_ID}}",
+        "emoji": true
+      }
+    },
+    {
+      "type": "section",
+      "fields": [
+        {
+          "type": "mrkdwn",
+          "text": "*Score:*\n{{SCORE}} {{SCORE_EMOJI}}"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*Findings:*\n{{FINDINGS}} issues"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*Duration:*\n{{DURATION_MINUTES}} minutes"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*Timestamp:*\n<!date^{{TIMESTAMP_UNIX}}^{date_short_pretty} at {time}|{{TIMESTAMP_ISO}}>"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*Severity Breakdown:*\n• P0: {{P0_COUNT}} Critical :rotating_light:\n• P1: {{P1_COUNT}} High :warning:\n• P2: {{P2_COUNT}} Medium :yellow_circle:\n• P3: {{P3_COUNT}} Low :white_circle:"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "context",
+      "elements": [
+        {
+          "type": "mrkdwn",
+          "text": ":chart_with_upwards_trend: Score Evolution: {{PREVIOUS_SCORE}} → {{SCORE}} ({{SCORE_DELTA}})"
+        }
+      ]
+    },
+    {
+      "type": "actions",
+      "elements": [
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "View Full Report",
+            "emoji": true
+          },
+          "url": "{{REPORT_URL}}",
+          "style": "primary"
+        },
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Download PDF",
+            "emoji": true
+          },
+          "url": "{{REPORT_PDF_URL}}"
+        }
+      ]
+    }
+  ]
+}

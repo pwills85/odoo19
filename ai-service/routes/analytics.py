@@ -24,6 +24,12 @@ try:
 except ImportError:
     from ..analytics.project_matcher_claude import ProjectMatcherClaude
 
+# Import analytics tracker
+try:
+    from utils.analytics_tracker import get_analytics_tracker
+except ImportError:
+    from ..utils.analytics_tracker import get_analytics_tracker
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/ai/analytics", tags=["Analytics"])
@@ -167,15 +173,43 @@ async def suggest_project(
         else None
     )
 
-    # Llamar a Claude (versión síncrona)
+    # Llamar a Claude (versión async nativa)
     try:
-        result = matcher.suggest_project_sync(
+        result = await matcher.suggest_project(
             partner_name=request.partner_name,
             partner_vat=request.partner_vat,
             invoice_lines=invoice_lines_dict,
             available_projects=projects_dict,
             historical_purchases=historical_dict
         )
+
+        # Track analytics (P0-1 implementation)
+        try:
+            tracker = get_analytics_tracker()
+            tracker.track_suggestion(
+                result=result,
+                partner_id=request.partner_id,
+                partner_name=request.partner_name,
+                company_id=request.company_id,
+                metadata={
+                    "invoice_lines_count": len(invoice_lines_dict),
+                    "available_projects_count": len(projects_dict),
+                    "has_historical": historical_dict is not None
+                }
+            )
+            logger.info(
+                "analytics_tracked",
+                project_id=result.get("project_id"),
+                confidence=result.get("confidence"),
+                partner_id=request.partner_id
+            )
+        except Exception as tracking_error:
+            # Don't fail request if tracking fails, just log warning
+            logger.warning(
+                "analytics_tracking_failed",
+                error=str(tracking_error),
+                partner_id=request.partner_id
+            )
 
         return ProjectSuggestionResponse(**result)
 
@@ -209,10 +243,30 @@ async def get_stats(authorized: bool = Depends(verify_api_key)) -> Dict[str, Any
     """
     Estadísticas del servicio (requiere autenticación).
 
-    TODO: Implementar contadores reales.
+    Returns real-time analytics from Redis backend.
+
+    Response includes:
+    - total_suggestions: Total number of project suggestions made
+    - avg_confidence: Average confidence score across all suggestions
+    - projects_matched: Total unique projects matched
+    - top_projects: Top 10 most frequently matched projects
+    - confidence_distribution: Distribution of confidence levels (high/medium/low)
     """
-    return {
-        "total_suggestions": 0,
-        "avg_confidence": 0,
-        "projects_matched": 0
-    }
+    try:
+        tracker = get_analytics_tracker()
+        stats = tracker.get_stats(limit_top_projects=10)
+
+        logger.info(
+            "analytics_stats_requested",
+            total_suggestions=stats.get("total_suggestions", 0),
+            avg_confidence=stats.get("avg_confidence", 0)
+        )
+
+        return stats
+
+    except Exception as e:
+        logger.exception("Error retrieving analytics stats: %s", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving stats: {str(e)[:200]}"
+        )

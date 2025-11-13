@@ -24,8 +24,9 @@ from requests import Session
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.backends import default_backend
-from odoo import _
-from odoo.exceptions import UserError
+from .i18n import gettext as _
+from .exceptions import DTEAuthenticationError as UserError
+from .safe_xml_parser import fromstring_safe
 
 _logger = logging.getLogger(__name__)
 
@@ -177,7 +178,7 @@ class SIIAuthenticator:
             # </SII:RESPUESTA>
 
             if isinstance(response, str):
-                root = etree.fromstring(response.encode('utf-8'))
+                root = fromstring_safe(response)
             else:
                 root = response
 
@@ -343,7 +344,7 @@ class SIIAuthenticator:
             # </SII:RESPUESTA>
 
             if isinstance(response, str):
-                root = etree.fromstring(response.encode('utf-8'))
+                root = fromstring_safe(response)
             else:
                 root = response
 

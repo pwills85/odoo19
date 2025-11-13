@@ -1,0 +1,32 @@
+Loaded cached credentials.
+Aquí tienes la consulta usando el ORM de Odoo:
+
+```python
+from odoo import fields
+from datetime import date
+from dateutil.relativedelta import relativedelta
+
+today = date.today()
+first_day_current_month = today.replace(day=1)
+first_day_last_month = first_day_current_month - relativedelta(months=1)
+last_day_last_month = first_day_current_month - relativedelta(days=1)
+
+date_from = fields.Date.to_string(first_day_last_month)
+date_to = fields.Date.to_string(last_day_last_month)
+
+invoices_by_partner = self.env['account.move'].read_group(
+    domain=[
+        ('move_type', '=', 'out_invoice'),
+        ('date', '>=', date_from),
+        ('date', '<=', date_to),
+        ('state', '=', 'posted') # Solo facturas validadas
+    ],
+    fields=['partner_id', 'amount_total'],
+    groupby=['partner_id'],
+    orderby='amount_total DESC',
+    lazy=False
+)
+
+# El resultado es una lista de diccionarios, cada uno con 'partner_id' y 'amount_total' (sumado)
+# Ejemplo: [{'partner_id': (1, 'Partner Name'), 'amount_total': 1500.00}]
+```

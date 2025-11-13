@@ -120,42 +120,46 @@ class PayrollDataFactory:
 
     @staticmethod
     def get_or_create_economic_indicators(env, year=2025):
-        """Obtiene o crea indicadores económicos para año"""
-        Indicators = env['l10n_cl.economic.indicators']
+        """Obtiene o crea indicadores económicos para año (API actualizada a Odoo 19)"""
+        Indicators = env['hr.economic.indicators']
 
+        # Buscar por período (primer día del año)
+        period_date = date(year, 1, 1)
         indicators = Indicators.search([
-            ('year', '=', year),
+            ('period', '=', period_date),
         ], limit=1)
 
         if indicators:
             return indicators
 
-        # Crear indicadores 2025
+        # Crear indicadores para enero del año especificado
         return Indicators.create({
-            'year': year,
-            'uf_value': 37_000.0,  # UF enero 2025
-            'utm_value': 70_000.0,  # UTM enero 2025
-            'imacec_rate': 1.2,
-            'inflation_rate': 3.5,
+            'period': period_date,
+            'uf': 37000.0,  # UF enero 2025
+            'utm': 70000.0,  # UTM enero 2025
+            'uta': 840000.0,  # UTA anual
+            'minimum_wage': 500000.0,  # Sueldo mínimo
         })
 
     @staticmethod
     def get_or_create_legal_caps(env, year=2025):
-        """Obtiene o crea topes legales para año"""
+        """Obtiene o crea topes legales para año (API actualizada a Odoo 19)"""
         LegalCaps = env['l10n_cl.legal.caps']
 
         # Topes legales 2025
         caps_data = [
-            ('AFP_IMPONIBLE_CAP', 83.1, 'UF'),  # Tope AFP Ley 20.255 Art. 17
-            ('UF_VALUE', 37_000.0, 'CLP'),  # Valor UF (referencia)
-            ('UTM_VALUE', 70_000.0, 'CLP'),  # Valor UTM
+            ('AFP_IMPONIBLE_CAP', 83.1, 'uf'),  # Tope AFP Ley 20.255 Art. 17
+            ('APV_CAP_MONTHLY', 50.0, 'uf'),  # Tope APV mensual
+            ('APV_CAP_ANNUAL', 600.0, 'uf'),  # Tope APV anual
         ]
 
         caps = {}
         for code, amount, unit in caps_data:
+            # Usar objetos date, no strings
+            valid_from_date = date(year, 1, 1)
             cap = LegalCaps.search([
                 ('code', '=', code),
-                ('valid_from', '=', f'{year}-01-01'),
+                ('valid_from', '=', valid_from_date),
             ], limit=1)
 
             if not cap:
@@ -163,8 +167,8 @@ class PayrollDataFactory:
                     'code': code,
                     'amount': amount,
                     'unit': unit,
-                    'valid_from': f'{year}-01-01',
-                    'valid_until': f'{year}-12-31',
+                    'valid_from': valid_from_date,
+                    'valid_until': date(year, 12, 31),
                 })
 
             caps[code] = cap

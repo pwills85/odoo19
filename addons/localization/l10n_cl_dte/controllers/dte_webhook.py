@@ -132,15 +132,16 @@ def rate_limit_redis(max_calls=100, period=60):
                     raise TooManyRequests(
                         f"Rate limit exceeded: {max_calls_config} calls per {period}s"
                     )
+                
+                return f(*args, **kwargs)
 
             except RedisError as e:
-                # Fallback: log error pero permitir request (fail-open para rate limit)
+                # FAIL-SECURE: si Redis falla, rechazar request (consistent with replay protection)
                 _logger.error(
-                    "Rate limit check failed (Redis error)",
+                    "Rate limit check failed (Redis error) - REJECTING",
                     extra={'ip': ip, 'error': str(e)}
                 )
-
-            return f(*args, **kwargs)
+                raise TooManyRequests("Rate limiting temporarily unavailable (Redis error)")
         return wrapper
     return decorator
 

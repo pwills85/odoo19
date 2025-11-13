@@ -1,0 +1,206 @@
+# Odoo 19 PROMPT System - CLI Configuration
+# Auto-generated configuration file for prompts_cli.py
+# Last updated: 2025-11-12
+
+# Default settings
+defaults:
+  # Default module for audits
+  module: l10n_cl_dte
+
+  # Default agents (comma-separated: compliance,backend,frontend,infrastructure)
+  agents:
+    - compliance
+    - backend
+
+  # Default output directory (relative to project root)
+  output_dir: docs/prompts/06_outputs/2025-11/auditorias
+
+  # Auto-save audit reports
+  auto_save: true
+
+  # Verbose logging
+  verbose: false
+
+# Notification settings
+notifications:
+  # Slack integration
+  slack:
+    enabled: false
+    webhook_url: null
+    channel: "#odoo-audits"
+    mention_on_p0: true
+
+  # Email integration
+  email:
+    enabled: false
+    smtp_server: null
+    smtp_port: 587
+    smtp_user: null
+    smtp_password: null
+    from_address: "odoo-audits@example.com"
+    to_addresses:
+      - "tech-lead@example.com"
+    send_on_completion: true
+    send_on_error: true
+
+# Cache settings
+cache:
+  enabled: true
+  max_age_days: 7
+  cache_dir: .cache/prompts_cli
+  auto_cleanup: true
+
+# Output formatting
+output:
+  # Format: markdown, json, html
+  default_format: markdown
+
+  # Include charts/graphs
+  include_charts: true
+
+  # Colorize console output
+  colorize: true
+
+  # Pagination for long outputs
+  paginate: true
+  lines_per_page: 50
+
+# Agent-specific configurations
+agents:
+  compliance:
+    enabled: true
+    model: haiku-4.5
+    max_tokens: 100000
+    temperature: 0.1
+    priority: high
+
+  backend:
+    enabled: true
+    model: sonnet-4.5
+    max_tokens: 150000
+    temperature: 0.2
+    priority: high
+
+  frontend:
+    enabled: false  # Coming soon
+    model: sonnet-4
+    max_tokens: 120000
+    temperature: 0.2
+    priority: medium
+
+  infrastructure:
+    enabled: false  # Coming soon
+    model: sonnet-4.5
+    max_tokens: 100000
+    temperature: 0.1
+    priority: medium
+
+# Execution settings
+execution:
+  # Timeout per agent (minutes)
+  timeout_minutes: 15
+
+  # Retry on failure
+  retry_enabled: true
+  max_retries: 2
+
+  # Parallel execution
+  parallel: false  # Sequential by default
+
+  # Dry-run mode (simulate without executing)
+  dry_run: false
+
+# Docker integration
+docker:
+  # Auto-check Docker health before audit
+  health_check: true
+
+  # Auto-restart unhealthy containers
+  auto_restart: false
+
+  # Container names
+  odoo_container: odoo19_app
+  db_container: odoo19_db
+
+# Metrics tracking
+metrics:
+  # Auto-update metrics_history.json
+  auto_update: true
+
+  # Track execution time
+  track_time: true
+
+  # Track costs
+  track_costs: true
+
+  # Generate comparison reports
+  generate_comparisons: true
+
+# Templates validation
+templates:
+  # Auto-validate before execution
+  auto_validate: true
+
+  # Required sections
+  required_sections:
+    - "# Objetivo"
+    - "# Contexto"
+    - "# Instrucciones"
+
+  # Max prompt size (characters)
+  max_size: 50000
+
+# Advanced features
+advanced:
+  # Enable experimental features
+  experimental: false
+
+  # Debug mode (verbose logging)
+  debug: false
+
+  # Profile performance
+  profile: false
+
+  # Generate telemetry
+  telemetry: false
+
+# CLI appearance
+appearance:
+  # Theme: default, minimal, corporate
+  theme: default
+
+  # Show progress bars
+  progress_bars: true
+
+  # Show spinner animations
+  spinners: true
+
+  # Rich formatting
+  rich_formatting: true
+
+# History tracking
+history:
+  # Enable command history
+  enabled: true
+
+  # History file location
+  file: ~/.prompts_cli/history.log
+
+  # Max history entries
+  max_entries: 1000
+
+  # Auto-clean old entries
+  auto_clean: true
+  clean_after_days: 30
+
+# Security
+security:
+  # Require confirmation for destructive operations
+  confirm_destructive: true
+
+  # Mask sensitive data in logs
+  mask_sensitive: true
+
+  # Audit log all commands
+  audit_log: true
+  audit_file: ~/.prompts_cli/audit.log

@@ -355,7 +355,7 @@ class BudgetComparisonReport(models.Model):
             result = service.compute_budget_comparison(self)
 
             # Crear líneas
-            self._create_comparison_lines(result['lines'])
+            self.env.create_comparison_lines(result['lines'])
 
             # Guardar recomendaciones
             self.write({

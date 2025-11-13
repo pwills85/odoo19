@@ -188,7 +188,7 @@ class TestL10nClF29RealCalculations(TransactionCase):
         if sales_data.get('gravadas', 0) > 0:
             for i in range(3):  # Distribuir en 3 facturas
                 amount = sales_data['gravadas'] / 3
-                invoice = self._create_invoice(
+                invoice = self.env.create_invoice(
                     'out_invoice',
                     partner,
                     amount,
@@ -201,7 +201,7 @@ class TestL10nClF29RealCalculations(TransactionCase):
         if sales_data.get('exentas', 0) > 0:
             for i in range(2):  # 2 facturas
                 amount = sales_data['exentas'] / 2
-                invoice = self._create_invoice(
+                invoice = self.env.create_invoice(
                     'out_invoice',
                     partner,
                     amount,
@@ -214,7 +214,7 @@ class TestL10nClF29RealCalculations(TransactionCase):
         if purchase_data.get('gravadas', 0) > 0:
             for i in range(4):  # 4 facturas
                 amount = purchase_data['gravadas'] / 4
-                invoice = self._create_invoice(
+                invoice = self.env.create_invoice(
                     'in_invoice',
                     partner,
                     amount,
@@ -225,7 +225,7 @@ class TestL10nClF29RealCalculations(TransactionCase):
         
         # Facturas de compra exentas
         if purchase_data.get('exentas', 0) > 0:
-            invoice = self._create_invoice(
+            invoice = self.env.create_invoice(
                 'in_invoice',
                 partner,
                 purchase_data['exentas'],
@@ -251,7 +251,7 @@ class TestL10nClF29RealCalculations(TransactionCase):
         }
         
         # Crear facturas del período
-        self._create_test_invoices_month(
+        self.env.create_test_invoices_month(
             self.test_period, sales_data, purchase_data
         )
         
@@ -298,7 +298,7 @@ class TestL10nClF29RealCalculations(TransactionCase):
         sales_data = {'gravadas': 200000}      # IVA débito: $38.000
         purchase_data = {'gravadas': 400000}   # IVA crédito: $76.000
         
-        self._create_test_invoices_month(
+        self.env.create_test_invoices_month(
             self.test_period, sales_data, purchase_data
         )
         
@@ -333,7 +333,7 @@ class TestL10nClF29RealCalculations(TransactionCase):
         sales_data = {'gravadas': 500000}      # IVA débito: $95.000
         purchase_data = {'gravadas': 200000}   # IVA crédito: $38.000
         
-        self._create_test_invoices_month(
+        self.env.create_test_invoices_month(
             self.test_period, sales_data, purchase_data
         )
         
@@ -380,7 +380,7 @@ class TestL10nClF29RealCalculations(TransactionCase):
             day = (i % 28) + 1
             invoice_date = self.test_period.replace(day=day)
             
-            self._create_invoice(
+            self.env.create_invoice(
                 'out_invoice',
                 partner,
                 amount,
@@ -394,7 +394,7 @@ class TestL10nClF29RealCalculations(TransactionCase):
             day = (i % 28) + 1
             invoice_date = self.test_period.replace(day=day)
             
-            self._create_invoice(
+            self.env.create_invoice(
                 'in_invoice',
                 partner,
                 amount,
@@ -434,7 +434,7 @@ class TestL10nClF29RealCalculations(TransactionCase):
         sales_data = {'gravadas': 300000}
         purchase_data = {'gravadas': 150000}
         
-        self._create_test_invoices_month(
+        self.env.create_test_invoices_month(
             self.test_period, sales_data, purchase_data
         )
         
@@ -529,7 +529,7 @@ class TestL10nClF29RealCalculations(TransactionCase):
             period_date = date(2024, month, 1)
             
             # Crear facturas del mes
-            self._create_test_invoices_month(
+            self.env.create_test_invoices_month(
                 period_date,
                 {'gravadas': monthly_sales},
                 {'gravadas': monthly_purchases}

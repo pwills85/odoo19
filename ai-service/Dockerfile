@@ -5,7 +5,7 @@ LABEL description="AI Microservice for DTE Intelligence"
 
 WORKDIR /app
 
-# Instalar solo dependencias necesarias (lxml, web scraping)
+# Instalar solo dependencias necesarias (lxml, web scraping, SSL certificates)
 # OPTIMIZACIÓN: Removidas dependencias OCR y PDF no utilizadas (-200MB)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -14,7 +14,11 @@ RUN apt-get update && \
         libxml2-dev \
         libxslt1-dev \
         curl \
+        ca-certificates \
         && rm -rf /var/lib/apt/lists/*
+
+# Update CA certificates
+RUN update-ca-certificates
 
 # Copiar requirements
 COPY requirements.txt .

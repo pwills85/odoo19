@@ -541,7 +541,7 @@ class L10nClF22(models.Model):
 
         # Crear asiento contable de provisión si hay impuesto a pagar
         if self.impuesto_a_pagar > 0:
-            self._create_provision_move()
+            self.env.create_provision_move()
 
         # Cambiar estado
         self.write({

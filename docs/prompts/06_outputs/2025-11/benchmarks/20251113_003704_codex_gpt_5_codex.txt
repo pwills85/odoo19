@@ -1,0 +1,31 @@
+OpenAI Codex v0.57.0 (research preview)
+--------
+workdir: /Users/pedro/Documents/odoo19
+model: gpt-5-codex
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: high
+reasoning summaries: auto
+session id: 019a7b4a-e696-7523-bcec-9069ae9697f0
+--------
+user
+Responde en máximo 2 oraciones: ¿Cuál es la diferencia entre t-esc y t-out en Odoo 19?
+
+thinking
+**Planning web search on Odoo tags difference**
+🌐 Searched: Odoo 17 t-esc vs t-out difference
+
+thinking
+**Clarifying Odoo 19 directives differences**
+🌐 Searched: t-out directive odoo 19 difference with t-esc
+
+thinking
+**Summarizing differences between t-out and t-esc**
+
+I’m gathering precise, two-sentence Spanish explanations showing that in Odoo 19 `t-out` is the official output directive escaping HTML by default but allowing safe markup (e.g., with `markupsafe.Markup`), while `t-esc` is a deprecated alias kept for compatibility and recommended to be replaced; I’m focusing on citing official Odoo docs confirming auto-escaping, safe markup handling, the alias status, and the deprecation listing. I want to balance clarity with correct references, noting the user’s request for official documentation over blog citations, and ensuring the explanation clearly contrasts their behaviors and migration guidance.
+codex
+En Odoo 19 la directiva oficial `t-out` imprime los valores escapados para evitar XSS y solo inserta HTML sin escaparlo cuando el contenido se marcó explícitamente como seguro (por ejemplo con `markupsafe.Markup`). ([odoo.com](https://www.odoo.com/documentation/19.0/developer/reference/frontend/qweb.html?utm_source=openai)) `t-esc` aparece en la documentación como directiva heredada dentro del bloque de “Deprecated output directives” —es solo un alias de `t-out`— por lo que se recomienda migrar a `t-out` en cualquier plantilla nueva o actualizada para alinearse con el estándar vigente. ([odoo.com](https://www.odoo.com/documentation/19.0/developer/reference/frontend/qweb.html?utm_source=openai))
+tokens used
+21.936
+En Odoo 19 la directiva oficial `t-out` imprime los valores escapados para evitar XSS y solo inserta HTML sin escaparlo cuando el contenido se marcó explícitamente como seguro (por ejemplo con `markupsafe.Markup`). ([odoo.com](https://www.odoo.com/documentation/19.0/developer/reference/frontend/qweb.html?utm_source=openai)) `t-esc` aparece en la documentación como directiva heredada dentro del bloque de “Deprecated output directives” —es solo un alias de `t-out`— por lo que se recomienda migrar a `t-out` en cualquier plantilla nueva o actualizada para alinearse con el estándar vigente. ([odoo.com](https://www.odoo.com/documentation/19.0/developer/reference/frontend/qweb.html?utm_source=openai))

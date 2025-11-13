@@ -34,7 +34,7 @@ class TestTaxBrackets(TransactionCase):
             'utm': 68647,
             'uta': 823764,
             'minimum_wage': 500000,
-            'afp_limit': 87.8,
+            'afp_tope_uf': 87.8,
         })
     
     def test_brackets_exist_in_database(self):

@@ -30,17 +30,18 @@
                         </group>
                         <group>
                             <field name="minimum_wage" required="1"/>
-                            <field name="afp_limit"/>
+                            <field name="afp_tope_uf"/>
                         </group>
                     </group>
                     
                     <group string="Asignaciones Familiares">
                         <group>
-                            <field name="family_allowance_t1"/>
-                            <field name="family_allowance_t2"/>
+                            <field name="asig_fam_tramo_1"/>
+                            <field name="asig_fam_tramo_2"/>
                         </group>
                         <group>
-                            <field name="family_allowance_t3"/>
+                            <field name="asig_fam_tramo_3"/>
+                            <field name="asig_fam_tramo_4"/>
                         </group>
                     </group>
                     
@@ -57,14 +58,14 @@
         <field name="name">hr.economic.indicators.tree</field>
         <field name="model">hr.economic.indicators</field>
         <field name="arch" type="xml">
-            <tree string="Indicadores Económicos">
+            <list string="Indicadores Económicos">
                 <field name="period"/>
                 <field name="uf"/>
                 <field name="utm"/>
                 <field name="uta"/>
                 <field name="minimum_wage"/>
-                <field name="afp_limit"/>
-            </tree>
+                <field name="afp_tope_uf"/>
+            </list>
         </field>
     </record>
     

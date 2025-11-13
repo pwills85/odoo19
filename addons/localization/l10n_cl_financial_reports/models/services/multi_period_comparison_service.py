@@ -974,10 +974,10 @@ class MultiPeriodComparisonService:
             workbook = Workbook(output, {'in_memory': True})
             
             # Crear hojas
-            self._create_comparison_sheet(workbook, comparison)
-            self._create_chart_sheet(workbook, comparison)
+            self.env.create_comparison_sheet(workbook, comparison)
+            self.env.create_chart_sheet(workbook, comparison)
             if comparison.show_trends:
-                self._create_trends_sheet(workbook, comparison)
+                self.env.create_trends_sheet(workbook, comparison)
             
             workbook.close()
             output.seek(0)

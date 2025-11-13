@@ -23,6 +23,7 @@ License: LGPL-3
 from lxml import etree
 import logging
 import os
+from .safe_xml_parser import fromstring_safe, parse_safe
 
 _logger = logging.getLogger(__name__)
 
@@ -83,13 +84,13 @@ class XSDValidator:
                 _logger.error(f"[XSD] ❌ {error_msg}")
                 return (False, error_msg)
 
-            # Parse XSD
+            # Parse XSD (defense-in-depth: use safe parser even for local files)
             with open(xsd_path, 'rb') as xsd_file:
-                xsd_doc = etree.parse(xsd_file)
+                xsd_doc = parse_safe(xsd_file)
                 xsd_schema = etree.XMLSchema(xsd_doc)
 
             # Parse XML
-            xml_doc = etree.fromstring(xml_string.encode('ISO-8859-1'))
+            xml_doc = fromstring_safe(xml_string)
 
             # Validate
             is_valid = xsd_schema.validate(xml_doc)

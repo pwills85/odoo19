@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="1">
+    <data noupdate="0">
         
         <!-- ========================================== -->
         <!-- REGLAS SALARIALES P1 - MOTOR DE CÁLCULO -->
@@ -18,7 +18,6 @@
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">result = contract.wage</field>
-            <field name="appears_on_payslip" eval="True"/>
             <field name="active" eval="True"/>
         </record>
         
@@ -27,14 +26,13 @@
             <field name="name">Total Haberes Imponibles</field>
             <field name="code">HABERES_IMPONIBLES</field>
             <field name="sequence">100</field>
-            <field name="category_id" ref="category_haber_imponible"/>
+            <field name="category_id" ref="category_total_imponible"/>
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
 # Suma de todos los haberes imponibles
 result = sum([line.total for line in payslip.line_ids if line.category_id.imponible and line.total &gt; 0])
             </field>
-            <field name="appears_on_payslip" eval="True"/>
             <field name="active" eval="True"/>
         </record>
         
@@ -50,7 +48,6 @@ result = sum([line.total for line in payslip.line_ids if line.category_id.imponi
 # Suma de haberes no imponibles
 result = sum([line.total for line in payslip.line_ids if line.category_id and not line.category_id.imponible and line.total &gt; 0])
             </field>
-            <field name="appears_on_payslip" eval="True"/>
             <field name="active" eval="True"/>
         </record>
         
@@ -61,14 +58,13 @@ result = sum([line.total for line in payslip.line_ids if line.category_id and no
             <field name="name">Total Imponible</field>
             <field name="code">TOTAL_IMPONIBLE</field>
             <field name="sequence">200</field>
-            <field name="category_id" ref="category_base"/>
+            <field name="category_id" ref="category_total_imponible"/>
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
 # Total Imponible = HABERES_IMPONIBLES
 result = categories.HABERES_IMPONIBLES
             </field>
-            <field name="appears_on_payslip" eval="True"/>
             <field name="active" eval="True"/>
         </record>
         
@@ -77,13 +73,13 @@ result = categories.HABERES_IMPONIBLES
             <field name="name">Tope Imponible (UF)</field>
             <field name="code">TOPE_IMPONIBLE_UF</field>
             <field name="sequence">201</field>
-            <field name="category_id" ref="category_base"/>
+            <field name="category_id" ref="category_total_imponible"/>
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
 # PR-2 FIX (NOM-C001): Usar get_cap() method para tope AFP
 # Obtener tope legal AFP en UF usando vigencia por fecha
-from odoo.exceptions import UserError
+# UserError está disponible en el contexto de safe_eval
 
 if not payslip.indicadores_id:
     raise UserError(
@@ -106,7 +102,6 @@ if unit != 'uf':
 uf_value = payslip.indicadores_id.uf
 result = tope_uf * uf_value
             </field>
-            <field name="appears_on_payslip" eval="False"/>
             <field name="active" eval="True"/>
         </record>
         
@@ -115,7 +110,7 @@ result = tope_uf * uf_value
             <field name="name">Base Tributable</field>
             <field name="code">BASE_TRIBUTABLE</field>
             <field name="sequence">202</field>
-            <field name="category_id" ref="category_base"/>
+            <field name="category_id" ref="category_total_imponible"/>
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
@@ -124,7 +119,6 @@ total_imp = categories.TOTAL_IMPONIBLE
 tope_imp = categories.TOPE_IMPONIBLE_UF
 result = min(total_imp, tope_imp) if tope_imp > 0 else total_imp
             </field>
-            <field name="appears_on_payslip" eval="True"/>
             <field name="active" eval="True"/>
         </record>
         
@@ -150,7 +144,6 @@ if contract.afp_id:
 
 result = -(base * (tasa_afp + comision))
             </field>
-            <field name="appears_on_payslip" eval="True"/>
             <field name="active" eval="True"/>
         </record>
         
@@ -165,15 +158,18 @@ result = -(base * (tasa_afp + comision))
             <field name="amount_python_compute">
 # Salud = 7% FONASA o plan ISAPRE sobre BASE_TRIBUTABLE
 base = categories.BASE_TRIBUTABLE
-tasa_salud = 0.07  # 7% legal mínimo
+legal_7pct = base * 0.07  # 7% legal mínimo
 
-# Si tiene ISAPRE, usar tasa del plan
-if contract.isapre_id and contract.isapre_plan_id:
-    tasa_salud = contract.isapre_plan_id.cotizacion_pactada / 100.0
-
-result = -(base * tasa_salud)
+# Si tiene ISAPRE, comparar plan en UF vs 7% legal
+if contract.isapre_id and contract.isapre_plan_uf and payslip.indicadores_id:
+    # Convertir plan UF a CLP
+    plan_clp = contract.isapre_plan_uf * payslip.indicadores_id.uf
+    # Se paga el mayor entre plan y 7% legal
+    result = -(max(plan_clp, legal_7pct))
+else:
+    # FONASA o sin plan ISAPRE: 7% legal
+    result = -legal_7pct
             </field>
-            <field name="appears_on_payslip" eval="True"/>
             <field name="active" eval="True"/>
         </record>
         
@@ -186,12 +182,22 @@ result = -(base * tasa_salud)
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
-# AFC Trabajador = 0.6% sobre BASE_TRIBUTABLE
-base = categories.BASE_TRIBUTABLE
+# AFC Trabajador = 0.6% sobre TOTAL_IMPONIBLE (tope 131.9 UF - Actualizado 2025)
+# Normativa: AFC tiene tope diferente al AFP (131.9 UF vs 87.8 UF)
+# Ref: Superintendencia de Pensiones - Límite máximo mensual AFC 2025
+# FIX: Usar TOTAL_IMPONIBLE directamente, NO BASE_TRIBUTABLE (que tiene tope AFP 87.8 UF)
+
+# Obtener tope AFC (131.9 UF)
+tope_afc_uf = 131.9
+tope_afc = payslip.indicadores_id.uf * tope_afc_uf
+
+# Aplicar tope AFC sobre TOTAL_IMPONIBLE (no BASE_TRIBUTABLE)
+base = min(categories.TOTAL_IMPONIBLE, tope_afc)
+
+# Calcular AFC
 tasa_afc = 0.006  # 0.6%
 result = -(base * tasa_afc)
             </field>
-            <field name="appears_on_payslip" eval="True"/>
             <field name="active" eval="True"/>
         </record>
         
@@ -202,19 +208,21 @@ result = -(base * tasa_afc)
             <field name="name">Base Impuesto Único</field>
             <field name="code">BASE_IMPUESTO_UNICO</field>
             <field name="sequence">400</field>
-            <field name="category_id" ref="category_base"/>
+            <field name="category_id" ref="category_total_imponible"/>
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
-# Base Impuesto = BASE_TRIBUTABLE - descuentos previsionales
-base_trib = categories.BASE_TRIBUTABLE
-afp = abs(categories.AFP)
-salud = abs(categories.SALUD)
-afc = abs(categories.AFC)
+# Base Impuesto = TOTAL_IMPONIBLE - descuentos previsionales
+# Normativa: Base impuesto NO tiene tope AFP (87.8 UF)
+# Usar TOTAL_IMPONIBLE (sin tope) en lugar de BASE_TRIBUTABLE (con tope AFP)
+
+base_trib = categories.TOTAL_IMPONIBLE
+afp = abs(categories.AFP or 0)
+salud = abs(categories.SALUD or 0)
+afc = abs(categories.AFC or 0)
 
 result = base_trib - afp - salud - afc
             </field>
-            <field name="appears_on_payslip" eval="True"/>
             <field name="active" eval="True"/>
         </record>
         
@@ -226,26 +234,14 @@ result = base_trib - afp - salud - afc
             <field name="category_id" ref="category_desc_legal"/>
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
-            <field name="amount_python_compute">
-# Aplicar tabla de tramos impositivos
-base_impuesto = categories.BASE_IMPUESTO_UNICO
-result = 0.0
-
-if base_impuesto > 0:
-    # Buscar tramo aplicable
-    tramo = env['hr.tax.bracket'].search([
-        ('year', '=', payslip.date_to.year),
-        ('from_amount', '&lt;=', base_impuesto),
-        ('to_amount', '&gt;=', base_impuesto)
-    ], limit=1)
-    
-    if tramo:
-        # Impuesto = (base - desde) * tasa + factor
-        excedente = base_impuesto - tramo.from_amount
-        result = -((excedente * tramo.rate / 100.0) + tramo.fixed_amount)
-            </field>
-            <field name="appears_on_payslip" eval="True"/>
-            <field name="active" eval="True"/>
+                        <field name="amount_python_compute">
+            # Cálculo de impuesto único usando el método centralizado del modelo hr.tax.bracket
+            # Esto asegura consistencia y respeta la lógica de negocio de UTM y vigencia.
+            base_impuesto = categories.BASE_IMPUESTO_UNICO
+            # La zona extrema se manejará en un ticket separado si es necesario.
+            # Por ahora, se asume que no hay zona extrema.
+            result = -env['hr.tax.bracket'].calculate_tax(base_impuesto, payslip.date_to)
+                        </field>            <field name="active" eval="True"/>
         </record>
         
         <!-- ==================== TOTALES FINALES ==================== -->
@@ -255,14 +251,13 @@ if base_impuesto > 0:
             <field name="name">TOTAL HABERES</field>
             <field name="code">TOTAL_HABERES</field>
             <field name="sequence">900</field>
-            <field name="category_id" ref="category_haber"/>
+            <field name="category_id" ref="category_haberes"/>
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
 # Total Haberes = Imponibles + No Imponibles
 result = categories.HABERES_IMPONIBLES + categories.HABERES_NO_IMPONIBLES
             </field>
-            <field name="appears_on_payslip" eval="True"/>
             <field name="active" eval="True"/>
         </record>
         
@@ -271,7 +266,7 @@ result = categories.HABERES_IMPONIBLES + categories.HABERES_NO_IMPONIBLES
             <field name="name">TOTAL DESCUENTOS</field>
             <field name="code">TOTAL_DESCUENTOS</field>
             <field name="sequence">901</field>
-            <field name="category_id" ref="category_desc"/>
+            <field name="category_id" ref="category_descuentos"/>
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
@@ -288,7 +283,6 @@ if hasattr(categories, 'APV'):
 
 result = -total
             </field>
-            <field name="appears_on_payslip" eval="True"/>
             <field name="active" eval="True"/>
         </record>
         
@@ -297,14 +291,13 @@ result = -total
             <field name="name">ALCANCE LÍQUIDO</field>
             <field name="code">NET</field>
             <field name="sequence">902</field>
-            <field name="category_id" ref="category_net"/>
+            <field name="category_id" ref="category_liquido"/>
             <field name="condition_select">none</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute">
 # Líquido = Total Haberes + Total Descuentos (descuentos son negativos)
 result = categories.TOTAL_HABERES + categories.TOTAL_DESCUENTOS
             </field>
-            <field name="appears_on_payslip" eval="True"/>
             <field name="active" eval="True"/>
         </record>
 
@@ -329,7 +322,6 @@ result = contract.date_start and contract.date_start >= dt_date(2025, 1, 1)
 # APV 0.5% sobre sueldo base
 result = contract.wage * 0.005
             </field>
-            <field name="appears_on_payslip" eval="False"/>
             <field name="active" eval="True"/>
         </record>
 
@@ -350,7 +342,6 @@ result = contract.date_start and contract.date_start >= dt_date(2025, 1, 1)
 # Cesantía 0.5% sobre sueldo base
 result = contract.wage * 0.005
             </field>
-            <field name="appears_on_payslip" eval="False"/>
             <field name="active" eval="True"/>
         </record>
 

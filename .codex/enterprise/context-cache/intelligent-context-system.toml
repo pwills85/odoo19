@@ -1,0 +1,174 @@
+# Sistema de Contexto Inteligente Enterprise
+# Contexto dinámico y aprendizaje adaptativo
+
+[intelligent_context_config]
+# Configuración del sistema de contexto inteligente
+enabled = true
+context_engine = "adaptive"
+learning_enabled = true
+
+[context_layers]
+# Capas de contexto superpuestas
+
+[context_layers.layer_0_syntactic]
+# Capa base: Análisis sintáctico
+enabled = true
+scope = "file"
+cache_ttl = "1h"
+update_trigger = "file_change"
+
+[context_layers.layer_1_semantic]
+# Capa semántica: Comprensión de código
+enabled = true
+scope = "module"
+cache_ttl = "4h"
+update_trigger = "semantic_change"
+
+[context_layers.layer_2_architectural]
+# Capa arquitectural: Patrones de diseño
+enabled = true
+scope = "project"
+cache_ttl = "24h"
+update_trigger = "architectural_change"
+
+[context_layers.layer_3_domain]
+# Capa de dominio: Conocimiento experto Odoo + Chile
+enabled = true
+scope = "enterprise"
+cache_ttl = "168h"  # 1 semana
+update_trigger = "regulatory_update"
+
+[context_layers.layer_4_learning]
+# Capa de aprendizaje: Contexto adaptativo
+enabled = true
+scope = "historical"
+cache_ttl = "720h"  # 30 días
+update_trigger = "learning_update"
+
+[domain_knowledge_base]
+# Base de conocimiento especializado
+odoo19_patterns = {
+    path = ".github/agents/knowledge/odoo19_patterns.md",
+    weight = 0.9,
+    update_frequency = "weekly"
+}
+
+sii_regulatory = {
+    path = ".github/agents/knowledge/sii_regulatory_context.md",
+    weight = 0.95,
+    update_frequency = "monthly"
+}
+
+project_architecture = {
+    path = ".github/agents/knowledge/project_architecture.md",
+    weight = 0.85,
+    update_frequency = "biweekly"
+}
+
+chilean_labor_law = {
+    path = "docs/CHILEAN_LABOR_LAW_REFERENCE.md",
+    weight = 0.8,
+    update_frequency = "quarterly"
+}
+
+[code_context_mapping]
+# Mapeo de contexto por tipo de archivo/código
+python_models = {
+    patterns = ["**/models/*.py"],
+    context_type = "odoo_model",
+    domain_knowledge = ["odoo19_patterns", "project_architecture"]
+}
+
+python_controllers = {
+    patterns = ["**/controllers/*.py"],
+    context_type = "web_controller",
+    domain_knowledge = ["odoo19_patterns"]
+}
+
+xml_views = {
+    patterns = ["**/views/*.xml"],
+    context_type = "odoo_view",
+    domain_knowledge = ["odoo19_patterns"]
+}
+
+javascript = {
+    patterns = ["**/*.js"],
+    context_type = "frontend",
+    domain_knowledge = ["odoo19_patterns"]
+}
+
+dte_validation = {
+    patterns = ["**/l10n_cl_dte/**/*.py"],
+    context_type = "dte_compliance",
+    domain_knowledge = ["sii_regulatory", "chilean_labor_law"]
+}
+
+payroll = {
+    patterns = ["**/l10n_cl_hr_payroll/**/*.py"],
+    context_type = "payroll_compliance",
+    domain_knowledge = ["chilean_labor_law"]
+}
+
+[adaptive_context]
+# Contexto adaptativo basado en aprendizaje
+enabled = true
+learning_rate = 0.1
+context_adaptation = true
+
+# Aprendizaje por usuario/proyecto
+user_preferences = true
+project_patterns = true
+success_patterns = true
+
+# Adaptación automática
+auto_context_expansion = true
+context_pruning = true
+relevance_scoring = true
+
+[context_optimization]
+# Optimizaciones de rendimiento
+parallel_processing = true
+incremental_updates = true
+context_compression = true
+memory_mapped_storage = true
+
+# Cache inteligente
+context_cache_size = "1GB"
+cache_eviction_policy = "lru"
+cache_prefetching = true
+
+[enterprise_context_features]
+# Características enterprise
+context_versioning = true
+context_audit_trail = true
+context_backup_recovery = true
+multi_context_isolation = true
+
+# Gobernanza
+context_governance = true
+quality_assurance = true
+compliance_monitoring = true
+
+[context_monitoring]
+# Monitoreo avanzado
+performance_metrics = true
+usage_analytics = true
+context_quality_scoring = true
+
+alerts = {
+    context_drift_threshold = 0.3,
+    quality_drop_threshold = 0.2,
+    performance_degradation_threshold = 0.15
+}
+
+[integration_points]
+# Puntos de integración con otros sistemas
+codex_profiles = true
+mcp_servers = true
+memory_system = true
+model_optimization = true
+
+# APIs externas
+context7_integration = true
+vector_search_integration = true
+knowledge_graph_integration = true

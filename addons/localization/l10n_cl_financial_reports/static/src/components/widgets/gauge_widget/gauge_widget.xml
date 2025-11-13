@@ -6,7 +6,7 @@
             <div class="o_gauge_widget_header">
                 <div class="o_gauge_widget_title">
                     <i t-att-class="widgetIcon" class="me-2"/>
-                    <span t-esc="widgetTitle"/>
+                    <span t-out="widgetTitle"/>
                 </div>
                 <div class="o_gauge_widget_actions">
                     <button 
@@ -38,7 +38,7 @@
                 <div t-elif="state.hasError" class="o_gauge_error">
                     <div class="alert alert-danger" role="alert">
                         <i class="fa fa-exclamation-triangle me-2"/>
-                        <span t-esc="state.errorMessage"/>
+                        <span t-out="state.errorMessage"/>
                     </div>
                     <button 
                         class="btn btn-primary btn-sm"
@@ -55,8 +55,8 @@
                     <!-- Quick details -->
                     <div t-if="showDetails" class="o_gauge_quick_details">
                         <div t-foreach="detailItems" t-as="item" t-key="item.label" class="o_gauge_detail_item">
-                            <span class="o_gauge_detail_label" t-esc="item.label"/>
-                            <span class="o_gauge_detail_value" t-esc="item.value"/>
+                            <span class="o_gauge_detail_label" t-out="item.label"/>
+                            <span class="o_gauge_detail_value" t-out="item.value"/>
                         </div>
                     </div>
                 </div>
@@ -76,8 +76,8 @@
                                 <tr>
                                     <td>Current Value</td>
                                     <td class="text-end fw-bold">
-                                        <t t-esc="props.data.value.toFixed(1)"/>
-                                        <t t-esc="props.data.units"/>
+                                        <t t-out="props.data.value.toFixed(1)"/>
+                                        <t t-out="props.data.units"/>
                                     </td>
                                 </tr>
                                 <tr>
@@ -88,15 +88,15 @@
                                             'bg-warning': props.data.status === 'fair',
                                             'bg-danger': props.data.status === 'poor' or props.data.status === 'critical'
                                         }">
-                                            <t t-esc="props.data.status"/>
+                                            <t t-out="props.data.status"/>
                                         </span>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td>Range</td>
                                     <td class="text-end">
-                                        <t t-esc="props.data.min"/> - <t t-esc="props.data.max"/>
-                                        <t t-esc="props.data.units"/>
+                                        <t t-out="props.data.min"/> - <t t-out="props.data.max"/>
+                                        <t t-out="props.data.units"/>
                                     </td>
                                 </tr>
                             </tbody>
@@ -107,8 +107,8 @@
                             <table class="table table-sm">
                                 <tbody>
                                     <tr t-foreach="Object.entries(props.data.details)" t-as="detail" t-key="detail[0]">
-                                        <td t-esc="detail[0].replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())"/>
-                                        <td class="text-end" t-esc="detail[1]"/>
+                                        <td t-out="detail[0].replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())"/>
+                                        <td class="text-end" t-out="detail[1]"/>
                                     </tr>
                                 </tbody>
                             </table>

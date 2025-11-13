@@ -1,0 +1,19 @@
+OpenAI Codex v0.57.0 (research preview)
+--------
+workdir: /Users/pedro/Documents/odoo19
+model: o3
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: high
+reasoning summaries: auto
+session id: 019a7b4b-c4b5-7760-b02c-948e8d348630
+--------
+user
+Responde en máximo 2 oraciones: ¿Cuál es la diferencia entre t-esc y t-out en Odoo 19?
+Reconnecting... 1/5
+Reconnecting... 2/5
+Reconnecting... 3/5
+Reconnecting... 4/5
+Reconnecting... 5/5
+ERROR: unexpected status 400 Bad Request: {"detail":"The 'o3' model is not supported when using Codex with a ChatGPT account."}

@@ -1,0 +1,4 @@
+[0;34m[TEST 1/15][0m Testing gemini-2.5-flash - Multi-step reasoning
+[0;32m✅[0m gemini-2.5-flash completado en 71s
+[1;33m📊[0m Tokens (estimado): 406 | Chars: 2272 | Velocidad: 5 tok/s
+71|406|2272

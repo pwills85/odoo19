@@ -165,6 +165,36 @@ payroll_validations_total = Counter(
 
 
 # ═══════════════════════════════════════════════════════════
+# ALERTING METRICS (NEW 2025-11-09)
+# ═══════════════════════════════════════════════════════════
+# These metrics are used by Prometheus alerts.yml
+
+# Daily cost tracking
+daily_cost_usd = Gauge(
+    'ai_service_daily_cost_usd',
+    'Estimated daily cost in USD (resets at midnight)'
+)
+
+# Plugin system
+plugin_load_failures_total = Gauge(
+    'ai_service_plugin_load_failures_total',
+    'Number of plugins that failed to load'
+)
+
+# Knowledge base
+knowledge_base_documents = Gauge(
+    'ai_service_knowledge_base_documents',
+    'Number of knowledge base documents loaded'
+)
+
+# Anthropic API errors (for alerting on API outages)
+anthropic_api_errors_total = Counter(
+    'ai_service_anthropic_api_errors_total',
+    'Total Anthropic API errors (timeouts, 5xx, network errors)'
+)
+
+
+# ═══════════════════════════════════════════════════════════
 # SERVICE INFO
 # ═══════════════════════════════════════════════════════════
 

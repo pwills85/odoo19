@@ -44,7 +44,6 @@ class TestPayrollCapsDynamic(TransactionCase):
         cls.employee = cls.env['hr.employee'].create({
             'name': 'Test Employee',
             'company_id': cls.company.id,
-            'l10n_cl_identification_id': '12345678-9',
         })
         
         cls.contract = cls.env['hr.contract'].create({
@@ -57,22 +56,22 @@ class TestPayrollCapsDynamic(TransactionCase):
             'afp_id': cls.afp.id,
         })
         
-        # Create economic indicators for Jan 2025
+        # Create economic indicators for Jan 2025 (API actualizada a Odoo 19)
         cls.indicators_jan = cls.env['hr.economic.indicators'].create({
-            'month': 1,
-            'year': 2025,
+            'period': date(2025, 1, 1),
             'uf': 37800.00,
             'utm': 65967.00,
             'uta': 791604.00,
+            'minimum_wage': 500000.00,
         })
-        
-        # Create economic indicators for Jul 2025
+
+        # Create economic indicators for Jul 2025 (API actualizada a Odoo 19)
         cls.indicators_jul = cls.env['hr.economic.indicators'].create({
-            'month': 7,
-            'year': 2025,
+            'period': date(2025, 7, 1),
             'uf': 38200.00,
             'utm': 66500.00,
             'uta': 798000.00,
+            'minimum_wage': 500000.00,
         })
         
         # Create payroll structure

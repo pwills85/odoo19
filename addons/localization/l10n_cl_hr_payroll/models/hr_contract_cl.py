@@ -118,6 +118,35 @@ class HrContractCL(models.Model):
         help='Número de cargas familiares inválidas'
     )
     
+    # Cargas GES (beneficiarios salud para Isapre - LRE Previred)
+    isapre_ges_cargas_simples = fields.Integer(
+        string='Cargas GES Simples',
+        default=0,
+        compute='_compute_ges_cargas',
+        store=True,
+        readonly=False,
+        help='Beneficiarios GES simples (hijos < 24 años) para LRE Previred. '
+             'Por defecto copia de cargas familiares, pero puede diferir en casos de ingreso alto.'
+    )
+    isapre_ges_cargas_maternales = fields.Integer(
+        string='Cargas GES Maternales',
+        default=0,
+        compute='_compute_ges_cargas',
+        store=True,
+        readonly=False,
+        help='Beneficiarios GES maternales (cónyuge/conviviente) para LRE Previred. '
+             'Por defecto copia de cargas familiares, pero puede diferir en casos de ingreso alto.'
+    )
+    isapre_ges_cargas_invalidas = fields.Integer(
+        string='Cargas GES Inválidas',
+        default=0,
+        compute='_compute_ges_cargas',
+        store=True,
+        readonly=False,
+        help='Beneficiarios GES con invalidez para LRE Previred. '
+             'Por defecto copia de cargas familiares, pero puede diferir en casos de ingreso alto.'
+    )
+    
     # Gratificación
     gratification_type = fields.Selection([
         ('legal', 'Legal (25% utilidades)'),
@@ -157,6 +186,28 @@ class HrContractCL(models.Model):
             if contract.weekly_hours < 1 or contract.weekly_hours > 45:
                 raise ValidationError(_("La jornada semanal debe estar entre 1 y 45 horas"))
     
+    @api.depends('family_allowance_simple', 'family_allowance_maternal', 'family_allowance_invalid', 'health_system')
+    def _compute_ges_cargas(self):
+        """
+        Compute GES cargas from family allowance by default.
+        
+        When health_system is Isapre, GES cargas are initialized from family_allowance_*
+        but can be edited independently (useful for high-income workers with no family 
+        allowance but who still have GES beneficiaries).
+        """
+        for contract in self:
+            if contract.health_system == 'isapre':
+                if not contract.isapre_ges_cargas_simples:
+                    contract.isapre_ges_cargas_simples = contract.family_allowance_simple
+                if not contract.isapre_ges_cargas_maternales:
+                    contract.isapre_ges_cargas_maternales = contract.family_allowance_maternal
+                if not contract.isapre_ges_cargas_invalidas:
+                    contract.isapre_ges_cargas_invalidas = contract.family_allowance_invalid
+            else:
+                contract.isapre_ges_cargas_simples = 0
+                contract.isapre_ges_cargas_maternales = 0
+                contract.isapre_ges_cargas_invalidas = 0
+    
     @api.constrains('family_allowance_simple', 'family_allowance_maternal', 'family_allowance_invalid')
     def _check_family_allowances(self):
         for contract in self:
@@ -166,3 +217,17 @@ class HrContractCL(models.Model):
                 raise ValidationError(_("Las cargas maternales no pueden ser negativas"))
             if contract.family_allowance_invalid < 0:
                 raise ValidationError(_("Las cargas inválidas no pueden ser negativas"))
+    
+    @api.constrains('isapre_ges_cargas_simples', 'isapre_ges_cargas_maternales', 'isapre_ges_cargas_invalidas')
+    def _check_ges_cargas(self):
+        """Validate GES cargas are non-negative"""
+        for contract in self:
+            if contract.isapre_ges_cargas_simples < 0:
+                raise ValidationError(_("Las cargas GES simples no pueden ser negativas"))
+            if contract.isapre_ges_cargas_maternales < 0:
+                raise ValidationError(_("Las cargas GES maternales no pueden ser negativas"))
+            if contract.isapre_ges_cargas_invalidas < 0:
+                raise ValidationError(_("Las cargas GES inválidas no pueden ser negativas"))
+            if contract.health_system == 'isapre':
+                if contract.isapre_ges_cargas_maternales > 1:
+                    raise ValidationError(_("Máximo 1 carga maternal GES permitida"))

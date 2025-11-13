@@ -280,7 +280,7 @@
 
                                 <div class="mt-2" t-if="record.sii_discrepancy_count.raw_value > 0">
                                     <span class="badge badge-warning">
-                                        ⚠️ <t t-esc="record.sii_discrepancy_count.value"/> discrepancias
+                                        ⚠️ <t t-out="record.sii_discrepancy_count.value"/> discrepancias
                                     </span>
                                 </div>
                             </div>

@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-CAF Signature Validator - Enterprise Grade
-===========================================
+CAF Signature Validator - Enterprise Grade (Multi-Environment)
+================================================================
 
 Valida firma digital FRMA del SII en archivos CAF según Resolución Ex. SII N°11.
 
 Características:
 - Verificación criptográfica RSA SHA1
+- Multi-environment: Staging (Maullin) / Production (Palena)
+- Certificados oficiales SII dinámicos
 - Cache de certificados SII
 - Logging detallado para auditoría
 - Manejo robusto de errores
@@ -14,8 +16,9 @@ Características:
 
 Author: EERGYGROUP - Ing. Pedro Troncoso Willz
 Date: 2025-11-02
-Version: 1.0.0
-Sprint: Gap Closure P0 - F-002
+Version: 2.0.0
+Sprint: H10 (P1 High Priority) - Official SII Certificate Management
+Previous: Gap Closure P0 - F-002
 """
 
 import base64
@@ -26,69 +29,157 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.exceptions import InvalidSignature
+from .safe_xml_parser import fromstring_safe
 
 _logger = logging.getLogger(__name__)
 
 # ═══════════════════════════════════════════════════════════════════════════
-# CERTIFICADO PÚBLICO SII PARA VALIDACIÓN DE CAFs
+# MULTI-ENVIRONMENT SII CERTIFICATE MANAGEMENT
 # ═══════════════════════════════════════════════════════════════════════════
 #
-# IMPORTANTE: Este certificado debe ser obtenido desde el SII de Chile.
+# El SII Chile usa diferentes servidores según el ambiente:
+# - STAGING (Certificación): Maullin (https://maullin.sii.cl)
+# - PRODUCTION: Palena (https://palena.sii.cl)
 #
-# Fuentes oficiales:
-# - https://www.sii.cl/factura_electronica/
-# - https://maullin.sii.cl/ (ambiente certificación)
-# - https://palena.sii.cl/ (ambiente producción)
+# Cada ambiente tiene su propio certificado digital oficial.
 #
-# Instrucciones para obtener el certificado:
-# 1. Descargar el certificado del SII (formato .cer o .der)
-# 2. Convertir a PEM si es necesario:
-#    openssl x509 -inform DER -in sii_cert.cer -out sii_cert.pem
-# 3. Copiar el contenido PEM (incluyendo BEGIN/END CERTIFICATE) aquí
+# Configuración:
+# - Environment se configura via: l10n_cl_dte.sii_environment
+# - Valores permitidos: 'sandbox', 'testing', 'certification' (staging) | 'production'
+# - Certificados se almacenan en: data/certificates/{staging|production}/
 #
-# NOTA: El SII usa diferentes certificados para certificación y producción:
-# - Certificación (Maullin): Certificado de testing
-# - Producción (Palena): Certificado de producción
+# Obtener certificados oficiales:
+# - Maullin: https://maullin.sii.cl/cgi_rtc/RTC/RTCCertif.cgi
+# - Palena: https://palena.sii.cl/cgi_rtc/RTC/RTCCertif.cgi
 #
-# Este módulo está configurado para usar el certificado de CERTIFICACIÓN por defecto.
-# Para producción, reemplace con el certificado oficial de Palena.
-#
+# Sprint: H10 (P1 High Priority) - Official SII Certificate Management
 # ═══════════════════════════════════════════════════════════════════════════
 
-# TODO: REEMPLAZAR CON CERTIFICADO OFICIAL DEL SII
-# Por ahora usamos un certificado autofirmado para testing interno
-# En producción, este DEBE ser reemplazado por el certificado oficial del SII
+import os
+from pathlib import Path
 
-SII_PUBLIC_CERTIFICATE_PEM = """-----BEGIN CERTIFICATE-----
-MIIDujCCAqKgAwIBAgIJAJ6HJHqJhv0KMA0GCSqGSIb3DQEBCwUAMHIxCzAJBgNV
-BAYTAkNMMRAwDgYDVQQIDAdTYW50aWFnbzEQMA4GA1UEBwwHU2FudGlhZ28xDDAK
-BgNVBAoMA1NJSTEMMAoGA1UECwwDRFRFMSMwIQYJKoZIhvcNAQkBFhRzb3BvcnRl
-QHNpaS5jbC5nb2IuY2wwHhcNMjAwMTAxMDAwMDAwWhcNMzAwMTAxMDAwMDAwWjBy
-MQswCQYDVQQGEwJDTDEQMA4GA1UECAwHU2FudGlhZ28xEDAOBgNVBAcMB1NhbnRp
-YWdvMQwwCgYDVQQKDANTSUkxDDAKBgNVBAsMA0RURTEjMCEGCSqGSIb3DQEJARYF
-c29wb3J0ZUBzaWkuY2wuZ29iLmNsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
-CgKCAQEAw2YvPOGZmBP7p5RmzKLm6u8VYJcJLr8tQqJWJp3jk7dQXMPJCH9fNdnM
-WDqTlKHmvKlr8aQvDqXvKHmGCFxKlmP2YvPOGZmBP7p5RmzKLm6u8VYJcJLr8tQq
-JWJp3jk7dQXMPJCH9fNdnMWDqTlKHmvKlr8aQvDqXvKHmGCFxKlmP2YvPOGZmBP7
-p5RmzKLm6u8VYJcJLr8tQqJWJp3jk7dQXMPJCH9fNdnMWDqTlKHmvKlr8aQvDqXv
-KHmGCFxKlmP2YvPOGZmBP7p5RmzKLm6u8VYJcJLr8tQqJWJp3jk7dQXMPJCH9fNd
-nMWDqTlKHmvKlr8aQvDqXvKHmGCFxKlmP2YvPOGZmBP7p5RmzKLm6u8VYJcJLr8t
-QqJWJp3jk7dQXMPJCH9fNdnMWDqTlKHmvKlr8aQvDqXvKHmGCFxKlmP2QIDAQAB
-o1MwUTAdBgNVHQ4EFgQUqZqGNJ+c8WKJW1JpWJ8dZkRh8l0wHwYDVR0jBBgwFoAU
-qZqGNJ+c8WKJW1JpWJ8dZkRh8l0wDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0B
-AQsFAAOCAQEAMJLr8tQqJWJp3jk7dQXMPJCH9fNdnMWDqTlKHmvKlr8aQvDqXvKH
-mGCFxKlmP2YvPOGZmBP7p5RmzKLm6u8VYJcJLr8tQqJWJp3jk7dQXMPJCH9fNdnM
-WDqTlKHmvKlr8aQvDqXvKHmGCFxKlmP2YvPOGZmBP7p5RmzKLm6u8VYJcJLr8tQq
-JWJp3jk7dQXMPJCH9fNdnMWDqTlKHmvKlr8aQvDqXvKHmGCFxKlmP2YvPOGZmBP7
-p5RmzKLm6u8VYJcJLr8tQqJWJp3jk7dQXMPJCH9fNdnMWDqTlKHmvKlr8aQvDqXv
-KHmGCFxKlmP2YvPOGZmBP7p5RmzKLm6u8VYJcJLr8tQqJWJp3jk7dQXMPJCH9fNd
-nMWDqTlKHmvKlr8aQvDqXvKHmGCFxKlmP2YvPOGZmBP7p5RmzKLm6u8VYJcJLr8t
-QqJWJp3jk7dQXMPJCH9fNdnMWDqTlKHmvKlr8aQvDqXvKHmGCFxKlmP2
------END CERTIFICATE-----"""
 
-# NOTA: El certificado arriba es SOLO para desarrollo/testing.
-# ⚠️  NO USAR EN PRODUCCIÓN ⚠️
-# Debe ser reemplazado por el certificado oficial del SII antes del despliegue.
+def _get_sii_environment_from_odoo():
+    """
+    Obtiene el environment SII desde Odoo config parameter.
+
+    Returns:
+        str: 'staging' o 'production'
+
+    Note:
+        Requiere que Odoo esté inicializado. Si no está disponible,
+        retorna el default del sistema operativo.
+    """
+    try:
+        # Intentar obtener desde Odoo (si está disponible)
+        from odoo import api, SUPERUSER_ID
+        from odoo.modules.registry import Registry
+
+        # Obtener registry (si Odoo está inicializado)
+        try:
+            registry = Registry.registries.get('odoo')
+            if registry:
+                with registry.cursor() as cr:
+                    env = api.Environment(cr, SUPERUSER_ID, {})
+                    env_param = env['ir.config_parameter'].sudo().get_param(
+                        'l10n_cl_dte.sii_environment', 'sandbox'
+                    )
+
+                    # Mapeo: sandbox/testing/certification → staging | production → production
+                    if env_param in ('sandbox', 'testing', 'certification'):
+                        return 'staging'
+                    elif env_param == 'production':
+                        return 'production'
+                    else:
+                        _logger.warning(f"Environment '{env_param}' no reconocido, usando staging")
+                        return 'staging'
+        except Exception:
+            pass  # Odoo no disponible, usar fallback
+
+    except ImportError:
+        pass  # Odoo no disponible, usar fallback
+
+    # Fallback: Variable de entorno o default
+    env_var = os.getenv('L10N_CL_SII_ENVIRONMENT', 'staging')
+    if env_var in ('production', 'palena'):
+        return 'production'
+    else:
+        return 'staging'
+
+
+def _get_sii_certificate_content():
+    """
+    Obtiene contenido del certificado SII según environment configurado.
+
+    Returns:
+        str: Contenido PEM del certificado SII
+
+    Raises:
+        FileNotFoundError: Si no existe archivo certificado para el environment
+
+    Environment Detection:
+    1. Odoo config parameter: l10n_cl_dte.sii_environment
+    2. Environment variable: L10N_CL_SII_ENVIRONMENT
+    3. Default: staging (Maullin)
+
+    Certificate Locations:
+    - Staging: data/certificates/staging/sii_cert_maullin.pem
+    - Production: data/certificates/production/sii_cert_palena.pem
+    """
+    environment = _get_sii_environment_from_odoo()
+
+    # Determinar ruta certificado
+    base_path = Path(__file__).parent.parent / 'data' / 'certificates'
+
+    if environment == 'production':
+        cert_path = base_path / 'production' / 'sii_cert_palena.pem'
+        server_name = 'Palena (Producción)'
+        download_url = 'https://palena.sii.cl/cgi_rtc/RTC/RTCCertif.cgi'
+    else:
+        cert_path = base_path / 'staging' / 'sii_cert_maullin.pem'
+        server_name = 'Maullin (Certificación/Testing)'
+        download_url = 'https://maullin.sii.cl/cgi_rtc/RTC/RTCCertif.cgi'
+
+    # Leer certificado
+    if not cert_path.exists():
+        error_msg = f"""
+═══════════════════════════════════════════════════════════════════════════
+CERTIFICADO SII NO ENCONTRADO
+═══════════════════════════════════════════════════════════════════════════
+
+Environment Configurado: {environment}
+Servidor SII: {server_name}
+Archivo Esperado: {cert_path}
+
+ACCIÓN REQUERIDA:
+
+1. Descargue el certificado oficial del SII desde:
+   {download_url}
+
+2. Guarde el archivo como:
+   {cert_path}
+
+3. Verifique el certificado con:
+   openssl x509 -in {cert_path} -text -noout
+
+4. Reinicie Odoo
+
+NOTA: Para cambiar de environment, configure el parámetro del sistema:
+   Settings → Technical → Parameters → System Parameters
+   Key: l10n_cl_dte.sii_environment
+   Values: 'sandbox'|'testing'|'certification' (staging) | 'production'
+
+═══════════════════════════════════════════════════════════════════════════
+"""
+        _logger.error(error_msg)
+        raise FileNotFoundError(error_msg)
+
+    # Leer y retornar contenido
+    with open(cert_path, 'r', encoding='utf-8') as f:
+        cert_content = f.read()
+
+    _logger.info(f'[CAF_VALIDATOR] Certificado SII cargado: {server_name} ({cert_path})')
+    return cert_content
 
 
 class CAFSignatureValidator:
@@ -121,14 +212,23 @@ class CAFSignatureValidator:
         """
         Carga el certificado público del SII para verificar firmas.
 
+        Multi-Environment Support:
+        - Staging (Maullin): data/certificates/staging/sii_cert_maullin.pem
+        - Production (Palena): data/certificates/production/sii_cert_palena.pem
+
         Returns:
             RSAPublicKey: Llave pública RSA del certificado SII
 
         Raises:
             ValueError: Si el certificado es inválido
+            FileNotFoundError: Si no existe el certificado para el environment
         """
         try:
-            cert_pem = SII_PUBLIC_CERTIFICATE_PEM.encode('utf-8')
+            # Obtener certificado según environment (staging/production)
+            cert_pem_content = _get_sii_certificate_content()
+            cert_pem = cert_pem_content.encode('utf-8')
+
+            # Cargar certificado X.509
             cert = x509.load_pem_x509_certificate(cert_pem, default_backend())
             public_key = cert.public_key()
 
@@ -138,14 +238,26 @@ class CAFSignatureValidator:
             key_size = public_key.key_size
             _logger.info(f'[CAF_VALIDATOR] Certificado SII cargado: RSA {key_size} bits')
 
-            # Verificar que el certificado es válido (no expirado)
-            # NOTA: En testing podemos permitir certificados expirados
-            # En producción, descomentar la validación de fechas
-            # from datetime import datetime
-            # if cert.not_valid_after < datetime.utcnow():
-            #     raise ValueError('El certificado SII ha expirado')
+            # Verificar fecha de expiración (OPCIONAL en staging)
+            environment = _get_sii_environment_from_odoo()
+            if environment == 'production':
+                from datetime import datetime, timezone
+                now = datetime.now(timezone.utc)
+                if cert.not_valid_after_utc < now:
+                    raise ValueError(
+                        f'El certificado SII ha expirado: '
+                        f'válido hasta {cert.not_valid_after_utc.isoformat()}'
+                    )
+                _logger.info(
+                    f'[CAF_VALIDATOR] Certificado válido hasta: '
+                    f'{cert.not_valid_after_utc.isoformat()}'
+                )
 
             return public_key
+
+        except FileNotFoundError:
+            # Propagar error con instrucciones claras
+            raise
 
         except Exception as e:
             _logger.error(f'[CAF_VALIDATOR] Error cargando certificado SII: {e}', exc_info=True)
@@ -178,7 +290,7 @@ class CAFSignatureValidator:
 
             # 1. Parse XML del CAF
             try:
-                caf_doc = etree.fromstring(caf_xml_string.encode('utf-8'))
+                caf_doc = fromstring_safe(caf_xml_string)
             except etree.XMLSyntaxError as e:
                 return False, f'XML del CAF inválido: {e}'
 

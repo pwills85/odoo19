@@ -1,0 +1,3 @@
+YOLO mode is enabled. All tool calls will be automatically approved.
+Loaded cached credentials.
+`t-esc` escapa el contenido HTML para prevenir ataques XSS, mostrando el texto de forma segura. `t-out` renderiza el contenido como HTML puro, lo que permite mostrar etiquetas HTML pero requiere precaución para evitar vulnerabilidades.

@@ -8,7 +8,7 @@
                     <i class="fa fa-filter me-2"/>
                     <span>Filters</span>
                     <span t-if="hasActiveFilters" class="badge bg-primary ms-2">
-                        <t t-esc="activeFilterCount"/>
+                        <t t-out="activeFilterCount"/>
                     </span>
                 </div>
                 <div class="o_filter_panel_actions">
@@ -19,7 +19,7 @@
             <!-- Filter Summary (when collapsed) -->
             <div t-if="!state.isExpanded and hasActiveFilters" class="o_filter_panel_summary">
                 <i class="fa fa-info-circle me-2 text-muted"/>
-                <span class="text-muted" t-esc="filterSummary"/>
+                <span class="text-muted" t-out="filterSummary"/>
             </div>
             
             <!-- Filter Content (when expanded) -->
@@ -34,7 +34,7 @@
                         <Dropdown>
                             <button class="btn btn-sm btn-outline-primary dropdown-toggle">
                                 <t t-if="state.localFilters.period">
-                                    <t t-esc="state.filterOptions?.periods[state.localFilters.period]?.name"/>
+                                    <t t-out="state.filterOptions?.periods[state.localFilters.period]?.name"/>
                                 </t>
                                 <t t-else="">Custom Period</t>
                             </button>
@@ -44,7 +44,7 @@
                                          t-on-click="() => onPeriodSelect(period.id)"
                                          t-att-class="{'active': state.localFilters.period === period.id}">
                                         <i t-att-class="period.icon" class="me-2 fa-fw"/>
-                                        <t t-esc="period.text"/>
+                                        <t t-out="period.text"/>
                                     </div>
                                 </t>
                             </t>
@@ -84,7 +84,7 @@
                         <t t-foreach="state.filterOptions.companies" t-as="company" t-key="company.id">
                             <option t-att-value="company.id" 
                                     t-att-selected="state.localFilters.company_id === company.id">
-                                <t t-esc="company.name"/>
+                                <t t-out="company.name"/>
                             </option>
                         </t>
                     </select>
@@ -102,7 +102,7 @@
                         <t t-foreach="state.filterOptions.departments" t-as="dept" t-key="dept.id">
                             <option t-att-value="dept.id"
                                     t-att-selected="state.localFilters.department_id === dept.id">
-                                <t t-esc="dept.complete_name || dept.name"/>
+                                <t t-out="dept.complete_name || dept.name"/>
                             </option>
                         </t>
                     </select>
@@ -120,7 +120,7 @@
                         <t t-foreach="state.filterOptions?.account_types || []" t-as="type" t-key="type.value">
                             <option t-att-value="type.value"
                                     t-att-selected="state.localFilters.account_type === type.value">
-                                <t t-esc="type.label"/>
+                                <t t-out="type.label"/>
                             </option>
                         </t>
                     </select>
@@ -172,10 +172,10 @@
                                         <div class="dropdown-item d-flex justify-content-between align-items-center"
                                              t-on-click="() => onLoadPreset(preset.id)">
                                             <span>
-                                                <t t-esc="preset.name"/>
+                                                <t t-out="preset.name"/>
                                                 <t t-if="!preset.is_mine">
                                                     <small class="text-muted ms-1">
-                                                        (<t t-esc="preset.created_by"/>)
+                                                        (<t t-out="preset.created_by"/>)
                                                     </small>
                                                 </t>
                                             </span>
@@ -203,7 +203,7 @@
                     <div t-foreach="state.errors" t-as="error" t-key="error_index" 
                          class="alert alert-danger alert-sm">
                         <i class="fa fa-exclamation-triangle me-1"/>
-                        <t t-esc="error"/>
+                        <t t-out="error"/>
                     </div>
                 </div>
                 

@@ -1,0 +1,3 @@
+YOLO mode is enabled. All tool calls will be automatically approved.
+Loaded cached credentials.
+The primary difference is that `t-esc` is deprecated in Odoo 19, while `t-out` is the recommended directive. Both directives automatically escape HTML content by default to prevent XSS vulnerabilities. However, `t-out` offers the flexibility to render unescaped HTML if the content is explicitly marked as safe using a utility function.

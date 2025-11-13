@@ -1608,12 +1608,13 @@ class AccountMoveDTE(models.Model):
         """
         try:
             from lxml import etree
+            from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
 
-            # Parse DTE XML
-            dte_root = etree.fromstring(dte_xml.encode('ISO-8859-1'))
+            # Parse DTE XML (XXE protected)
+            dte_root = fromstring_safe(dte_xml)
 
-            # Parse TED XML
-            ted_root = etree.fromstring(ted_xml.encode('ISO-8859-1'))
+            # Parse TED XML (XXE protected)
+            ted_root = fromstring_safe(ted_xml)
 
             # Find Documento element
             # Structure: <DTE><Documento>...</Documento></DTE>

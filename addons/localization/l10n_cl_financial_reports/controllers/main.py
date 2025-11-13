@@ -4,7 +4,7 @@ from odoo.http import request
 
 class FinancialReportController(http.Controller):
 
-    @http.route('/financial_reports/get_report_data', type='json', auth='user')
+    @http.route('/financial_reports/get_report_data', type='jsonrpc', auth='user')
     def get_report_data(self, report_options):
         """
         Endpoint centralizado para obtener datos de informes financieros.

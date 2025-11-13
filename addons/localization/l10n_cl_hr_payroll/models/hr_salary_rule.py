@@ -202,10 +202,10 @@ class HrSalaryRule(models.Model):
         if self.condition_select == 'python':
             try:
                 localdict = self._get_eval_context(payslip, contract, worked_days, inputs_dict)
-                safe_eval(self.condition_python, localdict, mode='exec', nocopy=True)
+                safe_eval(self.condition_python, localdict, mode='exec')
                 return localdict.get('result', False)
             except Exception as e:
-                _logger.error("Error evaluando condición Python: %s\nCódigo:\n%s", 
+                _logger.error("Error evaluando condición Python: %s\nCódigo:\n%s",
                             e, self.condition_python)
                 return False
         
@@ -242,10 +242,10 @@ class HrSalaryRule(models.Model):
         if self.amount_select == 'code':
             try:
                 localdict = self._get_eval_context(payslip, contract, worked_days, inputs_dict)
-                safe_eval(self.amount_python_compute, localdict, mode='exec', nocopy=True)
+                safe_eval(self.amount_python_compute, localdict, mode='exec')
                 return float(localdict.get('result', 0.0))
             except Exception as e:
-                _logger.error("Error calculando código Python: %s\nCódigo:\n%s", 
+                _logger.error("Error calculando código Python: %s\nCódigo:\n%s",
                             e, self.amount_python_compute)
                 return 0.0
         
@@ -254,12 +254,15 @@ class HrSalaryRule(models.Model):
     def _get_eval_context(self, payslip, contract, worked_days, inputs_dict):
         """
         Obtener contexto para evaluar código Python
-        
+
         Técnica Odoo 19 CE:
         - Dict con variables predefinidas
         - Acceso controlado a modelos
         - Librerías seguras
         """
+        from odoo.exceptions import UserError
+        from datetime import date
+
         return {
             # Modelos principales
             'payslip': payslip,
@@ -268,13 +271,19 @@ class HrSalaryRule(models.Model):
             'categories': payslip._get_category_dict(),
             'worked_days': worked_days,
             'inputs': inputs_dict,
-            
+
+            # Entorno Odoo
+            'env': payslip.env,
+            'UserError': UserError,
+
             # Librerías Python seguras
             'min': min,
             'max': max,
             'abs': abs,
             'round': round,
-            
+            'hasattr': hasattr,
+            'date': date,
+
             # Variable resultado
             'result': 0.0,
         }

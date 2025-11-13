@@ -28,7 +28,7 @@ class UniversalFinancialAPI(http.Controller):
     """
     
     @http.route('/api/financial/dashboard/<string:dashboard_type>', 
-                type='json', auth='user', methods=['GET'])
+                type='jsonrpc', auth='user', methods=['GET'])
     def get_dashboard(self, dashboard_type, **filters):
         """
         Get dashboard data for any registered dashboard type.
@@ -91,7 +91,7 @@ class UniversalFinancialAPI(http.Controller):
                 'dashboard': None,
             }
     
-    @http.route('/api/financial/kpis', type='json', auth='user', methods=['GET'])
+    @http.route('/api/financial/kpis', type='jsonrpc', auth='user', methods=['GET'])
     def get_consolidated_kpis(self, **filters):
         """
         Get KPIs from all registered providers.
@@ -165,7 +165,7 @@ class UniversalFinancialAPI(http.Controller):
             }
     
     @http.route('/api/financial/widgets/<string:widget_type>', 
-                type='json', auth='user', methods=['GET'])
+                type='jsonrpc', auth='user', methods=['GET'])
     def get_widget_data(self, widget_type, **filters):
         """
         Get specific widget data from registered providers.
@@ -238,7 +238,7 @@ class UniversalFinancialAPI(http.Controller):
             }
     
     @http.route('/api/financial/services/register', 
-                type='json', auth='user', methods=['POST'])
+                type='jsonrpc', auth='user', methods=['POST'])
     def register_external_service(self, service_config):
         """
         Allow external modules to register services dynamically.
@@ -295,7 +295,7 @@ class UniversalFinancialAPI(http.Controller):
             }
     
     @http.route('/api/financial/modules/integration-status', 
-                type='json', auth='user', methods=['GET'])
+                type='jsonrpc', auth='user', methods=['GET'])
     def get_integration_status(self):
         """
         Get integration status of all modules with financial reports.
@@ -402,7 +402,7 @@ class UniversalFinancialAPI(http.Controller):
             }
     
     @http.route('/api/financial/registry/stats', 
-                type='json', auth='user', methods=['GET'])
+                type='jsonrpc', auth='user', methods=['GET'])
     def get_registry_statistics(self):
         """
         Get detailed statistics about the service registry.

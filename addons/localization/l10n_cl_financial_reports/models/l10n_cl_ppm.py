@@ -445,7 +445,7 @@ class L10nClPpm(models.Model):
 
         # Crear asiento de provisión si hay PPM a pagar
         if self.ppm_amount_final > 0:
-            self._create_provision_move()
+            self.env.create_provision_move()
 
         # Cambiar estado
         self.write({
@@ -559,7 +559,7 @@ class L10nClPpm(models.Model):
             raise UserError(_('No existe asiento de provisión para este PPM'))
 
         # Crear asiento de pago (reversa de la provisión + pago real)
-        self._create_payment_move()
+        self.env.create_payment_move()
 
         self.write({
             'state': 'paid'

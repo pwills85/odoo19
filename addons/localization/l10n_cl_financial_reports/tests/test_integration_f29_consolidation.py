@@ -80,15 +80,15 @@ class TestF29RetentionConsolidation(TransactionCase):
         4. Verificar consolidación correcta
         """
         # === SETUP: Nómina con retenciones de trabajadores ===
-        payslip = self._create_payslip_with_retentions()
+        payslip = self.env.create_payslip_with_retentions()
         payslip.action_payslip_done()
         
         # === SETUP: BHE recibida con retenciones de proveedores ===
-        bhe_record = self._create_received_bhe()
+        bhe_record = self.env.create_received_bhe()
         bhe_record.action_validate()
         
         # === ACCIÓN: Generar F29 mensual ===
-        f29 = self._create_f29_for_period()
+        f29 = self.env.create_f29_for_period()
         f29.action_calculate()
         
         # === VERIFICACIONES ===
@@ -133,10 +133,10 @@ class TestF29RetentionConsolidation(TransactionCase):
     def test_f29_handles_no_payroll_data(self):
         """Test edge case: F29 sin datos de nómina, solo BHE"""
         # Solo BHE, sin nómina
-        bhe_record = self._create_received_bhe()
+        bhe_record = self.env.create_received_bhe()
         bhe_record.action_validate()
         
-        f29 = self._create_f29_for_period()
+        f29 = self.env.create_f29_for_period()
         f29.action_calculate()
         
         # Debe funcionar solo con BHE
@@ -147,10 +147,10 @@ class TestF29RetentionConsolidation(TransactionCase):
     def test_f29_handles_no_bhe_data(self):
         """Test edge case: F29 sin BHE, solo nómina"""
         # Solo nómina, sin BHE
-        payslip = self._create_payslip_with_retentions()
+        payslip = self.env.create_payslip_with_retentions()
         payslip.action_payslip_done()
         
-        f29 = self._create_f29_for_period()
+        f29 = self.env.create_f29_for_period()
         f29.action_calculate()
         
         # Debe funcionar solo con nómina
@@ -161,13 +161,13 @@ class TestF29RetentionConsolidation(TransactionCase):
     def test_f29_multiple_bhe_consolidation(self):
         """Test: F29 consolida múltiples BHE del período"""
         # Crear múltiples BHE
-        bhe1 = self._create_received_bhe(amount=200000)  # Retención: 29,000
-        bhe2 = self._create_received_bhe(amount=100000)  # Retención: 14,500
+        bhe1 = self.env.create_received_bhe(amount=200000)  # Retención: 29,000
+        bhe2 = self.env.create_received_bhe(amount=100000)  # Retención: 14,500
         
         bhe1.action_validate()
         bhe2.action_validate()
         
-        f29 = self._create_f29_for_period()
+        f29 = self.env.create_f29_for_period()
         f29.action_calculate()
         
         # Debe sumar todas las BHE
@@ -177,18 +177,18 @@ class TestF29RetentionConsolidation(TransactionCase):
     def test_f29_filters_by_period_correctly(self):
         """Test: F29 solo incluye datos del período correcto"""
         # BHE en período correcto
-        bhe_current = self._create_received_bhe(
+        bhe_current = self.env.create_received_bhe(
             date_reception=self.period_start + timedelta(days=5)
         )
         bhe_current.action_validate()
         
         # BHE fuera del período
-        bhe_previous = self._create_received_bhe(
+        bhe_previous = self.env.create_received_bhe(
             date_reception=self.period_start - timedelta(days=5)
         )
         bhe_previous.action_validate()
         
-        f29 = self._create_f29_for_period()
+        f29 = self.env.create_f29_for_period()
         f29.action_calculate()
         
         # Solo debe incluir BHE del período actual
@@ -270,16 +270,16 @@ class TestF29RetentionConsolidation(TransactionCase):
         
         # 10 BHE
         for i in range(10):
-            bhe = self._create_received_bhe(amount=100000 + (i * 10000))
+            bhe = self.env.create_received_bhe(amount=100000 + (i * 10000))
             bhe.action_validate()
         
         # 5 nóminas
         for i in range(5):
-            payslip = self._create_payslip_with_retentions()
+            payslip = self.env.create_payslip_with_retentions()
             payslip.action_payslip_done()
         
         # Generar F29
-        f29 = self._create_f29_for_period()
+        f29 = self.env.create_f29_for_period()
         f29.action_calculate()
         
         end_time = datetime.now()
@@ -300,14 +300,14 @@ class TestF29RetentionConsolidation(TransactionCase):
     def test_data_consistency_after_modifications(self):
         """Test: Consistencia de datos tras modificaciones"""
         # Crear datos iniciales
-        bhe = self._create_received_bhe()
-        payslip = self._create_payslip_with_retentions()
+        bhe = self.env.create_received_bhe()
+        payslip = self.env.create_payslip_with_retentions()
         
         bhe.action_validate()
         payslip.action_payslip_done()
         
         # Crear F29 inicial
-        f29 = self._create_f29_for_period()
+        f29 = self.env.create_f29_for_period()
         f29.action_calculate()
         
         initial_total = f29.total_retenciones

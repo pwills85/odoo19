@@ -19,7 +19,7 @@
                     <div class="o_control_panel_main">
                         <div class="o_control_panel_breadcrumbs">
                             <h2>
-                                <span t-esc="dashboardTitle"/>
+                                <span t-out="dashboardTitle"/>
                                 <span t-if="websocketConnected" 
                                       class="badge bg-success ms-2" 
                                       title="Real-time updates active">
@@ -101,7 +101,7 @@
                                 <div class="grid-stack-item-content">
                                     <div class="widget-header">
                                         <i t-att-class="widget.icon" class="me-1"/>
-                                        <span t-esc="widget.name"/>
+                                        <span t-out="widget.name"/>
                                     </div>
                                     <div class="widget-body">
                                         <!-- Render appropriate widget component -->

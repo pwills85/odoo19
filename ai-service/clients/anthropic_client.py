@@ -399,10 +399,10 @@ IMPORTANTE:
         """
         import json
 
-        # Simplificar historial (solo campos críticos)
+        # Simplificar historial (solo campos críticos, últimos 3)
         history_compact = [
             {"err": h.get("error_code"), "msg": h.get("message")[:100]}
-            for h in (history or [])[:3]  # Max 3 últimos
+            for h in (history or [])[-3:]  # Max 3 últimos
         ]
 
         prompt = f"""Analiza este DTE:

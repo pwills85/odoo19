@@ -1,0 +1,3 @@
+YOLO mode is enabled. All tool calls will be automatically approved.
+Loaded cached credentials.
+In Odoo 19, `t-out` is the modern directive that replaces the deprecated `t-esc`; both automatically escape HTML to prevent XSS attacks, but `t-out` is the recommended and actively supported method for rendering data.In Odoo 19, `t-out` is the modern directive that replaces the deprecated `t-esc`; both automatically escape HTML to prevent XSS attacks, but `t-out` is the recommended and actively supported method for rendering data.

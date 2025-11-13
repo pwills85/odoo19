@@ -1,0 +1,71 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# CodeQL Security Configuration
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# CodeQL analiza el código para detectar vulnerabilidades de seguridad.
+# Esta configuración optimiza el análisis para proyectos Python/Odoo.
+#
+# Referencia: https://docs.github.com/en/code-security/code-scanning/creating-an-advanced-setup-for-code-scanning/customizing-your-advanced-setup-for-code-scanning
+#
+# ══════════════════════════════════════════════════════════════════════════════
+
+name: "CodeQL Security Analysis"
+
+# Lenguajes a analizar
+languages:
+  - python
+  # - javascript  # Descomentar si hay código JS/TypeScript
+
+# Queries a ejecutar
+queries:
+  # Usar queries de seguridad recomendadas por defecto
+  - uses: security-and-quality
+  
+  # Queries adicionales para Python
+  - name: Python Security Best Practices
+    uses: security-extended
+    queries:
+      - python/security
+      - python/security-extended
+  
+  # Queries específicas para Odoo
+  - name: Odoo-specific security checks
+    uses: security-extended
+    queries:
+      - python/sql-injection
+      - python/xss
+      - python/path-injection
+      - python/command-injection
+
+# Paths a excluir del análisis
+paths-ignore:
+  - "**/migrations/**"
+  - "**/__pycache__/**"
+  - "**/tests/**"
+  - "**/test_*.py"
+  - "**/.venv/**"
+  - "**/venv/**"
+  - "**/node_modules/**"
+  - "**/dist/**"
+  - "**/build/**"
+  - "**/.cache/**"
+  - "**/docs/prompts/.cache/**"
+
+# Paths a incluir específicamente (opcional, para análisis focalizado)
+paths:
+  - "addons/localization/**"
+  - "ai-service/**"
+  - "scripts/**"
+
+# Configuración de packs de queries
+packs:
+  python-security:
+    - python-security-and-quality
+  python-extended:
+    - python-security-extended
+
+# Configuración de queries personalizadas (opcional)
+# custom-queries:
+#   - name: Custom Odoo security checks
+#     queries-path: .github/codeql-queries
+

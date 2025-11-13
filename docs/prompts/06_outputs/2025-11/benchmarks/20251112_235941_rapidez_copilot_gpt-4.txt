@@ -1,0 +1,9 @@
+En Odoo 19, `t-out` es el reemplazo moderno de `t-esc` para escapar HTML automáticamente en templates QWeb. `t-esc` está **deprecado** desde Odoo 19 y generará warnings, mientras que `t-out` es la sintaxis estándar que debes usar. Ambos previenen XSS escapando el contenido, pero `t-out` es obligatorio para cumplir con los estándares de Odoo 19 CE.
+
+
+Total usage est:       1 Premium request
+Total duration (API):  6.0s
+Total duration (wall): 10.7s
+Total code changes:    0 lines added, 0 lines removed
+Usage by model:
+    claude-sonnet-4.5    34.3k input, 125 output, 0 cache read, 0 cache write (Est. 1 Premium request)

@@ -33,8 +33,61 @@ class TestLey21735ReformaPensiones(TransactionCase):
         # AFP (para otros cálculos)
         self.afp = self.env['hr.afp'].create({
             'name': 'AFP Cuprum',
-            'rate': 11.44
+            'code': 'CUPRUM',
+            'rate': 11.44,
+            'sis_rate': 1.57
         })
+
+        # Indicadores económicos para todos los períodos de tests
+        # Julio 2025 (antes vigencia Ley 21.735)
+        self.env['hr.economic.indicators'].create({
+            'period': date(2025, 7, 1),
+            'uf': 37500.00,
+            'utm': 65000.00,
+            'uta': 780000.00,
+            'minimum_wage': 500000.00
+        })
+        # Agosto 2025 (vigencia Ley 21.735)
+        self.env['hr.economic.indicators'].create({
+            'period': date(2025, 8, 1),
+            'uf': 37500.00,
+            'utm': 65000.00,
+            'uta': 780000.00,
+            'minimum_wage': 500000.00
+        })
+        # Septiembre 2025
+        self.env['hr.economic.indicators'].create({
+            'period': date(2025, 9, 1),
+            'uf': 37500.00,
+            'utm': 65000.00,
+            'uta': 780000.00,
+            'minimum_wage': 500000.00
+        })
+        # Octubre 2025 (para test_07)
+        self.env['hr.economic.indicators'].create({
+            'period': date(2025, 10, 1),
+            'uf': 37500.00,
+            'utm': 65000.00,
+            'uta': 780000.00,
+            'minimum_wage': 500000.00
+        })
+        # Enero 2026 (períodos futuros)
+        self.env['hr.economic.indicators'].create({
+            'period': date(2026, 1, 1),
+            'uf': 38000.00,
+            'utm': 66000.00,
+            'uta': 792000.00,
+            'minimum_wage': 510000.00
+        })
+
+        # Estructura salarial
+        self.struct = self.env.ref('l10n_cl_hr_payroll.structure_base_cl',
+                                   raise_if_not_found=False)
+        if not self.struct:
+            self.struct = self.env['hr.payroll.structure'].create({
+                'name': 'Estructura Chile',
+                'code': 'CL_BASE'
+            })
 
     # ===== VIGENCIA LEY 21.735 =====
 
@@ -57,7 +110,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2025, 7, 1),
-            'date_to': date(2025, 7, 31)
+            'date_to': date(2025, 7, 31),
+            'struct_id': self.struct.id
         })
 
         payslip.compute_sheet()
@@ -98,7 +152,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2025, 8, 1),
-            'date_to': date(2025, 8, 31)
+            'date_to': date(2025, 8, 31),
+            'struct_id': self.struct.id
         })
 
         payslip.compute_sheet()
@@ -134,7 +189,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2025, 8, 1),
-            'date_to': date(2025, 8, 31)
+            'date_to': date(2025, 8, 31),
+            'struct_id': self.struct.id
         })
 
         payslip.compute_sheet()
@@ -166,7 +222,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2025, 8, 1),
-            'date_to': date(2025, 8, 31)
+            'date_to': date(2025, 8, 31),
+            'struct_id': self.struct.id
         })
 
         payslip.compute_sheet()
@@ -198,7 +255,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2025, 9, 1),
-            'date_to': date(2025, 9, 30)
+            'date_to': date(2025, 9, 30),
+            'struct_id': self.struct.id
         })
 
         payslip.compute_sheet()
@@ -227,32 +285,54 @@ class TestLey21735ReformaPensiones(TransactionCase):
     def test_06_validation_blocks_missing_aporte(self):
         """Validación debe bloquear confirmación si falta aporte"""
 
+        # Configurar RUT para evitar validaciones previas
+        self.employee.write({
+            'identification_id': '12.345.678-9'
+        })
+
+        # Archivar contratos anteriores para evitar overlapping
+        existing_contracts = self.env['hr.contract'].search([
+            ('employee_id', '=', self.employee.id),
+            ('state', '=', 'open')
+        ])
+        existing_contracts.write({'state': 'cancel'})
+
+        # Crear contrato con wage=0 para que employer_total_ley21735 sea 0
         contract = self.env['hr.contract'].create({
             'name': 'Contrato Test Validación',
             'employee_id': self.employee.id,
-            'wage': 1000000,
+            'wage': 0,  # wage=0 produce aporte=0 naturalmente
             'date_start': date(2025, 8, 1),
             'state': 'open',
-            'afp_id': self.afp.id
+            'afp_id': self.afp.id,
+            'health_system': 'fonasa'
         })
+
+        # Obtener indicador económico para agosto 2025
+        indicator_agosto = self.env['hr.economic.indicators'].search([
+            ('period', '=', date(2025, 8, 1))
+        ], limit=1)
 
         payslip = self.env['hr.payslip'].create({
             'name': 'Test Validación',
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2025, 8, 1),
-            'date_to': date(2025, 8, 31)
+            'date_to': date(2025, 8, 31),
+            'struct_id': self.struct.id,
+            'indicadores_id': indicator_agosto.id
         })
 
-        # Forzar aplica_ley21735 = True pero total = 0 (simular bug)
-        payslip.write({
-            'aplica_ley21735': True,
-            'employer_total_ley21735': 0
-        })
+        # Calcular - debería producir employer_total_ley21735=0 porque wage=0
+        payslip.compute_sheet()
 
-        # Intentar confirmar (debe fallar)
+        # Verificar que aplica la ley pero con aporte=0
+        self.assertTrue(payslip.aplica_ley21735, "Debe aplicar Ley 21.735 (período válido)")
+        self.assertEqual(payslip.employer_total_ley21735, 0, "Aporte debe ser 0 con wage=0")
+
+        # Intentar confirmar (debe fallar por validación)
         with self.assertRaises(ValidationError) as cm:
-            payslip.write({'state': 'done'})
+            payslip.action_done()
 
         self.assertIn('Ley 21.735', str(cm.exception))
         self.assertIn('aporte empleador', str(cm.exception).lower())
@@ -271,11 +351,18 @@ class TestLey21735ReformaPensiones(TransactionCase):
 
         for wage, exp_cuenta, exp_seguro, exp_total in test_cases:
             with self.subTest(wage=wage):
+                # Archivar contratos anteriores para evitar overlapping
+                existing_contracts = self.env['hr.contract'].search([
+                    ('employee_id', '=', self.employee.id),
+                    ('state', '=', 'open')
+                ])
+                existing_contracts.write({'state': 'cancel'})
+
                 contract = self.env['hr.contract'].create({
                     'name': f'Contrato ${wage:,}',
                     'employee_id': self.employee.id,
                     'wage': wage,
-                    'date_start': date(2025, 8, 1),
+                    'date_start': date(2025, 10, 1),
                     'state': 'open',
                     'afp_id': self.afp.id
                 })
@@ -285,7 +372,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
                     'employee_id': self.employee.id,
                     'contract_id': contract.id,
                     'date_from': date(2025, 10, 1),
-                    'date_to': date(2025, 10, 31)
+                    'date_to': date(2025, 10, 31),
+                    'struct_id': self.struct.id
                 })
 
                 payslip.compute_sheet()
@@ -322,7 +410,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2025, 8, 1),
-            'date_to': date(2025, 8, 31)
+            'date_to': date(2025, 8, 31),
+            'struct_id': self.struct.id
         })
 
         payslip.compute_sheet()
@@ -343,6 +432,13 @@ class TestLey21735ReformaPensiones(TransactionCase):
     def test_09_wage_cero_no_genera_aporte(self):
         """Wage 0 o negativo no debe generar aporte"""
 
+        # Archivar contratos anteriores para evitar overlapping
+        existing_contracts = self.env['hr.contract'].search([
+            ('employee_id', '=', self.employee.id),
+            ('state', '=', 'open')
+        ])
+        existing_contracts.write({'state': 'cancel'})
+
         contract = self.env['hr.contract'].create({
             'name': 'Contrato Sin Sueldo',
             'employee_id': self.employee.id,
@@ -357,7 +453,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2025, 8, 1),
-            'date_to': date(2025, 8, 31)
+            'date_to': date(2025, 8, 31),
+            'struct_id': self.struct.id
         })
 
         payslip.compute_sheet()
@@ -386,7 +483,8 @@ class TestLey21735ReformaPensiones(TransactionCase):
             'employee_id': self.employee.id,
             'contract_id': contract.id,
             'date_from': date(2026, 1, 1),
-            'date_to': date(2026, 1, 31)
+            'date_to': date(2026, 1, 31),
+            'struct_id': self.struct.id
         })
 
         payslip.compute_sheet()

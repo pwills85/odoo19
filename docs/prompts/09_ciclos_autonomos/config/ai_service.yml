@@ -1,0 +1,132 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# CONFIGURACIÓN CICLO AUTÓNOMO - AI MICROSERVICE
+# ═══════════════════════════════════════════════════════════════════════════
+
+modulo:
+  nombre: "ai_service"
+  tipo: "microservicio"
+  path: "ai-service/"
+  lenguaje: "python"
+  framework: "FastAPI"
+  
+descripcion: "Microservicio AI con Claude API - Motor inteligencia conversacional"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CRITERIOS ÉXITO PERSONALIZADOS
+# ═══════════════════════════════════════════════════════════════════════════
+
+criterios_exito:
+  compliance_odoo19:
+    P0: 100     # N/A (no es módulo Odoo)
+    P1: 100     # N/A
+  
+  tests:
+    coverage: 92          # Microservicio crítico requiere alta cobertura
+    passing_rate: 100
+  
+  brechas:
+    P0_cerradas: 100
+    P1_cerradas: 95
+    P2_cerradas: 80
+  
+  calidad_codigo:
+    pep8_errors: 0
+    docstrings_coverage: 85
+    type_hints_coverage: 90  # FastAPI requiere type hints estrictos
+  
+  seguridad:
+    vulnerabilidades_criticas: 0
+    vulnerabilidades_altas: 0
+    owasp_score: 95
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ITERACIONES MÁXIMAS
+# ═══════════════════════════════════════════════════════════════════════════
+
+iteraciones:
+  P0: 5
+  P1: 3
+  P2: 1
+
+# ═══════════════════════════════════════════════════════════════════════════
+# VALIDACIONES ESPECÍFICAS
+# ═══════════════════════════════════════════════════════════════════════════
+
+validaciones:
+  # Tests unitarios
+  tests_unitarios:
+    comando: "pytest ai-service/tests/ --cov=ai-service/app --cov-report=json"
+    criterio_exito: "coverage >= 92 AND passing_rate == 100"
+  
+  # Linting
+  linting:
+    comando: "flake8 ai-service/app --count --statistics"
+    criterio_exito: "errors == 0"
+  
+  # Type checking
+  type_checking:
+    comando: "mypy ai-service/app --strict"
+    criterio_exito: "errors == 0"
+  
+  # Security scan
+  security:
+    comando: "bandit -r ai-service/app -f json"
+    criterio_exito: "critical == 0 AND high == 0"
+  
+  # API health check
+  smoke_test:
+    comando: "curl -f http://localhost:8000/health"
+    criterio_exito: "status_code == 200 AND response.status == 'healthy'"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# RESTRICCIONES ESPECÍFICAS
+# ═══════════════════════════════════════════════════════════════════════════
+
+restricciones:
+  - "NO modificar archivos de configuración sin aprobación: config/*.yml"
+  - "NO modificar Dockerfile sin aprobación"
+  - "NO exponer API keys en logs"
+  - "NO eliminar endpoints sin deprecation warning previo"
+  - "SÍ agregar tests para cada fix"
+  - "SÍ validar contratos API tras cambios"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ARCHIVOS CRÍTICOS (Requieren aprobación manual)
+# ═══════════════════════════════════════════════════════════════════════════
+
+archivos_criticos:
+  - "ai-service/app/main.py"
+  - "ai-service/app/engine.py"
+  - "ai-service/config/production.yml"
+  - "ai-service/Dockerfile"
+  - "docker-compose.yml"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# MEMORIA INTELIGENTE - Configuración
+# ═══════════════════════════════════════════════════════════════════════════
+
+memoria:
+  habilitar: true
+  guardar_fixes_exitosos: true
+  guardar_estrategias_fallidas: true
+  extraer_patrones: true
+  dias_retencion: 180  # Mantener fixes 6 meses
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NOTIFICACIONES
+# ═══════════════════════════════════════════════════════════════════════════
+
+notificaciones:
+  slack:
+    habilitar: true
+    webhook: "${SLACK_WEBHOOK_URL}"
+    eventos:
+      - "ciclo_iniciado"
+      - "ciclo_completado"
+      - "brecha_critica_no_cerrada"
+      - "validacion_fallida"
+  
+  email:
+    habilitar: false
+    destinatarios: []
+

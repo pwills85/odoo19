@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Wizard Advertencias Validación IA -->
+    <record id="view_payroll_ai_validation_wizard_form" model="ir.ui.view">
+        <field name="name">payroll.ai.validation.wizard.form</field>
+        <field name="model">payroll.ai.validation.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Advertencia Validación IA">
+                <group>
+                    <div class="alert alert-warning" role="alert">
+                        <h4><i class="fa fa-exclamation-triangle"/> ⚠️ Revisión Manual Requerida</h4>
+                        <p>La validación IA recomienda revisar esta liquidación antes de confirmar.</p>
+                    </div>
+                </group>
+                
+                <group>
+                    <group string="Liquidación">
+                        <field name="payslip_id" readonly="1"/>
+                    </group>
+                    <group string="Resultado Validación">
+                        <field name="recommendation" widget="badge"
+                               decoration-success="recommendation == 'approve'"
+                               decoration-warning="recommendation == 'review'"
+                               decoration-danger="recommendation == 'reject'"/>
+                        <field name="confidence" widget="progressbar"/>
+                    </group>
+                </group>
+                
+                <group string="Advertencias Detectadas">
+                    <field name="warnings" nolabel="1" widget="text" 
+                           class="text-warning" colspan="2"/>
+                </group>
+                
+                <div class="alert alert-info" role="alert">
+                    <p><i class="fa fa-info-circle"/> <b>Opciones:</b></p>
+                    <ul>
+                        <li><b>Cancelar:</b> Volver a revisar la liquidación antes de confirmar</li>
+                        <li><b>Confirmar de todos modos:</b> Ignorar advertencias y confirmar (se registrará en el historial)</li>
+                    </ul>
+                </div>
+                
+                <footer>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                    <button string="Confirmar de todos modos" name="action_confirm_anyway" 
+                            type="object" class="btn-primary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

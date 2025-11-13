@@ -1,0 +1,9 @@
+cli|model|duration|words|api_time|tokens
+copilot|claude-sonnet-4.5|12.216789000|84|5.3s|34.3k input,
+copilot|claude-sonnet-4|27.049408000|89|21.3s|68.9k input,
+copilot|claude-haiku-4.5|8.221825000|89|2.1s|34.1k input,
+copilot|gpt-5|17.684450000|77|11.5s|27.0k input,
+codex|gpt-5-codex|43.206133000|328|N/A|
+codex|gpt-4-turbo|ERROR|0|N/A|N/A
+codex|o3|ERROR|0|N/A|N/A
+codex|o1|ERROR|0|N/A|N/A

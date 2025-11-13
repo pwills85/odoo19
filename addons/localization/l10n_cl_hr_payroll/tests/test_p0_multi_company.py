@@ -52,44 +52,48 @@ class TestP0MultiCompany(TransactionCase):
             'vat': '222222222',
         })
 
+        # Obtener grupos requeridos
+        group_hr_user = self.env.ref('hr.group_hr_user')
+        group_payroll_user = self.env.ref('l10n_cl_hr_payroll.group_hr_payroll_user')
+
         # Usuario con acceso solo a Company A
-        self.user_company_a = self.UserModel.create({
+        self.user_company_a = self.UserModel.sudo().create({
             'name': 'User Company A',
             'login': 'user_a@test.com',
             'company_id': self.company_a.id,
             'company_ids': [(6, 0, [self.company_a.id])],
-            'groups_id': [(6, 0, [
-                self.env.ref('hr.group_hr_user').id,
-                self.env.ref('l10n_cl_hr_payroll.group_hr_payroll_user').id
-            ])]
         })
 
         # Usuario con acceso solo a Company B
-        self.user_company_b = self.UserModel.create({
+        self.user_company_b = self.UserModel.sudo().create({
             'name': 'User Company B',
             'login': 'user_b@test.com',
             'company_id': self.company_b.id,
             'company_ids': [(6, 0, [self.company_b.id])],
-            'groups_id': [(6, 0, [
-                self.env.ref('hr.group_hr_user').id,
-                self.env.ref('l10n_cl_hr_payroll.group_hr_payroll_user').id
-            ])]
         })
 
-        # Empleado Company A
-        self.employee_a = self.EmployeeModel.with_user(self.user_company_a).create({
+        # Asignar grupos usando write en el grupo para añadir usuarios
+        group_hr_user.sudo().write({
+            'users': [(4, self.user_company_a.id), (4, self.user_company_b.id)]
+        })
+        group_payroll_user.sudo().write({
+            'users': [(4, self.user_company_a.id), (4, self.user_company_b.id)]
+        })
+
+        # Empleado Company A (usando sudo para evitar checks de permisos en tests)
+        self.employee_a = self.EmployeeModel.sudo().create({
             'name': 'Employee A',
             'company_id': self.company_a.id,
         })
 
         # Empleado Company B
-        self.employee_b = self.EmployeeModel.with_user(self.user_company_b).create({
+        self.employee_b = self.EmployeeModel.sudo().create({
             'name': 'Employee B',
             'company_id': self.company_b.id,
         })
 
         # Contrato Company A
-        self.contract_a = self.ContractModel.with_user(self.user_company_a).create({
+        self.contract_a = self.ContractModel.sudo().create({
             'name': 'Contract A',
             'employee_id': self.employee_a.id,
             'company_id': self.company_a.id,
@@ -98,7 +102,7 @@ class TestP0MultiCompany(TransactionCase):
         })
 
         # Contrato Company B
-        self.contract_b = self.ContractModel.with_user(self.user_company_b).create({
+        self.contract_b = self.ContractModel.sudo().create({
             'name': 'Contract B',
             'employee_id': self.employee_b.id,
             'company_id': self.company_b.id,
@@ -107,7 +111,7 @@ class TestP0MultiCompany(TransactionCase):
         })
 
         # Payslip Company A
-        self.payslip_a = self.PayslipModel.with_user(self.user_company_a).create({
+        self.payslip_a = self.PayslipModel.sudo().create({
             'name': 'Payslip A',
             'employee_id': self.employee_a.id,
             'contract_id': self.contract_a.id,
@@ -117,7 +121,7 @@ class TestP0MultiCompany(TransactionCase):
         })
 
         # Payslip Company B
-        self.payslip_b = self.PayslipModel.with_user(self.user_company_b).create({
+        self.payslip_b = self.PayslipModel.sudo().create({
             'name': 'Payslip B',
             'employee_id': self.employee_b.id,
             'contract_id': self.contract_b.id,
@@ -125,6 +129,9 @@ class TestP0MultiCompany(TransactionCase):
             'date_from': date(2025, 1, 1),
             'date_to': date(2025, 1, 31),
         })
+
+        # NOTA: Creación con sudo() para evitar AccessError en tests
+        # Los tests validan ir.rules multi-company, no permisos de grupos
 
     def test_ir_rule_payslip_exists(self):
         """

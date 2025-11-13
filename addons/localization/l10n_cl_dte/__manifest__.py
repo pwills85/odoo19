@@ -5,21 +5,22 @@
     'category': 'Accounting/Localizations',
     'summary': 'Facturación Electrónica Chilena - Complete DTE Solution with Enhanced Features',
     'description': """
-Chilean Electronic Invoicing - DTE System
-==========================================
+Chilean Electronic Invoicing - DTE System (B2B)
+================================================
 
 Sistema enterprise-grade de facturación electrónica para Chile, desarrollado según
 normativa oficial del SII (Servicio de Impuestos Internos).
 
 🎯 Características Principales
 -------------------------------
-✅ **5 Tipos de DTE Certificados SII:**
+✅ **5 Tipos de DTE Certificados SII (B2B Scope EERGYGROUP):**
   • DTE 33: Factura Electrónica
-  • DTE 61: Nota de Crédito Electrónica
-  • DTE 56: Nota de Débito Electrónica
-  • DTE 52: Guía de Despacho Electrónica
   • DTE 34: Factura Exenta Electrónica
-  • Recepción Boletas Honorarios Electrónicas (BHE)
+  • DTE 52: Guía de Despacho Electrónica
+  • DTE 56: Nota de Débito Electrónica
+  • DTE 61: Nota de Crédito Electrónica
+
+Alcance EERGYGROUP B2B: Excluye Boletas (39,41,70) y Factura Compra (46)
 
 ✅ **Seguridad Enterprise:**
   • Firma digital XMLDSig PKCS#1 con certificados digitales SII
@@ -221,8 +222,8 @@ Es un desarrollo independiente para localización chilena.
         'views/dte_contingency_pending_views.xml',  # ⭐ NEW (Sprint 3 - 2025-10-24): Pending DTEs (Contingency)
         'views/res_config_settings_views.xml',
         'views/analytic_dashboard_views.xml',   # ⭐ NUEVO: Dashboard Cuentas Analíticas
-        # 'views/dte_dashboard_views.xml',        # ⭐ DESACTIVADO: tipo 'dashboard' no soportado en Odoo 19 (convertir a kanban)
-        # 'views/dte_dashboard_views_enhanced.xml',  # ⭐ DESACTIVADO: depende de dte_dashboard_views.xml
+        'views/dte_dashboard_views.xml',        # ✅ ACTIVADO: Convertido a kanban (Odoo 19 compliant) - 2025-11-12
+        'views/dte_dashboard_views_enhanced.xml',  # ✅ ACTIVADO: Convertido a kanban (Odoo 19 compliant) - 2025-11-12
         'views/boleta_honorarios_views.xml',    # ⭐ NUEVO Sprint D: Boletas de Honorarios (loaded first - referenced by retencion_iue_tasa)
         'views/retencion_iue_tasa_views.xml',   # ⭐ NUEVO Sprint D: Tasas de Retención IUE
         'views/l10n_cl_rcv_entry_views.xml',    # ⭐ NEW (Sprint 1 - 2025-11-01): RCV Entries (Res. 61/2017)
@@ -239,9 +240,9 @@ Es un desarrollo independiente para localización chilena.
 
         # ⭐ Wizards adicionales desactivados temporalmente
         # 'wizards/ai_chat_wizard_views.xml',       # ⭐ DESACTIVADO: depende de ai_chat_integration
-        # ⭐ FASE 2 - Wizards desactivados temporalmente para completar instalación básica
-        # 'wizards/upload_certificate_views.xml',
-        # 'wizards/send_dte_batch_views.xml',
+        # ⭐ FASE 2 - Wizards P1 REACTIVADOS (Sprint 2 - 2025-11-12)
+        'wizards/upload_certificate_views.xml',      # ✅ ACTIVADO: Upload certificados .p12
+        'wizards/send_dte_batch_views.xml',          # ✅ ACTIVADO: Envío masivo DTEs
         # 'wizards/generate_consumo_folios_views.xml',
         # 'wizards/generate_libro_views.xml',
     ],

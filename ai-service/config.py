@@ -4,6 +4,7 @@ Configuración del AI Microservice
 """
 
 from pydantic_settings import BaseSettings
+from pydantic import Field, validator
 from typing import Optional
 
 
@@ -22,7 +23,23 @@ class Settings(BaseSettings):
     # SEGURIDAD
     # ═══════════════════════════════════════════════════════════
     
-    api_key: str = "default_ai_api_key"  # Cambiar en producción
+    # ✅ FIX [H1/S1]: API key now required from environment (no default)
+    # MUST set via environment variable AI_SERVICE_API_KEY
+    # Application will fail to start if not provided (fail-safe security)
+    api_key: str = Field(..., description="Required API key from AI_SERVICE_API_KEY env var")
+
+    @validator('api_key')
+    def validate_api_key_not_default(cls, v):
+        """Prevent usage of insecure default values"""
+        forbidden_values = ['default', 'changeme', 'default_ai_api_key', 'test', 'dev']
+        if any(forbidden in v.lower() for forbidden in forbidden_values):
+            raise ValueError(
+                f"Insecure API key detected. Production keys required. "
+                f"Set AI_SERVICE_API_KEY environment variable with a real key."
+            )
+        if len(v) < 16:
+            raise ValueError("API key must be at least 16 characters for security")
+        return v
     allowed_origins: list[str] = ["http://odoo:8069", "http://odoo-eergy-services:8001"]
     
     # ═══════════════════════════════════════════════════════════
@@ -30,7 +47,11 @@ class Settings(BaseSettings):
     # ═══════════════════════════════════════════════════════════
 
     anthropic_api_key: str
-    anthropic_model: str = "claude-sonnet-4-5-20250929"  # Claude Sonnet 4.5 (Sept 2025)
+    # ✅ FIX [H3 CICLO3]: Model from env var for flexibility
+    anthropic_model: str = Field(
+        default="claude-sonnet-4-5-20250929",
+        description="Anthropic model from ANTHROPIC_MODEL env var (default: Claude Sonnet 4.5)"
+    )
 
     # Max tokens por caso de uso
     anthropic_max_tokens_default: int = 8192
@@ -75,9 +96,19 @@ class Settings(BaseSettings):
     # ═══════════════════════════════════════════════════════════
     # ODOO INTEGRATION
     # ═══════════════════════════════════════════════════════════
-    
+
     odoo_url: str = "http://odoo:8069"
-    odoo_api_key: str = "default_odoo_api_key"
+    # ✅ FIX [S2]: Odoo API key now required from environment (no default)
+    odoo_api_key: str = Field(..., description="Required from ODOO_API_KEY env var")
+
+    @validator('odoo_api_key')
+    def validate_odoo_api_key_not_default(cls, v):
+        """Prevent usage of insecure default Odoo API key"""
+        if 'default' in v.lower() or v == 'changeme' or len(v) < 16:
+            raise ValueError(
+                "Insecure Odoo API key. Set ODOO_API_KEY environment variable with real key."
+            )
+        return v
     
     # ═══════════════════════════════════════════════════════════
     # THRESHOLDS Y CONFIGURACIÓN IA

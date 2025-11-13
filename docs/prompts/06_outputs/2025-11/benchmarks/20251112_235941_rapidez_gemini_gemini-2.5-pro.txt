@@ -1,0 +1,4 @@
+YOLO mode is enabled. All tool calls will be automatically approved.
+Loaded cached credentials.
+Attempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 0s.. Retrying after 245.445372ms...
+En Odoo 19, `t-esc` muestra contenido de forma segura, escapando caracteres HTML para prevenir ataques de Cross-Site Scripting (XSS). Por otro lado, `t-out` inserta el contenido en bruto (raw) sin escaparlo, lo cual es útil para renderizar HTML dinámico que tú controlas. En resumen, siempre debes usar `t-esc` para datos de usuario o no confiables, y `t-out` solo para HTML generado internamente y de confianza.

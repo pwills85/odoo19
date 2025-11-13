@@ -43,7 +43,15 @@ class L10nClApvInstitution(models.Model):
         string='Active',
         default=True
     )
-    
-    _sql_constraints = [
-        ('code_unique', 'UNIQUE(code)', 'El código de la institución APV debe ser único'),
-    ]
+
+    @api.constrains('code')
+    def _check_code_unique(self):
+        """Validar que el código sea único (migrado desde _sql_constraints en Odoo 19)"""
+        for institution in self:
+            if institution.code:
+                existing = self.search_count([
+                    ('code', '=', institution.code),
+                    ('id', '!=', institution.id)
+                ])
+                if existing:
+                    raise ValidationError(_('El código de la institución APV debe ser único'))

@@ -1,0 +1,7 @@
+           name            |    state    | latest_version | demo | application 
+---------------------------+-------------+----------------+------+-------------
+ l10n_cl_dte               | uninstalled |                | f    | f
+ l10n_cl_financial_reports | uninstalled |                | f    | f
+ l10n_cl_hr_payroll        | uninstalled |                | f    | t
+(3 rows)
+

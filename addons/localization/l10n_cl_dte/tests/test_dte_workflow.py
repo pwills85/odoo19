@@ -60,7 +60,7 @@ class TestDTEWorkflow(TransactionCase):
     
     def test_01_invoice_creation(self):
         """Test creación básica de factura"""
-        invoice = self._create_invoice()
+        invoice = self.env.create_invoice()
         
         # Debe estar en draft
         self.assertEqual(invoice.state, 'draft')
@@ -71,7 +71,7 @@ class TestDTEWorkflow(TransactionCase):
     
     def test_02_invoice_post_sets_dte_status(self):
         """Test que al confirmar factura se marca como 'to_send'"""
-        invoice = self._create_invoice()
+        invoice = self.env.create_invoice()
         
         # Confirmar
         invoice.action_post()
@@ -90,7 +90,7 @@ class TestDTEWorkflow(TransactionCase):
     def test_03_credit_note_creation(self):
         """Test creación de nota de crédito"""
         # Crear y confirmar factura
-        invoice = self._create_invoice()
+        invoice = self.env.create_invoice()
         invoice.action_post()
         
         # Crear nota de crédito
@@ -118,7 +118,7 @@ class TestDTEWorkflow(TransactionCase):
     
     def test_04_dte_fields_present(self):
         """Test que campos DTE están presentes"""
-        invoice = self._create_invoice()
+        invoice = self.env.create_invoice()
         
         # Campos críticos deben existir
         self.assertTrue(hasattr(invoice, 'dte_code'))
@@ -192,7 +192,7 @@ class TestDTEWorkflow(TransactionCase):
     
     def test_10_dte_status_transitions(self):
         """Test transiciones de estado DTE"""
-        invoice = self._create_invoice()
+        invoice = self.env.create_invoice()
         
         # Draft
         self.assertEqual(invoice.dte_status, 'draft')

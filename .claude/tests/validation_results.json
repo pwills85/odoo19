@@ -1,0 +1,73 @@
+{
+  "extended_thinking": {
+    "odoo-dev-precision.md": {
+      "exists": true,
+      "has_extended_thinking": true
+    },
+    "test-automation.md": {
+      "exists": true,
+      "has_extended_thinking": true
+    },
+    "docker-devops.md": {
+      "exists": true,
+      "has_extended_thinking": true
+    },
+    "ai-fastapi-dev.md": {
+      "exists": true,
+      "has_extended_thinking": true
+    }
+  },
+  "mcp_servers": {
+    "file_exists": true,
+    "valid_json": true,
+    "servers": {
+      "postgres": {
+        "exists": true,
+        "valid": true,
+        "command": "npx"
+      },
+      "filesystem": {
+        "exists": true,
+        "valid": true,
+        "command": "npx"
+      },
+      "git": {
+        "exists": true,
+        "valid": true,
+        "command": "npx"
+      }
+    },
+    "has_mcp_servers_key": true,
+    "npx_available": true
+  },
+  "haiku_agents": {
+    "quick-status-checker.md": {
+      "exists": true,
+      "has_haiku": true,
+      "has_cost_category": true,
+      "has_tools": true,
+      "has_max_tokens": true
+    },
+    "quick-file-finder.md": {
+      "exists": true,
+      "has_haiku": true,
+      "has_cost_category": true,
+      "has_tools": true,
+      "has_max_tokens": true
+    },
+    "quick-code-validator.md": {
+      "exists": true,
+      "has_haiku": true,
+      "has_cost_category": true,
+      "has_tools": true,
+      "has_max_tokens": true
+    }
+  },
+  "summary": {
+    "total_tests": 16,
+    "passed": 16,
+    "warnings": 0,
+    "failed": 0,
+    "success_rate": 100.0
+  }
+}

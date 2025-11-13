@@ -94,10 +94,10 @@ class TestFinancialReportsPayrollIntegration(TransactionCase):
         Test principal: Costos de nómina aparecen correctamente en reportes financieros
         """
         # === SETUP: Crear nóminas con costos laborales ===
-        payslip1 = self._create_payslip_with_full_costs(
+        payslip1 = self.env.create_payslip_with_full_costs(
             self.employee1, base_salary=1000000
         )
-        payslip2 = self._create_payslip_with_full_costs(
+        payslip2 = self.env.create_payslip_with_full_costs(
             self.employee2, base_salary=800000
         )
         
@@ -149,7 +149,7 @@ class TestFinancialReportsPayrollIntegration(TransactionCase):
     def test_payroll_hierarchy_in_reports(self):
         """Test: Jerarquía de costos laborales en reportes"""
         # Crear nómina
-        payslip = self._create_payslip_with_full_costs(self.employee1, 1200000)
+        payslip = self.env.create_payslip_with_full_costs(self.employee1, 1200000)
         payslip.action_payslip_done()
         
         # Generar reporte con detalle
@@ -176,14 +176,14 @@ class TestFinancialReportsPayrollIntegration(TransactionCase):
         # Crear nóminas en dos períodos diferentes
         
         # Período 1 (Enero)
-        payslip_jan = self._create_payslip_with_full_costs(
+        payslip_jan = self.env.create_payslip_with_full_costs(
             self.employee1, 1000000, 
             period_start=date(2025, 1, 1), period_end=date(2025, 1, 31)
         )
         payslip_jan.action_payslip_done()
         
         # Período 2 (Febrero) - aumento salarial
-        payslip_feb = self._create_payslip_with_full_costs(
+        payslip_feb = self.env.create_payslip_with_full_costs(
             self.employee1, 1100000,  # Aumento 10%
             period_start=date(2025, 2, 1), period_end=date(2025, 2, 28)
         )
@@ -225,16 +225,16 @@ class TestFinancialReportsPayrollIntegration(TransactionCase):
         })
         
         # Asignar empleados a centros de costo
-        contract1 = self._create_contract_with_cost_center(
+        contract1 = self.env.create_contract_with_cost_center(
             self.employee1, cost_center_admin, 1000000
         )
-        contract2 = self._create_contract_with_cost_center(
+        contract2 = self.env.create_contract_with_cost_center(
             self.employee2, cost_center_sales, 900000
         )
         
         # Generar nóminas
-        payslip1 = self._create_payslip_from_contract(contract1)
-        payslip2 = self._create_payslip_from_contract(contract2)
+        payslip1 = self.env.create_payslip_from_contract(contract1)
+        payslip2 = self.env.create_payslip_from_contract(contract2)
         
         payslip1.action_payslip_done()
         payslip2.action_payslip_done()
@@ -269,7 +269,7 @@ class TestFinancialReportsPayrollIntegration(TransactionCase):
         })
         
         # Crear nómina que genere provisiones
-        payslip = self._create_payslip_with_provisions(contract)
+        payslip = self.env.create_payslip_with_provisions(contract)
         payslip.action_payslip_done()
         
         # Generar reporte de balance

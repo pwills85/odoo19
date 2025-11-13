@@ -16,7 +16,7 @@
                 <div class="page">
                     <div class="text-center">
                         <h2>RECIBO</h2>
-                        <p>Documento: <t t-esc="o.name"/></p>
+                        <p>Documento: <t t-out="o.name"/></p>
                     </div>
                     
                     <div class="row mt32">
