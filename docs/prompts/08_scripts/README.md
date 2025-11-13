@@ -304,8 +304,73 @@ copilot
 
 ---
 
+---
+
+## 🛡️ Sistema Validación Templates (MEJORA 11)
+
+### Archivos
+
+```
+docs/prompts/08_scripts/
+├── validate_templates.py          # Validador principal
+├── test_validate_templates.py     # Tests unitarios (pytest)
+├── generate_html_report.py        # Generador reportes HTML
+```
+
+### Uso Rápido
+
+```bash
+# Validar todos los templates
+python3 validate_templates.py --all
+
+# Validar template específico
+python3 validate_templates.py ../04_templates/TEMPLATE_AUDITORIA.md
+
+# Generar reporte HTML
+python3 validate_templates.py --all --json validation_report.json
+python3 generate_html_report.py --input validation_report.json
+open ../06_outputs/TEMPLATES_VALIDATION_REPORT.html
+
+# Ejecutar tests
+pytest test_validate_templates.py -v
+```
+
+### Validaciones
+
+- ✅ Estructura (secciones obligatorias)
+- ✅ Metadata (versión, nivel, agente)
+- ✅ Variables ({{VAR}}, {VAR}, [VAR])
+- ✅ Cross-references (links templates)
+- ✅ Markdown syntax (headers, code blocks)
+- ✅ Coherencia nivel/agente (P4 no Haiku)
+
+### Pre-Commit Hook
+
+El hook ya está integrado en `.git/hooks/pre-commit`. Valida automáticamente templates staged y bloquea commit si fallan.
+
+### CI Workflow
+
+`.github/workflows/validate-templates.yml` ejecuta validación en cada PR con cambios en templates.
+
+### Scoring
+
+```
+Score = 100 - (errors * 20) - (warnings * 5) - (infos * 1)
+
+90-100: EXCELENTE ✅
+80-89:  BUENO ✅
+70-79:  ACEPTABLE ✅
+<70:    RECHAZADO ❌ (bloquea commit)
+```
+
+### Documentación Completa
+
+Ver instrucciones detalladas en: `TEMPLATE_VALIDATION_SYSTEM.md` (en este mismo directorio)
+
+---
+
 **🚀 Scripts de automatización profesionales para máxima productividad**
 
-**Mantenedor:** Pedro Troncoso (@pwills85)  
+**Mantenedor:** Pedro Troncoso (@pwills85)
 **Última actualización:** 2025-11-12
 
