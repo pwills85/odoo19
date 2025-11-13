@@ -7,7 +7,7 @@ FastAPI service para inteligencia artificial aplicada a DTEs
 from fastapi import FastAPI, Depends, HTTPException, Security, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel, Field, validator
 from typing import Optional, Dict, Any, List
 import re
@@ -20,6 +20,7 @@ from slowapi.errors import RateLimitExceeded
 import hashlib
 import json
 import uuid
+import traceback
 
 from config import settings
 
@@ -107,6 +108,60 @@ def get_user_identifier(request: Request) -> str:
 limiter = Limiter(key_func=get_user_identifier)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# ═══════════════════════════════════════════════════════════
+# GLOBAL EXCEPTION HANDLER (FIX [S4] CICLO5)
+# ═══════════════════════════════════════════════════════════
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """
+    ✅ FIX [S4 CICLO5]: Global exception handler with production-safe error messages.
+
+    Hides stack traces in production (settings.debug=False) to prevent
+    information disclosure (OWASP A09 - Security Logging and Monitoring Failures).
+
+    Security benefits:
+    - Prevents sensitive information leakage
+    - Logs full details internally for debugging
+    - Returns generic messages in production
+    - Includes request ID for support tracking
+    """
+    # Log full error details internally (always, regardless of debug mode)
+    logger.error(
+        "unhandled_exception",
+        exc_type=type(exc).__name__,
+        exc_message=str(exc),
+        path=request.url.path,
+        method=request.method,
+        exc_info=True  # Includes full traceback in logs
+    )
+
+    # Return different responses based on debug mode
+    if settings.debug:
+        # DEBUG mode: Return detailed error for development
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "error": "Internal server error",
+                "type": type(exc).__name__,
+                "detail": str(exc),
+                "traceback": traceback.format_exc(),
+                "path": request.url.path,
+                "method": request.method,
+                "debug_mode": True
+            }
+        )
+    else:
+        # PRODUCTION mode: Generic error message (OWASP A09 compliant)
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "error": "Internal server error",
+                "detail": "An unexpected error occurred. Please contact support if the problem persists.",
+                "request_id": request.headers.get("X-Request-ID", "unknown")
+            }
+        )
 
 # ═══════════════════════════════════════════════════════════
 # ROUTER REGISTRATION
