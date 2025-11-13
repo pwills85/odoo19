@@ -16,29 +16,52 @@ echo "📝 Configurando branch protection en main..."
 gh api \
   --method PUT \
   -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
   "/repos/$REPO/branches/$MAIN_BRANCH/protection" \
-  -f required_status_checks='{"strict":true,"contexts":["CI","quality-gates","security-scan"]}' \
-  -f enforce_admins=false \
-  -f required_pull_request_reviews='{"required_approving_review_count":1,"dismiss_stale_reviews":true,"require_code_owner_reviews":true}' \
-  -f restrictions=null \
-  -f required_linear_history=false \
-  -f allow_force_pushes=false \
-  -f allow_deletions=false \
-  -f required_conversation_resolution=true
+  --input - <<EOF
+{
+  "required_status_checks": {
+    "strict": true,
+    "contexts": ["CI", "quality-gates", "security-scan"]
+  },
+  "enforce_admins": false,
+  "required_pull_request_reviews": {
+    "required_approving_review_count": 1,
+    "dismiss_stale_reviews": true,
+    "require_code_owner_reviews": true
+  },
+  "restrictions": null,
+  "required_linear_history": false,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "required_conversation_resolution": true
+}
+EOF
 
 # Branch Protection - develop
 echo "📝 Configurando branch protection en develop..."
 gh api \
   --method PUT \
   -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
   "/repos/$REPO/branches/$DEVELOP_BRANCH/protection" \
-  -f required_status_checks='{"strict":true,"contexts":["CI","quality-gates"]}' \
-  -f enforce_admins=false \
-  -f required_pull_request_reviews='{"required_approving_review_count":1,"dismiss_stale_reviews":true}' \
-  -f restrictions=null \
-  -f required_linear_history=false \
-  -f allow_force_pushes=false \
-  -f allow_deletions=false
+  --input - <<EOF
+{
+  "required_status_checks": {
+    "strict": true,
+    "contexts": ["CI", "quality-gates"]
+  },
+  "enforce_admins": false,
+  "required_pull_request_reviews": {
+    "required_approving_review_count": 1,
+    "dismiss_stale_reviews": true
+  },
+  "restrictions": null,
+  "required_linear_history": false,
+  "allow_force_pushes": false,
+  "allow_deletions": false
+}
+EOF
 
 # Repository Settings
 echo "⚙️  Configurando repository settings..."
