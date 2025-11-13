@@ -1,5 +1,17 @@
 # 🚀 Odoo 19 Community Edition - Facturación Electrónica Chilena + Nóminas
 
+[![License: LGPL-3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+[![Odoo Version](https://img.shields.io/badge/Odoo-19.0-purple.svg)](https://github.com/odoo/odoo/tree/19.0)
+[![Python Version](https://img.shields.io/badge/Python-3.11+-green.svg)](https://www.python.org/)
+[![Docker](https://img.shields.io/badge/Docker-Required-2496ED.svg?logo=docker)](https://www.docker.com/)
+[![CI/CD](https://github.com/pwills85/odoo19/actions/workflows/ci.yml/badge.svg)](https://github.com/pwills85/odoo19/actions)
+[![Coverage](https://img.shields.io/badge/Coverage-80%25-yellow.svg)](./coverage.xml)
+[![Compliance](https://img.shields.io/badge/Odoo%2019%20CE-80.4%25-orange.svg)](./CIERRE_BRECHAS_ODOO19_INFORME_FINAL.md)
+[![SII Certified](https://img.shields.io/badge/SII-Resolution%2080%2F2014-success.svg)](https://www.sii.cl/)
+[![Previred](https://img.shields.io/badge/Previred-Compatible-success.svg)](https://www.previred.com/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
+
 ---
 
 ## ⚡ INICIO RÁPIDO PARA AGENTES NUEVOS
