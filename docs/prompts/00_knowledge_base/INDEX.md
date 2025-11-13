@@ -15,7 +15,7 @@ La **Knowledge Base** contiene toda la documentación técnica fundamental neces
 
 ---
 
-## 📁 ARCHIVOS DISPONIBLES (7 documentos)
+## 📁 ARCHIVOS DISPONIBLES (10 documentos)
 
 ### 1. Stack & Deployment
 
@@ -282,16 +282,104 @@ docs/prompts/
 
 ---
 
+### 8. Orchestration System ✨ **NUEVO v2.2.0**
+
+#### CLI_AGENTS_SYSTEM_CONTEXT.md
+**Propósito:** Contexto completo para CLI agents (Copilot, Gemini, Codex) en sistema de orquestación multi-agente
+
+**Contiene:**
+- Rol de cada CLI agent en el sistema
+- Arquitectura multi-agente (Claude Code como Orchestrator Maestro)
+- Permisos pre-autorizados (autonomía máxima)
+- Operaciones que requieren confirmación
+- Docker constraints (TODAS las operaciones Odoo via Docker)
+- Output format standards para CLIOutputParser
+- 7 fases de orquestación y responsabilidades
+- Budget awareness y pricing por modelo
+- Specialization por CLI tool (Copilot vs Gemini vs Codex)
+- Ejemplos de interacción y troubleshooting
+
+**Cuándo usar:**
+- **CRÍTICO:** CLI agents DEBEN leer este archivo antes de ejecutar tareas
+- Entender el rol en el sistema de orquestación
+- Conocer permisos pre-autorizados (evitar consultas innecesarias)
+- Seguir formatos de output esperados
+- Operar con autonomía dentro de límites
+
+**Relacionado:** `../ORQUESTACION_CLAUDE_CODE.md`, `../RESUMEN_IMPLEMENTACION_ORQUESTACION_V1.0.md`
+
+---
+
+#### ORQUESTACION_CLAUDE_CODE.md (fuera de Knowledge Base)
+**Propósito:** Contrato completo del sistema de orquestación multi-agente v1.0
+
+**Ubicación:** `docs/prompts/ORQUESTACION_CLAUDE_CODE.md`
+
+**Contiene:**
+- Contrato completo entre usuario y Claude Code como Orchestrator Maestro
+- Arquitectura del sistema (diagrams, flujos)
+- 7 fases detalladas: Discovery → Audit → Close Gaps → Enhance → Dev → Test → Re-audit
+- OrchestrationConfig y OrchestrationSession (dataclasses)
+- Budget tracking con pricing por modelo (Claude, GPT-4o, Gemini, Codex)
+- Sistema de confirmaciones para operaciones críticas
+- Templates mapping (6 dimensiones de auditoría)
+- Métricas y reporting (formato de reportes finales)
+- CI/CD integration (GitHub Actions workflow)
+- Error recovery strategies
+- Ejemplos de uso (3 casos prácticos completos)
+- Best practices y roadmap v1.1-v2.0
+
+**Cuándo usar:**
+- **CRÍTICO:** Claude Code DEBE seguir este contrato cuando actúa como Orchestrator Maestro
+- Entender el flujo completo de orquestación
+- Configurar orquestaciones complejas
+- Integrar con CI/CD
+- Personalizar budgets y límites
+- Troubleshooting del sistema de orquestación
+
+**Relacionado:** `CLI_AGENTS_SYSTEM_CONTEXT.md`, `../RESUMEN_IMPLEMENTACION_ORQUESTACION_V1.0.md`
+
+---
+
+#### RESUMEN_IMPLEMENTACION_ORQUESTACION_V1.0.md (fuera de Knowledge Base)
+**Propósito:** Resumen ejecutivo de la implementación del sistema de orquestación autónoma
+
+**Ubicación:** `docs/prompts/RESUMEN_IMPLEMENTACION_ORQUESTACION_V1.0.md`
+
+**Contiene:**
+- Resumen ejecutivo del sistema implementado
+- Métricas de implementación (4,105 líneas, 130KB código + docs)
+- Componentes implementados:
+  - CLIOutputParser (817 líneas) by Codex GPT-4-turbo
+  - IterativeOrchestrator (+843 líneas) by Copilot GPT-4o
+  - Documentación completa (2,415 líneas) by Claude Code
+- Tests y calidad (40+ tests, 90%+ coverage, 100% passing)
+- Docker compliance verification
+- ROI esperado ($6,900-14,900/año)
+- Archivos entregados y próximos pasos
+- Ejemplos de uso inmediato
+
+**Cuándo usar:**
+- Revisar el estado de la implementación
+- Entender qué fue construido y por quién
+- Ver métricas y ROI del sistema
+- Planificar próximos pasos
+- Onboarding de nuevos desarrolladores al sistema
+
+**Relacionado:** `../ORQUESTACION_CLAUDE_CODE.md`, `CLI_AGENTS_SYSTEM_CONTEXT.md`
+
+---
+
 ## 📊 MÉTRICAS KNOWLEDGE BASE
 
 | Métrica | Valor |
 |---------|-------|
-| **Archivos totales** | 7 |
-| **Líneas documentación** | ~3,500 |
-| **Temas cubiertos** | 6 (Stack, Compliance, Desarrollo, Arquitectura, Legal, Comandos) |
+| **Archivos totales** | 10 (8 en Knowledge Base + 2 referencias externas) |
+| **Líneas documentación** | ~6,400 |
+| **Temas cubiertos** | 8 (Stack, Compliance, Desarrollo, Arquitectura, Legal, Comandos, Orquestación, CLI Agents) |
 | **Autosostenibilidad** | 100% |
 | **Dependencias externas** | 0 |
-| **Última actualización** | 2025-11-12 |
+| **Última actualización** | 2025-11-13 |
 
 **Cobertura por área:**
 - ✅ **Deployment & DevOps:** 100% (deployment_environment.md + docker_odoo_command_reference.md)
@@ -299,6 +387,7 @@ docs/prompts/
 - ✅ **Desarrollo Odoo:** 100% (odoo19_patterns.md)
 - ✅ **Arquitectura:** 100% (project_architecture.md)
 - ✅ **Compliance Legal Chile:** 100% (sii_regulatory_context.md)
+- ✅ **Orquestación Multi-Agente:** 100% (CLI_AGENTS_SYSTEM_CONTEXT.md + ORQUESTACION_CLAUDE_CODE.md + RESUMEN_IMPLEMENTACION) ✨ **NUEVO**
 
 ---
 
@@ -376,10 +465,14 @@ docs/prompts/
 - Cómo desarrollar → `odoo19_patterns.md`
 - Decisiones arquitectura → `project_architecture.md`
 - Normativas Chile → `sii_regulatory_context.md`
+- **Sistema orquestación (Claude Code)** → `../ORQUESTACION_CLAUDE_CODE.md` ✨ **NUEVO**
+- **Contexto CLI agents (Copilot/Gemini/Codex)** → `CLI_AGENTS_SYSTEM_CONTEXT.md` ✨ **NUEVO**
+- **Resumen implementación orquestación** → `../RESUMEN_IMPLEMENTACION_ORQUESTACION_V1.0.md` ✨ **NUEVO**
 
 ---
 
-**Versión:** 1.0.0
+**Versión:** 1.1.0 (Orquestación Autónoma)
 **Creado:** 2025-11-12
+**Última Actualización:** 2025-11-13
 **Mantenedor:** Pedro Troncoso (@pwills85)
 **Status:** ✅ AUTOSOSTENIDO 100%
