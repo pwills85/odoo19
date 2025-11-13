@@ -4,7 +4,7 @@ Configuración del AI Microservice
 """
 
 from pydantic_settings import BaseSettings
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from typing import Optional
 
 
@@ -23,22 +23,38 @@ class Settings(BaseSettings):
     # SEGURIDAD
     # ═══════════════════════════════════════════════════════════
     
-    # ✅ FIX [H1/S1]: API key now required from environment (no default)
+    # ✅ FIX [P0-1]: API key now REQUIRED from environment (no default)
     # MUST set via environment variable AI_SERVICE_API_KEY
-    # Application will fail to start if not provided (fail-safe security)
+    # Application will FAIL TO START if not provided (fail-safe security)
     api_key: str = Field(..., description="Required API key from AI_SERVICE_API_KEY env var")
 
-    @validator('api_key')
+    @field_validator('api_key')
+    @classmethod
     def validate_api_key_not_default(cls, v):
-        """Prevent usage of insecure default values"""
-        forbidden_values = ['default', 'changeme', 'default_ai_api_key', 'test', 'dev']
-        if any(forbidden in v.lower() for forbidden in forbidden_values):
+        """Prevent usage of insecure default values - ENHANCED P0-1"""
+        # Expanded forbidden list
+        forbidden_values = [
+            'default', 'changeme', 'default_ai_api_key', 'test', 'dev',
+            'admin', 'password', '12345', 'secret', 'api_key', 'key',
+            'YOUR_API_KEY_HERE', 'REPLACE_ME', 'TODO'
+        ]
+
+        # Case-insensitive check
+        v_lower = v.lower()
+        for forbidden in forbidden_values:
+            if forbidden in v_lower:
+                raise ValueError(
+                    f"Insecure API key detected: contains '{forbidden}'. "
+                    f"Set AI_SERVICE_API_KEY environment variable with a strong production key."
+                )
+
+        # Minimum length validation (increased to 32 for better security)
+        if len(v) < 32:
             raise ValueError(
-                f"Insecure API key detected. Production keys required. "
-                f"Set AI_SERVICE_API_KEY environment variable with a real key."
+                "API key must be at least 32 characters for production security. "
+                f"Current length: {len(v)}"
             )
-        if len(v) < 16:
-            raise ValueError("API key must be at least 16 characters for security")
+
         return v
     allowed_origins: list[str] = ["http://odoo:8069", "http://odoo-eergy-services:8001"]
     
@@ -98,16 +114,38 @@ class Settings(BaseSettings):
     # ═══════════════════════════════════════════════════════════
 
     odoo_url: str = "http://odoo:8069"
-    # ✅ FIX [S2]: Odoo API key now required from environment (no default)
+    # ✅ FIX [P0-2]: Odoo API key now REQUIRED from environment (no default)
+    # MUST set via environment variable ODOO_API_KEY
+    # Application will FAIL TO START if not provided (fail-safe security)
     odoo_api_key: str = Field(..., description="Required from ODOO_API_KEY env var")
 
-    @validator('odoo_api_key')
+    @field_validator('odoo_api_key')
+    @classmethod
     def validate_odoo_api_key_not_default(cls, v):
-        """Prevent usage of insecure default Odoo API key"""
-        if 'default' in v.lower() or v == 'changeme' or len(v) < 16:
+        """Prevent usage of insecure default Odoo API key - ENHANCED P0-2"""
+        # Expanded forbidden list for Odoo keys
+        forbidden_values = [
+            'default', 'changeme', 'admin', 'password', 'odoo',
+            'test', 'dev', '12345', 'secret', 'api_key', 'key',
+            'YOUR_ODOO_KEY', 'REPLACE_ME', 'TODO', 'demo'
+        ]
+
+        # Case-insensitive check
+        v_lower = v.lower()
+        for forbidden in forbidden_values:
+            if forbidden in v_lower:
+                raise ValueError(
+                    f"Insecure Odoo API key detected: contains '{forbidden}'. "
+                    f"Set ODOO_API_KEY environment variable with a strong production key."
+                )
+
+        # Minimum length validation (increased to 32 for better security)
+        if len(v) < 32:
             raise ValueError(
-                "Insecure Odoo API key. Set ODOO_API_KEY environment variable with real key."
+                "Odoo API key must be at least 32 characters for production security. "
+                f"Current length: {len(v)}"
             )
+
         return v
     
     # ═══════════════════════════════════════════════════════════
