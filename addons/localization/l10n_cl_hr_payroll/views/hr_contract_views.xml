@@ -9,7 +9,7 @@
     <record id="view_hr_contract_cl_form" model="ir.ui.view">
         <field name="name">hr.contract.cl.form</field>
         <field name="model">hr.contract</field>
-        <field name="inherit_id" ref="hr_contract_view_form"/>
+        <field name="inherit_id" ref="l10n_cl_hr_payroll.hr_contract_view_form_stub"/>
         <field name="arch" type="xml">
             
             <!-- Agregar campos Chile después del campo wage -->

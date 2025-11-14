@@ -58,7 +58,6 @@ class HrSalaryRuleCategory(models.Model):
     
     parent_path = fields.Char(
         index=True,
-        unaccent=False,
         help='Ruta completa en la jerarquía (auto-calculado por _parent_store)'
     )
     

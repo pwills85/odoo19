@@ -177,6 +177,7 @@ class F29PerformanceOptimized(models.Model):
     Optimizaciones específicas para F29
     """
     _name = 'l10n_cl.f29.performance'
+    _description = 'F29 Performance Optimization'
     _inherit = ['l10n_cl.f29', 'performance.mixin']
 
     @api.model

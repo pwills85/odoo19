@@ -35,3 +35,7 @@ access_hr_contract_user,hr.contract.user,model_hr_contract,group_hr_payroll_user
 access_hr_contract_manager,hr.contract.manager,model_hr_contract,group_hr_payroll_manager,1,1,1,1
 access_hr_contract_type_user,hr.contract.type.user,model_hr_contract_type,group_hr_payroll_user,1,0,0,0
 access_hr_contract_type_manager,hr.contract.type.manager,model_hr_contract_type,group_hr_payroll_manager,1,1,1,1
+access_payroll_ai_validation_wizard_user,payroll.ai.validation.wizard.user,model_payroll_ai_validation_wizard,group_hr_payroll_user,1,1,1,1
+access_payroll_ai_validation_wizard_manager,payroll.ai.validation.wizard.manager,model_payroll_ai_validation_wizard,group_hr_payroll_manager,1,1,1,1
+access_previred_validation_wizard_user,previred.validation.wizard.user,model_previred_validation_wizard,group_hr_payroll_user,1,1,1,1
+access_previred_validation_wizard_manager,previred.validation.wizard.manager,model_previred_validation_wizard,group_hr_payroll_manager,1,1,1,1

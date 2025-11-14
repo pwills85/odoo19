@@ -181,13 +181,13 @@
                             <div class="o_kanban_record_bottom mt-3">
                                 <div class="oe_kanban_bottom_left">
                                     <span class="badge badge-pill">
-                                        <i class="fa fa-users"/> 
+                                        <i class="fa fa-users" title="Liquidaciones"/>
                                         <field name="slip_done_count"/> / <field name="slip_count"/>
                                     </span>
                                 </div>
                                 <div class="oe_kanban_bottom_right" t-if="record.state.raw_value == 'done'">
                                     <span class="text-success">
-                                        <i class="fa fa-money"/> 
+                                        <i class="fa fa-money" title="Total Neto"/>
                                         <field name="total_net" widget="monetary"/>
                                     </span>
                                 </div>

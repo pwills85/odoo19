@@ -214,13 +214,13 @@
 
                     <!-- KPIs Principales -->
                     <group>
-                        <group string="KPIs Últimos 30 Días">
+                        <group string="KPIs Últimos 30 Días" name="kpis_30d">
                             <field name="dtes_aceptados_30d"/>
                             <field name="dtes_rechazados_30d"/>
                             <field name="tasa_aceptacion_30d" widget="percentage"/>
                             <field name="tasa_rechazo_30d" widget="percentage"/>
                         </group>
-                        <group string="Estado Actual">
+                        <group string="Estado Actual" name="estado_actual">
                             <field name="dtes_pendientes"/>
                             <field name="dtes_con_reparos"/>
                             <field name="total_dtes_emitidos_mes"/>
@@ -228,11 +228,11 @@
                     </group>
 
                     <group>
-                        <group string="Facturación Mes Actual">
+                        <group string="Facturación Mes Actual" name="facturacion_mes">
                             <field name="monto_facturado_mes" widget="monetary"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
-                        <group string="Información">
+                        <group string="Información" name="informacion">
                             <field name="company_id" readonly="1"/>
                             <field name="last_update" readonly="1"/>
                         </group>

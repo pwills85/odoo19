@@ -42,21 +42,18 @@ class L10nClPpm(models.Model):
         string='Compañía',
         required=True,
         default=lambda self: self.env.company,
-        readonly=lambda self: self.state != 'draft'
     )
 
     fiscal_year = fields.Integer(
         string='Año Tributario',
         required=True,
         help='Año para el cual se calculan los PPM',
-        readonly=lambda self: self.state != 'draft'
     )
 
     period = fields.Integer(
         string='Mes',
         required=True,
         help='Mes del PPM (1-12)',
-        readonly=lambda self: self.state != 'draft'
     )
 
     period_date = fields.Date(
@@ -95,7 +92,6 @@ class L10nClPpm(models.Model):
         string='Tasa PPM (%)',
         default=0.25,
         help='Tasa de PPM según normativa (0.25%)',
-        readonly=lambda self: self.state != 'draft'
     )
 
     ppm_amount_calculated = fields.Monetary(
@@ -110,13 +106,11 @@ class L10nClPpm(models.Model):
     is_new_company = fields.Boolean(
         string='Empresa Nueva',
         help='Empresa sin renta año anterior',
-        readonly=lambda self: self.state != 'draft'
     )
 
     has_previous_losses = fields.Boolean(
         string='Pérdidas Tributarias Anteriores',
         help='Empresa con pérdidas arrastrables',
-        readonly=lambda self: self.state != 'draft'
     )
 
     is_suspended = fields.Boolean(
@@ -130,12 +124,10 @@ class L10nClPpm(models.Model):
         string='Ajuste Manual',
         currency_field='currency_id',
         help='Ajuste manual al PPM calculado',
-        readonly=lambda self: self.state != 'draft'
     )
 
     adjustment_reason = fields.Text(
         string='Motivo del Ajuste',
-        readonly=lambda self: self.state != 'draft'
     )
 
     # ========== MONTOS FINALES ==========
@@ -189,7 +181,6 @@ class L10nClPpm(models.Model):
     # auto_integrate_f29 = fields.Boolean(
     #     string='Integración Automática F29',
     #     default=True,
-    #     readonly=lambda self: self.state != 'draft',
     #     help='Integrar automáticamente con F29 mensual'
     # )
 

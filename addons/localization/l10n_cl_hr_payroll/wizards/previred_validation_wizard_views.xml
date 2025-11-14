@@ -10,13 +10,13 @@
                             string="Validar"
                             type="object"
                             class="btn-primary"
-                            attrs="{'invisible': [('validation_status', '!=', 'pending')]}"/>
+                            invisible="validation_status != 'pending'"/>
                     
                     <button name="action_generate_lre" 
                             string="Generar LRE"
                             type="object"
                             class="btn-success"
-                            attrs="{'invisible': ['|', ('validation_status', '!=', 'passed'), ('can_generate_lre', '=', False)]}"/>
+                            invisible="validation_status != 'passed' or not can_generate_lre"/>
                     
                     <field name="validation_status" widget="statusbar"/>
                 </header>
@@ -24,8 +24,8 @@
                 <sheet>
                     <group>
                         <field name="payslip_run_id" readonly="1"/>
-                        <field name="error_count" attrs="{'invisible': [('error_count', '=', 0)]}"/>
-                        <field name="warning_count" attrs="{'invisible': [('warning_count', '=', 0)]}"/>
+                        <field name="error_count" invisible="error_count == 0"/>
+                        <field name="warning_count" invisible="warning_count == 0"/>
                         <field name="can_generate_lre" invisible="1"/>
                     </group>
                     
@@ -34,11 +34,11 @@
                             <field name="validation_result" 
                                    widget="text"
                                    nolabel="1"
-                                   attrs="{'invisible': [('validation_result', '=', False)]}"/>
+                                   invisible="not validation_result"/>
                         </page>
                         
                         <page string="Campos Faltantes" 
-                              attrs="{'invisible': [('missing_fields', '=', False)]}">
+                              invisible="not missing_fields">
                             <field name="missing_fields" 
                                    widget="text"
                                    nolabel="1"/>

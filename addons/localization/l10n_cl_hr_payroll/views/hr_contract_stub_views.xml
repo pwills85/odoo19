@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ========================================================================= -->
+    <!-- HR CONTRACT STUB VIEWS - Odoo 19 CE Compatibility                        -->
+    <!-- ========================================================================= -->
+    <!-- Created: 2025-11-14                                                       -->
+    <!-- Purpose: Provide basic hr.contract views for CE (Enterprise-only module) -->
+    <!-- ========================================================================= -->
+
+    <!-- Form View: Contract -->
+    <record id="hr_contract_view_form_stub" model="ir.ui.view">
+        <field name="name">hr.contract.form.stub</field>
+        <field name="model">hr.contract</field>
+        <field name="arch" type="xml">
+            <form string="Contract">
+                <header>
+                    <button name="action_start_contract"
+                            string="Start Contract"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_close_contract"
+                            string="Close Contract"
+                            type="object"
+                            class="btn-warning"
+                            invisible="state != 'open'"/>
+                    <button name="action_cancel_contract"
+                            string="Cancel"
+                            type="object"
+                            invisible="state in ['close', 'cancel']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,open,close"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Contract Reference"/>
+                        <h1>
+                            <field name="name" placeholder="e.g. Contract #001"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Employee Information">
+                            <field name="employee_id"
+                                   widget="many2one_avatar_employee"
+                                   options="{'no_create': True}"/>
+                            <field name="job_id"/>
+                            <field name="department_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Contract Details">
+                            <field name="contract_type_id"/>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                        </group>
+                    </group>
+                    <group string="Salary Information">
+                        <group>
+                            <label for="wage"/>
+                            <div class="o_row">
+                                <field name="wage"/>
+                                <field name="currency_id" invisible="1"/>
+                            </div>
+                        </group>
+                    </group>
+                    <group string="Notes">
+                        <field name="notes" nolabel="1" placeholder="Additional information about the contract..."/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View: Contract -->
+    <record id="hr_contract_view_tree_stub" model="ir.ui.view">
+        <field name="name">hr.contract.tree.stub</field>
+        <field name="model">hr.contract</field>
+        <field name="arch" type="xml">
+            <list string="Contracts"
+                  decoration-info="state == 'draft'"
+                  decoration-success="state == 'open'"
+                  decoration-muted="state in ['close', 'cancel']">
+                <field name="name"/>
+                <field name="employee_id" widget="many2one_avatar_employee"/>
+                <field name="job_id" optional="hide"/>
+                <field name="department_id" optional="show"/>
+                <field name="contract_type_id"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="wage" widget="monetary"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'open'"
+                       decoration-muted="state in ['close', 'cancel']"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Search View: Contract -->
+    <record id="hr_contract_view_search_stub" model="ir.ui.view">
+        <field name="name">hr.contract.search.stub</field>
+        <field name="model">hr.contract</field>
+        <field name="arch" type="xml">
+            <search string="Contracts">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <filter name="filter_active" string="Active"
+                        domain="[('state', '=', 'open')]"/>
+                <filter name="filter_draft" string="Draft"
+                        domain="[('state', '=', 'draft')]"/>
+                <group>
+                    <filter name="group_employee" string="Employee"
+                            context="{'group_by': 'employee_id'}"/>
+                    <filter name="group_state" string="Status"
+                            context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action: Contracts -->
+    <record id="hr_contract_action_stub" model="ir.actions.act_window">
+        <field name="name">Contracts</field>
+        <field name="res_model">hr.contract</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_filter_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new contract
+            </p>
+            <p>
+                Define employee contracts including wages, start and end dates.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu: Contracts -->
+    <menuitem id="hr_contract_menu_stub"
+              name="Contracts"
+              parent="hr.menu_hr_root"
+              action="hr_contract_action_stub"
+              sequence="30"/>
+
+    <!-- ========================================================================= -->
+    <!-- HR CONTRACT TYPE VIEWS                                                    -->
+    <!-- ========================================================================= -->
+
+    <!-- Tree View: Contract Type -->
+    <record id="hr_contract_type_view_tree_stub" model="ir.ui.view">
+        <field name="name">hr.contract.type.tree.stub</field>
+        <field name="model">hr.contract.type</field>
+        <field name="arch" type="xml">
+            <list string="Contract Types">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View: Contract Type -->
+    <record id="hr_contract_type_view_form_stub" model="ir.ui.view">
+        <field name="name">hr.contract.type.form.stub</field>
+        <field name="model">hr.contract.type</field>
+        <field name="arch" type="xml">
+            <form string="Contract Type">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" string="Contract Type"/>
+                        <h1>
+                            <field name="name" placeholder="e.g. Indefinido, Plazo Fijo"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <field name="sequence"/>
+                        <field name="active" invisible="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action: Contract Types -->
+    <record id="hr_contract_type_action_stub" model="ir.actions.act_window">
+        <field name="name">Contract Types</field>
+        <field name="res_model">hr.contract.type</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Menu: Contract Types (Configuration) -->
+    <menuitem id="hr_contract_type_menu_stub"
+              name="Contract Types"
+              parent="hr.menu_human_resources_configuration"
+              action="hr_contract_type_action_stub"
+              sequence="90"/>
+
+</odoo>

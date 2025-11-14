@@ -91,7 +91,6 @@ class HrPayslip(models.Model):
         string='Referencia',
         required=True,
         readonly=True,
-        states={'draft': [('readonly', False)]},
         default='Nuevo',
         copy=False
     )
@@ -108,7 +107,6 @@ class HrPayslip(models.Model):
         string='Empleado',
         required=True,
         readonly=True,
-        states={'draft': [('readonly', False)]},
         tracking=True
     )
     
@@ -117,7 +115,6 @@ class HrPayslip(models.Model):
         string='Contrato',
         required=True,
         readonly=True,
-        states={'draft': [('readonly', False)]},
         domain="[('employee_id', '=', employee_id), ('state', 'in', ['open', 'pending'])]"
     )
     
@@ -125,7 +122,6 @@ class HrPayslip(models.Model):
         'hr.payroll.structure',
         string='Estructura Salarial',
         readonly=True,
-        states={'draft': [('readonly', False)]},
         help='Estructura que define las reglas de cálculo'
     )
     
@@ -145,7 +141,6 @@ class HrPayslip(models.Model):
         string='Fecha Desde',
         required=True,
         readonly=True,
-        states={'draft': [('readonly', False)]},
         default=lambda self: fields.Date.today().replace(day=1)
     )
     
@@ -153,7 +148,6 @@ class HrPayslip(models.Model):
         string='Fecha Hasta',
         required=True,
         readonly=True,
-        states={'draft': [('readonly', False)]},
         default=lambda self: fields.Date.today()
     )
     
@@ -176,8 +170,7 @@ class HrPayslip(models.Model):
         'hr.payslip.line',
         'slip_id',
         string='Líneas de Liquidación',
-        readonly=True,
-        states={'draft': [('readonly', False)]}
+        readonly=True
     )
     
     input_line_ids = fields.One2many(
@@ -185,7 +178,6 @@ class HrPayslip(models.Model):
         'payslip_id',
         string='Inputs',
         readonly=True,
-        states={'draft': [('readonly', False)]},
         help='Inputs adicionales (horas extra, bonos, etc.)'
     )
     

@@ -42,6 +42,8 @@ class DteDashboardEnhanced(models.Model):
         string='Monto Facturado Neto Mes',
         currency_field='currency_id',
         compute='_compute_kpis_enhanced',
+        store=True,
+        compute_sudo=True,  # Odoo 19 CE: Required for stored computed fields
         help=_('Monto neto facturado (facturas - notas de crédito) del mes actual con DTEs aceptados')
     )
 
@@ -52,24 +54,32 @@ class DteDashboardEnhanced(models.Model):
     pendientes_total = fields.Integer(
         string='Pendientes Total',
         compute='_compute_kpis_enhanced',
+        store=True,
+        compute_sudo=True,  # Odoo 19 CE: Required for stored computed fields
         help=_('Total de DTEs en estados pendientes (draft, to_send, sending, sent, contingency)')
     )
 
     dtes_enviados_sin_respuesta_6h = fields.Integer(
         string='DTEs Sin Respuesta +6h',
         compute='_compute_kpis_enhanced',
+        store=True,
+        compute_sudo=True,  # Odoo 19 CE: Required for stored computed fields
         help=_('DTEs enviados al SII hace más de 6 horas sin respuesta (estado sent > 6h)')
     )
 
     folios_restantes_total = fields.Integer(
         string='Folios CAF Restantes',
         compute='_compute_kpis_regulatory',
+        store=True,
+        compute_sudo=True,  # Odoo 19 CE: Required for stored computed fields
         help=_('Total de folios disponibles en CAFs activos de todos los tipos de DTE')
     )
 
     dias_certificado_expira = fields.Integer(
         string='Días a Expiración Certificado',
         compute='_compute_kpis_regulatory',
+        store=True,
+        compute_sudo=True,  # Odoo 19 CE: Required for stored computed fields
         help=_('Días restantes hasta la expiración del certificado digital SII')
     )
 
@@ -80,12 +90,16 @@ class DteDashboardEnhanced(models.Model):
     alerta_caf_bajo = fields.Boolean(
         string='Alerta: CAF Bajo',
         compute='_compute_kpis_regulatory',
+        store=True,
+        compute_sudo=True,  # Odoo 19 CE: Required for stored computed fields
         help=_('Alerta activada cuando folios CAF restantes < 10% del total activo')
     )
 
     alerta_certificado = fields.Boolean(
         string='Alerta: Certificado',
         compute='_compute_kpis_regulatory',
+        store=True,
+        compute_sudo=True,  # Odoo 19 CE: Required for stored computed fields
         help=_('Alerta activada cuando certificado expira en menos de 30 días')
     )
 
@@ -96,6 +110,8 @@ class DteDashboardEnhanced(models.Model):
     tasa_aceptacion_regulatoria = fields.Float(
         string='Tasa Aceptación Regulatoria (%)',
         compute='_compute_kpis_enhanced',
+        store=True,
+        compute_sudo=True,  # Odoo 19 CE: Required for stored computed fields
         digits=(5, 2),
         help=_('Tasa regulatoria: aceptados / (aceptados + rechazados) × 100. '
                'No incluye pendientes. Métrica oficial SII.')
@@ -104,6 +120,8 @@ class DteDashboardEnhanced(models.Model):
     tasa_aceptacion_operacional = fields.Float(
         string='Tasa Aceptación Operacional (%)',
         compute='_compute_kpis_enhanced',
+        store=True,
+        compute_sudo=True,  # Odoo 19 CE: Required for stored computed fields
         digits=(5, 2),
         help=_('Tasa operacional: aceptados / total_emitidos × 100. '
                'Incluye pendientes y errores. Métrica gestión interna.')

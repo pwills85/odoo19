@@ -7,10 +7,8 @@
             <field name="model_id" ref="model_hr_economic_indicators"/>
             <field name="state">code</field>
             <field name="code">model._cron_sync_previred_via_ai()</field>
-            <field name="user_id" ref="base.user_root"/>
             <field name="interval_number">1</field>
             <field name="interval_type">months</field>
-            <field name="nextcall" eval="(DateTime.now().replace(day=1) + relativedelta(months=1)).strftime('%Y-%m-%d 01:00:00')" />
         </record>
     </data>
 </odoo>
