@@ -22,7 +22,7 @@
                         </group>
 
                         <!-- Configuración Actual -->
-                        <group name="config_actual" string="Configuración Actual" attrs="{'invisible': [('config_existente', '=', False)]}">
+                        <group name="config_actual" string="Configuración Actual" invisible="not config_existente">
                             <field name="config_existente" invisible="1"/>
                             <div class="alert alert-info" role="alert">
                                 <i class="fa fa-info-circle"/> Ya existe configuración previa. Los valores actuales serán reemplazados al guardar.

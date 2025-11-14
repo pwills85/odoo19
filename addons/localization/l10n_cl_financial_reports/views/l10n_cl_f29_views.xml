@@ -11,27 +11,27 @@
                     <!-- Botones contextuales -->
                     <button name="action_calculate" type="object" string="Calcular desde Contabilidad" 
                             class="btn-primary" 
-                            attrs="{'invisible': [('state', 'not in', ('draft', 'review'))]}"/>
+                            invisible="state not in ('draft', 'review')"/>
                     
                     <button name="action_to_review" type="object" string="Pasar a Revisión" 
                             class="btn-secondary"
-                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                            invisible="state != 'draft'"/>
                     
                     <button name="action_validate" type="object" string="Validar F29" 
                             class="btn-success"
-                            attrs="{'invisible': [('state', 'not in', ('draft', 'review'))]}"/>
+                            invisible="state not in ('draft', 'review')"/>
                     
                     <button name="action_send_sii" type="object" string="Enviar al SII" 
                             class="btn-warning"
-                            attrs="{'invisible': [('state', '!=', 'validated')]}"/>
+                            invisible="state != 'validated'"/>
                     
                     <button name="action_check_status" type="object" string="Consultar Estado SII" 
                             class="btn-info"
-                            attrs="{'invisible': [('state', 'not in', ('sent', 'accepted', 'rejected'))]}"/>
+                            invisible="state not in ('sent', 'accepted', 'rejected')"/>
                     
                     <button name="action_replace" type="object" string="Crear Reemplazo" 
                             class="btn-danger"
-                            attrs="{'invisible': [('state', 'not in', ('sent', 'accepted', 'rejected'))]}"/>
+                            invisible="state not in ('sent', 'accepted', 'rejected')"/>
                     
                     <!-- Barra de estado -->
                     <field name="state" widget="statusbar" 
@@ -59,7 +59,7 @@
                         <button name="%(account.action_move_journal_line)d" type="action" 
                                 class="oe_stat_button" icon="fa-book"
                                 context="{'search_default_posted': 1}"
-                                attrs="{'invisible': [('provision_move_id', '=', False)]}">
+                                invisible="not provision_move_id">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Asiento</span>
                                 <span class="o_stat_text">Provisión</span>
@@ -71,11 +71,11 @@
                     <group>
                         <group name="basic_info" string="Información Básica">
                             <field name="company_id" readonly="1"/>
-                            <field name="period_date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="tipo_declaracion" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="period_date" readonly="state != 'draft'"/>
+                            <field name="tipo_declaracion" readonly="state != 'draft'"/>
                             <field name="numero_rectificacion"
-                                   attrs="{'invisible': [('tipo_declaracion', '=', 'original')],
-                                           'readonly': [('state', '!=', 'draft')]}"/>
+                                   invisible="tipo_declaracion == 'original'"
+                                   readonly="state != 'draft'"/>
                         </group>
                         <group name="sii_info" string="Información SII">
                             <field name="name" readonly="1" placeholder="F29/..."/>
@@ -90,11 +90,11 @@
                             <group string="VENTAS Y SERVICIOS">
                                 <group>
                                     <field name="ventas_afectas" widget="monetary"
-                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                           readonly="state not in ('draft', 'review')"/>
                                     <field name="ventas_exentas" widget="monetary"
-                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                           readonly="state not in ('draft', 'review')"/>
                                     <field name="ventas_exportacion" widget="monetary"
-                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                           readonly="state not in ('draft', 'review')"/>
                                 </group>
                                 <group>
                                     <field name="debito_fiscal" widget="monetary"
@@ -106,9 +106,9 @@
                             <group string="AJUSTES Y REMANENTES">
                                 <group>
                                     <field name="debito_remanente_mes_anterior" widget="monetary"
-                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                           readonly="state not in ('draft', 'review')"/>
                                     <field name="creditos_especiales" widget="monetary"
-                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                           readonly="state not in ('draft', 'review')"/>
                                 </group>
                             </group>
 
@@ -123,11 +123,11 @@
                             <group string="COMPRAS Y SERVICIOS">
                                 <group>
                                     <field name="compras_afectas" widget="monetary"
-                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                           readonly="state not in ('draft', 'review')"/>
                                     <field name="compras_exentas" widget="monetary"
-                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                           readonly="state not in ('draft', 'review')"/>
                                     <field name="compras_activo_fijo" widget="monetary"
-                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                           readonly="state not in ('draft', 'review')"/>
                                 </group>
                                 <group>
                                     <field name="credito_fiscal" widget="monetary"
@@ -139,7 +139,7 @@
                             <group string="REMANENTES">
                                 <group>
                                     <field name="remanente_credito_mes_anterior" widget="monetary"
-                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                           readonly="state not in ('draft', 'review')"/>
                                 </group>
                             </group>
 
@@ -154,16 +154,16 @@
                             <group string="PAGOS PROVISIONALES MENSUALES (PPM)">
                                 <group>
                                     <field name="ppm_mes" widget="monetary"
-                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                           readonly="state not in ('draft', 'review')"/>
                                     <field name="ppm_voluntario" widget="monetary"
-                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                           readonly="state not in ('draft', 'review')"/>
                                 </group>
                             </group>
 
                             <group string="RETENCIONES">
                                 <group>
                                     <field name="iva_retenido" widget="monetary"
-                                           attrs="{'readonly': [('state', 'not in', ('draft', 'review'))]}"/>
+                                           readonly="state not in ('draft', 'review')"/>
                                 </group>
                             </group>
 
@@ -275,20 +275,20 @@
 
                         <!-- Pestaña: SII Integration -->
                         <page string="SII" name="sii_integration" 
-                              attrs="{'invisible': [('state', 'in', ('draft', 'review'))]}">
+                              invisible="state in ('draft', 'review')">
                             
                             <div class="alert alert-warning" role="alert"
-                                 attrs="{'invisible': [('sii_track_id', '!=', False)]}">
+                                 invisible="sii_track_id">
                                 <strong>Pendiente:</strong> Este F29 aún no ha sido enviado al SII.
                             </div>
 
                             <div class="alert alert-success" role="alert"
-                                 attrs="{'invisible': [('state', '!=', 'accepted')]}">
+                                 invisible="state != 'accepted'">
                                 <strong>Aceptado:</strong> El F29 ha sido aceptado por el SII.
                             </div>
 
                             <div class="alert alert-danger" role="alert"
-                                 attrs="{'invisible': [('state', '!=', 'rejected')]}">
+                                 invisible="state != 'rejected'">
                                 <strong>Rechazado:</strong> El F29 ha sido rechazado por el SII. 
                                 Revise la respuesta para más detalles.
                             </div>
@@ -305,7 +305,7 @@
                             </group>
 
                             <group string="RESPUESTA SII" 
-                                   attrs="{'invisible': [('sii_response', '=', False)]}">
+                                   invisible="not sii_response">
                                 <field name="sii_response" nolabel="1" readonly="1" 
                                        widget="text" placeholder="La respuesta del SII aparecerá aquí..."/>
                             </group>

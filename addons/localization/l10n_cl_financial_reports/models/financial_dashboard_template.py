@@ -494,9 +494,16 @@ class FinancialDashboardTemplateTag(models.Model):
         default=True
     )
     
-    _sql_constraints = [
-        ('name_uniq', 'unique (name)', 'Tag name must be unique!')
-    ]
+    @api.constrains('name')
+    def _check_name_unique(self):
+        """Ensure tag name is unique."""
+        for record in self:
+            duplicate = self.search([
+                ('id', '!=', record.id),
+                ('name', '=', record.name)
+            ], limit=1)
+            if duplicate:
+                raise ValidationError('Tag name must be unique!')
 
 
 class FinancialDashboardTemplateRating(models.Model):
@@ -532,10 +539,17 @@ class FinancialDashboardTemplateRating(models.Model):
         readonly=True
     )
     
-    _sql_constraints = [
-        ('user_template_unique', 'unique (user_id, template_id)',
-         'A user can only rate a template once!')
-    ]
+    @api.constrains('user_id', 'template_id')
+    def _check_user_template_unique(self):
+        """Ensure a user can only rate a template once."""
+        for record in self:
+            duplicate = self.search([
+                ('id', '!=', record.id),
+                ('user_id', '=', record.user_id.id),
+                ('template_id', '=', record.template_id.id)
+            ], limit=1)
+            if duplicate:
+                raise ValidationError('A user can only rate a template once!')
     
     @api.constrains('rating')
     def _check_rating(self):
