@@ -117,8 +117,7 @@ class HrContract(models.Model):
         string='Wage',
         required=True,
         tracking=True,
-        help="Employee's monthly gross wage",
-        aggregator="avg"
+        help="Employee's monthly gross wage"
     )
 
     currency_id = fields.Many2one(
