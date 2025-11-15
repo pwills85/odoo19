@@ -279,8 +279,9 @@ class DTEValidationRequest(BaseModel):
                     raise ValueError(f"RUT emisor con dígito verificador inválido: {rut} (esperado: {expected_dv})")
             except ValueError:
                 raise
-            except:
-                pass  # Si falla parsing, continuar (formato ya validado)
+            except (KeyError, TypeError, AttributeError) as e:
+                # Si falla parsing por formato inesperado, continuar (formato ya validado por regex)
+                logger.debug("rut_dv_calculation_skipped", error=str(e))
 
         # Validar RUT receptor (si existe)
         if 'rut_receptor' in v:
@@ -630,7 +631,8 @@ async def health_check(request: Request):
                     "replicas": len(replicas_info),
                     "sentinels": len(sentinels_info) + 1  # +1 for current
                 }
-        except:
+        except (ConnectionError, TimeoutError, AttributeError) as e:
+            logger.debug("sentinel_info_unavailable", error=str(e))
             sentinel_info = {"type": "standalone"}
 
         dependencies["redis"] = {
@@ -751,8 +753,9 @@ async def health_check(request: Request):
                     else 0.0
                 )
             }
-    except:
-        # Metrics are optional
+    except (ConnectionError, ValueError, TypeError) as e:
+        # Metrics are optional, continue without them
+        logger.debug("metrics_retrieval_failed", error=str(e))
         pass
 
     # Build response
