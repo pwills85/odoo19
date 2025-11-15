@@ -126,7 +126,7 @@ class AnalyticReportService(models.Model):
             ORDER BY aa.code, ac.code, aal.date
         """
         
-        self.env.self.env.self.env.cr.execute(query, (tuple(analytic_account_ids), date_from, date_to))
+        self.env.cr.execute(query, (tuple(analytic_account_ids), date_from, date_to))
         return self.env.cr.dictfetchall()
     
     def _get_timesheet_costs(self, analytic_account_ids, date_from, date_to):
@@ -151,7 +151,7 @@ class AnalyticReportService(models.Model):
             GROUP BY aal.account_id, aal.employee_id, he.name, he.timesheet_cost
         """
         
-        self.env.self.env.self.env.cr.execute(query, (tuple(analytic_account_ids), date_from, date_to))
+        self.env.cr.execute(query, (tuple(analytic_account_ids), date_from, date_to))
         
         # Organizar por cuenta analítica
         timesheet_by_account = defaultdict(list)
@@ -384,7 +384,7 @@ class AnalyticReportService(models.Model):
                     AND date <= %s
             """
             
-            self.env.self.env.self.env.cr.execute(query, (
+            self.env.cr.execute(query, (
                 tuple(analytic_account_ids),
                 month_start,
                 month_end

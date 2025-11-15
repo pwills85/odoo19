@@ -74,7 +74,7 @@ class ExecutiveDashboardService(models.AbstractModel):
     
     def _get_financial_metrics(self, company_id, date_from, date_to):
         """Get consolidated financial metrics."""
-        self.env.self.env.cr.execute("""
+        self.env.cr.execute("""
             WITH revenue_data AS (
                 SELECT 
                     COALESCE(SUM(amount_total_signed), 0) as total_revenue,
@@ -173,7 +173,7 @@ class ExecutiveDashboardService(models.AbstractModel):
     
     def _get_dte_metrics(self, company_id, date_from, date_to):
         """Get DTE processing metrics."""
-        self.env.self.env.cr.execute("""
+        self.env.cr.execute("""
             SELECT 
                 COUNT(*) as total_dte,
                 COUNT(CASE WHEN l10n_cl_dte_status = 'accepted' THEN 1 END) as accepted,
@@ -203,7 +203,7 @@ class ExecutiveDashboardService(models.AbstractModel):
         
         # TODO: Refactorizar para usar search con dominio completo fuera del loop
         for doc_type in doc_types:
-            self.env.self.env.cr.execute("""
+            self.env.cr.execute("""
                 SELECT 
                     dt.name as document_type,
                     COALESCE(SUM(c.folios_available), 0) as available,
@@ -237,7 +237,7 @@ class ExecutiveDashboardService(models.AbstractModel):
         if not self.env['ir.module.module'].search([('name', '=', 'l10n_cl_payroll'), ('state', '=', 'installed')]):
             return {'available': False}
             
-        self.env.self.env.cr.execute("""
+        self.env.cr.execute("""
             SELECT 
                 COUNT(DISTINCT e.id) as headcount,
                 COUNT(DISTINCT CASE WHEN e.contract_id IS NOT NULL THEN e.id END) as active_contracts,
@@ -286,7 +286,7 @@ class ExecutiveDashboardService(models.AbstractModel):
         """Check F29 tax form compliance."""
         current_period = fields.Date.today().strftime('%Y-%m')
         
-        self.env.self.env.cr.execute("""
+        self.env.cr.execute("""
             SELECT 
                 period,
                 state,
@@ -332,7 +332,7 @@ class ExecutiveDashboardService(models.AbstractModel):
                 })
         
         # Overdue invoices
-        self.env.self.env.cr.execute("""
+        self.env.cr.execute("""
             SELECT COUNT(*) as overdue_count, SUM(amount_residual) as overdue_amount
             FROM account_move
             WHERE company_id = %s
@@ -364,7 +364,7 @@ class ExecutiveDashboardService(models.AbstractModel):
     
     def _get_previous_financial_metrics(self, company_id, date_from, date_to):
         """Get financial metrics for previous period (simplified)."""
-        self.env.self.env.cr.execute("""
+        self.env.cr.execute("""
             SELECT 
                 COALESCE(SUM(CASE WHEN move_type IN ('out_invoice', 'out_refund') THEN amount_total_signed ELSE 0 END), 0) as total_revenue,
                 COALESCE(SUM(CASE WHEN move_type IN ('in_invoice', 'in_refund') THEN amount_total_signed ELSE 0 END), 0) as total_expenses
@@ -384,7 +384,7 @@ class ExecutiveDashboardService(models.AbstractModel):
     
     def _get_withholding_status(self, company_id, date_from, date_to):
         """Get withholding tax status."""
-        self.env.self.env.cr.execute("""
+        self.env.cr.execute("""
             SELECT 
                 COUNT(*) as total_withholdings,
                 SUM(amount_total) as total_amount
