@@ -110,16 +110,24 @@ class AnalyticCostBenefitReport(models.Model):
         default=lambda self: self.env.company,
         required=True
     )
-    
+
+    # ========== PLACEHOLDER FIELDS (Vista compatibility) ==========
+    analysis_data = fields.Text(
+        string='Analysis Data (JSON)',
+        help='JSON data with detailed analysis for reporting'
+    )
+
+    recommendations = fields.Text(
+        string='Recommendations',
+        help='Text field with recommendations based on cost/benefit analysis'
+    )
+
     # Computed Fields
     @api.depends_context('date')
     @api.depends('analytic_account_id', 'date_from', 'date_to')
     def _compute_name(self):
         """Compute report name."""
-        # Optimización: usar with_context para prefetch
-        record = record.with_context(prefetch_fields=False)
-
-        for record in self.with_context(prefetch_fields=False):
+        for record in self:
             if record.analytic_account_id and record.date_from and record.date_to:
                 record.name = f"{record.analytic_account_id.name} - {record.date_from} to {record.date_to}"
             else:
@@ -127,26 +135,19 @@ class AnalyticCostBenefitReport(models.Model):
     
     @api.depends('cost_group_ids.net_amount', 'revenue_line_ids.net_amount')
     def _compute_financial_totals(self):
-        """Método compute optimizado con manejo de errores"""
-        _logger.debug("Computing _compute_financial_totals for %d records", len(self))
-        
-        try:
-            """Compute financial totals."""
-            for record in self.with_context(prefetch_fields=False):
+        """Compute financial totals."""
+        for record in self:
+            try:
                 record.total_costs = sum(record.cost_group_ids.mapped('net_amount'))
                 record.total_revenues = sum(record.revenue_line_ids.mapped('net_amount'))
                 record.net_benefit = record.total_revenues - record.total_costs
-            
+
                 if record.total_revenues > 0:
                     record.benefit_margin_percentage = (record.net_benefit / record.total_revenues) * 100
                 else:
                     record.benefit_margin_percentage = 0
-        except Exception as e:
-            _logger.error("Error in _compute_financial_totals: %s", str(e))
-            # Mantener valores por defecto en caso de error
-            
-        # TODO: Refactorizar para usar search con dominio completo fuera del loop
-        for record in self:
+            except Exception as e:
+                _logger.error("Error in _compute_financial_totals for record %s: %s", record.id, str(e))
                 record.total_costs = 0.0
                 record.total_revenues = 0.0
                 record.net_benefit = 0.0
@@ -387,32 +388,24 @@ class AnalyticCostGroupLine(models.Model):
     
     @api.depends('net_amount', 'report_id.total_costs', 'report_id.total_revenues')
     def _compute_weightings(self):
-        """Método compute optimizado con manejo de errores"""
-        # Optimización: usar with_context para prefetch
-        record = record.with_context(prefetch_fields=False)
-
-        # Optimización: usar with_context para prefetch
-        record = record.with_context(prefetch_fields=False)
-
-        _logger.debug("Computing _compute_weightings for %d records", len(self))
-        
-        try:
-            """Compute weighting percentages."""
-            for record in self.with_context(prefetch_fields=False):
+        """Compute weighting percentages."""
+        for record in self:
+            try:
                 # Weight vs Total Costs
                 if record.report_id.total_costs > 0:
                     record.weight_vs_total_costs = (record.net_amount / record.report_id.total_costs) * 100
                 else:
                     record.weight_vs_total_costs = 0
-            
+
                 # Weight vs Total Sales
                 if record.report_id.total_revenues > 0:
                     record.weight_vs_total_sales = (record.net_amount / record.report_id.total_revenues) * 100
                 else:
                     record.weight_vs_total_sales = 0
-        except Exception as e:
-            _logger.error("Error in _compute_weightings: %s", str(e))
-            # Mantener valores por defecto en caso de error
+            except Exception as e:
+                _logger.error("Error in _compute_weightings for record %s: %s", record.id, str(e))
+                record.weight_vs_total_costs = 0.0
+                record.weight_vs_total_sales = 0.0
 
 
 class AnalyticRevenueLine(models.Model):
@@ -465,17 +458,13 @@ class AnalyticRevenueLine(models.Model):
     
     @api.depends('net_amount', 'report_id.total_revenues')
     def _compute_percentage(self):
-        """Método compute optimizado con manejo de errores"""
-        _logger.debug("Computing _compute_percentage for %d records", len(self))
-        
-        try:
-            """Compute percentage of total revenue."""
-            for record in self.with_context(prefetch_fields=False):
+        """Compute percentage of total revenue."""
+        for record in self:
+            try:
                 if record.report_id.total_revenues > 0:
                     record.percentage_of_total = (record.net_amount / record.report_id.total_revenues) * 100
                 else:
                     record.percentage_of_total = 0
-
-        except Exception as e:
-            _logger.error("Error in _compute_percentage: %s", str(e))
-            # Mantener valores por defecto en caso de error
+            except Exception as e:
+                _logger.error("Error in _compute_percentage for record %s: %s", record.id, str(e))
+                record.percentage_of_total = 0.0

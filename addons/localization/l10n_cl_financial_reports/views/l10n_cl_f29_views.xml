@@ -9,32 +9,32 @@
                 <!-- Header con botones de acción y statusbar -->
                 <header>
                     <!-- Botones contextuales -->
-                    <button name="action_calculate" type="object" string="Calcular desde Contabilidad" 
-                            class="btn-primary" 
+                    <button name="action_calculate" type="object" string="Calcular desde Contabilidad"
+                            class="btn-primary"
                             invisible="state not in ('draft', 'review')"/>
-                    
-                    <button name="action_to_review" type="object" string="Pasar a Revisión" 
+
+                    <button name="action_to_review" type="object" string="Pasar a Revisión"
                             class="btn-secondary"
                             invisible="state != 'draft'"/>
-                    
-                    <button name="action_validate" type="object" string="Validar F29" 
+
+                    <button name="action_validate" type="object" string="Validar F29"
                             class="btn-success"
                             invisible="state not in ('draft', 'review')"/>
-                    
-                    <button name="action_send_sii" type="object" string="Enviar al SII" 
+
+                    <button name="action_send_sii" type="object" string="Enviar al SII"
                             class="btn-warning"
-                            invisible="state != 'validated'"/>
-                    
-                    <button name="action_check_status" type="object" string="Consultar Estado SII" 
+                            invisible="sii_status in ('sent', 'accepted')"/>
+
+                    <button name="action_check_status" type="object" string="Consultar Estado SII"
                             class="btn-info"
-                            invisible="state not in ('sent', 'accepted', 'rejected')"/>
-                    
-                    <button name="action_replace" type="object" string="Crear Reemplazo" 
+                            invisible="not sii_track_id"/>
+
+                    <button name="action_replace" type="object" string="Crear Rectificatoria"
                             class="btn-danger"
-                            invisible="state not in ('sent', 'accepted', 'rejected')"/>
-                    
+                            invisible="sii_status != 'accepted' or es_rectificatoria"/>
+
                     <!-- Barra de estado -->
-                    <field name="state" widget="statusbar" 
+                    <field name="state" widget="statusbar"
                            statusbar_visible="draft,review,validated,sent,accepted"/>
                 </header>
 
@@ -51,12 +51,12 @@
 
                     <!-- Smart buttons -->
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_view_moves" type="object" 
+                        <button name="action_view_moves" type="object"
                                 class="oe_stat_button" icon="fa-file-text-o">
                             <field name="move_ids" string="Facturas" widget="statinfo"/>
                         </button>
-                        
-                        <button name="%(account.action_move_journal_line)d" type="action" 
+
+                        <button name="%(account.action_move_journal_line)d" type="action"
                                 class="oe_stat_button" icon="fa-book"
                                 context="{'search_default_posted': 1}"
                                 invisible="not provision_move_id">
@@ -80,6 +80,11 @@
                         <group name="sii_info" string="Información SII">
                             <field name="name" readonly="1" placeholder="F29/..."/>
                             <field name="currency_id" invisible="1"/>
+                            <field name="sii_status" readonly="1"/>
+                            <field name="sii_track_id" readonly="1" invisible="not sii_track_id"/>
+                            <field name="sii_send_date" readonly="1" invisible="not sii_send_date"/>
+                            <field name="es_rectificatoria" invisible="1"/>
+                            <field name="folio_rectifica" readonly="1" invisible="not es_rectificatoria"/>
                         </group>
                     </group>
 
@@ -313,18 +318,11 @@
 
                         <!-- Pestaña: Documentos Incluidos -->
                         <page string="Documentos" name="documents">
-                            <field name="move_ids" readonly="1">
-                                <tree decoration-info="move_type in ('out_invoice', 'out_refund')"
-                                      decoration-muted="move_type in ('in_invoice', 'in_refund')">
-                                    <field name="name"/>
-                                    <field name="move_type" widget="badge"/>
-                                    <field name="partner_id"/>
-                                    <field name="invoice_date"/>
-                                    <field name="amount_untaxed" sum="Total Neto"/>
-                                    <field name="amount_tax" sum="Total IVA"/>
-                                    <field name="amount_total" sum="Total"/>
-                                </tree>
-                            </field>
+                            <!-- COMENTADO: Tree view inline requiere implementación completa -->
+                            <!-- <field name="move_ids" readonly="1"/> -->
+                            <group>
+                                <field name="move_ids" widget="many2many_tags" readonly="1"/>
+                            </group>
                         </page>
                     </notebook>
 
@@ -352,7 +350,7 @@
         <field name="name">l10n_cl.f29.tree</field>
         <field name="model">l10n_cl.f29</field>
         <field name="arch" type="xml">
-            <tree string="Formularios F29"
+            <list string="Formularios F29"
                   decoration-success="state == 'accepted'"
                   decoration-info="state in ('confirmed', 'filed')"
                   decoration-muted="state == 'draft'"
@@ -374,7 +372,7 @@
                        decoration-info="state in ('confirmed', 'filed')"
                        decoration-warning="state == 'review'"
                        decoration-danger="state == 'cancel'"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -420,16 +418,15 @@
                 <filter string="Último Trimestre" name="last_quarter"
                         domain="[('period_date', '>=', (context_today() - relativedelta(months=3)).strftime('%Y-%m-01'))]"/>
 
-                <group expand="0" string="Agrupar por">
-                    <filter string="Estado" name="group_state"
-                            context="{'group_by': 'state'}"/>
-                    <filter string="Tipo" name="group_type"
-                            context="{'group_by': 'tipo_declaracion'}"/>
-                    <filter string="Período" name="group_period"
-                            context="{'group_by': 'period_date'}"/>
-                    <filter string="Compañía" name="group_company"
-                            context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
-                </group>
+                <separator/>
+                <filter string="Estado" name="group_state"
+                        context="{'group_by': 'state'}"/>
+                <filter string="Tipo" name="group_type"
+                        context="{'group_by': 'tipo_declaracion'}"/>
+                <filter string="Período" name="group_period"
+                        context="{'group_by': 'period_date'}"/>
+                <filter string="Compañía" name="group_company"
+                        context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
             </search>
         </field>
     </record>

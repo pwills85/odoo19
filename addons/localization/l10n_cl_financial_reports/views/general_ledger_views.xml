@@ -151,11 +151,10 @@
                 <filter string="Hoy" name="today" help="Creados hoy"/>
                 <filter string="Esta Semana" name="week" help="Creados esta semana"/>
                 <filter string="Este Mes" name="month" help="Creados este mes"/>
-                <group expand="0" string="Agrupar Por">
-                    <filter string="Compañía" name="group_company" domain="[]" context="{'group_by': 'company_id'}"/>
-                    <filter string="Estado" name="group_state" domain="[]" context="{'group_by': 'state'}"/>
-                    <filter string="Mes" name="group_month" domain="[]" context="{'group_by': 'create_date:month'}"/>
-                </group>
+                <separator/>
+                <filter string="Compañía" name="group_company" domain="[]" context="{'group_by': 'company_id'}"/>
+                <filter string="Estado" name="group_state" domain="[]" context="{'group_by': 'state'}"/>
+                <filter string="Mes" name="group_month" domain="[]" context="{'group_by': 'create_date:month'}"/>
             </search>
         </field>
     </record>

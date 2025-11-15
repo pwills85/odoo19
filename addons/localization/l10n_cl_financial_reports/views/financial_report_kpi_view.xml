@@ -50,13 +50,12 @@
                 <field name="name"/>
                 <field name="report_line_id"/>
                 <field name="user_id"/>
-                
-                <group expand="0" string="Group By">
-                    <filter string="User" name="group_user" 
-                            context="{'group_by': 'user_id'}"/>
-                    <filter string="Report Line" name="group_report_line" 
-                            context="{'group_by': 'report_line_id'}"/>
-                </group>
+
+                <separator/>
+                <filter string="User" name="group_user"
+                        context="{'group_by': 'user_id'}"/>
+                <filter string="Report Line" name="group_report_line"
+                        context="{'group_by': 'report_line_id'}"/>
             </search>
         </field>
     </record>

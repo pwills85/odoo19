@@ -362,6 +362,7 @@ services:
 
       # Odoo Integration
       - ODOO_URL=http://odoo:8069
+      - ODOO_API_KEY=${ODOO_API_KEY}
 
       # Feature Flags (Phase 2B) - Actualizado 2025-10-24
       - ENABLE_PLUGIN_SYSTEM=${ENABLE_PLUGIN_SYSTEM:-true}

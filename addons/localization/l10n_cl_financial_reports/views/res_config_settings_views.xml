@@ -17,7 +17,7 @@
                                 <field name="dashboard_auto_refresh"/>
                             </div>
                             <div class="o_setting_right_pane">
-                                <label string="Auto Refresh Dashboard"/>
+                                <span class="o_form_label">Auto Refresh Dashboard</span>
                                 <div class="text-muted">
                                     Enable automatic refresh of financial dashboard
                                 </div>
@@ -35,7 +35,7 @@
                                 <field name="dashboard_cache_enabled"/>
                             </div>
                             <div class="o_setting_right_pane">
-                                <label string="Dashboard Cache"/>
+                                <span class="o_form_label">Dashboard Cache</span>
                                 <div class="text-muted">
                                     Enable caching for better performance
                                 </div>
@@ -71,7 +71,7 @@
                                 <field name="f29_auto_calculate"/>
                             </div>
                             <div class="o_setting_right_pane">
-                                <label string="Auto Calculate F29"/>
+                                <span class="o_form_label">Auto Calculate F29</span>
                                 <div class="text-muted">
                                     Automatically calculate F29 when period is closed
                                 </div>
@@ -83,7 +83,7 @@
                                 <field name="f29_validation_strict"/>
                             </div>
                             <div class="o_setting_right_pane">
-                                <label string="Strict Validation"/>
+                                <span class="o_form_label">Strict Validation</span>
                                 <div class="text-muted">
                                     Enable strict validation for F29 calculations
                                 </div>
@@ -95,7 +95,7 @@
                                 <field name="f29_backup_before_submit"/>
                             </div>
                             <div class="o_setting_right_pane">
-                                <label string="Backup Before Submit"/>
+                                <span class="o_form_label">Backup Before Submit</span>
                                 <div class="text-muted">
                                     Create backup before submitting to SII
                                 </div>
@@ -111,7 +111,7 @@
                                 <field name="mobile_dashboard_enabled"/>
                             </div>
                             <div class="o_setting_right_pane">
-                                <label string="Mobile Dashboard"/>
+                                <span class="o_form_label">Mobile Dashboard</span>
                                 <div class="text-muted">
                                     Enable mobile-optimized dashboard
                                 </div>
@@ -123,7 +123,7 @@
                                 <field name="mobile_touch_gestures"/>
                             </div>
                             <div class="o_setting_right_pane">
-                                <label string="Touch Gestures"/>
+                                <span class="o_form_label">Touch Gestures</span>
                                 <div class="text-muted">
                                     Enable touch gestures support
                                 </div>
@@ -135,7 +135,7 @@
                                 <field name="mobile_offline_mode"/>
                             </div>
                             <div class="o_setting_right_pane">
-                                <label string="Offline Mode"/>
+                                <span class="o_form_label">Offline Mode</span>
                                 <div class="text-muted">
                                     Enable offline mode for mobile devices
                                 </div>
@@ -171,7 +171,7 @@
                                 <field name="report_watermark_enabled"/>
                             </div>
                             <div class="o_setting_right_pane">
-                                <label string="Watermark"/>
+                                <span class="o_form_label">Watermark</span>
                                 <div class="text-muted">
                                     Add watermark to reports
                                 </div>
@@ -192,7 +192,7 @@
                                 <field name="sii_integration_enabled"/>
                             </div>
                             <div class="o_setting_right_pane">
-                                <label string="SII Integration"/>
+                                <span class="o_form_label">SII Integration</span>
                                 <div class="text-muted">
                                     Enable integration with SII systems
                                 </div>
@@ -210,7 +210,7 @@
                                 <field name="audit_trail_enabled"/>
                             </div>
                             <div class="o_setting_right_pane">
-                                <label string="Audit Trail"/>
+                                <span class="o_form_label">Audit Trail</span>
                                 <div class="text-muted">
                                     Log all financial report access and modifications
                                 </div>
@@ -243,7 +243,7 @@
 
                         <div class="col-12 col-lg-6 o_setting_box">
                             <div class="o_setting_right_pane">
-                                <label string="Database Optimization"/>
+                                <span class="o_form_label">Database Optimization</span>
                                 <div class="text-muted">
                                     Optimize database for better performance
                                 </div>
@@ -264,7 +264,7 @@
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">res.config.settings</field>
         <field name="view_mode">form</field>
-        <field name="target">inline</field>
+        <field name="target">current</field>
         <field name="context">{'module' : 'l10n_cl_financial_reports'}</field>
     </record>
 

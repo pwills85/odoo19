@@ -34,20 +34,22 @@ if ! command -v copilot &> /dev/null; then
     exit 1
 fi
 
-if [ -z "$GITHUB_TOKEN" ]; then
-    echo -e "${RED}❌ Error: GITHUB_TOKEN no configurado${NC}"
-    exit 1
-fi
-
 mkdir -p "$OUTPUT_DIR"
 
-echo -e "${GREEN}✓${NC} Copilot CLI instalado y autenticado"
-echo ""
-echo -e "${BLUE}⚙️  Ejecutando auditoría P4-Deep autónoma...${NC}"
-echo -e "${YELLOW}⏳ Esto puede tomar varios minutos...${NC}"
+echo -e "${GREEN}✓${NC} Copilot CLI disponible"
 echo ""
 
-# Ejecutar auditoría P4-Deep
+# Preparar directorio logs para debugging
+LOG_DIR="docs/prompts/06_outputs/$(date +%Y-%m)/logs/p4_deep_${MODULE}"
+mkdir -p "$LOG_DIR"
+
+echo -e "${GREEN}✓${NC} Logs debug: $LOG_DIR"
+echo ""
+echo -e "${BLUE}⚙️  Ejecutando auditoría P4-Deep autónoma...${NC}"
+echo -e "${YELLOW}⏳ Esto puede tomar 3-5 minutos...${NC}"
+echo ""
+
+# Ejecutar auditoría P4-Deep con flags anti-timeout
 copilot -p "Ejecuta auditoría P4-Deep arquitectónica del módulo addons/localization/${MODULE}/ siguiendo estrategia en docs/prompts/01_fundamentos/ESTRATEGIA_PROMPTING_ALTA_PRECISION.md.
 
 **Referencias obligatorias:**
@@ -89,10 +91,11 @@ copilot -p "Ejecuta auditoría P4-Deep arquitectónica del módulo addons/locali
 - Revisar error handling (try/except con contexto)
 
 ### F) Testing
-- Calcular coverage actual: pytest --cov
+- Calcular coverage actual: docker compose exec odoo pytest --cov /mnt/extra-addons/localization/${MODULE}/
 - Identificar gaps críticos (tests faltantes)
 - Analizar tests scenarios borde
 - Verificar tests integración (HTTP, DB)
+- **CRÍTICO:** Tests SOLO en Docker (docker compose exec odoo pytest...)
 
 ### G) Performance
 - Detectar N+1 queries (loops sobre recordsets)
@@ -232,7 +235,17 @@ comando validación
 ✅ ≥6 verificaciones reproducibles
 ✅ Hallazgos P0+P1 listados con esfuerzo
 ✅ Reporte guardado en ubicación especificada
-✅ Métricas cuantitativas completas" --allow-all-tools --allow-all-paths
+✅ Métricas cuantitativas completas" \
+  --model claude-sonnet-4 \
+  --stream on \
+  --disable-parallel-tools-execution \
+  --log-level info \
+  --log-dir "$LOG_DIR" \
+  --add-dir "addons/localization/${MODULE}" \
+  --add-dir "docs/prompts" \
+  --allow-all-tools \
+  --deny-tool 'shell(rm:*)' \
+  --deny-tool 'shell(git push)'
 
 EXIT_CODE=$?
 

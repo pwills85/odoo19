@@ -34,25 +34,16 @@ if ! command -v copilot &> /dev/null; then
     exit 1
 fi
 
-# Verificar autenticación
-if [ -z "$GITHUB_TOKEN" ]; then
-    echo -e "${RED}❌ Error: GITHUB_TOKEN no configurado${NC}"
-    echo "Ejecutar: copilot"
-    echo "Luego: /login"
-    exit 1
-fi
-
 # Crear directorio output
 mkdir -p "$OUTPUT_DIR"
 
-echo -e "${GREEN}✓${NC} Copilot CLI: $(copilot --version)"
-echo -e "${GREEN}✓${NC} Autenticación: OK"
+echo -e "${GREEN}✓${NC} Copilot CLI: disponible"
 echo -e "${GREEN}✓${NC} Directorio output: $OUTPUT_DIR"
 echo ""
 echo -e "${BLUE}⚙️  Ejecutando auditoría autónoma...${NC}"
 echo ""
 
-# Ejecutar auditoría autónoma
+# Ejecutar auditoría autónoma con flags optimizadas
 copilot -p "Audita compliance Odoo 19 CE en módulo addons/localization/${MODULE}/ siguiendo checklist docs/prompts/02_compliance/CHECKLIST_ODOO19_VALIDACIONES.md.
 
 **Objetivo:** Validar 8 patrones deprecación P0/P1/P2
@@ -68,9 +59,15 @@ copilot -p "Audita compliance Odoo 19 CE en módulo addons/localization/${MODULE
 - P2-08: _() → _lt() (lazy translations - audit only)
 
 **Por cada patrón:**
-1. Ejecuta comando grep correspondiente
+1. Ejecuta comando grep desde HOST (archivos en addons/localization/${MODULE}/)
 2. Cuenta ocurrencias
 3. Lista archivos:líneas afectados (si aplica)
+
+**CRÍTICO - Comandos permitidos:**
+- ✅ grep, find, wc, cat (lectura archivos desde host)
+- ✅ Análisis estático código (NO requiere instancia Odoo)
+- ❌ NUNCA: pytest, python -m, odoo-bin (requieren Docker)
+- ❌ NUNCA: Ejecutar código Python que importe 'from odoo import...'
 
 **Genera reporte markdown con:**
 
@@ -128,9 +125,35 @@ Si hay deprecaciones P0/P1, listar archivos que requieren corrección manual.
 ✅ 8 patrones validados (tabla completa)
 ✅ Compliance rates calculados (P0, P1, Global)
 ✅ Hallazgos críticos listados con archivo:línea
-✅ ≥8 verificaciones reproducibles ejecutadas
+✅ Verificaciones reproducibles ejecutadas
 ✅ Reporte guardado en ubicación especificada
-✅ Métricas cuantitativas incluidas" --allow-all-tools --allow-all-paths
+✅ Métricas cuantitativas incluidas" \
+  --model claude-haiku-4.5 \
+  --stream off \
+  --log-level error \
+  --add-dir "addons/localization/${MODULE}" \
+  --add-dir "docs/prompts/02_compliance" \
+  --add-dir "docs/prompts/06_outputs" \
+  --add-dir "/tmp" \
+  --disallow-temp-dir \
+  --allow-tool 'shell(grep:*)' \
+  --allow-tool 'shell(find:*)' \
+  --allow-tool 'shell(wc:*)' \
+  --allow-tool 'shell(ls:*)' \
+  --allow-tool 'shell(cat:*)' \
+  --allow-tool 'shell(head:*)' \
+  --allow-tool 'shell(cut:*)' \
+  --allow-tool 'shell(sort:*)' \
+  --allow-tool 'shell(cd:*)' \
+  --allow-tool 'shell(echo:*)' \
+  --allow-tool 'shell(pwd:*)' \
+  --allow-tool "write(docs/prompts/06_outputs/*)" \
+  --deny-tool 'shell(rm:*)' \
+  --deny-tool 'shell(git push)' \
+  --deny-tool 'shell(docker rm:*)' \
+  --deny-tool 'shell(python)' \
+  --deny-tool 'shell(pytest)' \
+  --deny-tool 'shell(odoo-bin)'
 
 EXIT_CODE=$?
 

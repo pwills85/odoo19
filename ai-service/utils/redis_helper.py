@@ -41,7 +41,7 @@ def get_redis_client(read_only: bool = False) -> redis.Redis:
     - REDIS_SENTINEL_ENABLED: Enable Sentinel mode (default: 'true')
     - REDIS_SENTINEL_HOSTS: Comma-separated sentinel hosts (default: 'redis-sentinel-1:26379,redis-sentinel-2:26379,redis-sentinel-3:26379')
     - REDIS_SENTINEL_MASTER_NAME: Master name in Sentinel (default: 'mymaster')
-    - REDIS_PASSWORD: Redis password (default: 'odoo19_redis_pass')
+    - REDIS_PASSWORD: Redis password (required, no default)
     - REDIS_DB: Redis database number (default: 1)
 
     Fallback (non-Sentinel mode):
@@ -89,7 +89,12 @@ def _get_sentinel_client(read_only: bool = False) -> redis.Redis:
         ]
 
         master_name = os.getenv('REDIS_SENTINEL_MASTER_NAME', 'mymaster')
-        password = os.getenv('REDIS_PASSWORD', 'odoo19_redis_pass')
+        password = os.getenv('REDIS_PASSWORD')
+        if not password:
+            raise ValueError(
+                "REDIS_PASSWORD environment variable is required. "
+                "Please set it in .env file or environment."
+            )
         db = int(os.getenv('REDIS_DB', '1'))
 
         logger.info("redis_sentinel_initializing",
@@ -180,7 +185,12 @@ def _get_direct_client() -> redis.Redis:
         host = os.getenv('REDIS_HOST', 'redis-master')
         port = int(os.getenv('REDIS_PORT', '6379'))
         db = int(os.getenv('REDIS_DB', '1'))
-        password = os.getenv('REDIS_PASSWORD', 'odoo19_redis_pass')
+        password = os.getenv('REDIS_PASSWORD')
+        if not password:
+            raise ValueError(
+                "REDIS_PASSWORD environment variable is required. "
+                "Please set it in .env file or environment."
+            )
 
         logger.info("redis_client_initializing",
                    host=host,

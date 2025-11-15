@@ -369,8 +369,75 @@ Ver instrucciones detalladas en: `TEMPLATE_VALIDATION_SYSTEM.md` (en este mismo 
 
 ---
 
+## 🤖 Orquestación Multi-CLI (CMO v2.1) - NUEVO 2025-11-13
+
+### Archivos Principales
+
+```
+docs/prompts/08_scripts/
+├── orchestrate_cmo.sh              # Orquestador CMO v2.1 con multi-CLI
+├── AI_CLI_USAGE.md                 # Guía completa uso CLI (340 LOC)
+├── REFACTOR_MULTI_CLI_SUMMARY.md   # Resumen ejecutivo refactorización
+├── quick_test_multi_cli.sh         # Script testing automatizado
+```
+
+### Características CMO v2.1
+
+- ✅ **Multi-CLI Support:** Copilot, Codex, Gemini (Claude deprecated)
+- ✅ **Context-Minimal:** 2K tokens/10 iter (96% reducción vs v1.0)
+- ✅ **Ephemeral Conversations:** Sin history entre iteraciones
+- ✅ **Token Efficiency:** Elimina compaction issues
+- ✅ **CLI Predeterminado:** Copilot CLI (configurable)
+
+### Uso Rápido
+
+```bash
+# CLI predeterminado (Copilot)
+./orchestrate_cmo.sh addons/localization/l10n_cl_dte 95 10 5.0
+
+# CLI explícito (Codex)
+AI_CLI=codex ./orchestrate_cmo.sh addons/localization/l10n_cl_dte 95 10 5.0
+
+# CLI explícito (Gemini)
+AI_CLI=gemini ./orchestrate_cmo.sh ai-service 90 5 3.0
+
+# Testing rápido multi-CLI
+./quick_test_multi_cli.sh ai-service 85 2 1.0
+```
+
+### CLIs Soportados
+
+| CLI | Comando | Instalación | Status |
+|-----|---------|-------------|--------|
+| **Copilot** | `copilot` | `npm install -g @githubnext/github-copilot-cli` | ✅ **Predeterminado** |
+| **Codex** | `codex` | `pip install codex-cli` | ✅ Disponible |
+| **Gemini** | `gemini` | `pip install gemini-cli` | ✅ Disponible |
+| **Claude** | `claude` | N/A | ⚠️ **Deprecated** |
+
+### Documentación Completa
+
+- **Guía uso CLI:** `AI_CLI_USAGE.md` (340 líneas)
+- **Resumen técnico:** `REFACTOR_MULTI_CLI_SUMMARY.md`
+- **Script testing:** `quick_test_multi_cli.sh` (testing automatizado 3 CLIs)
+
+### Arquitectura CMO
+
+```
+CONSIGNA (200 tokens max)
+    ↓
+AI CLI Decision (ephemeral)
+    ↓
+CONCLUSIÓN (50 tokens max)
+    ↓
+Bash State Machine (determinista)
+    ↓
+Retry Loop hasta éxito/budget
+```
+
+---
+
 **🚀 Scripts de automatización profesionales para máxima productividad**
 
 **Mantenedor:** Pedro Troncoso (@pwills85)
-**Última actualización:** 2025-11-12
+**Última actualización:** 2025-11-13
 

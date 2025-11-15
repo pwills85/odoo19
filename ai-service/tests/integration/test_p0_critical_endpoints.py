@@ -16,8 +16,7 @@ from fastapi.testclient import TestClient
 from unittest.mock import Mock, patch, AsyncMock
 import json
 
-from main import app
-from models.requests import DTEValidationRequest, ChatRequest, PayrollValidationRequest
+from main import app, DTEValidationRequest, ChatMessageRequest, PayrollValidationRequest
 
 
 @pytest.fixture

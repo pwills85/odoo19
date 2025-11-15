@@ -150,11 +150,10 @@
                         domain="[('date_from', '&lt;=', (context_today().replace(day=1))), ('date_to', '&gt;=', (context_today().replace(day=1)))]"/>
                 <filter string="Período Este Año" name="filter_current_year"
                         domain="[('date_from', '&lt;=', (context_today().replace(month=1, day=1))), ('date_to', '&gt;=', (context_today().replace(month=1, day=1)))]"/>
-                <group expand="0" string="Agrupar Por">
-                    <filter string="Compañía" name="group_company" domain="[]" context="{'group_by': 'company_id'}"/>
-                    <filter string="Estado" name="group_state" domain="[]" context="{'group_by': 'state'}"/>
-                    <filter string="Mes" name="group_month" domain="[]" context="{'group_by': 'create_date:month'}"/>
-                </group>
+                <separator/>
+                <filter string="Compañía" name="group_company" domain="[]" context="{'group_by': 'company_id'}"/>
+                <filter string="Estado" name="group_state" domain="[]" context="{'group_by': 'state'}"/>
+                <filter string="Mes" name="group_month" domain="[]" context="{'group_by': 'create_date:month'}"/>
             </search>
         </field>
     </record>

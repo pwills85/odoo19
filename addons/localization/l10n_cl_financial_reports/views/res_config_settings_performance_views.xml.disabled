@@ -5,9 +5,9 @@
     <record id="res_config_settings_view_form_inherit_financial_performance" model="ir.ui.view">
         <field name="name">res.config.settings.inherit.financial.performance</field>
         <field name="model">res.config.settings</field>
-        <field name="inherit_id" ref="base.view_res_config_settings"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//div[@id='settings']" position="inside">
+            <xpath expr="//div[contains(@class, 'settings')]" position="inside">
                 <div class="app_settings_block" data-string="Financial Performance" string="Financial Performance" data-key="financial_performance">
                     <h2>Configuraciones de Rendimiento</h2>
                     

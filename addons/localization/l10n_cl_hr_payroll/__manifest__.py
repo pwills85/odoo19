@@ -84,6 +84,7 @@ Licencia: LGPL-3
         # Datos base (SEGUNDO) - SOPA 2025
         'data/ir_sequence.xml',                      # Secuencias
         'data/ir_cron_data.xml',                     # Cron automático indicadores
+        'data/hr_contract_type_data.xml',            # Tipos de contrato (stub)
         'data/hr_salary_rule_category_base.xml',     # 13 categorías base
         'data/hr_salary_rule_category_sopa.xml',     # 9 categorías SOPA
         'data/hr_tax_bracket_2025.xml',              # Tramos impuesto 2025

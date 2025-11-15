@@ -32,7 +32,6 @@ class L10nClF22ConfigWizard(models.TransientModel):
     cuenta_gasto_impuesto = fields.Many2one(
         'account.account',
         string='Cuenta Gasto Impuesto Primera Categoría',
-        domain="[('company_id', '=', company_id), ('account_type', 'in', ['expense', 'expense_direct_cost'])]",
         help='Cuenta contable para registrar el gasto de impuesto primera categoría (ej: 5105 - Impuesto a la Renta)',
         required=True
     )
@@ -40,10 +39,38 @@ class L10nClF22ConfigWizard(models.TransientModel):
     cuenta_impuesto_por_pagar = fields.Many2one(
         'account.account',
         string='Cuenta Impuesto por Pagar',
-        domain="[('company_id', '=', company_id), ('account_type', '=', 'liability_current')]",
         help='Cuenta contable para el impuesto por pagar al SII (ej: 2103 - Impuesto Renta por Pagar)',
         required=True
     )
+
+    # Dominios dinámicos (Odoo 19 compatible)
+    cuenta_gasto_impuesto_domain = fields.Char(
+        compute='_compute_account_domains',
+        readonly=True,
+        store=False
+    )
+
+    cuenta_impuesto_por_pagar_domain = fields.Char(
+        compute='_compute_account_domains',
+        readonly=True,
+        store=False
+    )
+
+    @api.depends('company_id')
+    def _compute_account_domains(self):
+        """Computa los dominios dinámicos para las cuentas basándose en company_id"""
+        for wizard in self:
+            company_id = wizard.company_id.id if wizard.company_id else False
+
+            wizard.cuenta_gasto_impuesto_domain = str([
+                ('company_id', '=', company_id),
+                ('account_type', 'in', ['expense', 'expense_direct_cost'])
+            ]) if company_id else '[]'
+
+            wizard.cuenta_impuesto_por_pagar_domain = str([
+                ('company_id', '=', company_id),
+                ('account_type', '=', 'liability_current')
+            ]) if company_id else '[]'
 
     # ========== INFORMACIÓN ACTUAL ==========
     config_existente = fields.Boolean(

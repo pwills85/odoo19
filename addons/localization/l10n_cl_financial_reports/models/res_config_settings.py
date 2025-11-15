@@ -50,6 +50,43 @@ class ResConfigSettings(models.TransientModel):
         help="Time to live for dashboard cache in seconds"
     )
 
+    enable_prefetch_optimization = fields.Boolean(
+        string='Enable Prefetch Optimization',
+        config_parameter='l10n_cl_financial_reports.enable_prefetch_optimization',
+        default=True,
+        help="Enable query prefetch optimization for better performance"
+    )
+
+    enable_query_optimization = fields.Boolean(
+        string='Enable Query Optimization',
+        config_parameter='l10n_cl_financial_reports.enable_query_optimization',
+        default=True,
+        help="Enable database query optimization"
+    )
+
+    # ====== FINANCIAL REPORTS SETTINGS ======
+
+    financial_report_auto_refresh = fields.Boolean(
+        string='Auto Refresh Financial Reports',
+        config_parameter='l10n_cl_financial_reports.financial_report_auto_refresh',
+        default=False,
+        help="Automatically refresh financial reports when data changes"
+    )
+
+    financial_report_batch_size = fields.Integer(
+        string='Report Batch Size',
+        config_parameter='l10n_cl_financial_reports.financial_report_batch_size',
+        default=1000,
+        help="Number of records to process in batch for financial reports"
+    )
+
+    financial_report_cache_timeout = fields.Integer(
+        string='Report Cache Timeout (seconds)',
+        config_parameter='l10n_cl_financial_reports.financial_report_cache_timeout',
+        default=3600,
+        help="Cache timeout for generated financial reports"
+    )
+
     # ====== F29 CONFIGURATION ======
 
     f29_auto_calculate = fields.Boolean(

@@ -7,8 +7,8 @@
             <field name="name">financial.dashboard.layout.tree</field>
             <field name="model">financial.dashboard.layout</field>
             <field name="arch" type="xml">
-                <tree string="Dashboards Financieros" 
-                      decoration-bf="is_default" 
+                <list string="Dashboards Financieros"
+                      decoration-bf="is_default"
                       decoration-success="is_default">
                     <field name="name"/>
                     <field name="user_id"/>
@@ -16,7 +16,7 @@
                     <field name="is_default"/>
                     <field name="create_date"/>
                     <field name="write_date"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -108,12 +108,11 @@
                     <filter name="recent" string="Recientes"
                             domain="[('write_date', '>=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
                     
-                    <group expand="0" string="Agrupar por">
-                        <filter name="group_by_user" string="Usuario" 
-                                context="{'group_by': 'user_id'}"/>
-                        <filter name="group_by_date" string="Fecha de Creación" 
-                                context="{'group_by': 'create_date:month'}"/>
-                    </group>
+                    <separator/>
+                    <filter name="group_by_user" string="Usuario"
+                            context="{'group_by': 'user_id'}"/>
+                    <filter name="group_by_date" string="Fecha de Creación"
+                            context="{'group_by': 'create_date:month'}"/>
                 </search>
             </field>
         </record>
@@ -243,7 +242,7 @@
         <!-- Menu Item for Financial Dashboard Layout -->
         <menuitem id="menu_financial_dashboard_layout"
                   name="Gestión de Dashboards"
-                  parent="financial_dashboard_menu"
+                  parent="menu_financial_dashboard"
                   action="action_financial_dashboard_layout"
                   sequence="10"/>
 

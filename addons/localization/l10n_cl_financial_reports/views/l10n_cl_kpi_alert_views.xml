@@ -6,7 +6,7 @@
         <field name="name">l10n_cl.kpi.alert.tree</field>
         <field name="model">l10n_cl.kpi.alert</field>
         <field name="arch" type="xml">
-            <tree string="Alertas de KPI"
+            <list string="Alertas de KPI"
                   decoration-muted="not active"
                   decoration-warning="alert_level == 'warning'"
                   decoration-danger="alert_level == 'critical'"
@@ -22,7 +22,7 @@
                 <field name="triggered_count"/>
                 <field name="active" widget="boolean_toggle"/>
                 <field name="currency_id" column_invisible="1"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -187,11 +187,10 @@
                 <separator/>
                 <filter string="Recién Disparadas" name="recently_triggered"
                         domain="[('last_triggered_date', '>=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
-                <group expand="0" string="Agrupar Por">
-                    <filter string="Tipo de KPI" name="group_kpi_type" context="{'group_by': 'kpi_type'}"/>
-                    <filter string="Nivel de Alerta" name="group_alert_level" context="{'group_by': 'alert_level'}"/>
-                    <filter string="Compañía" name="group_company" context="{'group_by': 'company_id'}"/>
-                </group>
+                <separator/>
+                <filter string="Tipo de KPI" name="group_kpi_type" context="{'group_by': 'kpi_type'}"/>
+                <filter string="Nivel de Alerta" name="group_alert_level" context="{'group_by': 'alert_level'}"/>
+                <filter string="Compañía" name="group_company" context="{'group_by': 'company_id'}"/>
             </search>
         </field>
     </record>
@@ -213,11 +212,14 @@
     </record>
 
     <!-- Menu Item -->
+    <!-- COMENTADO: Parent menu "menu_l10n_cl_financial_reports_root" no existe en el módulo -->
+    <!--
     <menuitem id="menu_l10n_cl_kpi_alert"
               name="Alertas de KPI"
               parent="l10n_cl_financial_reports.menu_l10n_cl_financial_reports_root"
               action="action_l10n_cl_kpi_alert"
               sequence="40"
               groups="account.group_account_user"/>
+    -->
 
 </odoo>
