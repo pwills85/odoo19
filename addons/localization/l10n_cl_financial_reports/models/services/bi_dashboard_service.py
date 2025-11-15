@@ -137,13 +137,13 @@ class BiDashboardService(models.AbstractModel):
         """
         
         # Ejecutar queries
-        self.env.self.env.cr.execute(query_revenue, (date_from, date_to, tuple(company_ids)))
+        self.env.cr.execute(query_revenue, (date_from, date_to, tuple(company_ids)))
         revenue = self.env.cr.fetchone()[0]
         
-        self.env.self.env.cr.execute(query_expenses, (date_from, date_to, tuple(company_ids)))
+        self.env.cr.execute(query_expenses, (date_from, date_to, tuple(company_ids)))
         expenses = self.env.cr.fetchone()[0]
         
-        self.env.self.env.cr.execute(query_cash, (date_to, tuple(company_ids)))
+        self.env.cr.execute(query_cash, (date_to, tuple(company_ids)))
         cash_balance = self.env.cr.fetchone()[0]
         
         # Calcular métricas derivadas
@@ -155,7 +155,7 @@ class BiDashboardService(models.AbstractModel):
         prev_date_from = date_from - timedelta(days=days_diff)
         prev_date_to = date_from - timedelta(days=1)
         
-        self.env.self.env.cr.execute(query_revenue, (prev_date_from, prev_date_to, tuple(company_ids)))
+        self.env.cr.execute(query_revenue, (prev_date_from, prev_date_to, tuple(company_ids)))
         prev_revenue = self.env.cr.fetchone()[0]
         
         revenue_growth = ((revenue - prev_revenue) / prev_revenue * 100) if prev_revenue else 0
@@ -235,7 +235,7 @@ class BiDashboardService(models.AbstractModel):
                 (SELECT json_agg(row_to_json(ca)) FROM customer_analysis ca) as top_customers
         """
         
-        self.env.self.env.cr.execute(query, (
+        self.env.cr.execute(query, (
             date_from, date_to, tuple(company_ids),
             date_from, date_to, tuple(company_ids)
         ))
@@ -303,7 +303,7 @@ class BiDashboardService(models.AbstractModel):
             ORDER BY amount DESC
         """
         
-        self.env.self.env.cr.execute(query, (date_from, date_to, tuple(company_ids)))
+        self.env.cr.execute(query, (date_from, date_to, tuple(company_ids)))
         expenses = self.env.cr.dictfetchall()
         
         # Agrupar por categoría
@@ -479,7 +479,7 @@ class BiDashboardService(models.AbstractModel):
             ORDER BY period
         """
         
-        self.env.self.env.cr.execute(query, (historical_start, date_to, tuple(company_ids)))
+        self.env.cr.execute(query, (historical_start, date_to, tuple(company_ids)))
         monthly_data = self.env.cr.dictfetchall()
         
         if len(monthly_data) < 3:
@@ -746,7 +746,7 @@ class BiDashboardService(models.AbstractModel):
             ORDER BY amount DESC
         """
         
-        self.env.self.env.cr.execute(query, (date_from, date_to, tuple(company_ids)))
+        self.env.cr.execute(query, (date_from, date_to, tuple(company_ids)))
         return self.env.cr.dictfetchall()
     
     def _get_period_metrics(self, date_from, date_to, company_ids):
@@ -767,7 +767,7 @@ class BiDashboardService(models.AbstractModel):
                 AND am.company_id IN %s
         """
         
-        self.env.self.env.cr.execute(query, (date_from, date_to, tuple(company_ids)))
+        self.env.cr.execute(query, (date_from, date_to, tuple(company_ids)))
         result = self.env.cr.fetchone()
         
         revenue = result[0] or 0

@@ -195,7 +195,7 @@ class FinancialReportServiceExt(models.AbstractModel):
                 GROUP BY category
             """
             
-            self.env.self.env.self.env.cr.execute(query, (company_id, period['date_from'], period['date_to']))
+            self.env.cr.execute(query, (company_id, period['date_from'], period['date_to']))
             results = dict(self.env.cr.fetchall())
             
             categories['cost_of_goods'].append(results.get('cost_of_goods', 0))
@@ -269,7 +269,7 @@ class FinancialReportServiceExt(models.AbstractModel):
                     AND aa.account_type IN ('income', 'income_other', 'expense', 'expense_depreciation', 'expense_direct_cost')
             """
             
-            self.env.self.env.self.env.cr.execute(operating_query, (company_id, period['date_from'], period['date_to']))
+            self.env.cr.execute(operating_query, (company_id, period['date_from'], period['date_to']))
             operating = self.env.cr.fetchone()[0] or 0
             
             # Flujo de inversión (simplificado - activos fijos)
@@ -287,7 +287,7 @@ class FinancialReportServiceExt(models.AbstractModel):
                     AND aa.account_type = 'asset_fixed'
             """
             
-            self.env.self.env.self.env.cr.execute(investing_query, (company_id, period['date_from'], period['date_to']))
+            self.env.cr.execute(investing_query, (company_id, period['date_from'], period['date_to']))
             investing = self.env.cr.fetchone()[0] or 0
             
             # Flujo de financiamiento (simplificado - pasivos no corrientes y patrimonio)
@@ -305,7 +305,7 @@ class FinancialReportServiceExt(models.AbstractModel):
                     AND aa.account_type IN ('liability_non_current', 'equity')
             """
             
-            self.env.self.env.self.env.cr.execute(financing_query, (company_id, period['date_from'], period['date_to']))
+            self.env.cr.execute(financing_query, (company_id, period['date_from'], period['date_to']))
             financing = self.env.cr.fetchone()[0] or 0
             
             operating_data.append(operating)

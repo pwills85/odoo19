@@ -320,7 +320,7 @@ class MultiPeriodComparisonService:
         move_filter = "AND aml.parent_state = 'posted'" if target_move == 'posted' else ""
         query = query.format(move_filter=move_filter)
         
-        self.env.self.env.cr.execute(query, {
+        self.env.cr.execute(query, {
             'account_types': account_types,
             'company_id': company_id,
             'date_to': date_to
@@ -355,7 +355,7 @@ class MultiPeriodComparisonService:
         move_filter = "AND aml.parent_state = 'posted'" if target_move == 'posted' else ""
         query = query.format(move_filter=move_filter)
         
-        self.env.self.env.cr.execute(query, {
+        self.env.cr.execute(query, {
             'account_types': account_types,
             'company_id': company_id,
             'date_from': date_from,

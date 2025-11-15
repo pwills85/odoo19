@@ -191,7 +191,7 @@ class TaxBalanceService(models.AbstractModel):
         if include_draft_moves:
             query = query.replace("AND am.state = %(state)s", "AND am.state IN ('posted', 'draft')")
         
-        self.env.self.env.cr.execute(query, params)
+        self.env.cr.execute(query, params)
         
         return self.env.cr.dictfetchall()
     
