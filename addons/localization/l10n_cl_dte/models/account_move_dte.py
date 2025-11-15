@@ -1395,7 +1395,7 @@ class AccountMoveDTE(models.Model):
             ))
 
         # 5) Al menos una línea con cantidad > 0
-        valid_lines = self.invoice_line_ids.filtered(lambda l: not l.display_type and l.quantity and l.quantity > 0)
+        valid_lines = self.invoice_line_ids.filtered(lambda line: not line.display_type and line.quantity and line.quantity > 0)
         if not valid_lines:
             raise ValidationError(_(
                 "La guía de despacho debe tener al menos una línea con cantidad mayor a cero."
@@ -1475,7 +1475,7 @@ class AccountMoveDTE(models.Model):
         Returns 'productos' array with 'numero_linea' instead of 'linea'.
         """
         productos = []
-        for idx, line in enumerate(self.invoice_line_ids.filtered(lambda l: not l.display_type), start=1):
+        for idx, line in enumerate(self.invoice_line_ids.filtered(lambda inv_line: not inv_line.display_type), start=1):
             productos.append({
                 'numero_linea': idx,
                 'nombre': line.product_id.name or line.name or '',
@@ -1494,7 +1494,7 @@ class AccountMoveDTE(models.Model):
         Returns 'productos' array with 'numero_linea' instead of 'linea'.
         """
         productos = []
-        for idx, line in enumerate(self.invoice_line_ids.filtered(lambda l: not l.display_type), start=1):
+        for idx, line in enumerate(self.invoice_line_ids.filtered(lambda inv_line: not inv_line.display_type), start=1):
             productos.append({
                 'numero_linea': idx,
                 'nombre': line.product_id.name or line.name or '',
