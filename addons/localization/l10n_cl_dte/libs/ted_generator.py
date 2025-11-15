@@ -23,7 +23,6 @@ License: LGPL-3
 
 from lxml import etree
 import base64
-import hashlib
 import logging
 
 _logger = logging.getLogger(__name__)

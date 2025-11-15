@@ -17,9 +17,7 @@ Fase: 2.1 - Cierre de Brechas Dashboard
 """
 
 from odoo.tests.common import TransactionCase
-from odoo.exceptions import ValidationError
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
 
 
 class TestDteDashboardEnhanced(TransactionCase):

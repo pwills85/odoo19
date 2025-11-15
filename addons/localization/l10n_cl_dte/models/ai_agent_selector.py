@@ -15,7 +15,7 @@ Author: EERGYGROUP - Phase 2 Enhancement 2025-10-24
 """
 
 from odoo import models, api, _
-from odoo.exceptions import UserError, AccessError
+from odoo.exceptions import AccessError
 import logging
 
 _logger = logging.getLogger(__name__)

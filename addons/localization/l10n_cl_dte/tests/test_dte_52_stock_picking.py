@@ -21,9 +21,8 @@ License: LGPL-3
 """
 
 import unittest
-from unittest.mock import Mock, MagicMock, patch
 from odoo.tests.common import TransactionCase
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import ValidationError
 
 
 class TestDTE52StockPicking(TransactionCase):

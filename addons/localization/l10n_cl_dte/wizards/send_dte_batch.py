@@ -33,7 +33,7 @@ class SendDTEBatchWizard(models.TransientModel):
         for invoice in self.invoice_ids:
             try:
                 invoice.action_send_to_sii()
-            except Exception as e:
+            except Exception:
                 # Log error pero continuar con las demás
                 continue
         

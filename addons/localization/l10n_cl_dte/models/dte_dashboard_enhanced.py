@@ -18,9 +18,7 @@ Fase: 2.1 - Cierre de Brechas Dashboard
 """
 
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError, UserError
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
+from datetime import timedelta
 import logging
 
 _logger = logging.getLogger(__name__)

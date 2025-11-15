@@ -26,7 +26,6 @@ AI Service se usa DESPUÉS de pasar validación nativa para:
 
 from lxml import etree
 from datetime import datetime, date
-import re
 import logging
 from .safe_xml_parser import fromstring_safe
 

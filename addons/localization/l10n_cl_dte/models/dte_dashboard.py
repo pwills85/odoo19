@@ -13,8 +13,7 @@ Fase: 2.1 - Dashboard Central de DTE
 """
 
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError, UserError
-from datetime import datetime, timedelta
+from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 import logging
 

@@ -4,7 +4,6 @@ Tests for Pure Python libs pattern
 Verifies libs/ can work standalone (no Odoo dependencies)
 """
 
-import unittest
 from odoo.tests.common import TransactionCase
 
 
@@ -13,7 +12,6 @@ class TestPurePythonLibs(TransactionCase):
 
     def test_libs_no_direct_odoo_imports(self):
         """Verify libs/ has no direct Odoo imports (except conditional)"""
-        import os
         import re
         from pathlib import Path
 

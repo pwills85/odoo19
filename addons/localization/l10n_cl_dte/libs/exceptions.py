@@ -49,7 +49,7 @@ except ImportError:
 def create_backward_compat_aliases():
     """Create backward compatibility aliases if needed"""
     import sys
-    module = sys.modules[__name__]
+    sys.modules[__name__]
 
     # Example: If old code used 'SIIAuthError', map to DTEAuthenticationError
     # setattr(module, 'SIIAuthError', DTEAuthenticationError)

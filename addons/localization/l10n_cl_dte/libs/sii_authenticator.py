@@ -21,9 +21,8 @@ from lxml import etree
 from zeep import Client
 from zeep.transports import Transport
 from requests import Session
-from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.backends import default_backend
 from .i18n import gettext as _
 from .exceptions import DTEAuthenticationError as UserError
 from .safe_xml_parser import fromstring_safe

@@ -20,7 +20,6 @@ from odoo.exceptions import UserError
 import requests
 import logging
 import json
-from datetime import datetime
 
 _logger = logging.getLogger(__name__)
 

@@ -194,7 +194,7 @@ def _recalculate_bhe_books(env):
     _logger.info("FASE 3: Recalculando libros BHE históricos...")
 
     book_model = env['l10n_cl.bhe.book']
-    line_model = env['l10n_cl.bhe.book.line']
+    env['l10n_cl.bhe.book.line']
 
     # Buscar libros históricos (antes de 2025)
     historical_books = book_model.search([
@@ -252,7 +252,7 @@ def _print_migration_report(stats):
     _logger.info("REPORTE DE MIGRACIÓN - RETENCIONES BHE HISTÓRICAS")
     _logger.info("=" * 80)
     _logger.info("")
-    _logger.info(f"📊 ESTADÍSTICAS GENERALES:")
+    _logger.info("📊 ESTADÍSTICAS GENERALES:")
     _logger.info(f"  • Total BHE procesadas: {stats['total']}")
     _logger.info(f"  • BHE corregidas:       {stats['corrected']}")
     _logger.info(f"  • BHE sin cambios:      {stats['no_change']}")
@@ -260,13 +260,13 @@ def _print_migration_report(stats):
     _logger.info("")
 
     if stats['corrections_by_year']:
-        _logger.info(f"📅 CORRECCIONES POR AÑO:")
+        _logger.info("📅 CORRECCIONES POR AÑO:")
         for year in sorted(stats['corrections_by_year'].keys()):
             count = stats['corrections_by_year'][year]
             _logger.info(f"  • {year}: {count} BHE corregidas")
         _logger.info("")
 
-    _logger.info(f"💰 IMPACTO FINANCIERO:")
+    _logger.info("💰 IMPACTO FINANCIERO:")
     _logger.info(f"  • Diferencia total retenciones: ${stats['total_diff_retention']:,.0f}")
     _logger.info("")
 

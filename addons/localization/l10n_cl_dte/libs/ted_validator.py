@@ -22,8 +22,6 @@ Validaciones:
 4. Validación firma RSA (opcional)
 """
 
-from lxml import etree
-import base64
 import logging
 from datetime import datetime
 from .safe_xml_parser import fromstring_safe

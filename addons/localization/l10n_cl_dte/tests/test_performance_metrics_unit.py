@@ -16,7 +16,7 @@ License: LGPL-3
 """
 
 import unittest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import os
 
 

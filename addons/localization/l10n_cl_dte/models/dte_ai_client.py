@@ -17,9 +17,7 @@ import logging
 import hashlib
 import json
 from datetime import datetime, timedelta
-from odoo import models, api, _, fields
-from odoo.exceptions import UserError
-from odoo.tools import DEFAULT_SERVER_DATE_FORMAT
+from odoo import models, api
 
 _logger = logging.getLogger(__name__)
 

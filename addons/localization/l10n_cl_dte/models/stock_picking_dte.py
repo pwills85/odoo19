@@ -32,11 +32,9 @@ Author: EERGYGROUP - Ing. Pedro Troncoso Willz
 License: LGPL-3
 """
 
-from odoo import models, fields, api, _
+from odoo import models, fields, _
 from odoo.exceptions import ValidationError, UserError
-from datetime import datetime
 import base64
-import logging
 
 # Import DTE 52 generator
 from ..libs.dte_52_generator import (

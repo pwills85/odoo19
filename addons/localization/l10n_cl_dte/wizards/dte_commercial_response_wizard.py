@@ -116,7 +116,6 @@ class DTECommercialResponseWizard(models.TransientModel):
             )
 
             # P1-7 GAP CLOSURE: Generate commercial response XML natively
-            from ..libs.commercial_response_generator import CommercialResponseGenerator
 
             # Prepare response data
             response_data = {

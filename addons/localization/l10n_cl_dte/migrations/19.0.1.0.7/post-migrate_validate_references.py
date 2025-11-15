@@ -8,7 +8,6 @@ Validates NC/ND references to historical invoices.
 """
 
 import logging
-from odoo import api, SUPERUSER_ID
 
 _logger = logging.getLogger(__name__)
 

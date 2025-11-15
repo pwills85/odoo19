@@ -534,7 +534,6 @@ class TestXXEAdvancedAttacks(TransactionCase):
 
     def test_16_all_libs_use_safe_parser(self):
         """Test 16: Verificar que todas las libs usan safe parser"""
-        import os
         import re
         from pathlib import Path
 

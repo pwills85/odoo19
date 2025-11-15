@@ -10,7 +10,6 @@ Agrupa las entradas RCV por mes para facilitar:
 
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
-from datetime import date
 import logging
 
 _logger = logging.getLogger(__name__)

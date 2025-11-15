@@ -26,7 +26,6 @@ License: LGPL-3
 
 import xmlsec
 from lxml import etree
-import logging
 import tempfile
 import os
 import base64
@@ -34,7 +33,7 @@ from datetime import date
 
 # P3.1 GAP CLOSURE: Structured logging with conditional JSON output
 from .structured_logging import get_dte_logger
-from .safe_xml_parser import fromstring_safe, parse_safe
+from .safe_xml_parser import fromstring_safe
 
 _logger = get_dte_logger(__name__)
 
@@ -194,7 +193,7 @@ class XMLSigner:
                     )
 
                     # Add reference to document
-                    ref = xmlsec.template.add_reference(
+                    xmlsec.template.add_reference(
                         signature_node,
                         xmlsec.constants.TransformSha256,
                         uri=""
@@ -311,7 +310,7 @@ class XMLSigner:
                 algorithm=algorithm
             )
 
-            _logger.info(f"[XMLDSig] ✅ Documento signed successfully")
+            _logger.info("[XMLDSig] ✅ Documento signed successfully")
             return signed_xml
 
         except Exception as e:
@@ -366,7 +365,7 @@ class XMLSigner:
                 algorithm=algorithm
             )
 
-            _logger.info(f"[XMLDSig] ✅ SetDTE signed successfully")
+            _logger.info("[XMLDSig] ✅ SetDTE signed successfully")
             return signed_xml
 
         except Exception as e:

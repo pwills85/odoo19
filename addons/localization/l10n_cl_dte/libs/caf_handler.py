@@ -26,7 +26,6 @@ Funcionalidades:
 
 from lxml import etree
 from datetime import datetime, date
-import base64
 import logging
 
 # S-005: Protección XXE (Gap Closure P0)

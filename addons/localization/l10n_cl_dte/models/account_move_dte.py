@@ -19,9 +19,7 @@ Migration Note (2025-10-24):
 
 from odoo import models, fields, api, tools, _
 from odoo.exceptions import ValidationError, UserError
-import logging
 import base64
-from datetime import datetime
 
 # Import pure Python classes from libs/ (FASE 2 refactor)
 from ..libs.xml_generator import DTEXMLGenerator
@@ -34,7 +32,7 @@ from ..libs.xsd_validator import XSDValidator
 from ..libs.performance_metrics import measure_performance
 
 # P3.1 GAP CLOSURE: Structured logging with conditional JSON output
-from ..libs.structured_logging import get_dte_logger, log_dte_operation
+from ..libs.structured_logging import get_dte_logger
 
 _logger = get_dte_logger(__name__)
 
@@ -2072,7 +2070,7 @@ class AccountMoveDTE(models.Model):
             updated_count += 1
 
         _logger.info("=" * 70)
-        _logger.info(f"✅ DTE Status Poller completed:")
+        _logger.info("✅ DTE Status Poller completed:")
         _logger.info(f"   Total: {total_count}")
         _logger.info(f"   Success queries: {success_count}")
         _logger.info(f"   Updated: {updated_count}")
@@ -2149,7 +2147,7 @@ class AccountMoveDTE(models.Model):
                 continue
 
         _logger.info("=" * 70)
-        _logger.info(f"✅ DTE Quasi-Realtime Processor completed:")
+        _logger.info("✅ DTE Quasi-Realtime Processor completed:")
         _logger.info(f"   Total pending: {total_count}")
         _logger.info(f"   Successfully processed: {success_count}")
         _logger.info(f"   Errors: {error_count}")

@@ -58,10 +58,5 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{matrix.language}}"
-
-      - name: 📊 Upload results to GitHub Security
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: results/python.sarif
+          # Note: analyze action uploads results automatically
 

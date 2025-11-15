@@ -5,8 +5,7 @@ Cliente HTTP para comunicación con microservicios DTE y AI
 
 import requests
 import logging
-import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 _logger = logging.getLogger(__name__)
 

@@ -46,8 +46,6 @@ La firma digital original debe preservarse INTACTA para cumplir normativa.
 import logging
 from odoo import api, SUPERUSER_ID
 from odoo.exceptions import UserError
-from datetime import datetime
-import base64
 
 _logger = logging.getLogger(__name__)
 
@@ -275,7 +273,7 @@ def _print_migration_report(stats):
     _logger.info("REPORTE DE MIGRACIÓN - PRESERVACIÓN FIRMAS DIGITALES")
     _logger.info("=" * 80)
     _logger.info("")
-    _logger.info(f"📊 ESTADÍSTICAS GENERALES:")
+    _logger.info("📊 ESTADÍSTICAS GENERALES:")
     _logger.info(f"  • Total DTEs procesados:     {stats['total']}")
     _logger.info(f"  • Firmas preservadas:        {stats['preserved']} ✅")
     _logger.info(f"  • Ya eran históricos:        {stats['skipped_already_historical']}")
@@ -284,14 +282,14 @@ def _print_migration_report(stats):
     _logger.info("")
 
     if stats['by_year']:
-        _logger.info(f"📅 PRESERVACIÓN POR AÑO:")
+        _logger.info("📅 PRESERVACIÓN POR AÑO:")
         for year in sorted(stats['by_year'].keys()):
             count = stats['by_year'][year]
             _logger.info(f"  • {year}: {count} DTEs")
         _logger.info("")
 
     if stats['by_type']:
-        _logger.info(f"📄 PRESERVACIÓN POR TIPO DTE:")
+        _logger.info("📄 PRESERVACIÓN POR TIPO DTE:")
         dte_names = {
             '33': 'Factura Electrónica',
             '34': 'Factura Exenta',
@@ -305,10 +303,10 @@ def _print_migration_report(stats):
             _logger.info(f"  • {name} ({dte_type}): {count} DTEs")
         _logger.info("")
 
-    _logger.info(f"✅ RESULTADO:")
+    _logger.info("✅ RESULTADO:")
     _logger.info(f"  • {stats['preserved']} DTEs históricos preservados correctamente")
-    _logger.info(f"  • Firmas digitales INTACTAS (certificados expirados no re-firmados)")
-    _logger.info(f"  • Validez legal SII mantenida para auditorías (6 años)")
+    _logger.info("  • Firmas digitales INTACTAS (certificados expirados no re-firmados)")
+    _logger.info("  • Validez legal SII mantenida para auditorías (6 años)")
     _logger.info("")
 
     if stats['errors'] > 0:

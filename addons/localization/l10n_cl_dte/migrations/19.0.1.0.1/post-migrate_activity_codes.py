@@ -98,7 +98,7 @@ def migrate(cr, version):
             not_found_count += 1
 
     _logger.info("═" * 70)
-    _logger.info(f"MIGRACIÓN COMPLETADA:")
+    _logger.info("MIGRACIÓN COMPLETADA:")
     _logger.info(f"  ✅ Migrados: {migrated_count}")
     _logger.info(f"  ⚠️  No encontrados: {not_found_count}")
     _logger.info("═" * 70)

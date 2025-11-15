@@ -20,7 +20,7 @@ Critical for:
 
 from odoo.tests import TransactionCase, tagged
 from odoo.exceptions import ValidationError
-from datetime import date, datetime
+from datetime import date
 import logging
 
 _logger = logging.getLogger(__name__)

@@ -5,7 +5,6 @@ Verifica flujo completo de generación y envío de DTEs
 """
 
 from odoo.tests.common import TransactionCase
-from odoo.exceptions import ValidationError, UserError
 
 
 class TestDTEWorkflow(TransactionCase):

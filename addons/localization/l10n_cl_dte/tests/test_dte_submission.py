@@ -20,8 +20,8 @@ License: LGPL-3
 """
 
 from odoo.tests.common import TransactionCase
-from odoo.exceptions import ValidationError, UserError
-from unittest.mock import patch, MagicMock, Mock
+from odoo.exceptions import UserError
+from unittest.mock import patch, MagicMock
 from lxml import etree
 import base64
 

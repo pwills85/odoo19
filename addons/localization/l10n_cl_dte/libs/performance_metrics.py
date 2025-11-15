@@ -27,7 +27,7 @@ import time
 import logging
 import functools
 import os
-from typing import Dict, List, Optional, Callable
+from typing import Dict, List, Callable
 import statistics
 
 _logger = logging.getLogger(__name__)

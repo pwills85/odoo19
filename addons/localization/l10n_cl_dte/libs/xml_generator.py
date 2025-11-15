@@ -24,8 +24,6 @@ License: LGPL-3
 """
 
 from lxml import etree
-from datetime import datetime
-import logging
 from functools import lru_cache  # H3: Performance optimization
 
 # P3.1 GAP CLOSURE: Structured logging with conditional JSON output

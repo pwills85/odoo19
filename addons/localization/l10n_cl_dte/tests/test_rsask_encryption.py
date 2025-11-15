@@ -13,7 +13,6 @@ Version: 1.0.0
 
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
-from odoo.exceptions import ValidationError
 from odoo.addons.l10n_cl_dte.tools.encryption_helper import get_encryption_helper
 import base64
 

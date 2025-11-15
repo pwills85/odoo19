@@ -9,7 +9,7 @@ Based on Odoo 18: l10n_cl_fe/models/mail_dte.py (450 LOC)
 """
 
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import UserError
 import requests
 import json
 import logging
@@ -783,7 +783,7 @@ class DTEInbox(models.Model):
                     _logger.info("✅ TED validation PASSED (including RSA signature)")
                 else:
                     errors.extend(ted_result['errors'])
-                    _logger.warning(f"❌ TED validation FAILED")
+                    _logger.warning("❌ TED validation FAILED")
 
                 warnings.extend(ted_result.get('warnings', []))
 
@@ -1020,7 +1020,7 @@ class DTEInbox(models.Model):
         notification_type = 'success'
         title = _('DTE Validated Successfully')
         message_parts = [
-            f"Native validation: ✅ PASSED",
+            "Native validation: ✅ PASSED",
             f"TED validation: {'✅ PASSED' if self.ted_validated else '⚠️ SKIPPED'}",
         ]
 

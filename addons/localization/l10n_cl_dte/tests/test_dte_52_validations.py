@@ -15,7 +15,7 @@ License: LGPL-3
 """
 
 import unittest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 from odoo.exceptions import ValidationError
 
 
