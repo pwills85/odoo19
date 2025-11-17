@@ -14,6 +14,32 @@
 
 ---
 
+## 🆕 ACTUALIZACIÓN: Nueva Estrategia Git/GitHub (Nov 2025)
+
+**IMPORTANTE PARA CONTRIBUIDORES**: Hemos actualizado nuestra estrategia de control de versiones para prevenir pérdida de código y conflictos masivos.
+
+### 📚 Documentación Git/GitHub
+
+| Documento | Propósito | Audiencia |
+|-----------|-----------|-----------|
+| [.claude/GIT_STRATEGY.md](.claude/GIT_STRATEGY.md) | Estrategia completa | Tech Leads, Seniors |
+| [.claude/GIT_WORKFLOW_QUICK.md](.claude/GIT_WORKFLOW_QUICK.md) | Quick reference diaria | Todos los devs |
+| [docs/development/GIT_BEST_PRACTICES.md](docs/development/GIT_BEST_PRACTICES.md) | Guía best practices | Juniors, nuevos |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Guía contribución | Externos, colaboradores |
+
+### 🎯 Cambios Clave (Obligatorios)
+
+- ✅ **Integración diaria** a `develop` (feature branches MAX 3 días)
+- ✅ **Squash merge** obligatorio (historia Git limpia)
+- ✅ **Conventional Commits** estricto (`feat(module): description`)
+- ✅ **Versionado por módulo** (`l10n_cl_dte/19.0.7.0.0`)
+- ⚠️ **NO más** branches con 100+ commits sin integrar
+- ⚠️ **NO más** merges "big bang" con conflictos masivos
+
+**Ver detalles**: [.claude/GIT_STRATEGY.md](.claude/GIT_STRATEGY.md)
+
+---
+
 ## ⚡ INICIO RÁPIDO PARA AGENTES NUEVOS
 
 **Si eres un agente nuevo (Claude, Copilot, Gemini, etc.), lee PRIMERO:**
