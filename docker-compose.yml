@@ -176,45 +176,24 @@ services:
       start_period: 20s
 
   # ══════════════════════════════════════════════════════════
-  # RABBITMQ - ELIMINADO (2025-10-24) ❌
-  # ══════════════════════════════════════════════════════════
-  # Migration Note: RabbitMQ async processing replaced with Odoo ir.cron
-  #
-  # Rationale:
-  # - Odoo ir.cron provides same functionality (scheduled tasks)
-  # - Simpler architecture (one less service)
-  # - Better integration with Odoo ORM
-  # - DTE status polling now uses ir.cron (every 15 min)
-  #
-  # To restore: Uncomment lines below and run `docker-compose up -d rabbitmq`
-
-  # rabbitmq:
-  #   image: rabbitmq:3.12-management-alpine
-  #   container_name: odoo19_rabbitmq
-  #   restart: unless-stopped
-  #   environment:
-  #     RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
-  #     RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-changeme}
-  #   expose:
-  #     - "5672"
-  #   networks:
-  #     - stack_network
-
-  # ══════════════════════════════════════════════════════════
   # ODOO SERVICE ⭐ UPDATED (2025-10-24)
   # ══════════════════════════════════════════════════════════
-  # NOW INCLUDES: Native DTE library (libs/)
-  #   - XML generation (lxml)
-  #   - Digital signature (xmlsec)
-  #   - SII SOAP client (zeep)
-  #   - TED generator
-  #   - XSD validator
+  # Architecture: Native DTE library (libs/) - Migrated from microservices
   #
-  # Migration Benefits:
+  # Features:
+  #   - XML generation (lxml) - libs/xml_generator.py
+  #   - Digital signature (xmlsec) - libs/xml_signer.py
+  #   - SII SOAP client (zeep) - libs/sii_soap_client.py
+  #   - TED generator - libs/ted_generator.py
+  #   - XSD validator - libs/xsd_validator.py
+  #
+  # Benefits:
   #   - ~100ms faster per DTE (no HTTP overhead)
   #   - Better security (certificates in DB)
-  #   - Maximum Odoo 19 CE integration
-  #   - Simpler architecture (4 services instead of 6)
+  #   - Maximum Odoo 19 CE integration (ORM, @api, workflows)
+  #   - Simplified architecture (4 core services vs 6 legacy)
+  #
+  # Async processing: Odoo ir.cron (replaces RabbitMQ)
   # ══════════════════════════════════════════════════════════
   odoo:
     build:
@@ -262,53 +241,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 40s
-
-  # ══════════════════════════════════════════════════════════
-  # DTE SERVICE - ELIMINADO (2025-10-24) ❌
-  # ══════════════════════════════════════════════════════════
-  # Migration Note: DTE microservice migrated to native Odoo library (libs/)
-  #
-  # Rationale:
-  # - XML generation now in libs/xml_generator.py (lxml)
-  # - Digital signature now in libs/xml_signer.py (xmlsec)
-  # - SII SOAP client now in libs/sii_soap_client.py (zeep)
-  # - ~100ms faster (no HTTP overhead)
-  # - Better security (certificates in DB, not HTTP transmission)
-  # - Maximum integration with Odoo 19 CE (ORM, @api, workflows)
-  #
-  # New architecture:
-  # - account.move inherits DTE mixins (AbstractModel pattern)
-  # - Direct Python calls (no requests.post)
-  # - Uses Odoo ir.attachment for XML storage
-  # - Uses ir.config_parameter for configuration
-  #
-  # To restore: Uncomment lines below and run `docker-compose up -d odoo-eergy-services`
-
-  # odoo-eergy-services:
-  #   build: ./odoo-eergy-services
-  #   container_name: odoo19_eergy_services
-  #   restart: unless-stopped
-  #   environment:
-  #     - API_KEY=${EERGY_SERVICES_API_KEY:-default_eergy_api_key}
-  #     - SII_ENVIRONMENT=${SII_ENVIRONMENT:-sandbox}
-  #   expose:
-  #     - "8001"
-  #   networks:
-  #     - stack_network
-
-  # ══════════════════════════════════════════════════════════
-  # OLLAMA - LLM LOCAL (ELIMINADO - Usando solo Claude)
-  # ══════════════════════════════════════════════════════════
-  # ollama:
-  #   image: ollama/ollama:latest
-  #   container_name: odoo19_ollama
-  #   restart: unless-stopped
-  #   expose:
-  #     - "11434"  # Solo red interna
-  #   volumes:
-  #     - ollama_data:/root/.ollama
-  #   networks:
-  #     - stack_network
 
   # ══════════════════════════════════════════════════════════
   # AI MICROSERVICE - SOLO RED INTERNA ⭐
@@ -468,7 +400,6 @@ volumes:
   # Monitoring volumes (NEW 2025-11-09)
   prometheus_data:
   alertmanager_data:
-  # rabbitmq_data:  # ❌ ELIMINADO (2025-10-24) - RabbitMQ no longer used
 
 networks:
   stack_network:
