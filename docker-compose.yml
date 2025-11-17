@@ -224,7 +224,7 @@ services:
       args:
         ODOO_VERSION: "19.0"
         ODOO_RELEASE: "20251021"
-    image: eergygroup/odoo19:chile-1.0.5  # ⭐ UPDATED (2025-11-08): Zero warnings (redis + refactoring)
+    image: pwills85/odoo19:chile-1.0.5  # ⭐ UPDATED (2025-11-15): Published to Docker Hub
     container_name: odoo19_app
     restart: unless-stopped
     depends_on:
