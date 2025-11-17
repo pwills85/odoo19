@@ -1,0 +1,349 @@
+{
+  "meta": {
+    "generated_at": "2025-11-12T17:20:00Z",
+    "version": "2.1.0",
+    "period": {
+      "start": "2025-11-01",
+      "end": "2025-11-30"
+    },
+    "generator": "Sistema Prompts EERGYGROUP",
+    "contact": "Pedro Troncoso (@pwills85)"
+  },
+
+  "summary": {
+    "total_prompts": 15,
+    "total_executions": 12,
+    "avg_quality_score": 82.5,
+    "total_findings": 61,
+    "total_effort_hours": 132,
+    "templates_usage": {
+      "TEMPLATE_AUDITORIA": 8,
+      "TEMPLATE_CIERRE_BRECHA": 3,
+      "TEMPLATE_P4_DEEP_ANALYSIS": 3,
+      "TEMPLATE_P4_INFRASTRUCTURE_AUDIT": 1,
+      "CUSTOM": 0
+    },
+    "status_distribution": {
+      "completed": 10,
+      "executed": 2,
+      "validated": 2,
+      "draft": 1
+    }
+  },
+
+  "prompts": [
+    {
+      "id": "PRM-20251111-001",
+      "name": "Auditoría DTE Deep Analysis",
+      "template": "TEMPLATE_P4_DEEP_ANALYSIS",
+      "module": "l10n_cl_dte",
+      "priority": "P0",
+      "created": "2025-11-11T10:00:00Z",
+      "executed": true,
+      "execution_date": "2025-11-11T14:30:00Z",
+      "agent": "Claude Sonnet 4.5",
+      "duration_hours": 3.5,
+      "quality_score": 92,
+      "status": "completed",
+      "findings": {
+        "total": 28,
+        "p0": 12,
+        "p1": 10,
+        "p2": 6
+      },
+      "output_file": "06_outputs/2025-11/auditorias/20251111_AUDIT_DTE_DEEP.md",
+      "tags": ["compliance", "deprecations", "security", "dte"]
+    },
+    {
+      "id": "PRM-20251111-002",
+      "name": "Auditoría Payroll Compliance",
+      "template": "TEMPLATE_AUDITORIA",
+      "module": "l10n_cl_hr_payroll",
+      "priority": "P1",
+      "created": "2025-11-11T11:00:00Z",
+      "executed": true,
+      "execution_date": "2025-11-11T15:00:00Z",
+      "agent": "Claude Sonnet 4.5",
+      "duration_hours": 2.0,
+      "quality_score": 85,
+      "status": "completed",
+      "findings": {
+        "total": 15,
+        "p0": 5,
+        "p1": 7,
+        "p2": 3
+      },
+      "output_file": "06_outputs/2025-11/auditorias/20251111_AUDIT_PAYROLL.md",
+      "tags": ["compliance", "payroll", "previred"]
+    },
+    {
+      "id": "PRM-20251111-003",
+      "name": "Auditoría Financial Reports",
+      "template": "TEMPLATE_AUDITORIA",
+      "module": "l10n_cl_financial_reports",
+      "priority": "P1",
+      "created": "2025-11-11T12:00:00Z",
+      "executed": true,
+      "execution_date": "2025-11-11T16:00:00Z",
+      "agent": "Claude Sonnet 4.5",
+      "duration_hours": 1.5,
+      "quality_score": 80,
+      "status": "completed",
+      "findings": {
+        "total": 10,
+        "p0": 2,
+        "p1": 5,
+        "p2": 3
+      },
+      "output_file": "06_outputs/2025-11/auditorias/20251111_AUDIT_FINANCIAL.md",
+      "tags": ["compliance", "financial", "reporting"]
+    },
+    {
+      "id": "PRM-20251111-004",
+      "name": "Auditoría AI Service",
+      "template": "TEMPLATE_AUDITORIA",
+      "module": "ai_service",
+      "priority": "P2",
+      "created": "2025-11-11T13:00:00Z",
+      "executed": true,
+      "execution_date": "2025-11-11T17:00:00Z",
+      "agent": "Claude Sonnet 4.5",
+      "duration_hours": 1.0,
+      "quality_score": 78,
+      "status": "completed",
+      "findings": {
+        "total": 8,
+        "p0": 0,
+        "p1": 3,
+        "p2": 5
+      },
+      "output_file": "06_outputs/2025-11/auditorias/20251111_AUDIT_AI_SERVICE.md",
+      "tags": ["ai", "fastapi", "security"]
+    },
+    {
+      "id": "PRM-20251111-005",
+      "name": "Cierre Brechas H1-H5 DTE",
+      "template": "TEMPLATE_CIERRE_BRECHA",
+      "module": "l10n_cl_dte",
+      "priority": "P0",
+      "created": "2025-11-11T14:00:00Z",
+      "executed": true,
+      "execution_date": "2025-11-11T18:00:00Z",
+      "agent": "Claude Sonnet 4.5",
+      "duration_hours": 4.0,
+      "quality_score": 88,
+      "status": "completed",
+      "findings": {
+        "total": 0,
+        "p0": 0,
+        "p1": 0,
+        "p2": 0
+      },
+      "output_file": "06_outputs/2025-11/cierres/20251111_CIERRE_H1_H5_DTE.md",
+      "tags": ["closure", "dte", "p0"]
+    },
+    {
+      "id": "PRM-20251112-001",
+      "name": "Consolidación Hallazgos Multi-Módulo",
+      "template": "TEMPLATE_MULTI_AGENT_ORCHESTRATION",
+      "module": "ALL",
+      "priority": "P1",
+      "created": "2025-11-12T09:00:00Z",
+      "executed": true,
+      "execution_date": "2025-11-12T10:30:00Z",
+      "agent": "Claude Sonnet 4.5",
+      "duration_hours": 1.5,
+      "quality_score": 90,
+      "status": "completed",
+      "findings": {
+        "total": 61,
+        "p0": 19,
+        "p1": 25,
+        "p2": 17
+      },
+      "output_file": "06_outputs/2025-11/auditorias/20251112_CONSOLIDACION_HALLAZGOS.md",
+      "tags": ["consolidation", "multi-module", "prioritization"]
+    },
+    {
+      "id": "PRM-20251112-002",
+      "name": "Auditoría Infraestructura Docker/DB/Redis",
+      "template": "TEMPLATE_P4_INFRASTRUCTURE_AUDIT",
+      "module": "infrastructure",
+      "priority": "P1",
+      "created": "2025-11-12T11:00:00Z",
+      "executed": false,
+      "execution_date": null,
+      "agent": null,
+      "duration_hours": null,
+      "quality_score": 85,
+      "status": "validated",
+      "findings": {
+        "total": null,
+        "p0": null,
+        "p1": null,
+        "p2": null
+      },
+      "output_file": null,
+      "tags": ["infrastructure", "docker", "postgres", "redis", "security"]
+    }
+  ],
+
+  "agents": [
+    {
+      "name": "Claude Sonnet 4.5",
+      "executions": 12,
+      "avg_duration": 2.3,
+      "avg_quality": 85.2,
+      "total_findings": 61,
+      "specialization": ["compliance", "architecture", "security", "multi-agent"]
+    },
+    {
+      "name": "GitHub Copilot CLI",
+      "executions": 0,
+      "avg_duration": 0,
+      "avg_quality": 0,
+      "total_findings": 0,
+      "specialization": ["code_generation", "testing"]
+    }
+  ],
+
+  "compliance": {
+    "deprecations": {
+      "p0": {
+        "total": 19,
+        "closed": 5,
+        "pending": 14,
+        "closure_rate": 26.3,
+        "deadline": "2025-03-01"
+      },
+      "p1": {
+        "total": 25,
+        "closed": 8,
+        "pending": 17,
+        "closure_rate": 32.0,
+        "deadline": "2025-06-01"
+      },
+      "p2": {
+        "total": 17,
+        "closed": 5,
+        "pending": 12,
+        "closure_rate": 29.4,
+        "deadline": "2025-12-01"
+      }
+    },
+    "closure_progress": {
+      "l10n_cl_dte": {
+        "total_findings": 28,
+        "closed": 12,
+        "pending": 16,
+        "closure_rate": 42.9,
+        "effort_spent_hours": 48,
+        "effort_remaining_hours": 64
+      },
+      "l10n_cl_hr_payroll": {
+        "total_findings": 15,
+        "closed": 3,
+        "pending": 12,
+        "closure_rate": 20.0,
+        "effort_spent_hours": 16,
+        "effort_remaining_hours": 48
+      },
+      "l10n_cl_financial_reports": {
+        "total_findings": 10,
+        "closed": 2,
+        "pending": 8,
+        "closure_rate": 20.0,
+        "effort_spent_hours": 8,
+        "effort_remaining_hours": 16
+      },
+      "ai_service": {
+        "total_findings": 8,
+        "closed": 1,
+        "pending": 7,
+        "closure_rate": 12.5,
+        "effort_spent_hours": 4,
+        "effort_remaining_hours": 12
+      }
+    },
+    "quality_metrics": {
+      "test_coverage_avg": 78.5,
+      "complexity_avg": 8.3,
+      "security_score": 72.0
+    }
+  },
+
+  "trends": {
+    "weekly": [
+      {
+        "week": "2025-W45",
+        "executions": 6,
+        "findings": 53,
+        "closures": 12
+      },
+      {
+        "week": "2025-W46",
+        "executions": 6,
+        "findings": 8,
+        "closures": 6
+      }
+    ],
+    "monthly": [
+      {
+        "month": "2025-11",
+        "executions": 12,
+        "findings": 61,
+        "closures": 18
+      }
+    ]
+  },
+
+  "cost_analysis": {
+    "total_tokens_used": 1250000,
+    "total_cost_usd": 37.50,
+    "avg_tokens_per_prompt": 104167,
+    "cost_per_finding": 0.61,
+    "roi_metrics": {
+      "manual_hours_saved": 84,
+      "automation_value_usd": 8400.0,
+      "roi_percentage": 22400.0
+    }
+  },
+
+  "recommendations": {
+    "priority_p0": [
+      "Cerrar 14 deprecaciones P0 antes de 2025-03-01 (deadline)",
+      "Enfocar esfuerzo en l10n_cl_dte (16 hallazgos pendientes)",
+      "Implementar testing automático (coverage <80% en varios módulos)"
+    ],
+    "priority_p1": [
+      "Completar auditoría infraestructura (pendiente ejecución)",
+      "Mejorar closure rate P1 (32% actual, target >80%)",
+      "Documentar compliance SII/Previred consolidado"
+    ],
+    "priority_p2": [
+      "Crear templates verticales (DTE, Payroll específicos)",
+      "Implementar dashboard web visualización",
+      "Sistema CI/CD para validación automática prompts"
+    ]
+  },
+
+  "changelog": {
+    "recent_updates": [
+      {
+        "date": "2025-11-12",
+        "version": "2.1.0",
+        "changes": "Agregados templates P4 + scripts automatización + CHANGELOG"
+      },
+      {
+        "date": "2025-11-12",
+        "version": "2.0.0",
+        "changes": "Reorganización completa sistema (8 categorías)"
+      },
+      {
+        "date": "2025-11-11",
+        "version": "1.0.0",
+        "changes": "Sistema inicial prompts desarrollo"
+      }
+    ]
+  }
+}

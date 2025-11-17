@@ -46,8 +46,8 @@
                             <div class="col-12 text-center">
                                 <p class="mb-0">
                                     <strong>Período:</strong>
-                                    Del <span t-esc="period_info.get('date_from', 'N/A')"/>
-                                    al <span t-esc="period_info.get('date_to', 'N/A')"/>
+                                    Del <span t-out="period_info.get('date_from', 'N/A')"/>
+                                    al <span t-out="period_info.get('date_to', 'N/A')"/>
                                 </p>
                                 <p class="text-muted small mb-0">
                                     (Expresado en Pesos Chilenos - CLP)
@@ -71,7 +71,7 @@
                                     <tr class="table-info">
                                         <td class="fw-bold">INGRESOS DE ACTIVIDADES ORDINARIAS</td>
                                         <td class="text-end fw-bold">
-                                            <span t-esc="totals.get('CL_INCOME', {}).get('formatted', '0.00')"/>
+                                            <span t-out="totals.get('CL_INCOME', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
 
@@ -79,7 +79,7 @@
                                     <tr>
                                         <td class="ps-4">Costo de Ventas</td>
                                         <td class="text-end">
-                                            <span t-esc="totals.get('CL_COST_OF_REVENUE', {}).get('formatted', '0.00')"/>
+                                            <span t-out="totals.get('CL_COST_OF_REVENUE', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
 
@@ -87,7 +87,7 @@
                                     <tr class="table-success">
                                         <td class="fw-bold">UTILIDAD (PÉRDIDA) BRUTA</td>
                                         <td class="text-end fw-bold">
-                                            <span t-esc="totals.get('CL_GROSS_PROFIT', {}).get('formatted', '0.00')"/>
+                                            <span t-out="totals.get('CL_GROSS_PROFIT', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
 
@@ -95,7 +95,7 @@
                                     <tr>
                                         <td class="ps-4">Otros Ingresos</td>
                                         <td class="text-end">
-                                            <span t-esc="totals.get('CL_OTHER_INCOME', {}).get('formatted', '0.00')"/>
+                                            <span t-out="totals.get('CL_OTHER_INCOME', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
 
@@ -103,7 +103,7 @@
                                     <tr>
                                         <td class="ps-4">Gastos de Administración y Ventas</td>
                                         <td class="text-end">
-                                            <span t-esc="totals.get('CL_EXPENSES', {}).get('formatted', '0.00')"/>
+                                            <span t-out="totals.get('CL_EXPENSES', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
 
@@ -111,7 +111,7 @@
                                     <tr class="table-primary">
                                         <td class="fw-bold">UTILIDAD (PÉRDIDA) DEL EJERCICIO</td>
                                         <td class="text-end fw-bold">
-                                            <span t-esc="totals.get('CL_NET_PROFIT', {}).get('formatted', '0.00')"/>
+                                            <span t-out="totals.get('CL_NET_PROFIT', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -126,13 +126,13 @@
                                     <tr>
                                         <td style="width: 70%;">Margen Bruto (%)</td>
                                         <td style="width: 30%;" class="text-end">
-                                            <span t-esc="'%.2f%%' % margin_bruto"/>
+                                            <span t-out="'%.2f%%' % margin_bruto"/>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Margen Neto (%)</td>
                                         <td class="text-end">
-                                            <span t-esc="'%.2f%%' % margin_neto"/>
+                                            <span t-out="'%.2f%%' % margin_neto"/>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -148,7 +148,7 @@
                                 prácticas contables chilenas.
                             </p>
                             <p class="text-muted small">
-                                Generado el: <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y %H:%M')"/> |
+                                Generado el: <span t-out="datetime.datetime.now().strftime('%d/%m/%Y %H:%M')"/> |
                                 Sistema: Odoo 19 CE - l10n_cl_financial_reports
                             </p>
                         </div>

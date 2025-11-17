@@ -125,7 +125,7 @@ class AccountReport(models.Model):
             str|float: Valor de la celda (formateado o raw)
 
         Example en template QWeb:
-            <span t-esc="o._get_line_value(lines_by_code, 'CL_ASSETS')"/>
+            <span t-out="o._get_line_value(lines_by_code, 'CL_ASSETS')"/>
         """
         line = lines_by_code.get(line_code)
         if not line or not line.get('columns'):

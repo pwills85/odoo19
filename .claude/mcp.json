@@ -1,0 +1,39 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://odoo:odoo@localhost:5432/odoo"
+      ],
+      "description": "PostgreSQL MCP server for direct database inspection and queries"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/pedro/Documents/odoo19"
+      ],
+      "description": "Enhanced filesystem operations with safety guarantees"
+    },
+    "git": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-git",
+        "/Users/pedro/Documents/odoo19"
+      ],
+      "description": "Advanced git operations and repository analysis"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-playwright"
+      ],
+      "description": "Browser automation for E2E testing of Odoo DTE and UI validation"
+    }
+  }
+}

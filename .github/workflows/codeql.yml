@@ -1,0 +1,62 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# CodeQL Security Analysis Workflow
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Analiza el código para detectar vulnerabilidades de seguridad usando CodeQL.
+# Se ejecuta en push a main/develop y en todos los PRs.
+#
+# Referencia: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors
+#
+# ══════════════════════════════════════════════════════════════════════════════
+
+name: 🔒 CodeQL Security Analysis
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Ejecutar análisis completo semanalmente (lunes 2 AM UTC)
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  analyze:
+    name: 🔒 CodeQL Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'python' ]
+        # Agregar más lenguajes si es necesario:
+        # - 'javascript'
+        # - 'typescript'
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔍 Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql-config.yml
+          queries: +security-and-quality
+
+      - name: 🐍 Autobuild Python
+        uses: github/codeql-action/autobuild@v3
+
+      - name: 🔍 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"
+          # Note: analyze action uploads results automatically
+

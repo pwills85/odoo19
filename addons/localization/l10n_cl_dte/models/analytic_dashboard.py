@@ -16,8 +16,7 @@ Basado en: Documentación oficial Odoo 19 CE
 """
 
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError, UserError
-from odoo.models import Constraint
+from odoo.exceptions import UserError
 
 import logging
 import io

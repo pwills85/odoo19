@@ -242,7 +242,7 @@ class TrialBalanceService:
                         ]
                         
                         if group_lines:
-                            group_line = self._create_group_line(
+                            group_line = self.env.create_group_line(
                                 parent_code, group_lines, level - 1
                             )
                             result.append(group_line)

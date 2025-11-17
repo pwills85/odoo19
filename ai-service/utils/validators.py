@@ -14,7 +14,7 @@ Architecture: RUT validation delegated to python-stdnum (same as Odoo native)
 import re
 from typing import Any, Dict, List, Optional
 import structlog
-from stdnum.cl.rut import is_valid, compact
+from stdnum.cl.rut import is_valid, compact, calc_check_digit
 
 logger = structlog.get_logger(__name__)
 
@@ -50,22 +50,60 @@ def validate_rut(rut: str) -> bool:
     return is_valid(rut)
 
 
+def calculate_rut_dv(rut_number: str) -> str:
+    """
+    Calculate RUT check digit (dígito verificador).
+
+    Delegates to python-stdnum's calc_check_digit function.
+    Uses modulo-11 algorithm per Chilean tax authority (SII).
+
+    Args:
+        rut_number: RUT number without check digit (e.g., "76123456")
+
+    Returns:
+        Check digit as string ("0"-"9" or "K")
+
+    Examples:
+        >>> calculate_rut_dv("76123456")
+        "7"
+        >>> calculate_rut_dv("12345678")
+        "5"
+        >>> calculate_rut_dv("1111111")
+        "K"
+    """
+    if not rut_number or not isinstance(rut_number, str):
+        raise ValueError("RUT number must be a non-empty string")
+
+    # Remove any formatting (dots, hyphens) if present
+    clean_number = rut_number.replace(".", "").replace("-", "").strip()
+
+    if not clean_number.isdigit():
+        raise ValueError("RUT number must contain only digits")
+
+    # Use python-stdnum to calculate check digit
+    return calc_check_digit(clean_number)
+
+
 def sanitize_rut(rut: str) -> Optional[str]:
     """
     Sanitize and format RUT to standard format.
 
-    Delegates to python-stdnum.cl.rut.compact().
+    Validates first, then formats using python-stdnum.
 
     Args:
         rut: Input RUT (any format)
 
     Returns:
-        Formatted RUT (e.g., "12345678-9") or None if invalid
+        Formatted RUT (e.g., "12345678-5") or None if invalid
     """
     if not rut or not isinstance(rut, str):
         return None
 
     try:
+        # Validate first before sanitizing
+        if not is_valid(rut):
+            return None
+
         # Usar compact de stdnum (limpia el RUT)
         clean = compact(rut)
         # Formato: XXXXXXXX-Y

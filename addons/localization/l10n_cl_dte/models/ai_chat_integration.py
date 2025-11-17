@@ -20,7 +20,6 @@ from odoo.exceptions import UserError
 import requests
 import logging
 import json
-from datetime import datetime
 
 _logger = logging.getLogger(__name__)
 
@@ -91,8 +90,15 @@ class AIChatIntegration(models.AbstractModel):
             base_url = self._get_ai_service_url()
             timeout = self._get_ai_service_timeout()
 
+            # H9 FIX: Add Authorization header for health check
+            api_key = self.env['ir.config_parameter'].sudo().get_param(
+                'l10n_cl_dte.ai_service_api_key', False
+            )
+            headers = {'Authorization': f'Bearer {api_key}'} if api_key else {}
+            
             response = requests.get(
                 f"{base_url}/health",
+                headers=headers,
                 timeout=min(timeout, 10)  # Max 10s for health check
             )
 

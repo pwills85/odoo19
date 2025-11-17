@@ -14,6 +14,7 @@ Author: EERGYGROUP - Optimization Sprint 2025-10-24
 """
 
 import anthropic
+import httpx
 import structlog
 from typing import Dict, Any, List, Optional
 from tenacity import retry, stop_after_attempt, wait_random_exponential, retry_if_exception_type
@@ -36,23 +37,42 @@ class AnthropicClient:
 
     def __init__(self, api_key: str, model: str = "claude-sonnet-4-5-20250929"):
         """
-        Inicializa cliente async con optimizaciones.
+        Inicializa cliente async con optimizaciones y SSL validation.
+
+        ✅ FIX [S5 CICLO5]: Explicit SSL/TLS validation (OWASP A05 - Security Misconfiguration)
 
         Args:
             api_key: API key de Anthropic
             model: Modelo Claude (default: claude-sonnet-4-5-20250929)
         """
-        self.client = anthropic.AsyncAnthropic(api_key=api_key)
+        # ✅ FIX [S5 CICLO5]: Explicit SSL/TLS validation (OWASP A05)
+        # Create httpx client with explicit certificate verification
+        http_client = httpx.AsyncClient(
+            verify=True,  # ✅ Validate SSL certificates (prevent MITM attacks)
+            timeout=60.0,  # 60s timeout for API calls
+            limits=httpx.Limits(
+                max_keepalive_connections=20,
+                max_connections=100,
+                keepalive_expiry=30.0
+            )
+        )
+
+        self.client = anthropic.AsyncAnthropic(
+            api_key=api_key,
+            http_client=http_client  # ✅ Custom httpx client with SSL validation
+        )
         self.model = model
 
         logger.info(
             "anthropic_client_initialized",
             model=model,
+            ssl_verification=True,  # ✅ Log security feature
             optimizations_enabled=[
                 "prompt_caching",
                 "token_precounting",
                 "compact_output",
-                "streaming"
+                "streaming",
+                "ssl_verification"  # ✅ Added
             ]
         )
 
@@ -399,10 +419,10 @@ IMPORTANTE:
         """
         import json
 
-        # Simplificar historial (solo campos críticos)
+        # Simplificar historial (solo campos críticos, últimos 3)
         history_compact = [
             {"err": h.get("error_code"), "msg": h.get("message")[:100]}
-            for h in (history or [])[:3]  # Max 3 últimos
+            for h in (history or [])[-3:]  # Max 3 últimos
         ]
 
         prompt = f"""Analiza este DTE:

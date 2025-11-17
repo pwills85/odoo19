@@ -263,7 +263,7 @@ class MultiPeriodComparison(models.Model):
             result = service.compute_comparison(self)
             
             # Crear líneas de resultado
-            self._create_comparison_lines(result['lines'])
+            self.env.create_comparison_lines(result['lines'])
             
             # Guardar análisis
             self.write({

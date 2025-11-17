@@ -17,9 +17,7 @@ Fase: 2.1 - Cierre de Brechas Dashboard
 """
 
 from odoo.tests.common import TransactionCase
-from odoo.exceptions import ValidationError
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
 
 
 class TestDteDashboardEnhanced(TransactionCase):
@@ -66,13 +64,13 @@ class TestDteDashboardEnhanced(TransactionCase):
         self.fecha_inicio_mes = self.today.replace(day=1)
 
         # Crear CAF de prueba
-        self._create_test_caf()
+        self.env.create_test_caf()
 
         # Crear Certificado de prueba
-        self._create_test_certificate()
+        self.env.create_test_certificate()
 
         # Crear facturas y NC de prueba
-        self._create_test_invoices_with_nc()
+        self.env.create_test_invoices_with_nc()
 
         # Crear dashboard
         self.dashboard = self.env['l10n_cl.dte_dashboard'].get_or_create_dashboard(

@@ -19,9 +19,7 @@ Migration Note (2025-10-24):
 
 from odoo import models, fields, api, tools, _
 from odoo.exceptions import ValidationError, UserError
-import logging
 import base64
-from datetime import datetime
 
 # Import pure Python classes from libs/ (FASE 2 refactor)
 from ..libs.xml_generator import DTEXMLGenerator
@@ -34,7 +32,7 @@ from ..libs.xsd_validator import XSDValidator
 from ..libs.performance_metrics import measure_performance
 
 # P3.1 GAP CLOSURE: Structured logging with conditional JSON output
-from ..libs.structured_logging import get_dte_logger, log_dte_operation
+from ..libs.structured_logging import get_dte_logger
 
 _logger = get_dte_logger(__name__)
 
@@ -1397,7 +1395,7 @@ class AccountMoveDTE(models.Model):
             ))
 
         # 5) Al menos una línea con cantidad > 0
-        valid_lines = self.invoice_line_ids.filtered(lambda l: not l.display_type and l.quantity and l.quantity > 0)
+        valid_lines = self.invoice_line_ids.filtered(lambda line: not line.display_type and line.quantity and line.quantity > 0)
         if not valid_lines:
             raise ValidationError(_(
                 "La guía de despacho debe tener al menos una línea con cantidad mayor a cero."
@@ -1477,7 +1475,7 @@ class AccountMoveDTE(models.Model):
         Returns 'productos' array with 'numero_linea' instead of 'linea'.
         """
         productos = []
-        for idx, line in enumerate(self.invoice_line_ids.filtered(lambda l: not l.display_type), start=1):
+        for idx, line in enumerate(self.invoice_line_ids.filtered(lambda inv_line: not inv_line.display_type), start=1):
             productos.append({
                 'numero_linea': idx,
                 'nombre': line.product_id.name or line.name or '',
@@ -1496,7 +1494,7 @@ class AccountMoveDTE(models.Model):
         Returns 'productos' array with 'numero_linea' instead of 'linea'.
         """
         productos = []
-        for idx, line in enumerate(self.invoice_line_ids.filtered(lambda l: not l.display_type), start=1):
+        for idx, line in enumerate(self.invoice_line_ids.filtered(lambda inv_line: not inv_line.display_type), start=1):
             productos.append({
                 'numero_linea': idx,
                 'nombre': line.product_id.name or line.name or '',
@@ -1608,12 +1606,13 @@ class AccountMoveDTE(models.Model):
         """
         try:
             from lxml import etree
+            from odoo.addons.l10n_cl_dte.libs.safe_xml_parser import fromstring_safe
 
-            # Parse DTE XML
-            dte_root = etree.fromstring(dte_xml.encode('ISO-8859-1'))
+            # Parse DTE XML (XXE protected)
+            dte_root = fromstring_safe(dte_xml)
 
-            # Parse TED XML
-            ted_root = etree.fromstring(ted_xml.encode('ISO-8859-1'))
+            # Parse TED XML (XXE protected)
+            ted_root = fromstring_safe(ted_xml)
 
             # Find Documento element
             # Structure: <DTE><Documento>...</Documento></DTE>
@@ -2071,7 +2070,7 @@ class AccountMoveDTE(models.Model):
             updated_count += 1
 
         _logger.info("=" * 70)
-        _logger.info(f"✅ DTE Status Poller completed:")
+        _logger.info("✅ DTE Status Poller completed:")
         _logger.info(f"   Total: {total_count}")
         _logger.info(f"   Success queries: {success_count}")
         _logger.info(f"   Updated: {updated_count}")
@@ -2148,7 +2147,7 @@ class AccountMoveDTE(models.Model):
                 continue
 
         _logger.info("=" * 70)
-        _logger.info(f"✅ DTE Quasi-Realtime Processor completed:")
+        _logger.info("✅ DTE Quasi-Realtime Processor completed:")
         _logger.info(f"   Total pending: {total_count}")
         _logger.info(f"   Successfully processed: {success_count}")
         _logger.info(f"   Errors: {error_count}")

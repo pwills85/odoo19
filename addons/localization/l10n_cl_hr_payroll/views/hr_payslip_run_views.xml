@@ -6,7 +6,7 @@
         <field name="name">hr.payslip.run.tree</field>
         <field name="model">hr.payslip.run</field>
         <field name="arch" type="xml">
-            <tree string="Lotes de Nóminas" decoration-info="state=='draft'" 
+            <list string="Lotes de Nóminas" decoration-info="state=='draft'" 
                   decoration-muted="state=='cancel'" decoration-success="state=='done'">
                 <field name="name"/>
                 <field name="date_start"/>
@@ -19,7 +19,7 @@
                        decoration-warning="state=='processing'"
                        decoration-success="state=='done'"
                        decoration-danger="state=='cancel'"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -31,27 +31,25 @@
             <form string="Lote de Nóminas">
                 <header>
                     <!-- Botones workflow -->
-                    <button name="action_generate_payslips" string="Generar Liquidaciones" 
+                    <button name="action_generate_payslips" string="Generar Liquidaciones"
                             type="object" class="oe_highlight"
-                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                            invisible="state != 'draft'"/>
                     
-                    <button name="action_compute_all" string="Calcular Todas" 
-                            type="object" class="oe_highlight"
-                            attrs="{'invisible': [('state', '!=', 'processing')]}"/>
+                                        <button name="action_compute_all" string="Calcular Todas" type="object" class="oe_highlight" invisible="state != 'processing'"/>
                     
-                    <button name="action_confirm_all" string="Confirmar Todas" 
-                            type="object" class="oe_highlight"
-                            attrs="{'invisible': [('state', '!=', 'processing')]}"/>
                     
-                    <button name="action_export_previred" string="Exportar Previred" 
+                    
+                                        <button name="action_confirm_all" string="Confirmar Todas" type="object" class="oe_highlight" invisible="state != 'processing'"/>
+                    
+                    <button name="action_export_previred" string="Exportar Previred"
                             type="object" icon="fa-file-text-o"
-                            attrs="{'invisible': [('state', '!=', 'done')]}"/>
-                    
-                    <button name="action_draft" string="Volver a Borrador" 
-                            type="object" attrs="{'invisible': [('state', '=', 'draft')]}"/>
-                    
-                    <button name="action_cancel" string="Cancelar" 
-                            type="object" attrs="{'invisible': [('state', 'in', ['draft', 'cancel'])]}"/>
+                            invisible="state != 'done'"/>
+
+                    <button name="action_draft" string="Volver a Borrador"
+                            type="object" invisible="state == 'draft'"/>
+
+                    <button name="action_cancel" string="Cancelar"
+                            type="object" invisible="state in ['draft', 'cancel']"/>
                     
                     <field name="state" widget="statusbar" 
                            statusbar_visible="draft,processing,done"/>
@@ -74,14 +72,14 @@
                         
                         <button name="action_view_payslips" type="object"
                                 class="oe_stat_button" icon="fa-money"
-                                attrs="{'invisible': [('state', '!=', 'done')]}">
-                            <field name="total_net" widget="statinfo" 
+                                invisible="state != 'done'">
+                            <field name="total_net" widget="statinfo"
                                    string="Total Líquido"/>
                         </button>
                     </div>
                     
                     <widget name="web_ribbon" title="Cancelado" bg_color="bg-danger"
-                            attrs="{'invisible': [('state', '!=', 'cancel')]}"/>
+                            invisible="state != 'cancel'"/>
                     
                     <div class="oe_title">
                         <label for="name" class="oe_edit_only"/>
@@ -105,7 +103,7 @@
                     <notebook>
                         <page string="Liquidaciones" name="payslips">
                             <field name="slip_ids">
-                                <tree decoration-info="state=='draft'" 
+                                <list decoration-info="state=='draft'" 
                                       decoration-success="state=='done'"
                                       decoration-muted="state=='cancel'">
                                     <field name="number"/>
@@ -117,12 +115,12 @@
                                            decoration-info="state=='draft'"
                                            decoration-success="state=='done'"
                                            decoration-danger="state=='cancel'"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         
                         <page string="Estadísticas" name="stats"
-                              attrs="{'invisible': [('state', '=', 'draft')]}">
+                              invisible="state == 'draft'">
                             <group>
                                 <group string="Liquidaciones">
                                     <field name="slip_count"/>
@@ -130,7 +128,7 @@
                                     <field name="slip_done_count"/>
                                     <field name="slip_error_count"/>
                                 </group>
-                                <group string="Montos" attrs="{'invisible': [('state', '!=', 'done')]}">
+                                <group string="Montos" invisible="state != 'done'">
                                     <field name="total_gross" widget="monetary"/>
                                     <field name="total_net" widget="monetary"/>
                                     <field name="currency_id" invisible="1"/>
@@ -183,13 +181,13 @@
                             <div class="o_kanban_record_bottom mt-3">
                                 <div class="oe_kanban_bottom_left">
                                     <span class="badge badge-pill">
-                                        <i class="fa fa-users"/> 
+                                        <i class="fa fa-users" title="Liquidaciones"/>
                                         <field name="slip_done_count"/> / <field name="slip_count"/>
                                     </span>
                                 </div>
                                 <div class="oe_kanban_bottom_right" t-if="record.state.raw_value == 'done'">
                                     <span class="text-success">
-                                        <i class="fa fa-money"/> 
+                                        <i class="fa fa-money" title="Total Neto"/>
                                         <field name="total_net" widget="monetary"/>
                                     </span>
                                 </div>

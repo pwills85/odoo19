@@ -53,10 +53,17 @@ class FinancialDashboardLayout(models.Model):
         help="Descripción del propósito del dashboard"
     )
 
-    _sql_constraints = [
-        ('user_widget_unique', 'unique(user_id, widget_identifier)',
-         'La disposición para cada widget debe ser única por usuario.')
-    ]
+    @api.constrains('user_id', 'widget_identifier')
+    def _check_user_widget_unique(self):
+        """Ensure layout for each widget is unique per user."""
+        for record in self:
+            duplicate = self.search([
+                ('id', '!=', record.id),
+                ('user_id', '=', record.user_id.id),
+                ('widget_identifier', '=', record.widget_identifier)
+            ], limit=1)
+            if duplicate:
+                raise ValidationError('La disposición para cada widget debe ser única por usuario.')
 
     @api.model
     def get_layout_for_user(self):

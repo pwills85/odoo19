@@ -12,7 +12,6 @@ Date: 2025-11-02
 """
 
 from odoo.tests.common import TransactionCase
-from odoo import fields
 
 
 class TestComputedFieldsCache(TransactionCase):

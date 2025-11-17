@@ -24,8 +24,7 @@ License: LGPL-3
 """
 
 from lxml import etree
-from datetime import datetime
-import logging
+from functools import lru_cache  # H3: Performance optimization
 
 # P3.1 GAP CLOSURE: Structured logging with conditional JSON output
 from .structured_logging import get_dte_logger
@@ -52,6 +51,29 @@ class DTEXMLGenerator:
         No dependencies required - pure business logic.
         """
         pass
+
+    # ═══════════════════════════════════════════════════════════
+    # H3: CACHED HELPERS - Performance Optimization
+    # ═══════════════════════════════════════════════════════════
+
+    @staticmethod
+    @lru_cache(maxsize=1)  # H3: Cache namespace map (same for all DTEs)
+    def _get_dte_nsmap():
+        """
+        Get DTE XML namespace map (cached).
+
+        H3 OPTIMIZATION: Cached with @lru_cache(maxsize=1)
+        - Namespace map is immutable and same for all DTEs
+        - Avoids dict creation overhead on every XML generation
+        - Memory: ~100 bytes (negligible)
+
+        Returns:
+            dict: XML namespace map with SII and xmldsig namespaces
+        """
+        return {
+            None: 'http://www.sii.cl/SiiDte',  # Default namespace
+            'ds': 'http://www.w3.org/2000/09/xmldsig#'  # Digital signature
+        }
 
     # ═══════════════════════════════════════════════════════════
     # FACTORY PATTERN - DTE TYPE SELECTION
@@ -109,12 +131,8 @@ class DTEXMLGenerator:
         """Generate XML for DTE 33 (Electronic Invoice)"""
         _logger.info(f"Generating DTE 33, folio {data.get('folio')}")
 
-        # Create root element with SII namespace (Sprint 1.2 - B-007)
-        nsmap = {
-            None: 'http://www.sii.cl/SiiDte',  # Default namespace
-            'ds': 'http://www.w3.org/2000/09/xmldsig#'  # Digital signature
-        }
-        dte = etree.Element('DTE', version="1.0", nsmap=nsmap)
+        # Create root element with SII namespace (H3: Use cached nsmap)
+        dte = etree.Element('DTE', version="1.0", nsmap=self._get_dte_nsmap())
         documento = etree.SubElement(dte, 'Documento', ID=f"DTE-{data['folio']}")
 
         # Header
@@ -248,9 +266,15 @@ class DTEXMLGenerator:
             if ref.get('razon'):
                 etree.SubElement(referencia, 'RazonRef').text = ref['razon']
 
+    @lru_cache(maxsize=128)  # H3: Cache RUT formatting (emisor + receptores frecuentes)
     def _format_rut_sii(self, rut):
         """
         Format RUT for SII (12345678-9 format).
+
+        H3 OPTIMIZATION: Cached with @lru_cache(maxsize=128)
+        - Emisor RUT: Always same (1 cached entry)
+        - Receptor RUTs: Frequent customers reuse (127 cached entries)
+        - Performance gain: O(1) lookup vs O(n) string operations
 
         Args:
             rut (str): RUT in any format
@@ -294,12 +318,8 @@ class DTEXMLGenerator:
         """
         _logger.info(f"Generating DTE 34 (Exempt Invoice), folio {data.get('folio')}")
 
-        # Create root element with SII namespace (Sprint 1.2 - B-007)
-        nsmap = {
-            None: 'http://www.sii.cl/SiiDte',
-            'ds': 'http://www.w3.org/2000/09/xmldsig#'
-        }
-        dte = etree.Element('DTE', version="1.0", nsmap=nsmap)
+        # Create root element with SII namespace (H3: Use cached nsmap)
+        dte = etree.Element('DTE', version="1.0", nsmap=self._get_dte_nsmap())
         documento = etree.SubElement(dte, 'Documento', ID=f"DTE-{data['folio']}")
 
         # Header
@@ -449,12 +469,8 @@ class DTEXMLGenerator:
         """
         _logger.info(f"Generating DTE 52 (Shipping Guide), folio {data.get('folio')}")
 
-        # Create root element with SII namespace (Sprint 1.2 - B-007)
-        nsmap = {
-            None: 'http://www.sii.cl/SiiDte',
-            'ds': 'http://www.w3.org/2000/09/xmldsig#'
-        }
-        dte = etree.Element('DTE', version="1.0", nsmap=nsmap)
+        # Create root element with SII namespace (H3: Use cached nsmap)
+        dte = etree.Element('DTE', version="1.0", nsmap=self._get_dte_nsmap())
         documento = etree.SubElement(dte, 'Documento', ID=f"DTE-{data['folio']}")
 
         # Header (includes transport)
@@ -738,12 +754,8 @@ class DTEXMLGenerator:
         if not data.get('documento_referencia'):
             raise ValueError('Debit Note requires reference to original document')
 
-        # Create root element with SII namespace (Sprint 1.2 - B-007)
-        nsmap = {
-            None: 'http://www.sii.cl/SiiDte',
-            'ds': 'http://www.w3.org/2000/09/xmldsig#'
-        }
-        dte = etree.Element('DTE', version="1.0", nsmap=nsmap)
+        # Create root element with SII namespace (H3: Use cached nsmap)
+        dte = etree.Element('DTE', version="1.0", nsmap=self._get_dte_nsmap())
         documento = etree.SubElement(dte, 'Documento', ID=f"DTE-{data['folio']}")
 
         # Header (same structure as invoice)
@@ -912,12 +924,8 @@ class DTEXMLGenerator:
         if not data.get('documento_referencia'):
             raise ValueError('Credit Note requires reference to original document')
 
-        # Create root element with SII namespace (Sprint 1.2 - B-007)
-        nsmap = {
-            None: 'http://www.sii.cl/SiiDte',
-            'ds': 'http://www.w3.org/2000/09/xmldsig#'
-        }
-        dte = etree.Element('DTE', version="1.0", nsmap=nsmap)
+        # Create root element with SII namespace (H3: Use cached nsmap)
+        dte = etree.Element('DTE', version="1.0", nsmap=self._get_dte_nsmap())
         documento = etree.SubElement(dte, 'Documento', ID=f"DTE-{data['folio']}")
 
         # Header (similar to DTE 33 but with specific fields)

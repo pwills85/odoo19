@@ -120,7 +120,7 @@ class DTEConsumoFolios(models.Model):
             
             if record.dte_type:
                 dte_name = dict(record._fields['dte_type'].selection).get(record.dte_type, '')
-                parts.append(f'DTE {record.dte_type}')
+                parts.append(f'DTE {dte_name}' if dte_name else f'DTE {record.dte_type}')
             
             if record.journal_id:
                 parts.append(record.journal_id.name)

@@ -9,11 +9,11 @@
         <field name="name">hr.isapre.tree</field>
         <field name="model">hr.isapre</field>
         <field name="arch" type="xml">
-            <tree string="ISAPREs Chile" editable="bottom">
+            <list string="ISAPREs Chile" editable="bottom">
                 <field name="name"/>
                 <field name="code"/>
                 <field name="active"/>
-            </tree>
+            </list>
         </field>
     </record>
     

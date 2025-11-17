@@ -17,7 +17,7 @@
                     </group>
                 </group>
                 
-                <group string="Preview" attrs="{'invisible': [('preview_data', '=', False)]}">
+                <group string="Preview" invisible="not preview_data">
                     <field name="preview_data" nolabel="1" widget="text"/>
                 </group>
                 

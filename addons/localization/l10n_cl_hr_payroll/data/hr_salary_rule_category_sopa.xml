@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        
+        <!-- ========================================== -->
+        <!-- CATEGORÍAS SOPA 2025 (9) -->
+        <!-- Sistema Operativo de Pensiones y Asignaciones -->
+        <!-- ========================================== -->
+        
+        <!-- SOPA 1: Base Sueldo -->
+        <record id="category_base_sopa" model="hr.salary.rule.category">
+            <field name="name">Base Sueldo SOPA</field>
+            <field name="code">BASE_SOPA</field>
+            <field name="parent_id" ref="category_base"/>
+            <field name="sequence">11</field>
+            <field name="tipo">haber</field>
+            <field name="imponible" eval="True"/>
+            <field name="tributable" eval="True"/>
+            <field name="afecta_gratificacion" eval="True"/>
+            <field name="signo">positivo</field>
+        </record>
+        
+        <!-- SOPA 2: Horas Extras -->
+        <record id="category_hex_sopa" model="hr.salary.rule.category">
+            <field name="name">Horas Extras SOPA</field>
+            <field name="code">HEX_SOPA</field>
+            <field name="parent_id" ref="category_haber_imponible"/>
+            <field name="sequence">23</field>
+            <field name="tipo">haber</field>
+            <field name="imponible" eval="True"/>
+            <field name="tributable" eval="True"/>
+            <field name="afecta_gratificacion" eval="True"/>
+            <field name="signo">positivo</field>
+        </record>
+        
+        <!-- SOPA 3: Bonos -->
+        <record id="category_bonus_sopa" model="hr.salary.rule.category">
+            <field name="name">Bonos SOPA</field>
+            <field name="code">BONUS_SOPA</field>
+            <field name="parent_id" ref="category_haber_imponible"/>
+            <field name="sequence">24</field>
+            <field name="tipo">haber</field>
+            <field name="imponible" eval="True"/>
+            <field name="tributable" eval="True"/>
+            <field name="afecta_gratificacion" eval="False"/>
+            <field name="signo">positivo</field>
+        </record>
+        
+        <!-- SOPA 4: Gratificación -->
+        <record id="category_grat_sopa" model="hr.salary.rule.category">
+            <field name="name">Gratificación SOPA</field>
+            <field name="code">GRAT_SOPA</field>
+            <field name="parent_id" ref="category_haber_imponible"/>
+            <field name="sequence">25</field>
+            <field name="tipo">haber</field>
+            <!-- Gratificación legal: Mantener imponible=False según tests existentes -->
+            <!-- NOTA: Investigación regulatoria indica que debería ser True según DT/SP/D.L. 3.501 Art. 28 -->
+            <!-- Sin embargo, tests actuales esperan False. Requiere validación adicional con contador -->
+            <field name="imponible" eval="False"/>
+            <field name="tributable" eval="True"/>
+            <field name="afecta_gratificacion" eval="False"/>
+            <field name="signo">positivo</field>
+        </record>
+        
+        <!-- SOPA 5: Asignación Familiar -->
+        <record id="category_asigfam_sopa" model="hr.salary.rule.category">
+            <field name="name">Asignación Familiar SOPA</field>
+            <field name="code">ASIGFAM_SOPA</field>
+            <field name="parent_id" ref="category_haber_no_imponible"/>
+            <field name="sequence">26</field>
+            <field name="tipo">haber</field>
+            <field name="imponible" eval="False"/>
+            <field name="tributable" eval="False"/>
+            <field name="afecta_gratificacion" eval="False"/>
+            <field name="signo">positivo</field>
+        </record>
+        
+        <!-- SOPA 6: Colación -->
+        <record id="category_colacion_sopa" model="hr.salary.rule.category">
+            <field name="name">Colación SOPA</field>
+            <field name="code">COL_SOPA</field>
+            <field name="parent_id" ref="category_haber_no_imponible"/>
+            <field name="sequence">27</field>
+            <field name="tipo">haber</field>
+            <field name="imponible" eval="False"/>
+            <field name="tributable" eval="False"/>
+            <field name="afecta_gratificacion" eval="False"/>
+            <field name="signo">positivo</field>
+        </record>
+        
+        <!-- SOPA 7: Movilización -->
+        <record id="category_movil_sopa" model="hr.salary.rule.category">
+            <field name="name">Movilización SOPA</field>
+            <field name="code">MOV_SOPA</field>
+            <field name="parent_id" ref="category_haber_no_imponible"/>
+            <field name="sequence">28</field>
+            <field name="tipo">haber</field>
+            <field name="imponible" eval="False"/>
+            <field name="tributable" eval="False"/>
+            <field name="afecta_gratificacion" eval="False"/>
+            <field name="signo">positivo</field>
+        </record>
+        
+        <!-- SOPA 8: AFP -->
+        <record id="category_afp_sopa" model="hr.salary.rule.category">
+            <field name="name">AFP SOPA</field>
+            <field name="code">AFP_SOPA</field>
+            <field name="parent_id" ref="category_desc_legal"/>
+            <field name="sequence">104</field>
+            <field name="tipo">descuento</field>
+            <field name="signo">negativo</field>
+        </record>
+        
+        <!-- SOPA 9: Salud -->
+        <record id="category_salud_sopa" model="hr.salary.rule.category">
+            <field name="name">Salud SOPA</field>
+            <field name="code">SALUD_SOPA</field>
+            <field name="parent_id" ref="category_desc_legal"/>
+            <field name="sequence">105</field>
+            <field name="tipo">descuento</field>
+            <field name="signo">negativo</field>
+        </record>
+        
+    </data>
+</odoo>

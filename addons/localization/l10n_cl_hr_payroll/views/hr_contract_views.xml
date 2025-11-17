@@ -9,7 +9,7 @@
     <record id="view_hr_contract_cl_form" model="ir.ui.view">
         <field name="name">hr.contract.cl.form</field>
         <field name="model">hr.contract</field>
-        <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+        <field name="inherit_id" ref="l10n_cl_hr_payroll.hr_contract_view_form_stub"/>
         <field name="arch" type="xml">
             
             <!-- Agregar campos Chile después del campo wage -->
@@ -45,14 +45,21 @@
                 
                 <!-- APV -->
                 <separator string="Ahorro Previsional Voluntario (APV)" colspan="2"/>
-                <field name="apv_id" string="Institución APV"/>
-                <field name="apv_amount_uf" 
-                       string="Monto APV (UF)"
-                       invisible="not apv_id"/>
-                <field name="apv_type" 
-                       string="Tipo APV"
-                       invisible="not apv_id"
+                <field name="l10n_cl_apv_institution_id"
+                       string="Institución APV"
+                       placeholder="Seleccionar institución APV..."/>
+                <field name="l10n_cl_apv_regime"
+                       string="Régimen APV"
+                       invisible="not l10n_cl_apv_institution_id"
                        widget="radio"/>
+                <field name="l10n_cl_apv_amount_type"
+                       string="Tipo Monto APV"
+                       invisible="not l10n_cl_apv_institution_id"
+                       widget="radio"/>
+                <field name="l10n_cl_apv_amount"
+                       string="Monto APV"
+                       widget="monetary"
+                       invisible="not l10n_cl_apv_institution_id"/>
                 
                 <!-- Asignaciones Art. 41 CT -->
                 <separator string="Asignaciones Art. 41 CT" colspan="2"/>
@@ -64,13 +71,36 @@
                        widget="monetary"/>
                 
                 <!-- Cargas Familiares -->
-                <separator string="Cargas Familiares" colspan="2"/>
+                <separator string="Cargas Familiares (Asignación Familiar)" colspan="2"/>
                 <field name="family_allowance_simple" 
                        string="Cargas Simples"/>
                 <field name="family_allowance_maternal" 
                        string="Cargas Maternales"/>
                 <field name="family_allowance_invalid" 
                        string="Cargas Inválidas"/>
+                
+                <!-- Cargas GES (solo Isapre) -->
+                <separator string="Cargas GES (Beneficiarios Salud - LRE Previred)" 
+                           colspan="2"
+                           invisible="health_system != 'isapre'"/>
+                <group invisible="health_system != 'isapre'">
+                    <field name="isapre_ges_cargas_simples" 
+                           string="Cargas GES Simples"
+                           help="Beneficiarios GES simples para LRE Previred (hijos &lt; 24 años). Por defecto copia de cargas familiares."/>
+                    <field name="isapre_ges_cargas_maternales" 
+                           string="Cargas GES Maternales"
+                           help="Beneficiarios GES maternales para LRE Previred (cónyuge/conviviente). Por defecto copia de cargas familiares."/>
+                    <field name="isapre_ges_cargas_invalidas" 
+                           string="Cargas GES Inválidas"
+                           help="Beneficiarios GES con invalidez para LRE Previred. Por defecto copia de cargas familiares."/>
+                </group>
+                <div class="alert alert-info" 
+                     role="alert" 
+                     invisible="health_system != 'isapre'">
+                    <strong>Nota:</strong> Las cargas GES son requeridas por Previred para trabajadores con Isapre. 
+                    Normalmente coinciden con las cargas familiares, pero pueden diferir en casos de ingreso alto 
+                    (sin asignación familiar pero con beneficiarios GES).
+                </div>
                 
                 <!-- Otros -->
                 <separator string="Otros" colspan="2"/>

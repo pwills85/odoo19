@@ -15,14 +15,11 @@ Author: EERGYGROUP - Professional Gap Closure 2025-11-02
 """
 
 import unittest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import tempfile
 import os
-import base64
-import binascii
 import requests
 from odoo.tests.common import TransactionCase
-from odoo.exceptions import UserError, ValidationError
 
 
 class TestAIChatIntegrationExceptions(TransactionCase):
@@ -164,7 +161,7 @@ class TestXMLSignerExceptions(TransactionCase):
             # Simulate cleanup
             try:
                 os.unlink(temp_file)
-            except OSError as e:
+            except OSError:
                 # Should log warning, not raise
                 pass
 

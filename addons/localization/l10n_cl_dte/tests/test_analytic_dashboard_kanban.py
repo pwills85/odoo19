@@ -16,7 +16,6 @@ Version: 19.0.1.0.0
 """
 
 from odoo.tests.common import TransactionCase
-from odoo.exceptions import ValidationError
 
 
 class TestAnalyticDashboardKanban(TransactionCase):

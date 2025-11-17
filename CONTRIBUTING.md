@@ -1,17 +1,38 @@
 # 🤝 CONTRIBUTING - Guía para Contribuir
 
-**Proyecto:** Odoo 19 CE - Facturación Electrónica Chile  
-**Última actualización:** 2025-10-23
+**Proyecto:** Odoo 19 CE - Facturación Electrónica Chile
+**Última actualización:** 2025-11-15
+
+---
+
+## 🆕 ACTUALIZACIÓN: Nueva Estrategia Git/GitHub (Nov 2025)
+
+**IMPORTANTE**: Hemos implementado una nueva estrategia de control de versiones para prevenir conflictos y pérdida de código.
+
+### 📖 Lectura Prioritaria
+
+1. **[.claude/GIT_STRATEGY.md](.claude/GIT_STRATEGY.md)** - Estrategia completa Git/GitHub ⭐ **NUEVO**
+2. **[.claude/GIT_WORKFLOW_QUICK.md](.claude/GIT_WORKFLOW_QUICK.md)** - Workflow rápido diario ⭐ **NUEVO**
+
+### 🎯 Cambios Clave
+
+- ✅ Integración diaria a `develop` (feature branches max 3 días)
+- ✅ Squash merge obligatorio
+- ✅ Versionado granular por módulo (`l10n_cl_dte/19.0.7.0.0`)
+- ✅ Pre-commit hooks automáticos
+- ⚠️ NO más branches con 100+ commits sin integrar
+- ⚠️ NO más merges "big bang" con conflictos masivos
 
 ---
 
 ## 📋 ANTES DE EMPEZAR
 
-### Lectura Obligatoria
+### Lectura Obligatoria (Actualizada)
 
-1. **[QUICK_START.md](QUICK_START.md)** - Setup del entorno (5 min)
-2. **[TEAM_ONBOARDING.md](TEAM_ONBOARDING.md)** - Onboarding completo (15 min)
-3. **[AI_AGENT_INSTRUCTIONS.md](AI_AGENT_INSTRUCTIONS.md)** - Reglas y patrones de código
+1. **[.claude/GIT_WORKFLOW_QUICK.md](.claude/GIT_WORKFLOW_QUICK.md)** - Workflow Git rápido (3 min) ⭐
+2. **[QUICK_START.md](QUICK_START.md)** - Setup del entorno (5 min)
+3. **[TEAM_ONBOARDING.md](TEAM_ONBOARDING.md)** - Onboarding completo (15 min)
+4. **[AI_AGENT_INSTRUCTIONS.md](AI_AGENT_INSTRUCTIONS.md)** - Reglas y patrones de código
 
 ### Requisitos Previos
 

@@ -169,12 +169,11 @@
                         help="Analysis from last 3 months"/>
                 <filter string="This Year" name="this_year" 
                         help="Analysis from this year"/>
-                <group expand="0" string="Group By">
-                    <filter string="Analysis Type" name="group_analysis_type" context="{'group_by': 'analysis_type'}"/>
-                    <filter string="Company" name="group_company" context="{'group_by': 'company_id'}"/>
-                    <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
-                    <filter string="Creation Date" name="group_create_date" context="{'group_by': 'create_date'}"/>
-                </group>
+                <separator/>
+                <filter string="Analysis Type" name="group_analysis_type" context="{'group_by': 'analysis_type'}"/>
+                <filter string="Company" name="group_company" context="{'group_by': 'company_id'}"/>
+                <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+                <filter string="Creation Date" name="group_create_date" context="{'group_by': 'create_date'}"/>
             </search>
         </field>
     </record>

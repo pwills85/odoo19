@@ -1,0 +1,162 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# Dependabot Configuration - Automated Dependency Updates
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Dependabot automáticamente revisa y crea PRs para actualizar dependencias.
+# Configuración optimizada para repositorios Python/Odoo con múltiples
+# archivos de dependencias.
+#
+# Referencia: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# ══════════════════════════════════════════════════════════════════════════════
+
+version: 2
+
+updates:
+  # ════════════════════════════════════════════════════════════════════════════
+  # PYTHON - Dependencias principales
+  # ════════════════════════════════════════════════════════════════════════════
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "python"
+      - "automated"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    reviewers:
+      - "pwills85"
+    assignees:
+      - "pwills85"
+    # Agrupar actualizaciones relacionadas
+    groups:
+      security-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "security"
+    # Ignorar dependencias específicas si es necesario
+    ignore:
+      # Mantener versiones específicas de Odoo
+      - dependency-name: "odoo"
+        versions: [">=19.0,<20.0"]
+      # Ignorar actualizaciones mayores que requieren cambios significativos
+      - dependency-name: "lxml"
+        update-types: ["version-update:semver-major"]
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # PYTHON - AI Service
+  # ════════════════════════════════════════════════════════════════════════════
+  - package-ecosystem: "pip"
+    directory: "/ai-service"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+      - "ai-service"
+      - "automated"
+    commit-message:
+      prefix: "chore(deps:ai-service)"
+      include: "scope"
+    reviewers:
+      - "pwills85"
+    assignees:
+      - "pwills85"
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # PYTHON - Prompts System
+  # ════════════════════════════════════════════════════════════════════════════
+  - package-ecosystem: "pip"
+    directory: "/docs/prompts"
+    schedule:
+      interval: "monthly"
+      day: "first monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "python"
+      - "prompts"
+      - "automated"
+    commit-message:
+      prefix: "chore(deps:prompts)"
+      include: "scope"
+    reviewers:
+      - "pwills85"
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # DOCKER - Dockerfile dependencies
+  # ════════════════════════════════════════════════════════════════════════════
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "docker"
+      - "infrastructure"
+      - "automated"
+    commit-message:
+      prefix: "chore(deps:docker)"
+      include: "scope"
+    reviewers:
+      - "pwills85"
+    assignees:
+      - "pwills85"
+    # Agrupar actualizaciones de imágenes base
+    groups:
+      base-images:
+        patterns:
+          - "python:*"
+          - "postgres:*"
+          - "redis:*"
+          - "odoo:*"
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # GITHUB ACTIONS - Workflow dependencies
+  # ════════════════════════════════════════════════════════════════════════════
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci-cd"
+      - "automated"
+    commit-message:
+      prefix: "chore(deps:actions)"
+      include: "scope"
+    reviewers:
+      - "pwills85"
+    assignees:
+      - "pwills85"
+    # Agrupar actualizaciones de acciones comunes
+    groups:
+      checkout-actions:
+        patterns:
+          - "actions/checkout"
+      setup-actions:
+        patterns:
+          - "actions/setup-python"
+          - "actions/setup-node"
+      docker-actions:
+        patterns:
+          - "docker/*"
+

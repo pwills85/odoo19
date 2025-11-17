@@ -1,0 +1,161 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# CONFIGURACIÓN CICLO AUTÓNOMO - REPORTES FINANCIEROS CHILE
+# ═══════════════════════════════════════════════════════════════════════════
+
+modulo:
+  nombre: "l10n_cl_financial_reports"
+  tipo: "modulo_odoo"
+  path: "addons/localization/l10n_cl_financial_reports/"
+  lenguaje: "python"
+  framework: "Odoo 19 CE"
+  
+descripcion: "Reportes financieros chilenos - Balance, P&L, flujo caja según normas SII"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CRITERIOS ÉXITO PERSONALIZADOS
+# ═══════════════════════════════════════════════════════════════════════════
+
+criterios_exito:
+  compliance_odoo19:
+    P0: 100
+    P1: 95
+  
+  tests:
+    coverage: 85
+    passing_rate: 100
+  
+  brechas:
+    P0_cerradas: 100
+    P1_cerradas: 90
+    P2_cerradas: 75
+  
+  calidad_codigo:
+    pep8_errors: 0
+    docstrings_coverage: 70
+    type_hints_coverage: 60
+  
+  seguridad:
+    vulnerabilidades_criticas: 0
+    vulnerabilidades_altas: 0
+  
+  reportes:
+    formatos_validos: true      # PDF, XLSX, HTML
+    precision_calculos: 0.01    # Centavos
+    tiempo_generacion: 10       # Segundos máximo
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ITERACIONES MÁXIMAS
+# ═══════════════════════════════════════════════════════════════════════════
+
+iteraciones:
+  P0: 5
+  P1: 3
+  P2: 1
+
+# ═══════════════════════════════════════════════════════════════════════════
+# VALIDACIONES ESPECÍFICAS
+# ═══════════════════════════════════════════════════════════════════════════
+
+validaciones:
+  # Tests
+  tests_odoo:
+    comando: "pytest addons/localization/l10n_cl_financial_reports/tests/ --cov=addons/localization/l10n_cl_financial_reports/ --cov-report=json -v"
+    criterio_exito: "coverage >= 85 AND passing_rate == 100"
+  
+  # Compliance Odoo 19
+  compliance_p0:
+    comandos:
+      t_esc: "grep -r 't-esc' addons/localization/l10n_cl_financial_reports/views/ | wc -l"
+      self_cr: "grep -r 'self\\._cr' addons/localization/l10n_cl_financial_reports/models/ | wc -l"
+    criterio_exito: "ALL == 0"
+  
+  # Validación reportes
+  reportes_generacion:
+    comando: |
+      pytest addons/localization/l10n_cl_financial_reports/tests/test_reports.py \
+        -v \
+        -k 'test_balance_sheet or test_profit_loss or test_cash_flow'
+    criterio_exito: "ALL PASSED"
+  
+  # Performance reportes
+  performance:
+    comando: |
+      pytest addons/localization/l10n_cl_financial_reports/tests/test_reports.py \
+        --durations=10
+    criterio_exito: "max_duration <= 10s"
+  
+  # Linting
+  linting:
+    comando: "flake8 addons/localization/l10n_cl_financial_reports/ --count --statistics"
+    criterio_exito: "errors == 0"
+  
+  # Smoke test
+  smoke_test:
+    comando: |
+      docker-compose run --rm odoo \
+        odoo-bin -c /etc/odoo/odoo.conf \
+        --test-enable \
+        --test-tags=/l10n_cl_financial_reports \
+        --stop-after-init \
+        --log-level=error
+    criterio_exito: "exit_code == 0"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# RESTRICCIONES ESPECÍFICAS
+# ═══════════════════════════════════════════════════════════════════════════
+
+restricciones:
+  - "NO modificar plantillas reportes sin aprobación contador: reports/templates/*"
+  - "NO cambiar lógica cálculos sin validación contable"
+  - "SÍ agregar tests para cada reporte nuevo"
+  - "SÍ validar formatos salida (PDF, XLSX)"
+  - "SÍ mantener backward compatibility con reportes legacy"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ARCHIVOS CRÍTICOS (Requieren aprobación manual)
+# ═══════════════════════════════════════════════════════════════════════════
+
+archivos_criticos:
+  - "models/account_report.py"
+  - "reports/balance_sheet.py"
+  - "reports/profit_loss.py"
+  - "reports/cash_flow.py"
+  - "reports/templates/*"
+  - "__manifest__.py"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DEPENDENCIAS EXTERNAS
+# ═══════════════════════════════════════════════════════════════════════════
+
+dependencias:
+  python:
+    - "reportlab>=4.0.0"     # Generación PDF
+    - "openpyxl>=3.1.0"      # Generación XLSX
+    - "Pillow>=10.0.0"       # Imágenes en reportes
+
+# ═══════════════════════════════════════════════════════════════════════════
+# MEMORIA INTELIGENTE - Configuración
+# ═══════════════════════════════════════════════════════════════════════════
+
+memoria:
+  habilitar: true
+  guardar_fixes_exitosos: true
+  guardar_estrategias_fallidas: true
+  extraer_patrones: true
+  dias_retencion: 365
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NOTIFICACIONES
+# ═══════════════════════════════════════════════════════════════════════════
+
+notificaciones:
+  slack:
+    habilitar: true
+    webhook: "${SLACK_WEBHOOK_URL}"
+    eventos:
+      - "ciclo_completado"
+      - "reporte_generacion_error"
+  
+  email:
+    habilitar: false
+

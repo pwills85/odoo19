@@ -59,7 +59,7 @@
                         <!-- Comparison Lines -->
                         <group string="📋 Resultados de Comparación">
                             <field name="comparison_line_ids" nolabel="1">
-                                <tree string="Comparación Detallada"
+                                <list string="Comparación Detallada"
                                       decoration-danger="has_discrepancy"
                                       decoration-success="not has_discrepancy"
                                       create="0" delete="0" edit="0">
@@ -70,7 +70,7 @@
                                     <field name="difference" string="Diferencia (F29 - F22)" widget="monetary"/>
                                     <field name="has_discrepancy" string="⚠️" widget="boolean"/>
                                     <field name="currency_id" column_invisible="1"/>
-                                </tree>
+                                </list>
                             </field>
                         </group>
 
@@ -96,11 +96,14 @@
     </record>
 
     <!-- Menu Item under Financial Reports -->
+    <!-- COMENTADO: Parent menu "menu_l10n_cl_financial_reports_root" no existe en el módulo -->
+    <!--
     <menuitem id="menu_l10n_cl_report_comparison_wizard"
               name="Comparación Anual F22/F29"
               parent="l10n_cl_financial_reports.menu_l10n_cl_financial_reports_root"
               action="action_l10n_cl_report_comparison_wizard"
               sequence="30"
               groups="account.group_account_user"/>
+    -->
 
 </odoo>

@@ -465,7 +465,7 @@ class L10nClBheBook(models.Model):
         )
 
         # Título del libro
-        ws['A1'] = f"LIBRO DE BOLETAS DE HONORARIOS ELECTRÓNICAS"
+        ws['A1'] = "LIBRO DE BOLETAS DE HONORARIOS ELECTRÓNICAS"
         ws['A1'].font = Font(bold=True, size=14)
         ws['A2'] = f"Período: {dict(self._fields['period_month'].selection)[self.period_month]} {self.period_year}"
         ws['A2'].font = Font(bold=True, size=12)

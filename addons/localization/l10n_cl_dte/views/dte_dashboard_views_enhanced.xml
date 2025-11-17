@@ -36,7 +36,7 @@
             </field>
 
             <!-- Mejorar sección de KPIs -->
-            <xpath expr="//div[@class='row mt-2']" position="after">
+            <xpath expr="//div[hasclass('row', 'mt-2')]" position="after">
                 <hr/>
 
                 <!-- KPIs Regulatorios -->
@@ -149,7 +149,7 @@
             </button>
 
             <!-- Añadir grupo de KPIs Regulatorios -->
-            <group string="Estado Actual" position="after">
+            <group name="estado_actual" position="after">
                 <group string="KPIs Regulatorios SII" name="kpis_regulatory">
                     <field name="pendientes_total"/>
                     <field name="dtes_enviados_sin_respuesta_6h"/>
@@ -159,7 +159,7 @@
             </group>
 
             <!-- Añadir grupo de Tasas Mejoradas -->
-            <group string="Facturación Mes Actual" position="replace">
+            <group name="facturacion_mes" position="replace">
                 <group string="Facturación Mes Actual" name="facturacion">
                     <field name="monto_facturado_mes" widget="monetary"
                            help="Monto bruto (solo facturas aceptadas)"/>
@@ -182,9 +182,8 @@
             </group>
 
             <!-- Añadir Alertas Regulatorias -->
-            <notebook>
-                <page string="Alertas Regulatorias" name="alertas_regulatory" position="before">
-                    <page string="Alertas Críticas" name="alertas_criticas">
+            <xpath expr="//page[@name='quick_lists']" position="before">
+                <page string="Alertas Críticas" name="alertas_criticas">
                         <group>
                             <div class="alert alert-danger" role="alert"
                                  invisible="not alerta_certificado">
@@ -235,9 +234,8 @@
                                 </span>
                             </div>
                         </group>
-                    </page>
                 </page>
-            </notebook>
+            </xpath>
         </field>
     </record>
 
@@ -278,11 +276,11 @@
         <field name="arch" type="xml">
             <filter name="filter_con_reparos" position="after">
                 <separator/>
-                <filter name="filter_alerta_caf" string="Alerta CAF Bajo" translate="True"
+                <filter name="filter_alerta_caf" string="Alerta CAF Bajo"
                         domain="[('alerta_caf_bajo', '=', True)]"/>
-                <filter name="filter_alerta_certificado" string="Alerta Certificado" translate="True"
+                <filter name="filter_alerta_certificado" string="Alerta Certificado"
                         domain="[('alerta_certificado', '=', True)]"/>
-                <filter name="filter_envejecidos" string="Con DTEs Envejecidos (+6h)" translate="True"
+                <filter name="filter_envejecidos" string="Con DTEs Envejecidos (+6h)"
                         domain="[('dtes_enviados_sin_respuesta_6h', '>', 0)]"/>
             </filter>
         </field>

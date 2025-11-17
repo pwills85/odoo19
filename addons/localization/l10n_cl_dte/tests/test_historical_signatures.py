@@ -18,9 +18,9 @@ Critical for:
 """
 
 from odoo.tests import TransactionCase, tagged
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import ValidationError
 from datetime import date, datetime
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import base64
 import logging
 

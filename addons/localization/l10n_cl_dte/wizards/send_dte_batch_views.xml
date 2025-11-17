@@ -6,14 +6,7 @@
         <field name="arch" type="xml">
             <form string="Envío Masivo de DTEs">
                 <group>
-                    <field name="invoice_ids" widget="many2many_tags">
-                        <tree>
-                            <field name="name"/>
-                            <field name="partner_id"/>
-                            <field name="amount_total"/>
-                            <field name="dte_status"/>
-                        </tree>
-                    </field>
+                    <field name="invoice_ids" widget="many2many_tags"/>
                     <field name="count" readonly="1"/>
                 </group>
                 <footer>

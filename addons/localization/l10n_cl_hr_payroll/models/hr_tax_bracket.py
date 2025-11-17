@@ -74,13 +74,27 @@ class HrTaxBracket(models.Model):
         string='Activo',
         default=True
     )
-    
-    _sql_constraints = [
-        ('tramo_vigencia_unique', 
-         'UNIQUE(tramo, vigencia_desde, vigencia_hasta)', 
-         'Ya existe un tramo con la misma vigencia'),
-    ]
-    
+
+    @api.constrains('tramo', 'vigencia_desde', 'vigencia_hasta')
+    def _check_tramo_vigencia_unique(self):
+        """Validar que no existan duplicados de tramo+vigencia (migrado desde _sql_constraints en Odoo 19)"""
+        for bracket in self:
+            domain = [
+                ('tramo', '=', bracket.tramo),
+                ('vigencia_desde', '=', bracket.vigencia_desde),
+                ('id', '!=', bracket.id)
+            ]
+            # Si vigencia_hasta está definido, también lo validamos
+            if bracket.vigencia_hasta:
+                domain.append(('vigencia_hasta', '=', bracket.vigencia_hasta))
+            else:
+                # Si vigencia_hasta es False/None, buscamos otros con False/None también
+                domain.append(('vigencia_hasta', '=', False))
+
+            existing = self.search_count(domain)
+            if existing:
+                raise ValidationError(_('Ya existe un tramo con la misma vigencia'))
+
     @api.depends('tramo', 'desde', 'hasta', 'tasa', 'vigencia_desde')
     def _compute_name(self):
         """Generar nombre descriptivo del tramo"""

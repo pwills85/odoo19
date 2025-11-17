@@ -1,0 +1,34 @@
+{
+  "project_context": {
+    "module": "l10n_cl_dte",
+    "odoo_version": "19.0",
+    "business_domain": "facturación electrónica chilena",
+    "regulatory_year": "2025",
+    "architecture_pattern": "enterprise_modular"
+  },
+  "previous_audits": {
+    "v1.0_count": 1,
+    "v2.0_count": 1,
+    "acid_test_count": 1,
+    "total_findings_historical": 15,
+    "critical_findings_pattern": ["XXE", "SII_communication", "IA_integration"]
+  },
+  "codebase_metrics": {
+    "python_files":      185,
+    "architecture_patterns":       59,
+    "test_coverage_estimated": 65,
+    "complexity_average": "medium"
+  },
+  "team_expertise": {
+    "primary_languages": ["Python", "XML", "SQL"],
+    "frameworks": ["Odoo", "FastAPI"],
+    "regulatory_focus": ["SII", "Chile_2025"],
+    "security_level": "military_grade"
+  },
+  "critical_success_factors": {
+    "regulatory_compliance": "100%_required",
+    "performance_target": "<250ms_response",
+    "security_level": "zero_trust",
+    "scalability_target": "enterprise_ready"
+  }
+}

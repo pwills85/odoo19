@@ -30,7 +30,6 @@ License: LGPL-3
 
 from lxml import etree
 from datetime import datetime
-import logging
 from decimal import Decimal
 
 from .structured_logging import get_dte_logger
@@ -109,7 +108,7 @@ class DTE52Generator:
             documento = etree.SubElement(dte, "Documento", ID=f"DTE-52-{picking_data['folio']}")
 
             # 1. Encabezado (Header)
-            encabezado = self._build_encabezado(documento, picking_data, company_data, partner_data)
+            self._build_encabezado(documento, picking_data, company_data, partner_data)
 
             # 2. Detalle (Line items)
             self._build_detalle(documento, picking_data)
@@ -411,7 +410,7 @@ def extract_company_data(company):
     """
     # Format RUT
     rut = company.vat or ''
-    if not '-' in rut:
+    if '-' not in rut:
         # Add dash if missing (76123456-7)
         rut = f"{rut[:-1]}-{rut[-1]}" if len(rut) > 1 else rut
 
@@ -438,7 +437,7 @@ def extract_partner_data(partner):
     """
     # Format RUT
     rut = partner.vat or '66666666-6'  # Default for generic client
-    if not '-' in rut:
+    if '-' not in rut:
         rut = f"{rut[:-1]}-{rut[-1]}" if len(rut) > 1 else rut
 
     return {

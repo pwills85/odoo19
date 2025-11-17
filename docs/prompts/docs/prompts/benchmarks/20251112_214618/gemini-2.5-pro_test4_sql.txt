@@ -1,0 +1,23 @@
+Loaded cached credentials.
+Aquí está la consulta SQL para PostgreSQL. Filtra facturas de clientes ('out_invoice') del último mes completo, agrupa por cliente y ordena por el total facturado de mayor a menor.
+
+```sql
+SELECT
+    p.name,
+    SUM(m.amount_total) AS total_invoiced
+FROM
+    account_move m
+JOIN
+    res_partner p ON m.partner_id = p.id
+WHERE
+    m.move_type = 'out_invoice'
+    AND m.state = 'posted'
+    AND m.invoice_date >= date_trunc('month', CURRENT_DATE - interval '1 month')
+    AND m.invoice_date < date_trunc('month', CURRENT_DATE)
+GROUP BY
+    p.name
+ORDER BY
+    total_invoiced DESC;
+```
+
+Aunque esta consulta es eficiente, en Odoo se prefiere usar el método `read_group` del ORM. Este abstrae la base de datos, respeta las reglas de seguridad y es más mantenible.

@@ -38,7 +38,7 @@ def migrate(cr, version):
     _logger.info("MIGRACIÓN: Marcar CAFs Históricos")
     _logger.info("=" * 80)
 
-    env = api.Environment(cr, SUPERUSER_ID, {})
+    api.Environment(cr, SUPERUSER_ID, {})
 
     # FASE 1: Marcar CAFs históricos por fecha
     stats = _mark_historical_by_date(cr)

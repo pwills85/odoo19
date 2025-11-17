@@ -1,0 +1,9 @@
+En Odoo 19, t-esc está deprecado y se reemplaza por t-out: ambos imprimen contenido escapado, pero t-out es la directiva unificada y soportada. Usa t-out para salida segura y t-raw solo cuando necesites salida sin escape.
+
+
+Total usage est:       1 Premium request
+Total duration (API):  11.5s
+Total duration (wall): 15.8s
+Total code changes:    0 lines added, 0 lines removed
+Usage by model:
+    gpt-5                27.0k input, 452 output, 0 cache read, 0 cache write (Est. 1 Premium request)

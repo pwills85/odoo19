@@ -81,10 +81,9 @@
                 <filter string="Históricas" name="filter_historicas" domain="[('fecha_termino', '!=', False)]"/>
                 <separator/>
                 <filter string="Archivadas" name="inactive" domain="[('active', '=', False)]"/>
-                <group>
-                    <filter string="Año Inicio" name="group_by_year" context="{'group_by': 'fecha_inicio:year'}"/>
-                    <filter string="Compañía" name="group_by_company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
-                </group>
+                <separator/>
+                <filter string="Año Inicio" name="group_by_year" context="{'group_by': 'fecha_inicio:year'}"/>
+                <filter string="Compañía" name="group_by_company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
             </search>
         </field>
     </record>

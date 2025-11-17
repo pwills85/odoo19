@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ═════════════════════════════════════════════════════════════
+         DASHBOARD CENTRAL DE DTEs - MONITOREO SII
+         Vista Dashboard, Kanban, Tree, Form, Graph, Search
+         Autor: EERGYGROUP - Ing. Pedro Troncoso Willz
+         Fecha: 2025-11-07
+         Fase: 2.1 - Dashboard Central de DTE
+         ═════════════════════════════════════════════════════════════ -->
+
+    <!-- ══════════════════════════════════════════════════════════════
+         DASHBOARD VIEW - Vista Principal con KPIs
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_dte_dashboard_dashboard" model="ir.ui.view">
+        <field name="name">l10n_cl.dte_dashboard.dashboard</field>
+        <field name="model">l10n_cl.dte_dashboard</field>
+        <field name="arch" type="xml">
+            <dashboard string="Dashboard Central DTEs">
+                <view type="graph" ref="view_dte_dashboard_graph_bar"/>
+                <group>
+                    <!-- Fila 1: KPIs Principales -->
+                    <aggregate name="dtes_aceptados_30d" field="dtes_aceptados_30d"
+                               string="DTEs Aceptados (30d)"
+                               help="DTEs aceptados por el SII en los últimos 30 días"
+                               clickable="1"
+                               domain="[('l10n_cl_dte_status', '=', 'accepted')]"
+                               widget="statinfo"
+                               icon="fa-check-circle"
+                               bg_color="#27ae60"/>
+
+                    <aggregate name="dtes_rechazados_30d" field="dtes_rechazados_30d"
+                               string="DTEs Rechazados (30d)"
+                               help="DTEs rechazados por el SII en los últimos 30 días"
+                               clickable="1"
+                               domain="[('l10n_cl_dte_status', '=', 'rejected')]"
+                               widget="statinfo"
+                               icon="fa-times-circle"
+                               bg_color="#e74c3c"/>
+
+                    <aggregate name="dtes_pendientes" field="dtes_pendientes"
+                               string="DTEs Pendientes"
+                               help="DTEs pendientes de envío al SII"
+                               clickable="1"
+                               domain="[('l10n_cl_dte_status', 'in', ['draft', 'to_send'])]"
+                               widget="statinfo"
+                               icon="fa-clock-o"
+                               bg_color="#f39c12"/>
+
+                    <aggregate name="monto_facturado_mes" field="monto_facturado_mes"
+                               string="Monto Facturado Mes"
+                               help="Monto total facturado con DTEs aceptados en el mes actual"
+                               widget="monetary"
+                               icon="fa-money"
+                               bg_color="#3498db"/>
+                </group>
+
+                <group>
+                    <!-- Fila 2: Indicadores Adicionales -->
+                    <aggregate name="total_dtes_emitidos_mes" field="total_dtes_emitidos_mes"
+                               string="Total DTEs Mes"
+                               help="Total de DTEs emitidos en el mes actual"
+                               widget="statinfo"
+                               icon="fa-file-text"/>
+
+                    <aggregate name="dtes_con_reparos" field="dtes_con_reparos"
+                               string="DTEs con Reparos"
+                               help="DTEs que requieren acción del usuario"
+                               clickable="1"
+                               widget="statinfo"
+                               icon="fa-exclamation-triangle"
+                               bg_color="#e67e22"/>
+
+                    <aggregate name="tasa_aceptacion_30d" field="tasa_aceptacion_30d"
+                               string="Tasa Aceptación"
+                               help="Porcentaje de DTEs aceptados sobre el total"
+                               widget="percentage"
+                               icon="fa-line-chart"
+                               bg_color="#16a085"/>
+
+                    <aggregate name="tasa_rechazo_30d" field="tasa_rechazo_30d"
+                               string="Tasa Rechazo"
+                               help="Porcentaje de DTEs rechazados sobre el total"
+                               widget="percentage"
+                               icon="fa-area-chart"
+                               bg_color="#c0392b"/>
+                </group>
+            </dashboard>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         KANBAN VIEW - Vista Tarjetas
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_dte_dashboard_kanban" model="ir.ui.view">
+        <field name="name">l10n_cl.dte_dashboard.kanban</field>
+        <field name="model">l10n_cl.dte_dashboard</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_dashboard" create="false" delete="false">
+                <field name="company_id"/>
+                <field name="dtes_aceptados_30d"/>
+                <field name="dtes_rechazados_30d"/>
+                <field name="dtes_pendientes"/>
+                <field name="monto_facturado_mes"/>
+                <field name="tasa_aceptacion_30d"/>
+                <field name="dtes_con_reparos"/>
+                <field name="currency_id"/>
+
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <!-- Header -->
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary">
+                                        <i class="fa fa-dashboard"/> Dashboard DTEs
+                                    </div>
+                                    <div class="o_secondary">
+                                        <field name="company_id"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- KPIs Section -->
+                            <div class="container o_kanban_card_content">
+                                <div class="row">
+                                    <div class="col-6 o_kanban_primary_left">
+                                        <button class="btn btn-success" name="action_view_dtes_aceptados" type="object">
+                                            <span class="o_stat_value">
+                                                <field name="dtes_aceptados_30d"/>
+                                            </span>
+                                            <span class="o_stat_text">Aceptados 30d</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-6 o_kanban_primary_right">
+                                        <button class="btn btn-danger" name="action_view_dtes_rechazados" type="object">
+                                            <span class="o_stat_value">
+                                                <field name="dtes_rechazados_30d"/>
+                                            </span>
+                                            <span class="o_stat_text">Rechazados 30d</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <div class="col-6">
+                                        <button class="btn btn-warning" name="action_view_dtes_pendientes" type="object">
+                                            <span class="o_stat_value">
+                                                <field name="dtes_pendientes"/>
+                                            </span>
+                                            <span class="o_stat_text">Pendientes</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-6">
+                                        <button class="btn btn-info" name="action_view_dtes_con_reparos" type="object">
+                                            <span class="o_stat_value">
+                                                <field name="dtes_con_reparos"/>
+                                            </span>
+                                            <span class="o_stat_text">Con Reparos</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <hr/>
+
+                                <div class="row">
+                                    <div class="col-12">
+                                        <span class="text-muted">Monto Facturado Mes:</span><br/>
+                                        <strong class="text-primary">
+                                            <field name="monto_facturado_mes" widget="monetary"/>
+                                        </strong>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <div class="col-6">
+                                        <span class="text-muted">Tasa Aceptación:</span><br/>
+                                        <strong t-att-class="record.tasa_aceptacion_30d.raw_value >= 95 ? 'text-success' : 'text-warning'">
+                                            <field name="tasa_aceptacion_30d" widget="percentage"/>
+                                        </strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="text-muted">Última Actualización:</span><br/>
+                                        <field name="last_update" widget="relative"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Footer con acciones -->
+                            <div class="o_kanban_card_footer">
+                                <button name="action_view_ultimos_dtes" type="object"
+                                        class="btn btn-sm btn-link">
+                                    <i class="fa fa-list"/> Ver Últimos DTEs
+                                </button>
+                                <button name="action_refresh_kpis" type="object"
+                                        class="btn btn-sm btn-link float-end">
+                                    <i class="fa fa-refresh"/> Actualizar
+                                </button>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TREE VIEW - Vista Lista
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_dte_dashboard_tree" model="ir.ui.view">
+        <field name="name">l10n_cl.dte_dashboard.list</field>
+        <field name="model">l10n_cl.dte_dashboard</field>
+        <field name="arch" type="xml">
+            <list string="Dashboard DTEs" create="false" delete="false">
+                <field name="company_id"/>
+                <field name="dtes_aceptados_30d"/>
+                <field name="dtes_rechazados_30d"/>
+                <field name="dtes_pendientes"/>
+                <field name="monto_facturado_mes" sum="Total Facturado"/>
+                <field name="tasa_aceptacion_30d" widget="percentage"
+                       decoration-success="tasa_aceptacion_30d >= 95"
+                       decoration-warning="tasa_aceptacion_30d >= 80 and tasa_aceptacion_30d &lt; 95"
+                       decoration-danger="tasa_aceptacion_30d &lt; 80"/>
+                <field name="last_update"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         FORM VIEW - Detalle Dashboard
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_dte_dashboard_form" model="ir.ui.view">
+        <field name="name">l10n_cl.dte_dashboard.form</field>
+        <field name="model">l10n_cl.dte_dashboard</field>
+        <field name="arch" type="xml">
+            <form string="Dashboard Central DTEs" create="false" delete="false">
+                <header>
+                    <!-- Botones de Acción -->
+                    <button name="action_view_dtes_aceptados" string="Ver Aceptados"
+                            type="object" class="btn-success" icon="fa-check-circle"/>
+                    <button name="action_view_dtes_rechazados" string="Ver Rechazados"
+                            type="object" class="btn-danger" icon="fa-times-circle"/>
+                    <button name="action_view_dtes_pendientes" string="Ver Pendientes"
+                            type="object" class="btn-warning" icon="fa-clock-o"/>
+                    <button name="action_refresh_kpis" string="Actualizar KPIs"
+                            type="object" class="btn-primary" icon="fa-refresh"/>
+                </header>
+
+                <sheet>
+                    <!-- Título -->
+                    <div class="oe_title">
+                        <h1>
+                            <field name="display_name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <!-- Smart Buttons -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_dtes_aceptados" type="object"
+                                class="oe_stat_button" icon="fa-check-circle">
+                            <div class="o_stat_info">
+                                <field name="dtes_aceptados_30d" class="o_stat_value"/>
+                                <span class="o_stat_text">Aceptados 30d</span>
+                            </div>
+                        </button>
+                        <button name="action_view_dtes_rechazados" type="object"
+                                class="oe_stat_button" icon="fa-times-circle">
+                            <div class="o_stat_info">
+                                <field name="dtes_rechazados_30d" class="o_stat_value"/>
+                                <span class="o_stat_text">Rechazados 30d</span>
+                            </div>
+                        </button>
+                        <button name="action_view_dtes_pendientes" type="object"
+                                class="oe_stat_button" icon="fa-clock-o">
+                            <div class="o_stat_info">
+                                <field name="dtes_pendientes" class="o_stat_value"/>
+                                <span class="o_stat_text">Pendientes</span>
+                            </div>
+                        </button>
+                        <button name="action_view_dtes_con_reparos" type="object"
+                                class="oe_stat_button" icon="fa-exclamation-triangle">
+                            <div class="o_stat_info">
+                                <field name="dtes_con_reparos" class="o_stat_value"/>
+                                <span class="o_stat_text">Con Reparos</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- KPIs Principales -->
+                    <group>
+                        <group string="KPIs Últimos 30 Días">
+                            <field name="dtes_aceptados_30d"/>
+                            <field name="dtes_rechazados_30d"/>
+                            <field name="tasa_aceptacion_30d" widget="percentage"/>
+                            <field name="tasa_rechazo_30d" widget="percentage"/>
+                        </group>
+                        <group string="Estado Actual">
+                            <field name="dtes_pendientes"/>
+                            <field name="dtes_con_reparos"/>
+                            <field name="total_dtes_emitidos_mes"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Facturación Mes Actual">
+                            <field name="monto_facturado_mes" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Información">
+                            <field name="company_id" readonly="1"/>
+                            <field name="last_update" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Listas de Acceso Rápido -->
+                    <notebook>
+                        <page string="Listas de Acceso Rápido" name="quick_lists">
+                            <group>
+                                <button name="action_view_dtes_con_reparos"
+                                        string="Mis DTEs con Reparos"
+                                        type="object"
+                                        class="btn-warning btn-lg btn-block"
+                                        icon="fa-exclamation-triangle"
+                                        help="Ver DTEs que requieren acción (rechazados o con errores)"/>
+
+                                <button name="action_view_ultimos_dtes"
+                                        string="Últimos DTEs Enviados"
+                                        type="object"
+                                        class="btn-info btn-lg btn-block"
+                                        icon="fa-list"
+                                        help="Ver los 10 DTEs más recientes con su estado"/>
+                            </group>
+                        </page>
+
+                        <page string="Gráficos" name="charts">
+                            <div class="alert alert-info" role="alert">
+                                <strong>Nota:</strong> Los gráficos se visualizan mejor en la vista Dashboard o Graph.
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         GRAPH VIEW - Gráfico de Barras (DTEs por Tipo)
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_dte_dashboard_graph_bar" model="ir.ui.view">
+        <field name="name">l10n_cl.dte_dashboard.graph.bar</field>
+        <field name="model">l10n_cl.dte_dashboard</field>
+        <field name="arch" type="xml">
+            <graph string="DTEs Emitidos por Tipo (Mes Actual)" type="bar">
+                <field name="company_id" type="row"/>
+                <field name="total_dtes_emitidos_mes" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         GRAPH VIEW - Gráfico de Línea (Facturación Diaria)
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_dte_dashboard_graph_line" model="ir.ui.view">
+        <field name="name">l10n_cl.dte_dashboard.graph.line</field>
+        <field name="model">l10n_cl.dte_dashboard</field>
+        <field name="arch" type="xml">
+            <graph string="Evolución Facturación Diaria (Mes Actual)" type="line">
+                <field name="company_id" type="row"/>
+                <field name="monto_facturado_mes" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         SEARCH VIEW - Filtros y Agrupaciones
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_dte_dashboard_search" model="ir.ui.view">
+        <field name="name">l10n_cl.dte_dashboard.search</field>
+        <field name="model">l10n_cl.dte_dashboard</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Dashboard DTEs">
+                <!-- Campo de búsqueda -->
+                <field name="company_id" string="Compañía"
+                       filter_domain="[('company_id', 'ilike', self)]"/>
+
+                <!-- Filtros Predefinidos -->
+                <filter name="filter_alta_aceptacion" string="Alta Aceptación (>95%)"
+                        domain="[('tasa_aceptacion_30d', '>=', 95)]"/>
+                <filter name="filter_media_aceptacion" string="Media Aceptación (80-95%)"
+                        domain="[('tasa_aceptacion_30d', '>=', 80), ('tasa_aceptacion_30d', '&lt;', 95)]"/>
+                <filter name="filter_baja_aceptacion" string="Baja Aceptación (&lt;80%)"
+                        domain="[('tasa_aceptacion_30d', '&lt;', 80)]"/>
+
+                <separator/>
+
+                <filter name="filter_con_pendientes" string="Con DTEs Pendientes"
+                        domain="[('dtes_pendientes', '>', 0)]"/>
+                <filter name="filter_con_reparos" string="Con DTEs con Reparos"
+                        domain="[('dtes_con_reparos', '>', 0)]"/>
+
+                <separator/>
+
+                <filter name="filter_my_company" string="Mi Compañía"
+                        domain="[('company_id', '=', context.get('company_id', False))]"/>
+
+                <!-- Agrupaciones -->
+                <group>
+                    <filter name="group_company" string="Compañía"
+                            context="{'group_by': 'company_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         ACTION - Acción Ventana Principal
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="action_dte_dashboard" model="ir.actions.act_window">
+        <field name="name">Dashboard Central DTEs</field>
+        <field name="res_model">l10n_cl.dte_dashboard</field>
+        <field name="view_mode">kanban,dashboard,graph,list,form</field>
+        <field name="context">{
+            'search_default_filter_my_company': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Dashboard Central de DTEs
+            </p>
+            <p>
+                Este dashboard proporciona una vista unificada del estado de los DTEs:<br/>
+                • DTEs Aceptados/Rechazados por el SII (últimos 30 días)<br/>
+                • DTEs Pendientes de envío<br/>
+                • Monto total facturado (mes actual)<br/>
+                • Tasas de aceptación y rechazo<br/>
+                • Listas de acceso rápido (DTEs con reparos, últimos enviados)
+            </p>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         MENU - Menú Principal en Facturación
+         ══════════════════════════════════════════════════════════════ -->
+    <menuitem id="menu_dte_dashboard"
+              name="Dashboard DTEs"
+              parent="account.menu_finance"
+              action="action_dte_dashboard"
+              sequence="3"/>
+
+</odoo>

@@ -12,7 +12,7 @@ _logger = logging.getLogger(__name__)
 class AnalyticReportController(http.Controller):
     """Controlador para reportes analíticos de proyectos"""
     
-    @http.route('/account_financial_report/analytic/export', type='json', auth='user')
+    @http.route('/account_financial_report/analytic/export', type='jsonrpc', auth='user')
     def export_analytic_report(self, project_ids, date_from, date_to, 
                               include_timesheet=True, group_by_account=True):
         """
@@ -46,19 +46,19 @@ class AnalyticReportController(http.Controller):
             formats = self._get_excel_formats(workbook)
             
             # Hoja de resumen
-            self._create_summary_sheet(workbook, report_data, formats)
+            self.env.create_summary_sheet(workbook, report_data, formats)
             
             # Hoja por cada proyecto
             for project_id, project_data in report_data['data'].items():
                 sheet_name = f"{project_data['analytic_account_code'][:20]}"
-                self._create_project_sheet(workbook, sheet_name, project_data, formats)
+                self.env.create_project_sheet(workbook, sheet_name, project_data, formats)
             
             # Hoja de comparación
-            self._create_comparison_sheet(workbook, report_data, formats)
+            self.env.create_comparison_sheet(workbook, report_data, formats)
             
             # Hoja de timesheet consolidado
             if include_timesheet:
-                self._create_timesheet_sheet(workbook, report_data, formats)
+                self.env.create_timesheet_sheet(workbook, report_data, formats)
             
             workbook.close()
             output.seek(0)
@@ -473,7 +473,7 @@ class AnalyticReportController(http.Controller):
         worksheet.write(row, 2, grand_total_hours, formats['number'])
         worksheet.write(row, 4, grand_total_cost, formats['currency_bold'])
     
-    @http.route('/account_financial_report/analytic/dashboard_data', type='json', auth='user')
+    @http.route('/account_financial_report/analytic/dashboard_data', type='jsonrpc', auth='user')
     def get_dashboard_data(self, project_ids=None, months=6):
         """
         Obtiene datos para el dashboard de proyectos
@@ -492,7 +492,7 @@ class AnalyticReportController(http.Controller):
             return {'success': False, 'error': str(e)}
     
     @http.route('/account_financial_report/analytic/project_details/<int:project_id>', 
-                type='json', auth='user')
+                type='jsonrpc', auth='user')
     def get_project_details(self, project_id, date_from=None, date_to=None):
         """
         Obtiene detalles de un proyecto específico

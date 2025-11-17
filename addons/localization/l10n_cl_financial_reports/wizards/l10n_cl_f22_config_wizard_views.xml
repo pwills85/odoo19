@@ -22,7 +22,7 @@
                         </group>
 
                         <!-- Configuración Actual -->
-                        <group name="config_actual" string="Configuración Actual" attrs="{'invisible': [('config_existente', '=', False)]}">
+                        <group name="config_actual" string="Configuración Actual" invisible="not config_existente">
                             <field name="config_existente" invisible="1"/>
                             <div class="alert alert-info" role="alert">
                                 <i class="fa fa-info-circle"/> Ya existe configuración previa. Los valores actuales serán reemplazados al guardar.
@@ -37,18 +37,22 @@
 
                         <group name="cuentas" col="2">
                             <group name="cuenta_gasto" string="Cuenta de Gasto">
+                                <field name="cuenta_gasto_impuesto_domain" invisible="1"/>
                                 <field name="cuenta_gasto_impuesto"
                                        options="{'no_create': True}"
-                                       context="{'show_account_code': True}"/>
+                                       context="{'show_account_code': True}"
+                                       domain="cuenta_gasto_impuesto_domain"/>
                                 <div class="text-muted small">
                                     <i class="fa fa-lightbulb-o"/> Cuenta para registrar el gasto de impuesto primera categoría (ej: 5105 - Impuesto a la Renta)
                                 </div>
                             </group>
 
                             <group name="cuenta_impuesto" string="Cuenta de Pasivo">
+                                <field name="cuenta_impuesto_por_pagar_domain" invisible="1"/>
                                 <field name="cuenta_impuesto_por_pagar"
                                        options="{'no_create': True}"
-                                       context="{'show_account_code': True}"/>
+                                       context="{'show_account_code': True}"
+                                       domain="cuenta_impuesto_por_pagar_domain"/>
                                 <div class="text-muted small">
                                     <i class="fa fa-lightbulb-o"/> Cuenta de pasivo para el impuesto por pagar al SII (ej: 2103 - Impuesto Renta por Pagar)
                                 </div>

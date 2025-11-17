@@ -1,0 +1,106 @@
+{
+  "benchmark_date": "2025-11-12 21:59:39",
+  "bash_version": "GNU bash, version 5.3.3(1)-release (aarch64-apple-darwin24.4.0)",
+  "models_tested": ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro"],
+  "total_tests": 5,
+  "results": {
+    "gemini-2.5-flash-lite": {
+      "test1": {
+        "time_seconds": [0;34m[TEST 1/15][0m Testing gemini-2.5-flash-lite - Pregunta simple,
+        "tokens_estimated": ,
+        "chars": ,
+        "speed_tokens_per_sec": 0
+      },
+      "test2": {
+        "time_seconds": [0;34m[TEST 1/15][0m Testing gemini-2.5-flash-lite - Explicación técnica,
+        "tokens_estimated": ,
+        "chars": ,
+        "speed_tokens_per_sec": 0
+      },
+      "test3": {
+        "time_seconds": [0;34m[TEST 1/15][0m Testing gemini-2.5-flash-lite - Análisis código,
+        "tokens_estimated": ,
+        "chars": ,
+        "speed_tokens_per_sec": 0
+      },
+      "test4": {
+        "time_seconds": [0;34m[TEST 1/15][0m Testing gemini-2.5-flash-lite - Generación SQL,
+        "tokens_estimated": ,
+        "chars": ,
+        "speed_tokens_per_sec": 0
+      },
+      "test5": {
+        "time_seconds": [0;34m[TEST 1/15][0m Testing gemini-2.5-flash-lite - Multi-step reasoning,
+        "tokens_estimated": ,
+        "chars": ,
+        "speed_tokens_per_sec": 0
+      }
+    }
+,
+    "gemini-2.5-flash": {
+      "test1": {
+        "time_seconds": [0;34m[TEST 1/15][0m Testing gemini-2.5-flash - Pregunta simple,
+        "tokens_estimated": ,
+        "chars": ,
+        "speed_tokens_per_sec": 0
+      },
+      "test2": {
+        "time_seconds": [0;34m[TEST 1/15][0m Testing gemini-2.5-flash - Explicación técnica,
+        "tokens_estimated": ,
+        "chars": ,
+        "speed_tokens_per_sec": 0
+      },
+      "test3": {
+        "time_seconds": [0;34m[TEST 1/15][0m Testing gemini-2.5-flash - Análisis código,
+        "tokens_estimated": ,
+        "chars": ,
+        "speed_tokens_per_sec": 0
+      },
+      "test4": {
+        "time_seconds": [0;34m[TEST 1/15][0m Testing gemini-2.5-flash - Generación SQL,
+        "tokens_estimated": ,
+        "chars": ,
+        "speed_tokens_per_sec": 0
+      },
+      "test5": {
+        "time_seconds": [0;34m[TEST 1/15][0m Testing gemini-2.5-flash - Multi-step reasoning,
+        "tokens_estimated": ,
+        "chars": ,
+        "speed_tokens_per_sec": 0
+      }
+    }
+,
+    "gemini-2.5-pro": {
+      "test1": {
+        "time_seconds": [0;34m[TEST 1/15][0m Testing gemini-2.5-pro - Pregunta simple,
+        "tokens_estimated": ,
+        "chars": ,
+        "speed_tokens_per_sec": 0
+      },
+      "test2": {
+        "time_seconds": [0;34m[TEST 1/15][0m Testing gemini-2.5-pro - Explicación técnica,
+        "tokens_estimated": ,
+        "chars": ,
+        "speed_tokens_per_sec": 0
+      },
+      "test3": {
+        "time_seconds": [0;34m[TEST 1/15][0m Testing gemini-2.5-pro - Análisis código,
+        "tokens_estimated": ,
+        "chars": ,
+        "speed_tokens_per_sec": 0
+      },
+      "test4": {
+        "time_seconds": [0;34m[TEST 1/15][0m Testing gemini-2.5-pro - Generación SQL,
+        "tokens_estimated": ,
+        "chars": ,
+        "speed_tokens_per_sec": 0
+      },
+      "test5": {
+        "time_seconds": [0;34m[TEST 1/15][0m Testing gemini-2.5-pro - Multi-step reasoning,
+        "tokens_estimated": ,
+        "chars": ,
+        "speed_tokens_per_sec": 0
+      }
+    }
+  }
+}

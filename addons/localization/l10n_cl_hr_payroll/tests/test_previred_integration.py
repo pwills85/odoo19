@@ -53,7 +53,8 @@ class TestPreviredIntegration(TransactionCase):
             'period': date(2025, 1, 1),
             'uf': 37500.00,
             'utm': 65000.00,
-            'uta': 780000.00
+            'uta': 780000.00,
+            'minimum_wage': 500000.00
         })
 
         # Contrato 2025 (con reforma)
@@ -243,6 +244,7 @@ class TestPreviredIntegration(TransactionCase):
         })
 
         contract_sin_rut = self.env['hr.contract'].create({
+            'name': 'Contract Sin RUT',
             'employee_id': empleado_sin_rut.id,
             'wage': 1000000,
             'date_start': date(2025, 1, 1),
@@ -277,6 +279,7 @@ class TestPreviredIntegration(TransactionCase):
         AFP es obligatoria para cálculo de cotizaciones.
         """
         contract_sin_afp = self.env['hr.contract'].create({
+            'name': 'Contract Sin AFP',
             'employee_id': self.employee.id,
             'wage': 1000000,
             'date_start': date(2025, 1, 1),

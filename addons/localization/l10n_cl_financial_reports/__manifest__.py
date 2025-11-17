@@ -172,6 +172,7 @@ For technical support and customizations, contact EERGYGROUP.
         "views/ratio_prediction_ml_views.xml",
         "views/executive_dashboard_views.xml",
         "views/bi_dashboard_views.xml",
+        "views/financial_dashboard_menu.xml",  # Dashboard menu (must load BEFORE layout views)
         "views/financial_dashboard_layout_views.xml",  # Dashboard management views
 
         # Wizard views - Now enabled with complete implementation
@@ -185,7 +186,7 @@ For technical support and customizations, contact EERGYGROUP.
         "views/l10n_cl_kpi_alert_views.xml",  # FASE 2: KPI Alerts
         "views/l10n_cl_tax_forms_menu.xml",
         "views/res_config_settings_views.xml",  # Fixed: XPath corregido para Odoo 18
-        "views/res_config_settings_performance_views.xml",  # Fixed: Implementación completa con monitoreo
+        # "views/res_config_settings_performance_views.xml",  # DISABLED: XPath incompatible con Odoo 19
 
         # All menu items after views that define actions
         "views/menu_items.xml",

@@ -37,7 +37,7 @@
                             <div class="col-12 text-center">
                                 <p class="mb-0">
                                     <strong>Al:</strong>
-                                    <span t-esc="period_info.get('date_to', 'N/A')"/>
+                                    <span t-out="period_info.get('date_to', 'N/A')"/>
                                 </p>
                                 <p class="text-muted small mb-0">
                                     (Expresado en Pesos Chilenos - CLP)
@@ -63,7 +63,7 @@
                                     <tr class="table-info">
                                         <td class="fw-bold">ACTIVO CORRIENTE</td>
                                         <td class="text-end fw-bold">
-                                            <span t-esc="totals.get('CL_CURRENT_ASSETS', {}).get('formatted', '0.00')"/>
+                                            <span t-out="totals.get('CL_CURRENT_ASSETS', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
 
@@ -71,7 +71,7 @@
                                     <tr class="table-info">
                                         <td class="fw-bold">ACTIVO NO CORRIENTE</td>
                                         <td class="text-end fw-bold">
-                                            <span t-esc="totals.get('CL_NON_CURRENT_ASSETS', {}).get('formatted', '0.00')"/>
+                                            <span t-out="totals.get('CL_NON_CURRENT_ASSETS', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
 
@@ -79,7 +79,7 @@
                                     <tr class="table-primary fw-bold">
                                         <td>TOTAL ACTIVOS</td>
                                         <td class="text-end">
-                                            <span t-esc="totals.get('CL_ASSETS', {}).get('formatted', '0.00')"/>
+                                            <span t-out="totals.get('CL_ASSETS', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -102,7 +102,7 @@
                                     <tr class="table-warning">
                                         <td class="fw-bold">PASIVO CORRIENTE</td>
                                         <td class="text-end fw-bold">
-                                            <span t-esc="totals.get('CL_CURRENT_LIABILITIES', {}).get('formatted', '0.00')"/>
+                                            <span t-out="totals.get('CL_CURRENT_LIABILITIES', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
 
@@ -110,7 +110,7 @@
                                     <tr class="table-warning">
                                         <td class="fw-bold">PASIVO NO CORRIENTE</td>
                                         <td class="text-end fw-bold">
-                                            <span t-esc="totals.get('CL_NON_CURRENT_LIABILITIES', {}).get('formatted', '0.00')"/>
+                                            <span t-out="totals.get('CL_NON_CURRENT_LIABILITIES', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
 
@@ -118,7 +118,7 @@
                                     <tr class="table-secondary fw-bold">
                                         <td>TOTAL PASIVOS</td>
                                         <td class="text-end">
-                                            <span t-esc="totals.get('CL_LIABILITIES', {}).get('formatted', '0.00')"/>
+                                            <span t-out="totals.get('CL_LIABILITIES', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
 
@@ -126,7 +126,7 @@
                                     <tr class="table-info">
                                         <td class="fw-bold">PATRIMONIO</td>
                                         <td class="text-end fw-bold">
-                                            <span t-esc="totals.get('CL_EQUITY', {}).get('formatted', '0.00')"/>
+                                            <span t-out="totals.get('CL_EQUITY', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
 
@@ -134,7 +134,7 @@
                                     <tr class="table-success fw-bold">
                                         <td>TOTAL PASIVOS Y PATRIMONIO</td>
                                         <td class="text-end">
-                                            <span t-esc="totals.get('CL_LIABILITIES_EQUITY_SECTION', {}).get('formatted', '0.00')"/>
+                                            <span t-out="totals.get('CL_LIABILITIES_EQUITY_SECTION', {}).get('formatted', '0.00')"/>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -150,7 +150,7 @@
                                 Financiera (NIIF) y las prácticas contables chilenas.
                             </p>
                             <p class="text-muted small">
-                                Generado el: <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y %H:%M')"/> |
+                                Generado el: <span t-out="datetime.datetime.now().strftime('%d/%m/%Y %H:%M')"/> |
                                 Sistema: Odoo 19 CE - l10n_cl_financial_reports
                             </p>
                         </div>

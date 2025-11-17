@@ -325,7 +325,7 @@
                                 </div>
                                 <div class="o_kanban_counter">
                                     <span class="o_kanban_counter_side">
-                                        <b><t t-esc="group.count"/></b> Projects
+                                        <b><t t-out="group.count"/></b> Projects
                                     </span>
                                 </div>
                             </div>

@@ -14,6 +14,9 @@ Tests:
 from odoo.tests import tagged, TransactionCase
 from odoo.exceptions import ValidationError, UserError
 from datetime import date
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 @tagged('post_install', '-at_install', 'payroll_calc')
@@ -36,7 +39,8 @@ class TestPayrollCalculationsSprint32(TransactionCase):
             'period': date(2025, 10, 1),
             'uf': 39383.07,
             'utm': 68647,
-            'minimum_wage': 500000,
+            'uta': 823764.00,
+            'minimum_wage': 500000.00,
             'afp_limit': 87.8,
         })
         
@@ -63,6 +67,7 @@ class TestPayrollCalculationsSprint32(TransactionCase):
             'health_system': 'fonasa',
             'weekly_hours': 45,
             'state': 'open',
+            'gratification_type': 'none',  # FIX: Desactivar gratificación automática para tests
             'date_start': date(2025, 1, 1),
         })
         
@@ -74,6 +79,7 @@ class TestPayrollCalculationsSprint32(TransactionCase):
             'date_from': date(2025, 10, 1),
             'date_to': date(2025, 10, 31),
             'indicadores_id': self.indicators.id,
+            'struct_id': self.env.ref('l10n_cl_hr_payroll.structure_base_cl').id,
         })
     
     # ═══════════════════════════════════════════════════════════
@@ -219,8 +225,8 @@ class TestPayrollCalculationsSprint32(TransactionCase):
         # Calcular liquidación
         self.payslip.action_compute_sheet()
         
-        # No debe existir línea TAX
-        tax_line = self.payslip.line_ids.filtered(lambda l: l.code == 'TAX')
+        # No debe existir línea IMPUESTO_UNICO
+        tax_line = self.payslip.line_ids.filtered(lambda l: l.code == 'IMPUESTO_UNICO')
         self.assertFalse(tax_line, "Tramo 1 debe estar exento")
     
     def test_tax_tramo2(self):
@@ -231,9 +237,9 @@ class TestPayrollCalculationsSprint32(TransactionCase):
         # Calcular liquidación
         self.payslip.action_compute_sheet()
         
-        # Debe existir línea TAX
-        tax_line = self.payslip.line_ids.filtered(lambda l: l.code == 'TAX')
-        self.assertTrue(tax_line, "Debe existir línea TAX")
+        # Debe existir línea IMPUESTO_UNICO
+        tax_line = self.payslip.line_ids.filtered(lambda l: l.code == 'IMPUESTO_UNICO')
+        self.assertTrue(tax_line, "Debe existir línea IMPUESTO_UNICO")
         
         # Base tributable = 1.000.000
         # - AFP = 1.000.000 * 0.1144 = 114.400
@@ -252,8 +258,8 @@ class TestPayrollCalculationsSprint32(TransactionCase):
         self.payslip.action_compute_sheet()
         
         # Verificar impuesto calculado
-        tax_line = self.payslip.line_ids.filtered(lambda l: l.code == 'TAX')
-        self.assertTrue(tax_line, "Debe existir línea TAX")
+        tax_line = self.payslip.line_ids.filtered(lambda l: l.code == 'IMPUESTO_UNICO')
+        self.assertTrue(tax_line, "Debe existir línea IMPUESTO_UNICO")
         
         # Base = 2.000.000 - (2.000.000 * 0.1144) - (2.000.000 * 0.07)
         # Base = 2.000.000 - 228.800 - 140.000 = 1.631.200
@@ -280,19 +286,20 @@ class TestPayrollCalculationsSprint32(TransactionCase):
         self.assertAlmostEqual(abs(afc_line.total), expected_afc, delta=10)
     
     def test_afc_tope(self):
-        """Test tope AFC (120.2 UF)"""
+        """Test tope AFC (131.9 UF - Actualizado 2025)"""
         # Contrato con sueldo alto (excede tope AFC)
         self.contract.wage = 5000000
-        
+
         # Calcular liquidación
         self.payslip.action_compute_sheet()
-        
+
         # Verificar línea AFC
         afc_line = self.payslip.line_ids.filtered(lambda l: l.code == 'AFC')
-        
-        # Tope = 120.2 * 39.383,07 = 4.734.841
-        # AFC = 4.734.841 * 0.006 = 28.409
-        tope_clp = self.indicators.uf * 120.2
+
+        # Tope = 131.9 * 39.383,07 = 5.194.620
+        # AFC = 5.194.620 * 0.006 = 31.168
+        # Ref: Superintendencia de Pensiones - Límite máximo mensual AFC 2025
+        tope_clp = self.indicators.uf * 131.9
         expected_afc = tope_clp * 0.006
         self.assertAlmostEqual(abs(afc_line.total), expected_afc, delta=10)
     
@@ -333,7 +340,7 @@ class TestPayrollCalculationsSprint32(TransactionCase):
         self.assertTrue(self.payslip.line_ids.filtered(lambda l: l.code == 'BONO_PROD'))
         self.assertTrue(self.payslip.line_ids.filtered(lambda l: l.code == 'COLACION'))
         self.assertTrue(self.payslip.line_ids.filtered(lambda l: l.code == 'AFP'))
-        self.assertTrue(self.payslip.line_ids.filtered(lambda l: l.code == 'HEALTH'))
+        self.assertTrue(self.payslip.line_ids.filtered(lambda l: l.code == 'SALUD'))  # Código en español
         self.assertTrue(self.payslip.line_ids.filtered(lambda l: l.code == 'AFC'))
         
         # Verificar totalizadores

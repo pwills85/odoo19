@@ -29,7 +29,6 @@ from zeep.exceptions import Fault
 from requests import Session
 from requests.exceptions import ConnectionError, Timeout
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-import logging
 import time
 
 # P3.1 GAP CLOSURE: Structured logging with conditional JSON output
@@ -260,7 +259,7 @@ class SIISoapClient:
             authenticator = SIIAuthenticator(company, environment=environment)
             token = authenticator.get_token()
 
-            _logger.debug(f"[SII Send] Token obtained for DTE send")
+            _logger.debug("[SII Send] Token obtained for DTE send")
 
             # Create SOAP client with authentication headers
             session = Session()
@@ -271,7 +270,7 @@ class SIISoapClient:
 
             timeout = self._get_sii_timeout()
             transport = Transport(session=session, timeout=timeout)
-            client = self._create_soap_client('envio_dte', transport=transport)
+            client = self.env.create_soap_client('envio_dte', transport=transport)
 
             # Extract DV from RUT
             rut_parts = rut_emisor.split('-')
@@ -367,7 +366,7 @@ class SIISoapClient:
             authenticator = SIIAuthenticator(company, environment=environment)
             token = authenticator.get_token()
 
-            _logger.debug(f"[SII Query] Token obtained for query")
+            _logger.debug("[SII Query] Token obtained for query")
 
             # Create SOAP client with authentication headers
             session = Session()
@@ -377,7 +376,7 @@ class SIISoapClient:
             })
 
             transport = Transport(session=session, timeout=30)
-            client = self._create_soap_client('consulta_estado', transport=transport)
+            client = self.env.create_soap_client('consulta_estado', transport=transport)
 
             # Extract DV from RUT
             rut_parts = rut_emisor.split('-')
@@ -451,7 +450,7 @@ class SIISoapClient:
             authenticator = SIIAuthenticator(company, environment=environment)
             token = authenticator.get_token()
 
-            _logger.debug(f"[SII CommResp] Token obtained for commercial response")
+            _logger.debug("[SII CommResp] Token obtained for commercial response")
 
             # Create SOAP client with authentication headers
             session = Session()
@@ -463,7 +462,7 @@ class SIISoapClient:
             timeout = self._get_sii_timeout()
             transport = Transport(session=session, timeout=timeout)
             # Use same endpoint as envio_dte for commercial responses
-            client = self._create_soap_client('envio_dte', transport=transport)
+            client = self.env.create_soap_client('envio_dte', transport=transport)
 
             # Extract DV from RUT
             rut_parts = rut_emisor.split('-')

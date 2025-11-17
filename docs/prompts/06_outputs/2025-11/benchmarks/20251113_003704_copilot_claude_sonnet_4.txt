@@ -1,0 +1,11 @@
+✓ Read .github/agents/knowledge/odoo19_deprecations_reference.md:1-50 (36 lines)
+
+En Odoo 19, `t-esc` está deprecado y debe reemplazarse por `t-out` para escapar HTML automáticamente en las plantillas QWeb. Esta es una migración P0 crítica con deadline 2025-03-01, donde `t-out` es más seguro contra XSS y es el estándar oficial de Odoo 19.
+
+
+Total usage est:       1 Premium request
+Total duration (API):  21.3s
+Total duration (wall): 25.2s
+Total code changes:    0 lines added, 0 lines removed
+Usage by model:
+    claude-sonnet-4      68.9k input, 236 output, 0 cache read, 0 cache write (Est. 1 Premium request)

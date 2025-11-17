@@ -5,7 +5,7 @@ Aportes del Empleador Chile - Reforma Previsional 2025
 
 Costos laborales obligatorios del empleador (NO se descuentan al trabajador):
 
-1. Seguro de Invalidez y Sobrevivencia (SIS): 1.53%
+1. Seguro de Invalidez y Sobrevivencia (SIS): 1.57%
    - Base: Remuneración imponible
    - Tope: 87.8 UF
    - Destino: AFP
@@ -14,7 +14,7 @@ Costos laborales obligatorios del empleador (NO se descuentan al trabajador):
    - Contrato indefinido: 2.4% (2.2% empleador + 0.2% trabajador indemnización)
    - Contrato plazo fijo: 3.0% (trabajador 0.6% + empleador 2.4%)
    - Base: Remuneración imponible
-   - Tope: 120.2 UF
+   - Tope: 131.9 UF (Actualizado 2025 - SP)
 
 3. Caja de Compensación de Asignación Familiar (CCAF): 0.6%
    - Base: Remuneración imponible
@@ -26,6 +26,7 @@ Técnica Odoo 19 CE: Reglas salariales con categoría APORTE_EMPLEADOR
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+from odoo.tools import ormcache
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ class HrPayslipAportesEmpleador(models.Model):
     # ═══════════════════════════════════════════════════════════
     
     aporte_sis_amount = fields.Monetary(
-        string='SIS (1.53%)',
+        string='SIS (1.57%)',
         currency_field='company_currency_id',
         compute='_compute_aporte_sis',
         store=True,
@@ -84,7 +85,7 @@ class HrPayslipAportesEmpleador(models.Model):
         """
         Calcular Seguro de Invalidez y Sobrevivencia (SIS)
         
-        Tasa: 1.53% sobre imponible
+        Tasa: 1.57% sobre imponible (D.L. 3.500, Art. 68)
         Tope: 87.8 UF
         """
         for payslip in self:
@@ -96,8 +97,8 @@ class HrPayslipAportesEmpleador(models.Model):
             tope_afp_clp = payslip._get_tope_afp_clp()
             base_imponible = min(payslip.total_imponible, tope_afp_clp)
             
-            # Calcular 1.53%
-            payslip.aporte_sis_amount = base_imponible * 0.0153
+            # Calcular 1.57% (Tasa correcta según D.L. 3.500)
+            payslip.aporte_sis_amount = base_imponible * 0.0157
             
             _logger.debug(
                 f"SIS calculado: ${payslip.aporte_sis_amount:,.0f} "
@@ -111,7 +112,7 @@ class HrPayslipAportesEmpleador(models.Model):
         
         Contrato indefinido: 2.4%
         Contrato plazo fijo: 3.0%
-        Tope: 120.2 UF
+        Tope: 131.9 UF (Actualizado 2025 - SP)
         """
         for payslip in self:
             if not payslip.total_imponible or not payslip.contract_id:
@@ -121,7 +122,7 @@ class HrPayslipAportesEmpleador(models.Model):
             # Determinar tasa según tipo contrato
             tasa = payslip._get_tasa_seguro_cesantia_empleador()
             
-            # Aplicar tope seguro cesantía (120.2 UF)
+            # Aplicar tope seguro cesantía (131.9 UF - Actualizado 2025 - SP)
             tope_cesantia_clp = payslip._get_tope_cesantia_clp()
             base_imponible = min(payslip.total_imponible, tope_cesantia_clp)
             
@@ -186,63 +187,75 @@ class HrPayslipAportesEmpleador(models.Model):
     # HELPER METHODS
     # ═══════════════════════════════════════════════════════════
     
+    def _get_economic_indicators(self):
+        """Helper para obtener el registro de indicadores económicos del período."""
+        self.ensure_one()
+        if not self.date_to:
+            raise ValidationError(_("La liquidación debe tener una fecha de término para obtener los indicadores."))
+        
+        indicators = self.env['hr.economic.indicators'].get_indicator_for_date(self.date_to)
+        if not indicators:
+            raise UserError(_("No se encontraron indicadores económicos para el período de la liquidación."))
+        return indicators
+
+    @ormcache('self.date_to')
     def _get_tope_afp_clp(self):
         """
-        Obtener tope AFP en pesos chilenos (87.8 UF)
-        
-        Returns:
-            float: Tope en CLP
+        Obtener tope AFP en pesos chilenos dinámicamente desde hr.economic.indicators.
         """
         self.ensure_one()
+        indicators = self._get_economic_indicators()
         
-        # Obtener UF del día
-        uf_value = self._get_uf_value(self.date_to or fields.Date.today())
+        tope_uf = indicators.afp_tope_uf
+        if not tope_uf or tope_uf <= 0:
+            _logger.warning(f"Tope AFP (UF) no encontrado en indicadores para {indicators.period}. Usando fallback de 87.8.")
+            tope_uf = 87.8 # Fallback de seguridad
+
+        tope_clp = tope_uf * indicators.uf
         
-        # Tope 87.8 UF
-        tope = 87.8 * uf_value
-        
-        return tope
+        _logger.info(
+            f"Tope AFP calculado para Payslip {self.number}: {tope_uf} UF * ${indicators.uf:,.2f} = ${tope_clp:,.0f}",
+            extra={'payslip_id': self.id, 'source': indicators.source, 'last_sync': indicators.last_sync}
+        )
+        return tope_clp
     
+    @ormcache('self.date_to')
     def _get_tope_cesantia_clp(self):
         """
-        Obtener tope Seguro Cesantía en pesos chilenos (120.2 UF)
-        
-        Returns:
-            float: Tope en CLP
+        Obtener tope Seguro Cesantía en pesos chilenos dinámicamente desde hr.economic.indicators.
         """
         self.ensure_one()
-        
-        # Obtener UF del día
-        uf_value = self._get_uf_value(self.date_to or fields.Date.today())
-        
-        # Tope 120.2 UF
-        tope = 120.2 * uf_value
-        
-        return tope
+        indicators = self._get_economic_indicators()
+
+        tope_uf = indicators.afc_tope_uf
+        if not tope_uf or tope_uf <= 0:
+            _logger.warning(f"Tope AFC (UF) no encontrado en indicadores para {indicators.period}. Usando fallback de 131.9.")
+            tope_uf = 131.9 # Fallback de seguridad
+
+        tope_clp = tope_uf * indicators.uf
+
+        _logger.info(
+            f"Tope AFC calculado para Payslip {self.number}: {tope_uf} UF * ${indicators.uf:,.2f} = ${tope_clp:,.0f}",
+            extra={'payslip_id': self.id, 'source': indicators.source, 'last_sync': indicators.last_sync}
+        )
+        return tope_clp
     
     def _get_uf_value(self, reference_date):
         """
-        Obtener valor UF vigente
-        
+        Obtener valor UF vigente con cache - HIGH-013
+
+        DEPRECATED: Usar directamente _get_uf_value_cached()
+        Mantener por compatibilidad legacy
+
         Args:
             reference_date (date): Fecha de referencia
-        
+
         Returns:
             float: Valor UF en pesos
         """
-        # Buscar UF en indicadores económicos
-        indicator = self.env['hr.economic.indicators'].search([
-            ('date', '<=', reference_date)
-        ], order='date desc', limit=1)
-        
-        if indicator and indicator.uf:
-            return indicator.uf
-        
-        # Valor por defecto (2025)
-        _logger.warning(
-            f"UF no encontrada para {reference_date}, usando valor por defecto $38,000"
-        )
-        return 38000.0
+        # Usar método cached para mejor performance
+        indicators = self.env['hr.economic.indicators']
+        return indicators._get_uf_value_cached(reference_date)
     
     def _get_tasa_seguro_cesantia_empleador(self):
         """

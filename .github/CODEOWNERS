@@ -1,0 +1,86 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# CODEOWNERS - GitHub Code Ownership Configuration
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Este archivo define los propietarios de código para diferentes partes del
+# repositorio. Los propietarios serán automáticamente solicitados para revisar
+# cambios en sus áreas de responsabilidad.
+#
+# Formato: <ruta> @usuario @equipo
+# Referencia: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Propietario principal del repositorio
+* @pwills85
+
+# ══════════════════════════════════════════════════════════════════════════════
+# MÓDULOS DE LOCALIZACIÓN CHILENA
+# ══════════════════════════════════════════════════════════════════════════════
+
+# DTE (Documentos Tributarios Electrónicos)
+/addons/localization/l10n_cl_dte/ @pwills85
+/addons/localization/l10n_cl_dte/**/*.py @pwills85
+/addons/localization/l10n_cl_dte/**/*.xml @pwills85
+
+# Payroll (Nómina Chilena)
+/addons/localization/l10n_cl_hr_payroll/ @pwills85
+/addons/localization/l10n_cl_hr_payroll/**/*.py @pwills85
+
+# Financial Reports (Reportes Financieros)
+/addons/localization/l10n_cl_financial_reports/ @pwills85
+/addons/localization/l10n_cl_financial_reports/**/*.py @pwills85
+
+# ══════════════════════════════════════════════════════════════════════════════
+# INFRAESTRUCTURA Y CONFIGURACIÓN
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Docker y configuración
+/docker-compose.yml @pwills85
+/Dockerfile @pwills85
+/config/ @pwills85
+/requirements*.txt @pwills85
+
+# GitHub Actions y workflows
+/.github/workflows/ @pwills85
+/.github/CODEOWNERS @pwills85
+/.github/dependabot.yml @pwills85
+
+# ══════════════════════════════════════════════════════════════════════════════
+# AI SERVICE
+# ══════════════════════════════════════════════════════════════════════════════
+
+/ai-service/ @pwills85
+/ai-service/**/*.py @pwills85
+/ai-service/requirements.txt @pwills85
+
+# ══════════════════════════════════════════════════════════════════════════════
+# DOCUMENTACIÓN
+# ══════════════════════════════════════════════════════════════════════════════
+
+/docs/ @pwills85
+/docs/prompts/ @pwills85
+/docs/prompts/**/*.md @pwills85
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SEGURIDAD Y COMPLIANCE
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Archivos de seguridad
+/.github/security.yml @pwills85
+/.github/codeql-config.yml @pwills85
+/.github/dependabot.yml @pwills85
+
+# Certificados y configuración sensible
+/config/*.crt @pwills85
+/config/*.key @pwills85
+/.env* @pwills85
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SCRIPTS Y AUTOMATIZACIÓN
+# ══════════════════════════════════════════════════════════════════════════════
+
+/scripts/ @pwills85
+/scripts/**/*.sh @pwills85
+/scripts/**/*.py @pwills85
+

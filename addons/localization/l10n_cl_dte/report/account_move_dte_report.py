@@ -22,7 +22,6 @@ License: LGPL-3
 import base64
 import logging
 from io import BytesIO
-from datetime import datetime
 
 from odoo import api, models, _
 from odoo.exceptions import UserError

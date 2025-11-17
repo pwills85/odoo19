@@ -22,10 +22,9 @@ Validaciones:
 4. Validación firma RSA (opcional)
 """
 
-from lxml import etree
-import base64
 import logging
 from datetime import datetime
+from .safe_xml_parser import fromstring_safe
 
 _logger = logging.getLogger(__name__)
 
@@ -66,7 +65,7 @@ class TEDValidator:
             } o None si no se encuentra TED
         """
         try:
-            root = etree.fromstring(xml_string.encode('ISO-8859-1'))
+            root = fromstring_safe(xml_string)
 
             # Buscar elemento TED
             # Puede estar en diferentes ubicaciones según versión XML
@@ -275,7 +274,7 @@ class TEDValidator:
         """
         try:
             # Extraer elemento TED del XML
-            root = etree.fromstring(xml_string.encode('ISO-8859-1'))
+            root = fromstring_safe(xml_string)
             ted_element = root.find('.//TED')
 
             if ted_element is None:

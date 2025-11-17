@@ -104,7 +104,7 @@ class TestF22Report(TransactionCase):
         """Test básico de generación del reporte F22"""
 
         # Crear algunos asientos contables de prueba
-        self._create_test_moves()
+        self.env.create_test_moves()
 
         # Generar el reporte
         options = {

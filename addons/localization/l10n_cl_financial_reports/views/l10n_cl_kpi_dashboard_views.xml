@@ -132,7 +132,7 @@
         <field name="name">l10n_cl.kpi.dashboard.tree</field>
         <field name="model">l10n_cl.kpi.dashboard</field>
         <field name="arch" type="xml">
-            <tree string="KPIs Financieros">
+            <list string="KPIs Financieros">
                 <field name="company_id"/>
                 <field name="date_from"/>
                 <field name="date_to"/>
@@ -142,7 +142,7 @@
                 <field name="compras_netas" sum="Total Compras"/>
                 <field name="ppm_pagado" sum="Total PPM"/>
                 <field name="currency_id" invisible="1"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -163,10 +163,13 @@
     </record>
 
     <!-- Menu Item -->
+    <!-- COMENTADO: Parent menu l10n_cl_tax_forms_menu no existe -->
+    <!--
     <menuitem id="menu_l10n_cl_kpi_dashboard"
               name="Dashboard KPIs"
               parent="l10n_cl_tax_forms_menu"
               action="action_l10n_cl_kpi_dashboard"
               sequence="5"
               groups="account.group_account_manager"/>
+    -->
 </odoo>

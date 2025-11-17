@@ -1,0 +1,33 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# Dependency Review Workflow
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Revisa automáticamente las dependencias en PRs para detectar vulnerabilidades
+# y problemas de licencias antes de hacer merge.
+#
+# ══════════════════════════════════════════════════════════════════════════════
+
+name: 📦 Dependency Review
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    name: 📦 Review Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔍 Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          allow-licenses: MIT, Apache-2.0, BSD-3-Clause, BSD-2-Clause, LGPL-3.0, LGPL-2.1, ISC, MPL-2.0

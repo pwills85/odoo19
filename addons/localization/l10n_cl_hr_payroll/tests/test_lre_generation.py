@@ -33,30 +33,24 @@ class TestLREGeneration(TransactionCase):
         
         # Indicadores
         cls.indicators = cls.env['hr.economic.indicators'].create({
-            'month': 1,
-            'year': 2025,
+            'period': date(2025, 1, 1),
             'uf': 37800.00,
             'utm': 65967.00,
             'uta': 791604.00,
+            'minimum_wage': 500000.00,
         })
         
-        # Empleados
+        # Empleados (usando campos estándar de Odoo)
         cls.employee1 = cls.env['hr.employee'].create({
             'name': 'Juan Pérez Silva',
-            'firstname': 'Juan',
-            'lastname': 'Pérez',
-            'mothers_name': 'Silva',
-            'identification_id': '12345678-9',
             'company_id': cls.company.id,
+            'identification_id': '12345678-9',  # RUT requerido para validaciones
         })
-        
+
         cls.employee2 = cls.env['hr.employee'].create({
             'name': 'María González López',
-            'firstname': 'María',
-            'lastname': 'González',
-            'mothers_name': 'López',
-            'identification_id': '98765432-1',
             'company_id': cls.company.id,
+            'identification_id': '98765432-1',  # RUT requerido para validaciones
         })
         
         # Contratos
@@ -137,7 +131,7 @@ class TestLREGeneration(TransactionCase):
             'code': 'NET',
             'name': 'Líquido',
             'sequence': 100,
-            'category_id': self.env.ref('l10n_cl_hr_payroll.category_net').id,
+            'category_id': self.env.ref('l10n_cl_hr_payroll.category_liquido').id,
             'quantity': 1,
             'rate': 100,
             'amount': contract.wage * 0.8873,

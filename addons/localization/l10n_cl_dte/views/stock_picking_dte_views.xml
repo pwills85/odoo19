@@ -51,7 +51,7 @@
             </xpath>
 
             <!-- Add DTE 52 indicator in form title area -->
-            <xpath expr="//div[@class='oe_title']" position="inside">
+            <xpath expr="//div[hasclass('oe_title')]" position="inside">
                 <div class="o_row" invisible="not dte_52_folio">
                     <span class="badge badge-success">
                         DTE 52: <field name="dte_52_folio" readonly="1" class="oe_inline"/>
@@ -157,37 +157,6 @@
                     </div>
 
                 </page>
-            </xpath>
-
-        </field>
-    </record>
-
-    <!-- Tree View Extension - Add DTE 52 indicator column -->
-    <record id="view_stock_picking_tree_dte" model="ir.ui.view">
-        <field name="name">stock.picking.tree.dte</field>
-        <field name="model">stock.picking</field>
-        <field name="inherit_id" ref="stock.view_picking_internal_search"/>
-        <field name="arch" type="xml">
-
-            <!-- Add DTE 52 folio column after name -->
-            <xpath expr="//field[@name='name']" position="after">
-                <field name="dte_52_folio"
-                       string="DTE 52"
-                       optional="show"
-                       decoration-success="dte_52_status == 'accepted'"
-                       decoration-warning="dte_52_status == 'sent'"
-                       decoration-info="dte_52_status == 'to_send'"/>
-            </xpath>
-
-            <!-- Add DTE 52 status badge -->
-            <xpath expr="//field[@name='state']" position="after">
-                <field name="dte_52_status"
-                       string="Estado DTE"
-                       optional="hide"
-                       widget="badge"
-                       decoration-success="dte_52_status == 'accepted'"
-                       decoration-warning="dte_52_status in ['sent', 'to_send']"
-                       decoration-danger="dte_52_status == 'rejected'"/>
             </xpath>
 
         </field>

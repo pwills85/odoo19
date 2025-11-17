@@ -5,6 +5,7 @@
 # Manifest y hooks
 
 # Import specific hook functions for Odoo
+from .hooks import post_init_hook
 
 # Subpaquetes Odoo convencionales
 from . import utils

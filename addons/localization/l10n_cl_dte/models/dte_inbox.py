@@ -9,7 +9,7 @@ Based on Odoo 18: l10n_cl_fe/models/mail_dte.py (450 LOC)
 """
 
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import UserError
 import requests
 import json
 import logging
@@ -61,15 +61,13 @@ class DTEInbox(models.Model):
 
     dte_type = fields.Selection([
         ('33', 'Factura Electrónica'),
-        ('34', 'Liquidación Honorarios'),
-        ('39', 'Boleta Electrónica'),
-        ('41', 'Boleta Exenta'),
-        ('46', 'Factura Compra Electrónica'),
-        ('52', 'Guía de Despacho'),
-        ('56', 'Nota de Débito'),
-        ('61', 'Nota de Crédito'),
-        ('70', 'Boleta Honorarios Electrónica'),
-    ], string='DTE Type', required=True, tracking=True)
+        ('34', 'Factura Exenta Electrónica'),
+        ('52', 'Guía de Despacho Electrónica'),
+        ('56', 'Nota de Débito Electrónica'),
+        ('61', 'Nota de Crédito Electrónica'),
+    ], string='DTE Type', required=True, tracking=True,
+    help="EERGYGROUP B2B scope: Facturas, Guías y Notas asociadas. "
+         "Boletas (39,41,70) y Factura Compra (46) excluidas por contrato.")
 
     # ═══════════════════════════════════════════════════════════
     # FIELDS - EMISOR (SUPPLIER)
@@ -198,6 +196,30 @@ class DTEInbox(models.Model):
     response_sent = fields.Boolean('Response Sent', default=False)
     response_date = fields.Datetime('Response Sent Date')
     response_track_id = fields.Char('SII Track ID')
+
+    # ═══════════════════════════════════════════════════════════
+    # FIELDS - COMMERCIAL VALIDATION (H1 - 2025-11-11)
+    # ═══════════════════════════════════════════════════════════
+
+    commercial_auto_action = fields.Selection(
+        [
+            ('accept', 'Accept'),
+            ('reject', 'Reject'),
+            ('review', 'Manual Review')
+        ],
+        string='Commercial Action',
+        help="Auto-action determined by commercial validation "
+             "(8-day deadline, 2% PO tolerance)",
+        readonly=True,
+        tracking=True
+    )
+
+    commercial_confidence = fields.Float(
+        string='Commercial Confidence',
+        help="Confidence score 0.0-1.0 for commercial validation",
+        readonly=True,
+        digits=(3, 2)  # Format: 0.95
+    )
 
     # ═══════════════════════════════════════════════════════════
     # FIELDS - METADATA
@@ -761,7 +783,7 @@ class DTEInbox(models.Model):
                     _logger.info("✅ TED validation PASSED (including RSA signature)")
                 else:
                     errors.extend(ted_result['errors'])
-                    _logger.warning(f"❌ TED validation FAILED")
+                    _logger.warning("❌ TED validation FAILED")
 
                 warnings.extend(ted_result.get('warnings', []))
 
@@ -788,14 +810,86 @@ class DTEInbox(models.Model):
             raise UserError(_('Validation error: %s') % str(e))
 
         # ═══════════════════════════════════════════════════════════════════════
-        # FASE 2: AI VALIDATION (Semantic, anomalies)
+        # FASE 2.5: COMMERCIAL VALIDATION (H1 - 2025-11-11)
+        # ═══════════════════════════════════════════════════════════════════════
+
+        _logger.info("🔍 PHASE 2.5: Commercial validation (H1)")
+
+        from addons.localization.l10n_cl_dte.libs.commercial_validator import CommercialValidator
+
+        # Execute in isolated savepoint (avoid R-001 race condition)
+        with self.env.cr.savepoint():
+            commercial_validator = CommercialValidator(env=self.env)
+
+            # Find matching PO (if exists)
+            po_data = None
+            if self.purchase_order_id:
+                po_data = {
+                    'amount_total': self.purchase_order_id.amount_total,
+                    'id': self.purchase_order_id.id,
+                    'name': self.purchase_order_id.name
+                }
+
+            # Run commercial validation
+            commercial_result = commercial_validator.validate_commercial_rules(
+                dte_data=dte_data,
+                po_data=po_data
+            )
+
+            # Store results in new fields
+            self.commercial_auto_action = commercial_result['auto_action']
+            self.commercial_confidence = commercial_result['confidence']
+
+            # Log result
+            _logger.info(
+                f"✅ Commercial validation: {commercial_result['auto_action']} "
+                f"(confidence: {commercial_result['confidence']:.2f})",
+                extra={
+                    'dte_folio': self.folio,
+                    'commercial_errors': len(commercial_result['errors']),
+                    'commercial_warnings': len(commercial_result['warnings'])
+                }
+            )
+
+            # If 'reject', STOP (do NOT continue with AI or response generation)
+            if commercial_result['auto_action'] == 'reject':
+                self.state = 'error'
+                self.validation_errors = '\n'.join(commercial_result['errors'])
+
+                # Notify via Odoo chatter
+                self.message_post(
+                    body=f"<strong>Commercial validation REJECTED</strong><br/><br/>"
+                         f"<b>Errors ({len(commercial_result['errors'])}):</b><br/>"
+                         f"{'<br/>'.join(commercial_result['errors'])}",
+                    message_type='notification',
+                    subtype_xmlid='mail.mt_note'
+                )
+
+                raise UserError(
+                    _('Commercial validation failed:\n\n%s') %
+                    '\n'.join(commercial_result['errors'])
+                )
+
+            # If 'review', add warnings but CONTINUE with AI validation
+            if commercial_result['auto_action'] == 'review':
+                warnings.extend(commercial_result['warnings'])
+                _logger.info(
+                    f"⚠️ Commercial validation: Manual review required "
+                    f"({len(commercial_result['warnings'])} warnings)"
+                )
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # FASE 2: AI VALIDATION (Semantic, anomalies) - H2: Explicit timeout handling
         # ═══════════════════════════════════════════════════════════════════════
 
         try:
+            _logger.info("🔍 PHASE 2: AI validation (with 10s timeout - H2)")
+
             # Get vendor history for anomaly detection
             vendor_history = self._get_vendor_history()
 
             # AI validation (usa método heredado de dte.ai.client)
+            # Timeout configured in _get_ai_service_config() = 10s default
             ai_result = self.validate_received_dte(
                 dte_data=dte_data,
                 vendor_history=vendor_history
@@ -820,12 +914,46 @@ class DTEInbox(models.Model):
                 f"recommendation={self.ai_recommendation}"
             )
 
-        except Exception as e:
-            _logger.warning(f"AI validation failed (non-blocking): {e}")
-            # AI validation failure is non-blocking
+        except requests.Timeout as e:
+            # H2: Explicit handling for timeout (>10s)
+            _logger.warning(
+                "ai_service_timeout",
+                extra={
+                    'dte_folio': self.folio,
+                    'timeout_seconds': 10,
+                    'fallback': 'manual_review',
+                    'error': str(e)
+                }
+            )
+            self.state = 'review'
             self.ai_validated = False
             self.ai_recommendation = 'review'
-            warnings.append(f"AI validation unavailable: {str(e)[:50]}")
+            self.validation_warnings = (
+                f"AI validation timed out (>10s). Manual review required.\n"
+                f"{self.validation_warnings or ''}"
+            )
+            warnings.append("AI validation timed out - manual review required")
+
+        except (ConnectionError, requests.RequestException) as e:
+            # H2: Explicit handling for connection errors
+            _logger.error(
+                "ai_service_unavailable",
+                extra={
+                    'error': str(e),
+                    'dte_folio': self.folio,
+                    'fallback': 'manual_review'
+                }
+            )
+            self.ai_validated = False
+            self.ai_recommendation = 'review'
+            warnings.append(f"AI service unavailable: {str(e)[:50]}")
+
+        except Exception as e:
+            # Generic exception handler (non-blocking)
+            _logger.warning(f"AI validation failed (non-blocking): {e}")
+            self.ai_validated = False
+            self.ai_recommendation = 'review'
+            warnings.append(f"AI validation error: {str(e)[:50]}")
 
         # ═══════════════════════════════════════════════════════════════════════
         # FASE 3: PO MATCHING (AI-powered)
@@ -892,7 +1020,7 @@ class DTEInbox(models.Model):
         notification_type = 'success'
         title = _('DTE Validated Successfully')
         message_parts = [
-            f"Native validation: ✅ PASSED",
+            "Native validation: ✅ PASSED",
             f"TED validation: {'✅ PASSED' if self.ted_validated else '⚠️ SKIPPED'}",
         ]
 

@@ -4,6 +4,7 @@ Configuración del AI Microservice
 """
 
 from pydantic_settings import BaseSettings
+from pydantic import Field, field_validator
 from typing import Optional
 
 
@@ -22,7 +23,39 @@ class Settings(BaseSettings):
     # SEGURIDAD
     # ═══════════════════════════════════════════════════════════
     
-    api_key: str = "default_ai_api_key"  # Cambiar en producción
+    # ✅ FIX [P0-1]: API key now REQUIRED from environment (no default)
+    # MUST set via environment variable AI_SERVICE_API_KEY
+    # Application will FAIL TO START if not provided (fail-safe security)
+    api_key: str = Field(..., description="Required API key from AI_SERVICE_API_KEY env var")
+
+    @field_validator('api_key')
+    @classmethod
+    def validate_api_key_not_default(cls, v):
+        """Prevent usage of insecure default values - ENHANCED P0-1"""
+        # Expanded forbidden list
+        forbidden_values = [
+            'default', 'changeme', 'default_ai_api_key', 'test', 'dev',
+            'admin', 'password', '12345', 'secret', 'api_key', 'key',
+            'YOUR_API_KEY_HERE', 'REPLACE_ME', 'TODO'
+        ]
+
+        # Case-insensitive check
+        v_lower = v.lower()
+        for forbidden in forbidden_values:
+            if forbidden in v_lower:
+                raise ValueError(
+                    f"Insecure API key detected: contains '{forbidden}'. "
+                    f"Set AI_SERVICE_API_KEY environment variable with a strong production key."
+                )
+
+        # Minimum length validation (increased to 32 for better security)
+        if len(v) < 32:
+            raise ValueError(
+                "API key must be at least 32 characters for production security. "
+                f"Current length: {len(v)}"
+            )
+
+        return v
     allowed_origins: list[str] = ["http://odoo:8069", "http://odoo-eergy-services:8001"]
     
     # ═══════════════════════════════════════════════════════════
@@ -30,7 +63,11 @@ class Settings(BaseSettings):
     # ═══════════════════════════════════════════════════════════
 
     anthropic_api_key: str
-    anthropic_model: str = "claude-sonnet-4-5-20250929"  # Claude Sonnet 4.5 (Sept 2025)
+    # ✅ FIX [H3 CICLO3]: Model from env var for flexibility
+    anthropic_model: str = Field(
+        default="claude-sonnet-4-5-20250929",
+        description="Anthropic model from ANTHROPIC_MODEL env var (default: Claude Sonnet 4.5)"
+    )
 
     # Max tokens por caso de uso
     anthropic_max_tokens_default: int = 8192
@@ -75,9 +112,41 @@ class Settings(BaseSettings):
     # ═══════════════════════════════════════════════════════════
     # ODOO INTEGRATION
     # ═══════════════════════════════════════════════════════════
-    
+
     odoo_url: str = "http://odoo:8069"
-    odoo_api_key: str = "default_odoo_api_key"
+    # ✅ FIX [P0-2]: Odoo API key now REQUIRED from environment (no default)
+    # MUST set via environment variable ODOO_API_KEY
+    # Application will FAIL TO START if not provided (fail-safe security)
+    odoo_api_key: str = Field(..., description="Required from ODOO_API_KEY env var")
+
+    @field_validator('odoo_api_key')
+    @classmethod
+    def validate_odoo_api_key_not_default(cls, v):
+        """Prevent usage of insecure default Odoo API key - ENHANCED P0-2"""
+        # Expanded forbidden list for Odoo keys
+        forbidden_values = [
+            'default', 'changeme', 'admin', 'password', 'odoo',
+            'test', 'dev', '12345', 'secret', 'api_key', 'key',
+            'YOUR_ODOO_KEY', 'REPLACE_ME', 'TODO', 'demo'
+        ]
+
+        # Case-insensitive check
+        v_lower = v.lower()
+        for forbidden in forbidden_values:
+            if forbidden in v_lower:
+                raise ValueError(
+                    f"Insecure Odoo API key detected: contains '{forbidden}'. "
+                    f"Set ODOO_API_KEY environment variable with a strong production key."
+                )
+
+        # Minimum length validation (increased to 32 for better security)
+        if len(v) < 32:
+            raise ValueError(
+                "Odoo API key must be at least 32 characters for production security. "
+                f"Current length: {len(v)}"
+            )
+
+        return v
     
     # ═══════════════════════════════════════════════════════════
     # THRESHOLDS Y CONFIGURACIÓN IA

@@ -10,7 +10,7 @@
                     <header>
                         <button name="action_preview_widget" type="object" 
                                 string="Vista Previa" class="btn-secondary"
-                                attrs="{'invisible': [('widget_template_id', '=', False)]}"/>
+                                invisible="not widget_template_id"/>
                     </header>
                     
                     <sheet>
@@ -20,7 +20,7 @@
                             </h1>
                             <h2>
                                 <field name="widget_type" readonly="1" 
-                                       attrs="{'invisible': [('widget_type', '=', False)]}"/>
+                                       invisible="not widget_type"/>
                             </h2>
                         </div>
                         
@@ -77,7 +77,7 @@
                                 string="Añadir Widget" class="btn-primary"/>
                         <button name="action_preview_widget" type="object" 
                                 string="Vista Previa" class="btn-secondary"
-                                attrs="{'invisible': [('widget_template_id', '=', False)]}"/>
+                                invisible="not widget_template_id"/>
                         <button string="Cancelar" class="btn-light" special="cancel"/>
                     </footer>
                 </form>

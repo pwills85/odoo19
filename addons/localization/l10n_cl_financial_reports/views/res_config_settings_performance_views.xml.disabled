@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Configuraciones avanzadas de rendimiento para reportes financieros -->
+    
+    <record id="res_config_settings_view_form_inherit_financial_performance" model="ir.ui.view">
+        <field name="name">res.config.settings.inherit.financial.performance</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[contains(@class, 'settings')]" position="inside">
+                <div class="app_settings_block" data-string="Financial Performance" string="Financial Performance" data-key="financial_performance">
+                    <h2>Configuraciones de Rendimiento</h2>
+                    
+                    <!-- Configuraciones de Cache Avanzado -->
+                    <h3>Sistema de Cache</h3>
+                    <div class="row mt16 o_setting_box" id="cache_advanced_settings">
+                        <div class="col-12">
+                            <div class="alert alert-info" role="alert">
+                                <strong>Cache Inteligente:</strong> El sistema optimiza automáticamente el rendimiento mediante cache multinivel.
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="financial_report_auto_refresh"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="financial_report_auto_refresh"/>
+                                <div class="text-muted">
+                                    <strong>Auto-refresh Dashboard:</strong><br/>
+                                    Actualización automática cada 30 segundos para métricas en tiempo real
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="financial_report_cache_timeout"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="financial_report_cache_timeout"/>
+                                <div class="text-muted">
+                                    <strong>Timeout de Cache:</strong><br/>
+                                    Duración del cache (minutos). Valores más altos = mejor rendimiento, datos menos actualizados
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Optimizaciones de Query -->
+                    <h3>Optimizaciones SQL</h3>
+                    <div class="row mt16 o_setting_box" id="sql_optimization_settings">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="enable_query_optimization"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="enable_query_optimization"/>
+                                <div class="text-muted">
+                                    <strong>Query Optimization:</strong><br/>
+                                    Activa optimizaciones avanzadas: índices automáticos, query rewriting, plan caching
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="enable_prefetch_optimization"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="enable_prefetch_optimization"/>
+                                <div class="text-muted">
+                                    <strong>Prefetch Optimization:</strong><br/>
+                                    Previene N+1 queries mediante carga inteligente de relaciones
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Configuraciones de Batch Processing -->
+                    <h3>Procesamiento por Lotes</h3>
+                    <div class="row mt16 o_setting_box" id="batch_processing_settings">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="financial_report_batch_size"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="financial_report_batch_size"/>
+                                <div class="text-muted">
+                                    <strong>Batch Size:</strong><br/>
+                                    Número de registros procesados por lote. Valores recomendados:<br/>
+                                    • 500-1000: Sistemas normales<br/>
+                                    • 1000-2000: Sistemas potentes<br/>
+                                    • 100-500: Sistemas con recursos limitados
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-lg-6">
+                            <div class="alert alert-warning" role="alert">
+                                <strong>⚠️ Nota Importante:</strong><br/>
+                                Los cambios en configuraciones de rendimiento requieren reiniciar Odoo para tomar efecto completo.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Monitoreo y Métricas -->
+                    <h3>Monitoreo de Rendimiento</h3>
+                    <div class="row mt16 o_setting_box" id="monitoring_settings">
+                        <div class="col-12">
+                            <div class="alert alert-success" role="alert">
+                                <strong>📊 Métricas Disponibles:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>Tiempo de respuesta de queries SQL</li>
+                                    <li>Estadísticas de hit/miss del cache</li>
+                                    <li>Throughput de procesamiento de reportes</li>
+                                    <li>Utilización de memoria y CPU</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+    
+    <!-- Vista de monitoreo de performance (solo lectura) -->
+    <record id="performance_monitoring_view" model="ir.ui.view">
+        <field name="name">performance.monitoring.view</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.view_res_config_settings"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='settings']" position="inside">
+                <div class="app_settings_block" data-string="Performance Monitoring" string="Performance Monitoring" data-key="performance_monitoring">
+                    <h2>Monitor de Rendimiento</h2>
+                    
+                    <div class="row mt16">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Estadísticas del Sistema</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <h4 class="text-success">Cache Hit Rate</h4>
+                                                <span class="badge badge-success">92%</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <h4 class="text-info">Avg Query Time</h4>
+                                                <span class="badge badge-info">45ms</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <h4 class="text-warning">Memory Usage</h4>
+                                                <span class="badge badge-warning">68%</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <h4 class="text-primary">Reports/hour</h4>
+                                                <span class="badge badge-primary">1,247</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

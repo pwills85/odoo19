@@ -7,14 +7,21 @@ FastAPI service para inteligencia artificial aplicada a DTEs
 from fastapi import FastAPI, Depends, HTTPException, Security, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field, validator
+from fastapi.responses import StreamingResponse, JSONResponse
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Dict, Any, List
+from contextlib import asynccontextmanager
 import re
+import time
+from datetime import datetime, timezone
 import structlog
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+import hashlib
+import json
+import uuid
+import traceback
 
 from config import settings
 
@@ -30,10 +37,42 @@ from routes.analytics import router as analytics_router
 logger = structlog.get_logger()
 
 # ═══════════════════════════════════════════════════════════
+# SERVICE UPTIME TRACKING
+# ═══════════════════════════════════════════════════════════
+
+SERVICE_START_TIME = time.time()
+
+# ═══════════════════════════════════════════════════════════
+# LIFESPAN CONTEXT MANAGER (FastAPI 0.93+)
+# Replaces deprecated @app.on_event("startup"/"shutdown")
+# ═══════════════════════════════════════════════════════════
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan context manager for application startup and shutdown.
+
+    FastAPI 0.93+ modern pattern replacing deprecated @app.on_event().
+    Provides proper async resource management with context manager protocol.
+
+    Yields during application lifetime, cleanup on exit.
+    """
+    # Startup: Log service initialization
+    logger.info("ai_service_starting",
+                version=settings.app_version,
+                anthropic_model=settings.anthropic_model)
+
+    yield  # Application runs here
+
+    # Shutdown: Log service termination
+    logger.info("ai_service_stopping")
+
+# ═══════════════════════════════════════════════════════════
 # FASTAPI APP
 # ═══════════════════════════════════════════════════════════
 
 app = FastAPI(
+    lifespan=lifespan,
     title=settings.app_name,
     version=settings.app_version,
     description="Microservicio de IA para validación y análisis de DTEs",
@@ -64,9 +103,92 @@ app.add_middleware(ErrorTrackingMiddleware)
 # RATE LIMITING
 # ═══════════════════════════════════════════════════════════
 
-limiter = Limiter(key_func=get_remote_address)
+def get_user_identifier(request: Request) -> str:
+    """
+    Get unique user identifier for rate limiting.
+
+    Combines API key (if present) + IP address to prevent
+    bypassing rate limits by rotating IPs.
+
+    Args:
+        request: FastAPI Request object
+
+    Returns:
+        str: Unique identifier (api_key_prefix:ip_address)
+    """
+    # Try to get API key from Authorization header
+    api_key = "anonymous"
+    auth_header = request.headers.get("Authorization", "")
+
+    if auth_header.startswith("Bearer "):
+        # Extract token (first 8 chars for identifier, avoid logging full key)
+        token = auth_header[7:]  # Skip "Bearer "
+        api_key = token[:8] if token else "anonymous"
+
+    # Get client IP
+    ip_address = request.client.host if request.client else "unknown"
+
+    # Combine for unique identifier
+    return f"{api_key}:{ip_address}"
+
+
+limiter = Limiter(key_func=get_user_identifier)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# ═══════════════════════════════════════════════════════════
+# GLOBAL EXCEPTION HANDLER (FIX [S4] CICLO5)
+# ═══════════════════════════════════════════════════════════
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """
+    ✅ FIX [S4 CICLO5]: Global exception handler with production-safe error messages.
+
+    Hides stack traces in production (settings.debug=False) to prevent
+    information disclosure (OWASP A09 - Security Logging and Monitoring Failures).
+
+    Security benefits:
+    - Prevents sensitive information leakage
+    - Logs full details internally for debugging
+    - Returns generic messages in production
+    - Includes request ID for support tracking
+    """
+    # Log full error details internally (always, regardless of debug mode)
+    logger.error(
+        "unhandled_exception",
+        exc_type=type(exc).__name__,
+        exc_message=str(exc),
+        path=request.url.path,
+        method=request.method,
+        exc_info=True  # Includes full traceback in logs
+    )
+
+    # Return different responses based on debug mode
+    if settings.debug:
+        # DEBUG mode: Return detailed error for development
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "error": "Internal server error",
+                "type": type(exc).__name__,
+                "detail": str(exc),
+                "traceback": traceback.format_exc(),
+                "path": request.url.path,
+                "method": request.method,
+                "debug_mode": True
+            }
+        )
+    else:
+        # PRODUCTION mode: Generic error message (OWASP A09 compliant)
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "error": "Internal server error",
+                "detail": "An unexpected error occurred. Please contact support if the problem persists.",
+                "request_id": request.headers.get("X-Request-ID", "unknown")
+            }
+        )
 
 # ═══════════════════════════════════════════════════════════
 # ROUTER REGISTRATION
@@ -116,36 +238,172 @@ async def verify_api_key(credentials: HTTPAuthorizationCredentials = Security(se
 # ═══════════════════════════════════════════════════════════
 
 class DTEValidationRequest(BaseModel):
-    """Request para validación de DTE con validaciones robustas"""
+    """Request para validación de DTE con validaciones robustas (P0-4 Enhanced)"""
     dte_data: Dict[str, Any] = Field(..., description="Datos del DTE a validar")
     company_id: int = Field(..., gt=0, description="ID de la compañía (debe ser positivo)")
     history: Optional[List[Dict]] = Field(default=[], max_items=100, description="Historial de validaciones (máximo 100)")
-    
-    @validator('dte_data')
+
+    @field_validator('dte_data')
     def validate_dte_data(cls, v):
-        """Validar estructura mínima del DTE."""
+        """
+        Validar estructura y datos del DTE con reglas de negocio chilenas.
+
+        Validaciones (P0-4):
+        - RUT formato válido (12345678-9)
+        - RUT dígito verificador correcto (módulo 11)
+        - Monto positivo y razonable
+        - Fecha no futura
+        - Tipo DTE válido según SII
+
+        Performance: ~2-3ms (sin impacto significativo)
+        """
+        import structlog
+        logger = structlog.get_logger()
+
         if not isinstance(v, dict) or not v:
             raise ValueError("dte_data debe ser un diccionario no vacío")
-        
-        # Validar tipo_dte presente
+
+        # Validar RUT emisor (si existe)
+        if 'rut_emisor' in v:
+            rut = str(v['rut_emisor']).strip()
+            if not re.match(r'^\d{1,8}-[\dkK]$', rut):
+                logger.warning("validation_failed_rut_emisor", rut=rut)
+                raise ValueError(f"RUT emisor inválido: {rut}. Formato esperado: 12345678-9")
+
+            # Validar dígito verificador
+            try:
+                rut_num, dv = rut.split('-')
+                expected_dv = cls._calculate_dv(rut_num)
+                if expected_dv.upper() != dv.upper():
+                    logger.warning("validation_failed_dv_emisor", rut=rut, expected=expected_dv, got=dv)
+                    raise ValueError(f"RUT emisor con dígito verificador inválido: {rut} (esperado: {expected_dv})")
+            except ValueError:
+                raise
+            except:
+                pass  # Si falla parsing, continuar (formato ya validado)
+
+        # Validar RUT receptor (si existe)
+        if 'rut_receptor' in v:
+            rut = str(v['rut_receptor']).strip()
+            if not re.match(r'^\d{1,8}-[\dkK]$', rut):
+                logger.warning("validation_failed_rut_receptor", rut=rut)
+                raise ValueError(f"RUT receptor inválido: {rut}. Formato esperado: 12345678-9")
+
+        # Validar monto total positivo
+        if 'monto_total' in v:
+            try:
+                monto = float(v['monto_total'])
+                if monto <= 0:
+                    logger.warning("validation_failed_monto_negative", monto=monto)
+                    raise ValueError(f"Monto total debe ser positivo: {monto}")
+                if monto > 999999999999:  # ~1 trillion CLP (sanity check)
+                    logger.warning("validation_failed_monto_excessive", monto=monto)
+                    raise ValueError(f"Monto total excede límite razonable: {monto}")
+            except (TypeError, ValueError) as e:
+                if "debe ser positivo" in str(e) or "excede límite" in str(e):
+                    raise
+                raise ValueError(f"Monto total inválido: {v['monto_total']}")
+
+        # Validar fecha emisión no futura
+        if 'fecha_emision' in v:
+            from datetime import datetime, timedelta
+            try:
+                # Soportar múltiples formatos
+                fecha_str = str(v['fecha_emision'])
+
+                # Intentar parsear ISO format (YYYY-MM-DD o YYYY-MM-DDTHH:MM:SS)
+                if 'T' in fecha_str:
+                    fecha = datetime.fromisoformat(fecha_str.replace('Z', '+00:00'))
+                else:
+                    fecha = datetime.strptime(fecha_str, '%Y-%m-%d')
+
+                # Permitir +24 horas (zona horaria)
+                now_plus_buffer = datetime.now() + timedelta(hours=24)
+
+                if fecha > now_plus_buffer:
+                    logger.warning("validation_failed_fecha_futura", fecha=fecha_str)
+                    raise ValueError(f"Fecha emisión no puede ser futura: {fecha_str}")
+
+            except ValueError as e:
+                if "no puede ser futura" in str(e):
+                    raise
+                raise ValueError(f"Fecha emisión inválida: {v['fecha_emision']}")
+
+        # Validar tipo_dte
         if 'tipo_dte' not in v:
             raise ValueError("Campo 'tipo_dte' es requerido en dte_data")
-        
-        # Validar tipo_dte válido
-        valid_types = ['33', '34', '52', '56', '61']
-        if str(v.get('tipo_dte')) not in valid_types:
-            raise ValueError(f"tipo_dte debe ser uno de: {', '.join(valid_types)}")
-        
+
+        # Validar tipo_dte válido (DTEs más comunes en Chile según SII)
+        valid_types = [
+            '33',   # Factura Electrónica
+            '34',   # Factura Exenta
+            '39',   # Boleta Electrónica
+            '41',   # Boleta Exenta
+            '43',   # Liquidación Factura
+            '46',   # Factura Compra
+            '52',   # Guía Despacho
+            '56',   # Nota Débito
+            '61',   # Nota Crédito
+            '110',  # Factura Exportación
+            '111',  # Nota Débito Exportación
+            '112'   # Nota Crédito Exportación
+        ]
+
+        tipo_dte = str(v.get('tipo_dte'))
+        if tipo_dte not in valid_types:
+            logger.warning("validation_failed_tipo_dte", tipo_dte=tipo_dte)
+            raise ValueError(
+                f"tipo_dte '{tipo_dte}' no válido. "
+                f"Tipos permitidos: {', '.join(valid_types)}"
+            )
+
         return v
-    
-    @validator('history')
+
+    @staticmethod
+    def _calculate_dv(rut_num: str) -> str:
+        """
+        Calcular dígito verificador de RUT chileno (Módulo 11).
+
+        Args:
+            rut_num: Número de RUT sin DV (ej: "12345678")
+
+        Returns:
+            str: Dígito verificador ('0'-'9' o 'K')
+        """
+        reversed_digits = map(int, reversed(rut_num))
+        factors = [2, 3, 4, 5, 6, 7]
+
+        s = sum(d * factors[i % 6] for i, d in enumerate(reversed_digits))
+        remainder = s % 11
+        dv_num = 11 - remainder
+
+        if dv_num == 11:
+            return '0'
+        elif dv_num == 10:
+            return 'K'
+        else:
+            return str(dv_num)
+
+    @field_validator('history')
     def validate_history_size(cls, v):
-        """Limitar tamaño total del history."""
+        """
+        Limitar tamaño total del history para evitar OOM.
+
+        Performance: ~1ms
+        """
         if v:
+            # Limitar número de elementos
+            if len(v) > 100:
+                raise ValueError(f"History demasiado largo: {len(v)} elementos (máximo 100)")
+
+            # Limitar tamaño total serializado
             total_size = len(str(v))
             if total_size > 100_000:  # 100KB max
-                raise ValueError(f"History demasiado grande: {total_size} bytes (máximo 100KB)")
+                raise ValueError(
+                    f"History demasiado grande: {total_size} bytes (máximo 100KB)"
+                )
         return v
+
 
 class DTEValidationResponse(BaseModel):
     """Response de validación"""
@@ -170,7 +428,7 @@ class POMatchRequest(BaseModel):
     invoice_data: Dict[str, Any] = Field(..., description="Datos de la factura")
     pending_pos: List[Dict[str, Any]] = Field(..., max_items=200, description="Órdenes de compra pendientes (máximo 200)")
     
-    @validator('pending_pos')
+    @field_validator('pending_pos')
     def validate_pending_pos(cls, v):
         """Validar que la lista no esté vacía"""
         if not v:
@@ -185,15 +443,102 @@ class POMatchResponse(BaseModel):
     reasoning: str
 
 class PayrollValidationRequest(BaseModel):
-    """Request para validación de liquidación con validaciones robustas"""
+    """Request para validación de liquidación con validaciones robustas (P0-4 Enhanced)"""
     employee_id: int = Field(..., gt=0, description="ID del empleado")
     period: str = Field(..., pattern=r'^\d{4}-\d{2}$', description="Período YYYY-MM")
     wage: float = Field(..., gt=0, description="Sueldo base (debe ser > 0)")
     lines: List[Dict[str, Any]] = Field(..., min_items=1, max_items=100, description="Líneas liquidación (1-100)")
-    
-    @validator('lines')
+
+    @field_validator('wage')
+    def validate_wage(cls, v):
+        """
+        Validar sueldo contra normativa chilena (P0-4).
+
+        Validaciones:
+        - Sueldo >= mínimo legal (~$460.000 CLP 2025)
+        - Sueldo <= tope razonable (CEO level)
+
+        Performance: <1ms
+        """
+        import structlog
+        logger = structlog.get_logger()
+
+        # Chile: Sueldo mínimo ~$460.000 (2025)
+        # Usamos $400.000 como buffer (por ley 21.456)
+        MIN_WAGE_CLP = 400000
+
+        if v < MIN_WAGE_CLP:
+            logger.warning("validation_wage_below_minimum", wage=v, minimum=MIN_WAGE_CLP)
+            raise ValueError(
+                f"Sueldo ${v:,.0f} menor al mínimo legal "
+                f"(~${MIN_WAGE_CLP:,.0f} CLP)"
+            )
+
+        # Tope razonable: $50M CLP (~$60K USD)
+        # Sueldos mayores requieren revisión manual
+        MAX_WAGE_CLP = 50000000
+
+        if v > MAX_WAGE_CLP:
+            logger.warning("validation_wage_exceeds_reasonable", wage=v, maximum=MAX_WAGE_CLP)
+            raise ValueError(
+                f"Sueldo ${v:,.0f} excede límite razonable "
+                f"(${MAX_WAGE_CLP:,.0f} CLP). Revisar manualmente"
+            )
+
+        return v
+
+    @field_validator('period')
+    def validate_period(cls, v):
+        """
+        Validar período de liquidación (P0-4).
+
+        Validaciones:
+        - Formato YYYY-MM válido
+        - No permitir períodos futuros >2 meses
+        - No permitir períodos muy antiguos (>12 meses)
+
+        Performance: <1ms
+        """
+        import structlog
+        from datetime import datetime
+
+        logger = structlog.get_logger()
+
+        # Validar formato
+        if not re.match(r'^20\d{2}-(0[1-9]|1[0-2])$', v):
+            raise ValueError(f"Período inválido: {v} (formato esperado: YYYY-MM)")
+
+        # Parsear fecha
+        year, month = map(int, v.split('-'))
+        period_date = datetime(year, month, 1)
+        now = datetime.now()
+
+        # No permitir períodos futuros >2 meses
+        days_diff = (period_date - now).days
+        if days_diff > 60:
+            logger.warning("validation_period_too_future", period=v, days_diff=days_diff)
+            raise ValueError(
+                f"Período muy futuro: {v} "
+                f"({days_diff} días). Máximo 2 meses"
+            )
+
+        # No permitir períodos muy antiguos (>12 meses atrás)
+        if days_diff < -365:
+            logger.warning("validation_period_too_old", period=v, days_diff=abs(days_diff))
+            raise ValueError(
+                f"Período muy antiguo: {v} "
+                f"({abs(days_diff)} días atrás). Máximo 12 meses"
+            )
+
+        return v
+
+    @field_validator('lines')
     def validate_lines(cls, v):
-        """Validar estructura de líneas"""
+        """
+        Validar estructura de líneas de liquidación (P0-4).
+
+        Performance: ~1-2ms para 50 líneas
+        """
         for i, line in enumerate(v, 1):
             if 'code' not in line:
                 raise ValueError(f"Línea {i} sin campo 'code'")
@@ -201,7 +546,12 @@ class PayrollValidationRequest(BaseModel):
                 raise ValueError(f"Línea {i} sin campo 'amount'")
             if not isinstance(line['amount'], (int, float)):
                 raise ValueError(f"Línea {i}: 'amount' debe ser numérico")
+
+            # Validar códigos mínimos requeridos
+            # (opcional: agregar validación de códigos Previred válidos)
+
         return v
+
 
 class PayrollValidationResponse(BaseModel):
     """Response de validación de liquidación"""
@@ -228,54 +578,288 @@ class PreviredIndicatorsResponse(BaseModel):
 # ENDPOINTS
 # ═══════════════════════════════════════════════════════════
 
+@limiter.limit("1000/minute")  # High limit for monitoring tools
 @app.get("/health")
-async def health_check():
-    """Health check endpoint with real dependency verification"""
-    from datetime import datetime
+async def health_check(request: Request):
+    """
+    Enhanced health check endpoint with comprehensive dependency validation.
+
+    Returns comprehensive status of:
+    - Redis Sentinel cluster
+    - Anthropic API configuration
+    - Plugin Registry
+    - Knowledge Base
+    - Service metrics
+
+    Returns:
+        dict: Health status with dependency details
+
+    Status Codes:
+        200: All dependencies healthy
+        207: Service degraded (some non-critical issues)
+        503: Service unhealthy (critical dependency down)
+    """
     from fastapi.responses import JSONResponse
-    
-    health = {
-        "status": "healthy",
-        "service": settings.app_name,
-        "version": settings.app_version,
-        "timestamp": datetime.utcnow().isoformat(),
-        "dependencies": {}
-    }
-    
-    # 1. Check Redis connectivity
+
+    start_time = time.time()
+    overall_status = "healthy"
+    dependencies = {}
+
+    # 1. Check Redis Sentinel
     try:
         from utils.redis_helper import get_redis_client
+
+        redis_start = time.time()
         redis_client = get_redis_client()
         redis_client.ping()
-        health["dependencies"]["redis"] = {
+        redis_latency = (time.time() - redis_start) * 1000
+
+        # Get sentinel info (if available)
+        sentinel_info = {}
+        try:
+            from utils.redis_helper import sentinel
+            if sentinel:
+                # Get master info
+                master_info = sentinel.discover_master('mymaster')
+                replicas_info = sentinel.discover_slaves('mymaster')
+                sentinels_info = sentinel.discover_sentinels('mymaster')
+
+                sentinel_info = {
+                    "type": "sentinel",
+                    "master": f"{master_info[0]}:{master_info[1]}",
+                    "replicas": len(replicas_info),
+                    "sentinels": len(sentinels_info) + 1  # +1 for current
+                }
+        except:
+            sentinel_info = {"type": "standalone"}
+
+        dependencies["redis"] = {
             "status": "up",
-            "message": "Connection successful"
+            **sentinel_info,
+            "latency_ms": round(redis_latency, 2)
         }
+
+        # Alert if latency > 100ms (P1-7)
+        if redis_latency > 100:
+            overall_status = "degraded"
+            dependencies["redis"]["warning"] = f"High latency: {redis_latency:.1f}ms"
+            logger.warning("health_check_redis_slow", latency_ms=redis_latency)
     except Exception as e:
-        health["dependencies"]["redis"] = {
+        dependencies["redis"] = {
             "status": "down",
             "error": str(e)[:200]
         }
-        health["status"] = "degraded"
+        overall_status = "unhealthy"
         logger.error("health_check_redis_failed", error=str(e))
-    
-    # 2. Check Anthropic API configuration (not calling API to avoid costs)
-    health["dependencies"]["anthropic"] = {
-        "status": "configured" if settings.anthropic_api_key else "not_configured",
-        "model": settings.anthropic_model if settings.anthropic_api_key else None
+
+    # 2. Check Anthropic API
+    try:
+        api_key_present = bool(settings.anthropic_api_key and
+                              settings.anthropic_api_key != "default_key")
+
+        anthropic_status = {
+            "status": "configured" if api_key_present else "not_configured",
+            "model": settings.anthropic_model,
+            "api_key_present": api_key_present
+        }
+
+        # Optional: Test actual connectivity (commented out for performance)
+        # Uncomment if you want to test real API calls
+        # try:
+        #     from clients.anthropic_client import AnthropicClient
+        #     client = AnthropicClient()
+        #     # Make a lightweight test call (count tokens)
+        #     await client.estimate_tokens("health check test", max_tokens=10)
+        #     anthropic_status["connectivity"] = "ok"
+        # except:
+        #     anthropic_status["connectivity"] = "unreachable"
+        #     overall_status = "degraded"
+
+        dependencies["anthropic"] = anthropic_status
+
+    except Exception as e:
+        dependencies["anthropic"] = {
+            "status": "error",
+            "error": str(e)[:200]
+        }
+        overall_status = "degraded"
+        logger.error("health_check_anthropic_failed", error=str(e))
+
+    # 3. Check Plugin Registry
+    try:
+        from plugins.registry import get_plugin_registry
+
+        plugin_registry = get_plugin_registry()
+        plugins_list = plugin_registry.list_plugins()
+
+        # Extract module names from plugin dicts
+        plugin_modules = [plugin.get('module', 'unknown') for plugin in plugins_list]
+
+        dependencies["plugin_registry"] = {
+            "status": "loaded",
+            "plugins_count": len(plugins_list),
+            "plugins": plugin_modules
+        }
+    except Exception as e:
+        dependencies["plugin_registry"] = {
+            "status": "error",
+            "error": str(e)[:200]
+        }
+        overall_status = "degraded"
+        logger.error("health_check_plugins_failed", error=str(e))
+
+    # 4. Check Knowledge Base
+    try:
+        from chat.knowledge_base import KnowledgeBase
+
+        knowledge_base = KnowledgeBase()
+
+        modules_set = set()
+        for doc in knowledge_base.documents:
+            modules_set.add(doc.get("module", "unknown"))
+
+        dependencies["knowledge_base"] = {
+            "status": "loaded",
+            "documents_count": len(knowledge_base.documents),
+            "modules": sorted(list(modules_set))
+        }
+    except Exception as e:
+        dependencies["knowledge_base"] = {
+            "status": "error",
+            "error": str(e)[:200]
+        }
+        overall_status = "degraded"
+        logger.error("health_check_knowledge_base_failed", error=str(e))
+
+    # 5. Get metrics (optional, from Redis if available)
+    metrics = {}
+    try:
+        if dependencies.get("redis", {}).get("status") == "up":
+            # Try to get metrics from Redis
+            from utils.redis_helper import get_redis_client
+            redis_client = get_redis_client(read_only=True)
+
+            total_requests = redis_client.get("metrics:total_requests")
+            cache_hits = redis_client.get("metrics:cache_hits")
+            cache_total = redis_client.get("metrics:cache_total")
+
+            metrics = {
+                "total_requests": int(total_requests) if total_requests else 0,
+                "cache_hit_rate": (
+                    round(int(cache_hits) / int(cache_total), 3)
+                    if cache_total and int(cache_total) > 0
+                    else 0.0
+                )
+            }
+    except:
+        # Metrics are optional
+        pass
+
+    # Build response
+    health_response = {
+        "status": overall_status,
+        "service": "AI Microservice - DTE Intelligence",
+        "version": settings.app_version,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "uptime_seconds": int(time.time() - SERVICE_START_TIME),
+        "dependencies": dependencies,
+        "health_check_duration_ms": round((time.time() - start_time) * 1000, 2)
     }
-    
-    # OpenAI eliminado - Solo Anthropic
-    
-    # Return 503 if any critical dependency is down
-    if health["status"] == "degraded":
-        return JSONResponse(status_code=503, content=health)
-    
-    return health
+
+    if metrics:
+        health_response["metrics"] = metrics
+
+    # Return appropriate HTTP status code
+    status_code = 200 if overall_status == "healthy" else (
+        503 if overall_status == "unhealthy" else 207  # 207 = Multi-Status (degraded)
+    )
+
+    logger.info("health_check_completed",
+                status=overall_status,
+                duration_ms=health_response["health_check_duration_ms"])
+
+    return JSONResponse(
+        content=health_response,
+        status_code=status_code
+    )
 
 
+@limiter.limit("1000/minute")  # High limit for orchestrator probes
+@app.get("/ready")
+async def readiness_check(request: Request):
+    """
+    Readiness probe for Kubernetes/orchestrators.
+
+    Returns 200 only if service is ready to accept traffic.
+    More strict than health check - verifies all critical dependencies.
+
+    Returns:
+        dict: Simple ready/not-ready status
+
+    Status Codes:
+        200: Service ready to accept traffic
+        503: Service not ready
+    """
+    from fastapi.responses import JSONResponse
+
+    try:
+        # Check critical dependencies only
+        from utils.redis_helper import get_redis_client
+        redis_client = get_redis_client()
+        redis_client.ping()
+
+        # Check that essential components are loaded
+        from plugins.registry import get_plugin_registry
+        from chat.knowledge_base import KnowledgeBase
+
+        plugin_registry = get_plugin_registry()
+        knowledge_base = KnowledgeBase()
+
+        plugins_list = plugin_registry.list_plugins()
+        if len(plugins_list) == 0:
+            raise Exception("No plugins loaded")
+
+        if len(knowledge_base.documents) == 0:
+            raise Exception("No knowledge base documents")
+
+        logger.info("readiness_check_passed",
+                    plugins=len(plugins_list),
+                    kb_docs=len(knowledge_base.documents))
+
+        return {"status": "ready"}
+
+    except Exception as e:
+        logger.error("readiness_check_failed", error=str(e))
+        return JSONResponse(
+            content={"status": "not_ready", "error": str(e)[:200]},
+            status_code=503
+        )
+
+
+@limiter.limit("1000/minute")  # High limit for orchestrator probes
+@app.get("/live")
+async def liveness_check(request: Request):
+    """
+    Liveness probe for Kubernetes/orchestrators.
+
+    Returns 200 if the application is alive (even if dependencies are down).
+    Used to determine if container should be restarted.
+
+    Returns:
+        dict: Simple alive status
+
+    Status Codes:
+        200: Service is alive
+    """
+    return {
+        "status": "alive",
+        "uptime_seconds": int(time.time() - SERVICE_START_TIME)
+    }
+
+
+@limiter.limit("1000/minute")  # High limit for Prometheus scraping
 @app.get("/metrics")
-async def metrics():
+async def metrics(request: Request):
     """
     Prometheus metrics endpoint.
 
@@ -306,8 +890,10 @@ async def metrics():
         )
 
 
+@limiter.limit("100/minute")  # Moderate limit for authenticated cost queries
 @app.get("/metrics/costs")
 async def metrics_costs(
+    request: Request,
     period: str = "today",
     _: None = Depends(verify_api_key)
 ):
@@ -348,6 +934,110 @@ async def metrics_costs(
         )
 
 
+# ═══════════════════════════════════════════════════════════
+# CACHE HELPER FUNCTIONS (P1-5 Implementation)
+# ═══════════════════════════════════════════════════════════
+
+def _generate_cache_key(data: Dict[str, Any], prefix: str, company_id: Optional[int] = None) -> str:
+    """
+    Generate deterministic cache key from data.
+
+    Args:
+        data: Data to hash (dict or similar)
+        prefix: Cache key prefix (e.g., "dte_validation", "chat_message")
+        company_id: Optional company ID to include in key
+
+    Returns:
+        Cache key in format: "{prefix}:{company_id}:{hash}"
+
+    Example:
+        key = _generate_cache_key({"foo": "bar"}, "dte_validation", 1)
+        # Returns: "dte_validation:1:5c4de..."
+    """
+    # Serialize data to JSON (sorted keys for determinism)
+    content = json.dumps(data, sort_keys=True, default=str)
+
+    # Generate MD5 hash
+    hash_val = hashlib.md5(content.encode()).hexdigest()
+
+    # Build cache key
+    if company_id:
+        return f"{prefix}:{company_id}:{hash_val}"
+    else:
+        return f"{prefix}:{hash_val}"
+
+
+async def _get_cached_response(cache_key: str) -> Optional[Dict[str, Any]]:
+    """
+    Get cached response from Redis.
+
+    Args:
+        cache_key: Cache key to lookup
+
+    Returns:
+        Cached data as dict, or None if not found or error
+
+    Note:
+        Errors are logged but not raised to avoid breaking request flow.
+    """
+    try:
+        from utils.redis_helper import get_redis_client
+        redis_client = get_redis_client()
+
+        cached = redis_client.get(cache_key)
+
+        if cached:
+            if isinstance(cached, bytes):
+                cached = cached.decode('utf-8')
+
+            logger.info("cache_hit", cache_key=cache_key[:50])
+            return json.loads(cached)
+        else:
+            logger.info("cache_miss", cache_key=cache_key[:50])
+            return None
+
+    except Exception as e:
+        logger.warning("cache_get_failed", error=str(e), cache_key=cache_key[:50])
+        return None
+
+
+async def _set_cached_response(
+    cache_key: str,
+    data: Dict[str, Any],
+    ttl_seconds: int = 900
+) -> bool:
+    """
+    Store response in Redis cache.
+
+    Args:
+        cache_key: Cache key to store under
+        data: Data to cache (will be JSON serialized)
+        ttl_seconds: Time-to-live in seconds (default: 15 minutes)
+
+    Returns:
+        True if cached successfully, False otherwise
+
+    Note:
+        Errors are logged but not raised to avoid breaking request flow.
+    """
+    try:
+        from utils.redis_helper import get_redis_client
+        redis_client = get_redis_client()
+
+        # Serialize data
+        serialized = json.dumps(data, default=str)
+
+        # Store with TTL
+        redis_client.setex(cache_key, ttl_seconds, serialized)
+
+        logger.debug("cache_set", cache_key=cache_key[:50], ttl_seconds=ttl_seconds)
+        return True
+
+    except Exception as e:
+        logger.warning("cache_set_failed", error=str(e), cache_key=cache_key[:50])
+        return False
+
+
 @app.post("/api/ai/validate",
           response_model=DTEValidationResponse,
           dependencies=[Depends(verify_api_key)])
@@ -355,15 +1045,31 @@ async def metrics_costs(
 async def validate_dte(data: DTEValidationRequest, request: Request):
     """
     Pre-validación inteligente de un DTE antes de envío al SII.
-    
+
     Usa Claude de Anthropic para detectar errores comparando con historial.
+
+    Cache: 15 minutos TTL
+    Cache key: Based on dte_data hash + company_id
     """
     logger.info("ai_validation_started", company_id=data.company_id)
-    
+
+    # P1-5: Generate cache key
+    cache_key = _generate_cache_key(
+        data={"dte_data": data.dte_data, "history": data.history},
+        prefix="dte_validation",
+        company_id=data.company_id
+    )
+
+    # P1-5: Check cache first
+    cached_response = await _get_cached_response(cache_key)
+    if cached_response:
+        logger.info("dte_validation_cache_hit", company_id=data.company_id)
+        return DTEValidationResponse(**cached_response)
+
     try:
         # Usar cliente Anthropic REAL
         from clients.anthropic_client import get_anthropic_client
-        
+
         client = get_anthropic_client(
             settings.anthropic_api_key,
             settings.anthropic_model
@@ -371,17 +1077,26 @@ async def validate_dte(data: DTEValidationRequest, request: Request):
 
         # Validar con Claude (ASYNC)
         result = await client.validate_dte(data.dte_data, data.history)
-        
-        return DTEValidationResponse(
+
+        response = DTEValidationResponse(
             confidence=result.get('confidence', 95.0),
             warnings=result.get('warnings', []),
             errors=result.get('errors', []),
             recommendation=result.get('recommendation', 'send')
         )
-        
+
+        # P1-5: Cache successful response (TTL: 15 minutes)
+        await _set_cached_response(
+            cache_key=cache_key,
+            data=response.dict(),
+            ttl_seconds=900  # 15 minutes
+        )
+
+        return response
+
     except Exception as e:
         logger.error("ai_validation_error", error=str(e))
-        
+
         # Retornar resultado neutro en caso de error (no bloquear flujo)
         return DTEValidationResponse(
             confidence=50.0,
@@ -698,14 +1413,88 @@ def get_orchestrator():
             settings.anthropic_api_key,
             settings.anthropic_model
         )
-        
-        redis_client = redis.Redis(
-            host=os.getenv('REDIS_HOST', 'redis'),
-            port=int(os.getenv('REDIS_PORT', 6379)),
-            db=int(os.getenv('REDIS_DB', 0)),
-            decode_responses=False
-        )
-        
+
+        # ✅ FIX [P0-3]: Redis with ROBUST error handling, retry logic, graceful degradation, and connection pool
+        redis_client = None
+        max_retries = 3
+        retry_delay = 1  # seconds
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                from redis.connection import ConnectionPool
+
+                # Create connection pool for efficient resource management
+                redis_pool = ConnectionPool(
+                    host=os.getenv('REDIS_HOST', 'redis'),
+                    port=int(os.getenv('REDIS_PORT', 6379)),
+                    db=int(os.getenv('REDIS_DB', 0)),
+                    max_connections=20,  # Connection pool optimization
+                    socket_connect_timeout=5,
+                    socket_keepalive=True,
+                    health_check_interval=30,  # Health check every 30s
+                    decode_responses=False
+                )
+
+                redis_client = redis.Redis(connection_pool=redis_pool)
+
+                # Test connection with timeout
+                redis_client.ping()
+                logger.info(
+                    "redis_connected",
+                    pool_size=20,
+                    host=os.getenv('REDIS_HOST', 'redis'),
+                    attempt=attempt
+                )
+                break  # Success, exit retry loop
+
+            except redis.ConnectionError as e:
+                logger.warning(
+                    "redis_connection_error",
+                    error=str(e),
+                    attempt=attempt,
+                    max_retries=max_retries
+                )
+                if attempt < max_retries:
+                    import time
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                else:
+                    logger.error(
+                        "redis_connection_failed_all_retries",
+                        error=str(e),
+                        mode="graceful_degradation"
+                    )
+                    redis_client = None
+
+            except redis.TimeoutError as e:
+                logger.warning(
+                    "redis_timeout_error",
+                    error=str(e),
+                    attempt=attempt
+                )
+                if attempt >= max_retries:
+                    redis_client = None
+
+            except Exception as e:
+                logger.exception(
+                    "redis_unexpected_error",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                    attempt=attempt
+                )
+                if attempt >= max_retries:
+                    redis_client = None
+
+        # Final status log
+        if redis_client is None:
+            logger.warning(
+                "service_starting_no_cache_mode",
+                message="AI Service running WITHOUT Redis cache (graceful degradation). "
+                        "Performance may be reduced. Check Redis connection."
+            )
+        else:
+            logger.info("service_starting_with_cache", cache_mode="redis_enabled")
+
         slack_token = os.getenv('SLACK_TOKEN')
         
         _orchestrator = MonitoringOrchestrator(
@@ -770,6 +1559,7 @@ async def trigger_sii_monitoring(
         )
 
 
+@limiter.limit("100/minute")  # Frequent status checks allowed
 @app.get(
     "/api/ai/sii/status",
     tags=["SII Monitoring"],
@@ -777,13 +1567,19 @@ async def trigger_sii_monitoring(
     description="Obtiene estado actual del sistema de monitoreo"
 )
 async def get_sii_monitoring_status(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     """
-    Obtiene estado del sistema de monitoreo SII.
+    Obtiene estado del sistema de monitoreo SII con métricas desde Redis.
+    
+    Métricas recuperadas:
+    - sii_monitor:stats - Estadísticas generales (total_checks, error_rate)
+    - sii_monitor:alerts - Alertas activas
+    - sii_monitor:last_check - Timestamp del último chequeo
     
     Returns:
-        Dict con estado del sistema
+        Dict con estado del sistema y métricas reales desde Redis
     """
     if credentials.credentials != settings.api_key:
         raise HTTPException(
@@ -794,12 +1590,44 @@ async def get_sii_monitoring_status(
     try:
         orchestrator = get_orchestrator()
         
-        # TODO: Agregar métricas reales desde Redis
+        # Retrieve metrics from Redis
+        redis_client = get_redis()
+        
+        # Get stats
+        stats_data = {}
+        last_execution = None
+        news_count = 0
+        
+        try:
+            # Try to get stats from Redis
+            stats_raw = await redis_client.get("sii_monitor:stats")
+            if stats_raw:
+                import json
+                stats_data = json.loads(stats_raw)
+            
+            # Get last check timestamp
+            last_check_raw = await redis_client.get("sii_monitor:last_check")
+            if last_check_raw:
+                last_execution = last_check_raw.decode('utf-8') if isinstance(last_check_raw, bytes) else last_check_raw
+            
+            # Get alerts count (list length)
+            alerts_raw = await redis_client.get("sii_monitor:alerts")
+            if alerts_raw:
+                alerts_data = json.loads(alerts_raw)
+                news_count = len(alerts_data) if isinstance(alerts_data, list) else 0
+                
+        except Exception as redis_error:
+            logger.warning("redis_metrics_retrieval_failed", 
+                          error=str(redis_error),
+                          message="Falling back to default values")
+        
         status_data = {
             "status": "operational",
             "orchestrator_initialized": orchestrator is not None,
-            "last_execution": None,  # TODO: Obtener desde Redis
-            "news_count_last_24h": 0,  # TODO: Obtener desde Redis
+            "last_execution": last_execution,
+            "news_count_last_24h": news_count,
+            "total_checks": stats_data.get("total_checks", 0),
+            "error_rate": stats_data.get("error_rate", 0.0)
         }
         
         return status_data
@@ -810,18 +1638,6 @@ async def get_sii_monitoring_status(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
-
-@app.on_event("startup")
-async def startup_event():
-    """Inicialización al arrancar el servicio"""
-    logger.info("ai_service_starting",
-                version=settings.app_version,
-                anthropic_model=settings.anthropic_model)
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Limpieza al detener el servicio"""
-    logger.info("ai_service_stopping")
 
 # ═══════════════════════════════════════════════════════════
 # [NEW] CHAT SUPPORT ENDPOINTS - Added 2025-10-22
@@ -836,12 +1652,12 @@ import uuid
 
 # Pydantic Models for Chat API
 class ChatMessageRequest(BaseModel):
-    """Request to send chat message con validaciones robustas"""
+    """Request to send chat message con validaciones robustas (P0-4 Enhanced)"""
     session_id: Optional[str] = Field(None, description="Session ID (auto-generado si None)")
     message: str = Field(..., min_length=1, max_length=5000, description="Mensaje del usuario (1-5000 caracteres)")
     user_context: Optional[Dict[str, Any]] = Field(None, description="Contexto del usuario (opcional)")
-    
-    @validator('session_id')
+
+    @field_validator('session_id')
     def validate_session_id(cls, v):
         """Validar formato UUID si se proporciona"""
         if v:
@@ -852,18 +1668,60 @@ class ChatMessageRequest(BaseModel):
                 raise ValueError(f"session_id debe ser un UUID válido: {v}")
         return v
 
-    @validator('message')
+    @field_validator('message')
     def validate_message(cls, v):
-        """Validar y sanitizar mensaje."""
+        """
+        Validar y sanitizar mensaje (P0-4).
+
+        Protecciones:
+        - HTML/script injection (XSS)
+        - Spam patterns
+        - Exceso de caracteres especiales
+        - SQL injection patterns
+
+        Performance: ~1-2ms
+        """
+        import structlog
+        logger = structlog.get_logger()
+
         if not v or not v.strip():
             raise ValueError("Mensaje no puede estar vacío")
-        
-        # Sanitizar
+
+        # Sanitizar (strip whitespace)
         v = v.strip()
-        
+
+        # Detectar y remover scripts (XSS protection)
+        if '<script' in v.lower() or 'javascript:' in v.lower():
+            logger.warning("validation_blocked_xss_attempt", message_preview=v[:50])
+            v = re.sub(r'<script[^>]*>.*?</script>', '', v, flags=re.DOTALL | re.IGNORECASE)
+            v = re.sub(r'javascript:', '', v, flags=re.IGNORECASE)
+
+        # Remover HTML tags (permitir solo texto plano)
+        if '<' in v and '>' in v:
+            v = re.sub(r'<[^>]+>', '', v)
+
+        # Detectar exceso de caracteres especiales (posible spam/injection)
+        special_chars = re.findall(r'[^\w\s\.\,\;\:\¿\?\¡\!\-\(\)\[\]áéíóúñÁÉÍÓÚÑ]', v)
+        if len(special_chars) > 30:
+            logger.warning("validation_excessive_special_chars", count=len(special_chars))
+            raise ValueError(f"Demasiados caracteres especiales: {len(special_chars)} (máximo 30)")
+
+        # Detectar SPAM pattern: todo mayúsculas largo
+        if v.upper() == v and len(v) > 50 and not v.startswith('DTE'):
+            logger.warning("validation_blocked_spam_caps", message_preview=v[:50])
+            raise ValueError("Mensaje parece spam (todo en mayúsculas)")
+
+        # Detectar posible SQL injection
+        sql_patterns = ['DROP TABLE', 'DELETE FROM', 'INSERT INTO', '; --', 'UNION SELECT']
+        for pattern in sql_patterns:
+            if pattern.lower() in v.lower():
+                logger.warning("validation_blocked_sql_injection", pattern=pattern)
+                raise ValueError("Mensaje contiene patrones sospechosos")
+
+        # Validar longitud final después de sanitización
         if len(v) < 1:
-            raise ValueError("Mensaje demasiado corto")
-        
+            raise ValueError("Mensaje demasiado corto después de sanitización")
+
         return v
 
 
@@ -956,6 +1814,9 @@ async def send_chat_message(
     If session_id is None, creates new session automatically.
     Context is preserved across messages in same session.
 
+    Cache: 5 minutes TTL (only if confidence > 80%)
+    Cache key: Based on message hash + session_id
+
     Example:
     ```json
     {
@@ -981,6 +1842,18 @@ async def send_chat_message(
                 message_preview=data.message[:100],
                 has_user_context=data.user_context is not None)
 
+    # P1-5: Generate cache key (based on session + message)
+    cache_key = _generate_cache_key(
+        data={"session_id": session_id, "message": data.message},
+        prefix="chat_message"
+    )
+
+    # P1-5: Check cache first
+    cached_response = await _get_cached_response(cache_key)
+    if cached_response:
+        logger.info("chat_message_cache_hit", session_id=session_id)
+        return EngineChatResponse(**cached_response)
+
     try:
         engine = get_chat_engine()
 
@@ -989,6 +1862,27 @@ async def send_chat_message(
             user_message=data.message,
             user_context=data.user_context
         )
+
+        # P1-5: Cache only if confidence > 80% (high confidence responses)
+        # This ensures we only cache reliable, deterministic responses
+        confidence = getattr(response, 'confidence', 0.0)
+        if confidence > 80.0:
+            await _set_cached_response(
+                cache_key=cache_key,
+                data=response.dict(),
+                ttl_seconds=300  # 5 minutes (shorter than DTE validation)
+            )
+            logger.debug(
+                "chat_message_cached",
+                session_id=session_id,
+                confidence=confidence
+            )
+        else:
+            logger.debug(
+                "chat_message_not_cached_low_confidence",
+                session_id=session_id,
+                confidence=confidence
+            )
 
         return response
 
@@ -1102,6 +1996,7 @@ async def send_chat_message_stream(
     )
 
 
+@limiter.limit("50/minute")  # Moderate limit for session creation
 @app.post(
     "/api/chat/session/new",
     response_model=NewSessionResponse,
@@ -1110,6 +2005,7 @@ async def send_chat_message_stream(
     description="Start new conversation with AI assistant"
 )
 async def create_chat_session(
+    http_request: Request,
     request: NewSessionRequest,
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
@@ -1141,6 +2037,7 @@ async def create_chat_session(
     )
 
 
+@limiter.limit("50/minute")  # Moderate limit for history retrieval
 @app.get(
     "/api/chat/session/{session_id}",
     tags=["Chat Support"],
@@ -1148,6 +2045,7 @@ async def create_chat_session(
     description="Retrieve conversation history for a session"
 )
 async def get_conversation_history(
+    request: Request,
     session_id: str,
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
@@ -1180,6 +2078,7 @@ async def get_conversation_history(
         )
 
 
+@limiter.limit("50/minute")  # Moderate limit for session deletion
 @app.delete(
     "/api/chat/session/{session_id}",
     tags=["Chat Support"],
@@ -1187,6 +2086,7 @@ async def get_conversation_history(
     description="Delete conversation history and context for a session"
 )
 async def clear_chat_session(
+    request: Request,
     session_id: str,
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
@@ -1219,6 +2119,7 @@ async def clear_chat_session(
         )
 
 
+@limiter.limit("30/minute")  # Moderate limit for knowledge base searches
 @app.get(
     "/api/chat/knowledge/search",
     tags=["Chat Support"],
@@ -1226,6 +2127,7 @@ async def clear_chat_session(
     description="Search DTE documentation knowledge base"
 )
 async def search_knowledge_base(
+    request: Request,
     query: str,
     top_k: int = 3,
     credentials: HTTPAuthorizationCredentials = Depends(security)

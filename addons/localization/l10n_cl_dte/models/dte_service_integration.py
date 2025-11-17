@@ -18,7 +18,6 @@ from odoo import models, api, _
 from odoo.exceptions import UserError
 import requests
 import logging
-import base64
 from datetime import datetime
 
 _logger = logging.getLogger(__name__)

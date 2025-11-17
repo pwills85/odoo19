@@ -43,7 +43,7 @@ jobs:
     name: Odoo Tests in Container
     runs-on: ubuntu-latest
     container:
-      image: eergygroup/odoo19:chile-1.0.3
+      image: pwills85/odoo19:chile-1.0.3
     services:
       db:
         image: postgres:15-alpine

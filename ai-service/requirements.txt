@@ -24,13 +24,13 @@ beautifulsoup4>=4.12.0    # HTML parsing (ya existe abajo, moverlo aquí)
 # ═══════════════════════════════════════════════════════════
 # XML PARSING (for DTE)
 # ═══════════════════════════════════════════════════════════
-lxml>=4.9.0
+lxml>=5.3.0  # CVE-2024-45590 fixed (major upgrade 4.x→5.x)
 
 # ═══════════════════════════════════════════════════════════
 # HTTP Y COMUNICACIÓN
 # ═══════════════════════════════════════════════════════════
-httpx>=0.25.2
-requests>=2.31.0
+httpx>=0.25.2,<0.28.0  # Pin <0.28.0 for Starlette 0.27.0 compatibility (breaking changes in 0.28.x)
+requests>=2.32.3  # CVE-2023-32681 fixed
 
 # ═══════════════════════════════════════════════════════════
 # CACHE Y SESSION STORAGE

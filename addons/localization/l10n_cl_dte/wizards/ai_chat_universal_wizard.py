@@ -22,7 +22,6 @@ Author: EERGYGROUP - Phase 2 Enhancement 2025-10-24
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 import requests
-import json
 import logging
 
 _logger = logging.getLogger(__name__)

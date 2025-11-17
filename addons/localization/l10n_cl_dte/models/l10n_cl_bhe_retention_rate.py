@@ -6,7 +6,6 @@ Tabla histórica 2018-presente con tasas oficiales SII
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
-from datetime import date
 import logging
 
 _logger = logging.getLogger(__name__)

@@ -1,0 +1,87 @@
+# Sistema RAG (Retrieval Augmented Generation) Enterprise
+# Arquitectura para recuperación inteligente de conocimiento contextual
+
+[rag_config]
+# Configuración del sistema RAG
+enabled = true
+embedding_model = "text-embedding-3-large"
+vector_db_path = ".codex/enterprise/vector-store/odoo19-chile.db"
+chunk_size = 1000
+chunk_overlap = 200
+similarity_threshold = 0.85
+
+[context_sources]
+# Fuentes de conocimiento para indexación RAG
+project_docs = [
+    ".github/agents/knowledge/*.md",
+    "docs/**/*.md",
+    "README.md",
+    "CLAUDE.md"
+]
+
+code_context = [
+    "addons/**/*.py",
+    "libs/**/*.py",
+    "scripts/**/*.py",
+    "ai-service/**/*.py"
+]
+
+regulatory_docs = [
+    "docs/SII_*",
+    "docs/*_REQUIREMENTS*",
+    "docs/*_COMPLIANCE*"
+]
+
+[query_enhancement]
+# Mejoras automáticas de consultas
+auto_expand = true
+context_injection = true
+domain_specific_terms = [
+    "DTE", "CAF", "FOLIO", "RUT", "SII", "Odoo19", "EERGYGROUP",
+    "localización chilena", "factura electrónica", "guía despacho",
+    "previred", "AFP", "ISAPRE", "UF", "UTM"
+]
+
+semantic_expansion = {
+    "factura" = ["invoice", "DTE 33", "factura electrónica", "account.move"],
+    "proveedor" = ["supplier", "partner", "res.partner", "vendor"],
+    "cliente" = ["customer", "client", "buyer"],
+    "pago" = ["payment", "cobro", "account.payment"],
+    "impuesto" = ["tax", "IVA", "account.tax"]
+}
+
+[intelligence_layers]
+# Capas de inteligencia superpuestas
+layer_1_syntax = {
+    enabled = true
+    focus = "análisis sintáctico y patrones de código"
+}
+
+layer_2_semantic = {
+    enabled = true
+    focus = "comprensión semántica del dominio Odoo"
+}
+
+layer_3_regulatory = {
+    enabled = true
+    focus = "conocimiento experto de regulaciones chilenas"
+}
+
+layer_4_architectural = {
+    enabled = true
+    focus = "patrones de arquitectura enterprise"
+}
+
+[adaptive_learning]
+# Aprendizaje adaptativo basado en interacciones
+enabled = true
+feedback_collection = true
+model_fine_tuning = false  # Por ahora, usar prompting avanzado
+confidence_scoring = true
+
+[performance_optimization]
+# Optimizaciones de rendimiento para RAG
+cache_embeddings = true
+precompute_common_queries = true
+parallel_processing = true
+memory_mapped_vectors = true

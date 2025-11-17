@@ -1,0 +1,248 @@
+# Prometheus Alert Rules for AI Microservice
+# ==========================================
+# Project: Odoo 19 - Chilean Localization Stack
+# Component: AI Service Monitoring
+# Created: 2025-11-09
+#
+# Alerts:
+#   1. RedisDown (CRITICAL)
+#   2. RedisReplicaDown (WARNING)
+#   3. HighErrorRate (WARNING)
+#   4. DailyCostExceeded (WARNING)
+#   5. HighLatency (WARNING)
+#   6. PluginLoadFailure (WARNING)
+#   7. RedisSentinelDegraded (WARNING)
+#   8. KnowledgeBaseEmpty (WARNING)
+#   9. AnthropicAPIDown (CRITICAL)
+#   10. LowCacheHitRate (INFO)
+
+groups:
+  - name: ai_service_critical
+    interval: 30s
+    rules:
+      # 1. Redis Master Down - CRITICAL
+      - alert: RedisDown
+        expr: up{job="redis-master"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: redis
+          impact: high
+          team: infrastructure
+        annotations:
+          summary: "Redis master is down"
+          description: "Redis master {{ $labels.instance }} has been down for more than 1 minute. AI service cache unavailable."
+          impact: "All AI requests will bypass cache, increasing latency and cost by 3-5x"
+          runbook: "https://wiki.internal/runbooks/redis-down"
+          dashboard: "http://localhost:3000/d/redis-overview"
+
+      # 9. Anthropic API Unreachable - CRITICAL
+      - alert: AnthropicAPIDown
+        expr: increase(ai_service_anthropic_api_errors_total[2m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+          component: anthropic
+          impact: high
+          team: ai-service
+        annotations:
+          summary: "Anthropic API unreachable or erroring"
+          description: "{{ $value }} Anthropic API errors in last 2 minutes. AI service degraded."
+          impact: "All AI chat requests will fail. Business continuity affected."
+          runbook: "https://wiki.internal/runbooks/anthropic-api-down"
+          dashboard: "http://localhost:3000/d/ai-service-overview"
+
+  - name: ai_service_warnings
+    interval: 30s
+    rules:
+      # 2. Redis Replica Down - WARNING
+      - alert: RedisReplicaDown
+        expr: count(up{job="redis-replica"} == 0) >= 1
+        for: 5m
+        labels:
+          severity: warning
+          component: redis
+          impact: medium
+          team: infrastructure
+        annotations:
+          summary: "Redis replica is down"
+          description: "{{ $value }} Redis replica(s) down for more than 5 minutes."
+          impact: "Reduced redundancy. If master fails, service degradation likely."
+          runbook: "https://wiki.internal/runbooks/redis-replica-down"
+
+      # 3. High Error Rate - WARNING
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5..",job="ai-service"}[5m]))
+            /
+            sum(rate(http_requests_total{job="ai-service"}[5m]))
+          ) * 100 > 10
+        for: 2m
+        labels:
+          severity: warning
+          component: ai-service
+          impact: medium
+          team: ai-service
+        annotations:
+          summary: "High error rate detected in AI service"
+          description: "Error rate is {{ $value | printf \"%.2f\" }}% (threshold: 10%)"
+          impact: "User experience degraded. Check logs for root cause."
+          runbook: "https://wiki.internal/runbooks/high-error-rate"
+          query: "sum(rate(http_requests_total{status=~\"5..\",job=\"ai-service\"}[5m]))"
+
+      # 4. Daily Cost Exceeded - WARNING
+      - alert: DailyCostExceeded
+        expr: ai_service_daily_cost_usd > 50
+        for: 5m
+        labels:
+          severity: warning
+          component: cost
+          impact: low
+          team: finance
+        annotations:
+          summary: "Daily AI cost exceeded $50 budget"
+          description: "Current daily cost: ${{ $value | printf \"%.2f\" }} (threshold: $50)"
+          impact: "Budget overrun. Review usage patterns and consider rate limiting."
+          runbook: "https://wiki.internal/runbooks/cost-exceeded"
+          dashboard: "http://localhost:3000/d/ai-cost-analysis"
+
+      # 5. High Latency (P95) - WARNING
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{job="ai-service"}[5m])) by (le)
+          ) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          component: ai-service
+          impact: medium
+          team: ai-service
+        annotations:
+          summary: "High P95 latency detected"
+          description: "P95 latency is {{ $value | printf \"%.2f\" }}s (threshold: 1.0s)"
+          impact: "User experience degraded. Check for Redis cache misses or Anthropic API slowness."
+          runbook: "https://wiki.internal/runbooks/high-latency"
+
+      # 6. Plugin Load Failure - WARNING
+      - alert: PluginLoadFailure
+        expr: ai_service_plugin_load_failures_total > 0
+        for: 1m
+        labels:
+          severity: warning
+          component: plugins
+          impact: medium
+          team: ai-service
+        annotations:
+          summary: "Plugin load failure detected"
+          description: "{{ $value }} plugin(s) failed to load. AI functionality may be limited."
+          impact: "Reduced AI capabilities. Check plugin compatibility and dependencies."
+          runbook: "https://wiki.internal/runbooks/plugin-failure"
+
+      # 7. Redis Sentinel Cluster Degraded - WARNING
+      - alert: RedisSentinelDegraded
+        expr: redis_sentinel_known_sentinels < 2
+        for: 3m
+        labels:
+          severity: warning
+          component: redis
+          impact: medium
+          team: infrastructure
+        annotations:
+          summary: "Redis Sentinel cluster degraded"
+          description: "Only {{ $value }} sentinels are known (expected: 3)"
+          impact: "Automatic failover at risk. If master fails, manual intervention required."
+          runbook: "https://wiki.internal/runbooks/sentinel-degraded"
+
+      # 8. Knowledge Base Not Loaded - WARNING
+      - alert: KnowledgeBaseEmpty
+        expr: ai_service_knowledge_base_documents == 0
+        for: 5m
+        labels:
+          severity: warning
+          component: knowledge-base
+          impact: high
+          team: ai-service
+        annotations:
+          summary: "Knowledge base has no documents loaded"
+          description: "Knowledge base is empty. AI quality severely degraded."
+          impact: "AI responses will lack domain context (SII, DTE, payroll). User experience poor."
+          runbook: "https://wiki.internal/runbooks/kb-empty"
+          action: "Check /Users/pedro/Documents/odoo19/.claude/agents/knowledge/ directory"
+
+  - name: ai_service_info
+    interval: 60s
+    rules:
+      # 10. Cache Hit Rate Too Low - INFO
+      - alert: LowCacheHitRate
+        expr: |
+          (
+            rate(ai_service_cache_hits_total[10m])
+            /
+            (rate(ai_service_cache_hits_total[10m]) + rate(ai_service_cache_misses_total[10m]))
+          ) * 100 < 50
+        for: 10m
+        labels:
+          severity: info
+          component: cache
+          impact: low
+          team: ai-service
+        annotations:
+          summary: "Cache hit rate below 50%"
+          description: "Cache hit rate is {{ $value | printf \"%.2f\" }}% (expected: >50%)"
+          impact: "Increased latency and cost. Consider cache TTL tuning or cache warming."
+          runbook: "https://wiki.internal/runbooks/low-cache-hit-rate"
+          dashboard: "http://localhost:3000/d/redis-cache-performance"
+
+  - name: ai_service_business
+    interval: 60s
+    rules:
+      # Business Hours Rate Limit
+      - alert: HighRequestRateDuringBusinessHours
+        expr: |
+          rate(http_requests_total{job="ai-service"}[5m]) > 10
+          and
+          hour() >= 9 and hour() < 18
+        for: 10m
+        labels:
+          severity: info
+          component: traffic
+          impact: low
+          team: ai-service
+        annotations:
+          summary: "High request rate during business hours"
+          description: "Request rate: {{ $value | printf \"%.2f\" }} req/s (threshold: 10 req/s)"
+          impact: "Normal business activity. Monitor for sustained growth trends."
+
+      # Redis Memory Usage
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: redis
+          impact: medium
+          team: infrastructure
+        annotations:
+          summary: "Redis memory usage above 80%"
+          description: "Redis memory: {{ $value | printf \"%.2f\" }}% (threshold: 80%)"
+          impact: "Cache evictions likely. Consider increasing Redis memory limit."
+          runbook: "https://wiki.internal/runbooks/redis-high-memory"
+
+      # Anthropic Token Usage Spike
+      - alert: AnthropicTokenUsageSpike
+        expr: |
+          rate(ai_service_anthropic_tokens_used_total[5m])
+          >
+          1.5 * rate(ai_service_anthropic_tokens_used_total[1h] offset 1h)
+        for: 10m
+        labels:
+          severity: info
+          component: cost
+          impact: low
+          team: finance
+        annotations:
+          summary: "Anthropic token usage spike detected"
+          description: "Token usage 50% higher than historical average"
+          impact: "Potential cost increase. Review recent usage patterns."

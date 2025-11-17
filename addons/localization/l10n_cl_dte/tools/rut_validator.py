@@ -22,7 +22,6 @@ Author: EERGYGROUP - Ing. Pedro Troncoso Willz
 License: LGPL-3
 """
 
-from typing import Optional
 
 
 def validate_rut(rut: str) -> bool:

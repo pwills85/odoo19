@@ -16,6 +16,7 @@ from odoo.tests import tagged, TransactionCase
 from unittest.mock import patch, MagicMock
 from datetime import date, timedelta
 import base64
+import requests
 
 
 @tagged('post_install', '-at_install', 'payroll_indicators')
@@ -27,6 +28,15 @@ class TestIndicatorAutomation(TransactionCase):
         
         self.IndicatorModel = self.env['hr.economic.indicators']
         self.WizardModel = self.env['hr.economic.indicators.import.wizard']
+        
+        # Estructura salarial
+        self.struct = self.env.ref('l10n_cl_hr_payroll.structure_base_cl',
+                                   raise_if_not_found=False)
+        if not self.struct:
+            self.struct = self.env['hr.payroll.structure'].create({
+                'name': 'Estructura Chile',
+                'code': 'CL_BASE'
+            })
     
     def test_01_cron_job_exists(self):
         """Test que el cron job se crea correctamente"""
@@ -75,22 +85,29 @@ class TestIndicatorAutomation(TransactionCase):
     def test_03_fetch_api_retry_on_failure(self, mock_sleep, mock_get):
         """Test fetch API ejecuta reintentos en caso de fallo"""
         # Mock: primera llamada falla, segunda falla, tercera exitosa
+        mock_failure = MagicMock()
+        mock_failure.status_code = 500
+        mock_failure.text = 'Server Error'
+        mock_failure.raise_for_status.side_effect = requests.exceptions.HTTPError
+
+        mock_success = MagicMock()
+        mock_success.status_code = 200
+        mock_success.json.return_value = {
+            'success': True,
+            'indicators': {
+                'uf': 39000.0,
+                'utm': 68000.0,
+                'uta': 816000.0,
+                'sueldo_minimo': 500000.0,
+                'afp_tope_uf': 87.8,
+            }
+        }
+        mock_success.raise_for_status.return_value = None
+
         mock_get.side_effect = [
-            MagicMock(status_code=500, text='Server Error'),  # Intento 1: falla
-            MagicMock(status_code=500, text='Server Error'),  # Intento 2: falla
-            MagicMock(  # Intento 3: éxito
-                status_code=200,
-                json=lambda: {
-                    'success': True,
-                    'indicators': {
-                        'uf': 39000.0,
-                        'utm': 68000.0,
-                        'uta': 816000.0,
-                        'sueldo_minimo': 500000.0,
-                        'afp_tope_uf': 87.8,
-                    }
-                }
-            )
+            mock_failure,
+            mock_failure,
+            mock_success
         ]
         
         # Llamar cron
@@ -249,6 +266,7 @@ class TestIndicatorAutomation(TransactionCase):
             'date_from': date(2025, 1, 1),
             'date_to': date(2025, 1, 31),
             'indicadores_id': indicator.id,
+            'struct_id': self.struct.id,
         })
         
         # Calcular

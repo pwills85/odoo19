@@ -1,0 +1,120 @@
+# Multi-Channel Notification System Configuration
+# Last Updated: 2025-11-12
+
+# Slack Integration
+slack:
+  # Webhook URL - Get from: https://api.slack.com/messaging/webhooks
+  # Override with environment variable: SLACK_WEBHOOK_URL
+  webhook_url: ${SLACK_WEBHOOK_URL}
+
+  # Channel to post notifications (can use #channel or @user)
+  channel: "#odoo-audits"
+
+  # Mention @channel when P0 issues are detected
+  mention_on_p0: true
+
+  # Thread related notifications together (future feature)
+  use_threading: false
+
+# Email Integration
+email:
+  # SMTP Server Configuration
+  smtp_server: smtp.gmail.com
+  smtp_port: 587  # Use 465 for SSL, 587 for TLS
+
+  # From address (also used as SMTP username)
+  # Override with environment variable: SMTP_USER
+  from: "odoo-audits@example.com"
+
+  # Recipient email addresses
+  to:
+    - "dev-team@example.com"
+    - "qa-team@example.com"
+
+  # SMTP Password
+  # Set via environment variable: SMTP_PASSWORD
+  # For Gmail: Use App Password (https://support.google.com/accounts/answer/185833)
+
+  # Attach PDF report if available
+  attach_pdf: true
+
+# Throttling Configuration
+throttling:
+  # Minimum interval between notifications (seconds)
+  # Default: 300 (5 minutes)
+  min_interval_seconds: 300
+
+  # Quiet hours - no notifications during this time
+  # Use 24-hour format (HH:MM)
+  quiet_hours:
+    start: "22:00"  # 10:00 PM
+    end: "08:00"    # 8:00 AM
+
+  # Batch multiple events within interval
+  batch_notifications: false  # Future feature
+
+  # Maximum notifications per hour (rate limiting)
+  max_per_hour: 10
+
+# Event-Specific Configuration
+events:
+  audit_complete:
+    enabled: true
+    channels: ['slack', 'email']
+    priority: normal
+
+  p0_detected:
+    enabled: true
+    channels: ['slack', 'email']
+    priority: critical
+    # Always send immediately, bypass throttling
+    force_send: true
+
+  regression:
+    enabled: true
+    channels: ['slack']
+    priority: high
+
+  re_audit:
+    enabled: true
+    channels: ['slack']
+    priority: normal
+
+# Retry Configuration
+retry:
+  enabled: true
+  max_attempts: 3
+  backoff_seconds: 10
+
+# Logging
+logging:
+  enabled: true
+  level: INFO  # DEBUG, INFO, WARNING, ERROR
+  file: /Users/pedro/Documents/odoo19/docs/prompts/08_scripts/logs/notifications.log
+
+# Advanced Features
+features:
+  # Include code snippets in notifications
+  include_code_snippets: true
+  max_snippet_lines: 10
+
+  # Generate ASCII graphs for scores
+  ascii_graphs: true
+
+  # Link to detailed reports
+  report_base_url: "https://example.com/audit-reports"
+
+  # Timezone for timestamps
+  timezone: "America/Santiago"
+
+# Testing
+testing:
+  # Test webhook URLs (used with --test flag)
+  test_slack_webhook: ${TEST_SLACK_WEBHOOK_URL}
+
+  # Test email recipients
+  test_email_to:
+    - "test@example.com"
+
+  # Dry run mode (don't actually send)
+  dry_run: false

@@ -77,6 +77,54 @@ class L10nClF29(models.Model):
         tracking=True
     )
 
+    # ========== CAMPOS SII INTEGRATION ==========
+    sii_status = fields.Selection([
+        ('draft', 'Borrador'),
+        ('sending', 'Enviando...'),
+        ('sent', 'Enviado a SII'),
+        ('accepted', 'Aceptado por SII'),
+        ('rejected', 'Rechazado por SII'),
+    ], string='Estado SII', default='draft', tracking=True, copy=False)
+
+    sii_error_message = fields.Text(
+        string='Error SII',
+        readonly=True,
+        help='Mensaje de error del SII si fue rechazado'
+    )
+
+    sii_response_xml = fields.Text(
+        string='Respuesta XML SII',
+        readonly=True,
+        help='Respuesta XML completa del SII'
+    )
+
+    # ========== CAMPOS RECTIFICATORIA ==========
+    es_rectificatoria = fields.Boolean(
+        string='Es Rectificatoria',
+        default=False,
+        help='Indica si este F29 reemplaza a uno anterior'
+    )
+
+    f29_original_id = fields.Many2one(
+        'l10n_cl.f29',
+        string='F29 Original',
+        readonly=True,
+        help='F29 que se está rectificando'
+    )
+
+    folio_rectifica = fields.Char(
+        string='Folio que Rectifica',
+        readonly=True,
+        help='Número del F29 original'
+    )
+
+    rectificatoria_ids = fields.One2many(
+        'l10n_cl.f29',
+        'f29_original_id',
+        string='Rectificatorias',
+        readonly=True
+    )
+
     # ========== DÉBITO FISCAL (VENTAS) ==========
     ventas_afectas = fields.Monetary(
         string='Ventas y Servicios Gravados (Código 14)',
@@ -242,6 +290,88 @@ class L10nClF29(models.Model):
         help='Campo legacy - usar debito_fiscal'
     )
 
+    # ========== SII TRACKING FIELDS ==========
+    sii_track_id = fields.Char(
+        string='ID Seguimiento SII',
+        readonly=True,
+        help='Identificador de seguimiento del SII para consultas de estado'
+    )
+
+    sii_send_date = fields.Datetime(
+        string='Fecha Envío SII',
+        readonly=True,
+        help='Fecha y hora de envío al SII'
+    )
+
+    sii_response = fields.Text(
+        string='Respuesta SII',
+        readonly=True,
+        help='Respuesta completa del SII (XML o JSON)'
+    )
+
+    # ========== COMPUTED FIELDS (P0-2 implementation) ==========
+    move_ids = fields.Many2many(
+        'account.move',
+        compute='_compute_move_ids',
+        store=False,
+        string='Facturas Relacionadas',
+        help='Facturas del período incluidas en F29'
+    )
+
+    amount_total = fields.Monetary(
+        string='Monto Total',
+        currency_field='currency_id',
+        compute='_compute_amount_total',
+        store=True,
+        readonly=True,
+        help='Monto total (saldo a favor o a pagar)'
+    )
+
+    provision_move_id = fields.Many2one(
+        'account.move',
+        string='Asiento de Provisión',
+        compute='_compute_provision_move_id',
+        store=False,
+        readonly=True,
+        help='Asiento contable de provisión IVA'
+    )
+
+    payment_id = fields.Many2one(
+        'account.payment',
+        string='Pago Asociado',
+        compute='_compute_payment_id',
+        store=False,
+        readonly=True,
+        help='Pago asociado'
+    )
+
+    readonly_partial = fields.Boolean(
+        string='Solo Lectura Parcial',
+        compute='_compute_readonly_flags',
+        store=False,
+        help='Campos en modo solo lectura'
+    )
+
+    readonly_state = fields.Boolean(
+        string='Estado Solo Lectura',
+        compute='_compute_readonly_flags',
+        store=False,
+        help='Registro completo en solo lectura'
+    )
+
+    # ========== DEPRECATED FIELDS ==========
+    invoice_date = fields.Date(
+        string='Fecha Factura',
+        readonly=True,
+        help='[DEPRECATED] Fecha de la factura o documento asociado'
+    )
+
+    move_type = fields.Char(
+        string='Tipo de Movimiento',
+        readonly=True,
+        help='[DEPRECATED] Tipo de movimiento contable (invoice, payment, etc.)'
+    )
+
     @api.depends('name', 'period_date', 'company_id')
     def _compute_display_name(self):
         for record in self:
@@ -321,6 +451,206 @@ class L10nClF29(models.Model):
             record.total_compras = record.compras_afectas
             record.total_iva_debito = record.debito_fiscal
             record.total_iva_credito = record.credito_fiscal
+
+    # ========== COMPUTED FIELDS (PLACEHOLDER INTEGRATION) ==========
+
+    @api.depends('period_date', 'company_id')
+    def _compute_move_ids(self):
+        """
+        Calcula facturas relacionadas del período.
+        Delegación 100% a Odoo ORM nativo.
+
+        Busca todas las facturas (ventas y compras) del período correspondiente
+        que pertenecen a la misma compañía.
+        """
+        for record in self:
+            if not record.period_date or not record.company_id:
+                record.move_ids = False
+                continue
+
+            try:
+                # Calcular rango del mes completo
+                period_start = record.period_date.replace(day=1)
+
+                # Calcular último día del mes
+                if record.period_date.month == 12:
+                    period_end = record.period_date.replace(day=31)
+                else:
+                    next_month = record.period_date.replace(month=record.period_date.month + 1, day=1)
+                    period_end = next_month - timedelta(days=1)
+
+                # Buscar facturas usando ORM nativo con domain
+                domain = [
+                    ('company_id', '=', record.company_id.id),
+                    ('move_type', 'in', ['out_invoice', 'out_refund', 'in_invoice', 'in_refund']),
+                    ('invoice_date', '>=', period_start),
+                    ('invoice_date', '<=', period_end),
+                    ('state', '=', 'posted'),  # Solo facturas contabilizadas
+                ]
+
+                moves = self.env['account.move'].search(domain)
+                record.move_ids = moves
+
+                _logger.debug(
+                    "F29 %s: Found %d invoices for period %s",
+                    record.name,
+                    len(moves),
+                    record.period_date.strftime('%m/%Y')
+                )
+
+            except Exception as e:
+                _logger.error(
+                    "Error computing move_ids for F29 %s: %s",
+                    record.name or 'New',
+                    str(e)
+                )
+                record.move_ids = False
+
+    @api.depends('saldo_favor', 'iva_a_pagar')
+    def _compute_amount_total(self):
+        """
+        Calcula monto total de la declaración F29.
+        Delegación a campos computed existentes.
+
+        - Si hay saldo a favor: retorna el valor positivo del saldo
+        - Si hay IVA a pagar: retorna el valor negativo (adeudado)
+        """
+        for record in self:
+            if record.saldo_favor > 0:
+                record.amount_total = record.saldo_favor
+            elif record.iva_a_pagar > 0:
+                # Negativo indica deuda con SII
+                record.amount_total = -record.iva_a_pagar
+            else:
+                record.amount_total = 0.0
+
+    @api.depends('name', 'company_id')
+    def _compute_provision_move_id(self):
+        """
+        Busca asiento contable de provisión IVA relacionado.
+        Delegación 100% a Odoo ORM nativo.
+
+        Busca en account.move un asiento con:
+        - Referencia conteniendo el nombre del F29
+        - Misma compañía
+        - Journal de tipo 'general'
+        """
+        for record in self:
+            if not record.name or record.name == 'New' or not record.company_id:
+                record.provision_move_id = False
+                continue
+
+            try:
+                # Buscar asiento de provisión usando ORM
+                domain = [
+                    ('company_id', '=', record.company_id.id),
+                    ('ref', 'ilike', record.name),
+                    ('journal_id.type', '=', 'general'),
+                    ('state', '=', 'posted'),
+                ]
+
+                # Buscar el más reciente si hay varios
+                provision = self.env['account.move'].search(
+                    domain,
+                    order='date desc, id desc',
+                    limit=1
+                )
+
+                record.provision_move_id = provision if provision else False
+
+                if provision:
+                    _logger.debug(
+                        "F29 %s: Found provision move %s",
+                        record.name,
+                        provision.name
+                    )
+
+            except Exception as e:
+                _logger.error(
+                    "Error computing provision_move_id for F29 %s: %s",
+                    record.name,
+                    str(e)
+                )
+                record.provision_move_id = False
+
+    @api.depends('period_date', 'company_id', 'name')
+    def _compute_payment_id(self):
+        """
+        Busca pago asociado a la declaración F29.
+        Delegación 100% a Odoo ORM nativo.
+
+        Busca en account.payment un pago con:
+        - Fecha de pago en el rango del período
+        - Misma compañía
+        - Referencia conteniendo el nombre del F29
+        """
+        for record in self:
+            if not record.period_date or not record.company_id:
+                record.payment_id = False
+                continue
+
+            try:
+                # Calcular rango del mes completo
+                period_start = record.period_date.replace(day=1)
+
+                if record.period_date.month == 12:
+                    period_end = record.period_date.replace(day=31)
+                else:
+                    next_month = record.period_date.replace(month=record.period_date.month + 1, day=1)
+                    period_end = next_month - timedelta(days=1)
+
+                # Domain base
+                domain = [
+                    ('company_id', '=', record.company_id.id),
+                    ('date', '>=', period_start),
+                    ('date', '<=', period_end),
+                    ('state', 'in', ['posted', 'sent', 'reconciled']),
+                ]
+
+                # Si ya tiene nombre asignado, buscar por referencia
+                if record.name and record.name != 'New':
+                    domain.append(('ref', 'ilike', record.name))
+
+                # Buscar el más reciente si hay varios
+                payment = self.env['account.payment'].search(
+                    domain,
+                    order='date desc, id desc',
+                    limit=1
+                )
+
+                record.payment_id = payment if payment else False
+
+                if payment:
+                    _logger.debug(
+                        "F29 %s: Found payment %s (${:,.0f})",
+                        record.name or 'New',
+                        payment.name,
+                        payment.amount
+                    )
+
+            except Exception as e:
+                _logger.error(
+                    "Error computing payment_id for F29 %s: %s",
+                    record.name or 'New',
+                    str(e)
+                )
+                record.payment_id = False
+
+    @api.depends('state')
+    def _compute_readonly_flags(self):
+        """
+        Calcula flags de solo lectura basados en el estado.
+        Delegación a lógica de estado.
+
+        - readonly_partial: True si estado in ('filed', 'paid')
+        - readonly_state: True si estado in ('filed', 'paid', 'cancel')
+        """
+        for record in self:
+            # Estados parcialmente bloqueados (algunos campos editables)
+            record.readonly_partial = record.state in ('filed', 'paid')
+
+            # Estados completamente bloqueados (ningún campo editable)
+            record.readonly_state = record.state in ('filed', 'paid', 'cancel')
 
     # ========== CONSTRAINTS DE COHERENCIA ==========
 
@@ -581,6 +911,229 @@ class L10nClF29(models.Model):
                 'type': 'success',
                 'sticky': False,
             }
+        }
+
+    # ═══════════════════════════════════════════════════════════
+    # P0-1: SII INTEGRATION ACTION METHODS (Delegación l10n_cl_dte)
+    # ═══════════════════════════════════════════════════════════
+
+    def action_send_sii(self):
+        """
+        Envía F29 al SII usando infraestructura DTE existente.
+
+        DELEGACIÓN: 100% a l10n_cl_dte/libs/sii_soap_client.py
+        BRIDGE: Adaptación F29 data → DTE XML format
+        """
+        self.ensure_one()
+
+        # 1. VALIDACIONES
+        if not hasattr(self, 'state') or self.state == 'draft':
+            raise UserError(_('Debe confirmar el F29 antes de enviar'))
+
+        if self.sii_status in ['sent', 'accepted']:
+            raise UserError(_('F29 ya enviado al SII'))
+
+        if not self.company_id.vat:
+            raise ValidationError(_('Empresa sin RUT configurado'))
+
+        # 2. CAMBIAR ESTADO
+        self.write({'sii_status': 'sending'})
+
+        try:
+            # 3. GENERAR XML F29 (BRIDGE CODE)
+            f29_xml = self._generate_f29_xml()
+
+            # 4. FIRMAR XML (DELEGACIÓN a l10n_cl_dte)
+            from odoo.addons.l10n_cl_dte.libs.xml_signer import XMLSigner
+
+            certificate = self.company_id.dte_certificate_id
+            if not certificate:
+                raise ValidationError(_('Empresa sin certificado DTE'))
+
+            signer = XMLSigner()
+            signed_xml = signer.sign_xml(
+                xml_string=f29_xml,
+                certificate_data=certificate.certificate_data,
+                private_key=certificate.private_key,
+                password=certificate.password
+            )
+
+            # 5. ENVIAR A SII (DELEGACIÓN 100% a SIISoapClient)
+            from odoo.addons.l10n_cl_dte.libs.sii_soap_client import SIISoapClient
+
+            soap_client = SIISoapClient(self.env)
+            result = soap_client.send_dte_to_sii(
+                signed_xml=signed_xml,
+                rut_emisor=self.company_id.vat,
+                company=self.company_id
+            )
+
+            # 6. PROCESAR RESULTADO
+            self.write({
+                'sii_status': 'sent',
+                'sii_track_id': result.get('track_id'),
+                'sii_send_date': fields.Datetime.now(),
+                'sii_response_xml': result.get('xml_response'),
+            })
+
+            # 7. LOG COMUNICACIÓN
+            self.env['dte.communication'].sudo().create({
+                'action_type': 'send_dte',
+                'status': 'success',
+                'dte_type': '29',
+                'dte_folio': self.name,
+                'track_id': result.get('track_id'),
+                'request_xml': signed_xml,
+                'response_xml': result.get('xml_response'),
+                'company_id': self.company_id.id,
+            })
+
+            # 8. NOTIFICACIÓN
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Éxito'),
+                    'message': _('F29 enviado exitosamente al SII.\nTrack ID: %s') % result.get('track_id'),
+                    'type': 'success',
+                    'sticky': False,
+                }
+            }
+
+        except Exception as e:
+            _logger.error(f'Error envío F29 al SII: {str(e)}')
+            self.write({
+                'sii_status': 'draft',
+                'sii_error_message': str(e)
+            })
+            raise UserError(_('Error al enviar F29 al SII: %s') % str(e))
+
+    def _generate_f29_xml(self):
+        """
+        Genera XML del F29 según formato SII.
+        BRIDGE CODE: Adaptación datos F29 → XML SII
+        """
+        self.ensure_one()
+
+        from lxml import etree
+
+        ns = "http://www.sii.cl/SiiDte"
+        root = etree.Element(f"{{{ns}}}F29", nsmap={None: ns})
+
+        # Encabezado
+        encabezado = etree.SubElement(root, "Encabezado")
+        etree.SubElement(encabezado, "RutEmisor").text = self.company_id.vat
+        etree.SubElement(encabezado, "Periodo").text = self.period_date.strftime('%Y-%m')
+        etree.SubElement(encabezado, "FolioF29").text = self.name
+
+        # Detalle IVA
+        detalle = etree.SubElement(root, "Detalle")
+        etree.SubElement(detalle, "VentasAfectas").text = str(int(self.ventas_afectas or 0))
+        etree.SubElement(detalle, "ComprasAfectas").text = str(int(self.compras_afectas or 0))
+        etree.SubElement(detalle, "IVADebito").text = str(int(self.total_iva_debito or 0))
+        etree.SubElement(detalle, "IVACredito").text = str(int(self.total_iva_credito or 0))
+
+        xml_string = etree.tostring(
+            root,
+            encoding='ISO-8859-1',
+            xml_declaration=True,
+            pretty_print=True
+        ).decode('ISO-8859-1')
+
+        return xml_string
+
+    def action_check_status(self):
+        """Consulta estado F29 en SII. Delegación 100% a SIISoapClient."""
+        self.ensure_one()
+
+        if not self.sii_track_id:
+            raise UserError(_('F29 sin Track ID. Debe enviarlo primero.'))
+
+        try:
+            from odoo.addons.l10n_cl_dte.libs.sii_soap_client import SIISoapClient
+
+            soap_client = SIISoapClient(self.env)
+            result = soap_client.query_dte_status(
+                track_id=self.sii_track_id,
+                rut_emisor=self.company_id.vat,
+                company=self.company_id
+            )
+
+            # Actualizar estado
+            sii_status = result.get('status', 'sent')
+            self.write({'sii_status': sii_status})
+
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Estado SII'),
+                    'message': _('Estado actual: %s') % sii_status,
+                    'type': 'info',
+                    'sticky': False,
+                }
+            }
+
+        except Exception as e:
+            _logger.error(f'Error consultando estado F29: {str(e)}')
+            raise UserError(_('Error al consultar estado: %s') % str(e))
+
+    def action_to_review(self):
+        """Cambia estado a revisión. Delegación Odoo state machine."""
+        for record in self:
+            if not hasattr(record, 'state'):
+                _logger.warning(f'F29 {record.name} sin campo state')
+                continue
+            record.write({'state': 'review'})
+        return True
+
+    def action_replace(self):
+        """Crea F29 rectificatoria. Delegación Odoo copy() + workflow."""
+        self.ensure_one()
+
+        if not hasattr(self, 'state') or self.state != 'accepted':
+            raise UserError(_('Solo F29 aceptados pueden rectificarse'))
+
+        if self.es_rectificatoria:
+            raise UserError(_('No se puede rectificar una rectificatoria'))
+
+        # DELEGACIÓN: Odoo copy() nativo
+        rectificatoria = self.copy({
+            'name': 'New',
+            'state': 'draft',
+            'es_rectificatoria': True,
+            'f29_original_id': self.id,
+            'folio_rectifica': self.name,
+            'sii_status': 'draft',
+            'sii_track_id': False,
+            'sii_send_date': False,
+            'sii_response_xml': False,
+        })
+
+        self.message_post(
+            body=_('F29 Rectificatoria creada: %s') % rectificatoria.name
+        )
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'l10n_cl.f29',
+            'res_id': rectificatoria.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+    def action_view_moves(self):
+        """Abre vista de facturas relacionadas. Delegación Odoo domain action."""
+        self.ensure_one()
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Facturas Período %s') % self.period_date.strftime('%m/%Y'),
+            'res_model': 'account.move',
+            'domain': [('id', 'in', self.move_ids.ids)],
+            'view_mode': 'tree,form',
+            'target': 'current',
+            'context': {'create': False},
         }
 
     # ========== CRON METHODS ==========

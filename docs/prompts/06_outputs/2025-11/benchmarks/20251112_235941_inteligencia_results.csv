@@ -1,0 +1,11 @@
+cli|model|duration|file_refs|deprecations
+gemini|gemini-2.5-flash-lite|77.009702000|       0
+0|1
+gemini|gemini-2.5-flash|44.167152000|       0
+0|6
+gemini|gemini-2.5-pro|131.614032000|       0
+0|1
+copilot|gpt-4|90.844887000|       1|5
+codex|gpt-4-turbo|.060829000|       0
+0|0
+0

@@ -25,7 +25,12 @@ class AccountRatioAnalysisService(models.Model):
     debt_to_equity = fields.Float(string='Razón Deuda/Patrimonio', digits='Financials', readonly=True, help="...")
     return_on_assets = fields.Float(string='Retorno sobre Activos (ROA)', digits='Financials', readonly=True, help="...")
     return_on_equity = fields.Float(string='Retorno sobre Patrimonio (ROE)', digits='Financials', readonly=True, help="...")
+    gross_profit_margin = fields.Float(string='Margen de Utilidad Bruta', digits='Financials', readonly=True, help="...")
     net_profit_margin = fields.Float(string='Margen de Utilidad Neta', digits='Financials', readonly=True, help="...")
+    ratio_data = fields.Text(string='Datos de Ratios (JSON)', readonly=True)
+    analysis_summary = fields.Text(string='Resumen del Análisis', readonly=True)
+    benchmark_data = fields.Text(string='Datos de Benchmark (JSON)', readonly=True)
+    recommendations = fields.Text(string='Recomendaciones', readonly=True)
     error_message = fields.Text(string='Mensaje de Error', readonly=True)
 
     def compute_analysis(self):

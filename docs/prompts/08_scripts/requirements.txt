@@ -1,0 +1,17 @@
+# Python dependencies for prompts_cli.py
+# Install with: pip install -r requirements.txt
+
+# CLI framework
+click>=8.1.0
+
+# Rich terminal formatting
+rich>=13.0.0
+
+# YAML configuration
+pyyaml>=6.0.0
+
+# Optional: Enhanced progress bars
+tqdm>=4.66.0
+
+# Optional: JSON schema validation
+jsonschema>=4.19.0

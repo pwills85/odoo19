@@ -9,7 +9,6 @@ This script VALIDATES only, does NOT recalculate.
 """
 
 import logging
-from odoo import api, SUPERUSER_ID
 
 _logger = logging.getLogger(__name__)
 

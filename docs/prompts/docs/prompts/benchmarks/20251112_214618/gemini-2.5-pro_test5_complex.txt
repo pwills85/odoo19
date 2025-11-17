@@ -1,0 +1,33 @@
+Loaded cached credentials.
+Claro. Aquí una arquitectura de microservicios para validación de DTE en Odoo 19.
+
+### 1. Diagrama de Componentes
+
+*   **Odoo 19 (Cliente):** Módulo que consume la API de validación.
+*   **API Gateway (FastAPI):** Punto de entrada único. Enruta las peticiones a los microservicios internos.
+*   **Microservicio de Validación (Python, lxml):**
+    *   Responsabilidad: Validar la estructura del XML contra el esquema XSD oficial del SII. Es una tarea determinista y rápida.
+*   **Microservicio de Anomalías (Python, Scikit-learn/Pandas):**
+    *   Responsabilidad: Extraer características del XML (montos, RUTs, fechas, ítems) y usar un modelo ML (ej. Isolation Forest) pre-entrenado para calcular un puntaje de anomalía.
+*   **Registro de Modelos (MLflow - opcional):** Almacena y versiona los modelos de ML entrenados.
+
+### 2. Stack Tecnológico
+
+*   **Lenguaje/Framework:** Python y FastAPI. Por su alto rendimiento, ecosistema de ciencia de datos (Pandas, Scikit-learn) y facilidad para crear APIs REST.
+*   **Validación XML:** Biblioteca `lxml` por ser el estándar de facto en Python, altamente optimizada en C.
+*   **Contenerización:** Docker y Kubernetes (o Docker Compose para entornos simples). Para despliegue aislado, escalable y gestionable.
+
+### 3. Flujo de Validación End-to-End
+
+1.  **Petición:** El módulo de Odoo envía el XML del DTE al endpoint del API Gateway.
+2.  **Validación de Esquema:** El Gateway reenvía la petición al Microservicio de Validación. Si el XML es inválido, retorna un error 400 inmediatamente.
+3.  **Análisis de Anomalía:** Si el esquema es válido, el Gateway invoca al Microservicio de Anomalías.
+4.  **Inferencia:** Este servicio extrae features del XML, las pasa por el modelo ML y obtiene un puntaje de anomalía.
+5.  **Respuesta:** El Gateway consolida los resultados (validación de esquema: OK, puntaje de anomalía: 0.85) y los devuelve a Odoo en una única respuesta JSON.
+
+### 4. Métricas de Performance
+
+*   **Latencia (p95):** < 150ms por transacción completa.
+*   **Throughput:** > 500 requests/segundo por instancia de servicio.
+*   **Precisión del Modelo (ML):** > 95% en la detección de anomalías conocidas.
+*   **Disponibilidad:** > 99.9%.

@@ -23,7 +23,6 @@ License: LGPL-3
 
 from lxml import etree
 import base64
-import hashlib
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -243,7 +242,8 @@ class TEDGenerator:
             - Detecta adulteración de montos/datos
 
         Example:
-            >>> ted_elem = etree.fromstring(ted_xml)
+            >>> from .safe_xml_parser import fromstring_safe
+            >>> ted_elem = fromstring_safe(ted_xml)
             >>> generator = TEDGenerator(env)
             >>> is_valid = generator.validate_signature_ted(
             ...     ted_elem,

@@ -2,7 +2,48 @@
 
 Estas máximas rigen todas las auditorías funcionales y técnicas (Nómina, DTE, Reportes).
 
-## 1. Alcance y Trazabilidad
+---
+
+## 🚨 MÁXIMA #0: Compliance Odoo 19 CE (VALIDAR PRIMERO)
+
+**OBLIGATORIO - Ejecutar ANTES de cualquier otra auditoría**
+
+**Checklist completo:** `docs/prompts_desarrollo/CHECKLIST_ODOO19_VALIDACIONES.md`  
+**Guía deprecaciones:** `.claude/project/ODOO19_DEPRECATIONS_CRITICAL.md`
+
+### Comando Auditoría Automática
+
+```bash
+# Auditar deprecaciones P0+P1 en módulo
+python3 scripts/odoo19_migration/1_audit_deprecations.py \
+  --target addons/localization/[MODULO]/
+
+# Ver reporte detallado
+cat audit_report.md
+```
+
+### Validación Manual Rápida
+
+```bash
+# Detectar deprecaciones críticas
+grep -rn "t-esc\|type='json'\|attrs=\|self\._cr\|fields_view_get\|_sql_constraints\|<dashboard" \
+  addons/localization/[MODULO]/ --color=always | grep -v ".backup" | grep -v "tests/"
+
+# Esperado: 0 matches en código producción
+```
+
+### Reporte Obligatorio en Auditoría
+
+**Sección "✅ Compliance Odoo 19 CE" debe incluir:**
+- Estado validaciones P0: [X/5 OK] - Detalle por patrón
+- Estado validaciones P1: [X/3 OK] - Detalle por patrón
+- Compliance Rate: [XX%] = (OK / total) * 100
+- Deadline P0: 2025-03-01 (109 días restantes)
+- Archivos críticos pendientes: [Lista si aplica]
+
+**Prioridad:** P0 si hay deprecaciones críticas (bloquea producción)
+
+---## 1. Alcance y Trazabilidad
 
 - Cada auditoría debe declarar objetivo, módulos, ramas, y dependencias previas.
 - Todo hallazgo referencia archivo/línea o vista/acción y cómo reproducirlo.

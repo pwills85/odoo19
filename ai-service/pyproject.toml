@@ -49,3 +49,82 @@ ignore_missing_imports = true  # Many third-party libs don't have stubs
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
+
+# Pytest Configuration
+# ====================
+# Enterprise-grade testing configuration with coverage enforcement
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Coverage and reporting options
+addopts = [
+    "--cov=.",
+    "--cov-report=html",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-report=json",
+    "--cov-fail-under=80",
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+    "--capture=no",
+]
+
+# Custom test markers for categorization
+markers = [
+    "unit: Unit tests for individual functions/classes",
+    "integration: Integration tests for service interactions",
+    "slow: Slow running tests (>1s execution time)",
+    "api: API endpoint tests",
+    "database: Database interaction tests",
+    "asyncio: Asynchronous tests (using pytest-asyncio)",
+    "health: Health check endpoint tests",
+    "redis: Redis cache/connection tests",
+    "fast: Fast running tests (<1s execution time)",
+]
+
+# Coverage Configuration
+# ======================
+# Comprehensive coverage settings with enterprise standards
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    "**/tests/*",
+    "**/__pycache__/*",
+    "**/.venv/*",
+    "venv/*",
+    "*/site-packages/*",
+    "**/conftest.py",
+    "setup.py",
+]
+branch = true
+parallel = true
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+precision = 2
+skip_empty = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@abstractmethod",
+    "@abc.abstractmethod",
+    "pass",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.json]
+output = ".coverage.json"

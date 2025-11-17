@@ -26,7 +26,6 @@ License: LGPL-3
 
 import xmlsec
 from lxml import etree
-import logging
 import tempfile
 import os
 import base64
@@ -34,6 +33,7 @@ from datetime import date
 
 # P3.1 GAP CLOSURE: Structured logging with conditional JSON output
 from .structured_logging import get_dte_logger
+from .safe_xml_parser import fromstring_safe
 
 _logger = get_dte_logger(__name__)
 
@@ -169,12 +169,15 @@ class XMLSigner:
                 cert_file.flush()
                 cert_path = cert_file.name
 
-                # Write XML to temp file
-                xml_file.write(xml_string)
+                # Validate XML first (blocks XXE)
+                validated_tree = fromstring_safe(xml_string)
+
+                # Write validated XML to temp file
+                xml_file.write(etree.tostring(validated_tree, encoding='ISO-8859-1').decode('ISO-8859-1'))
                 xml_file.flush()
                 xml_path = xml_file.name
 
-                # Load XML
+                # Load XML (now safe - validated content)
                 xml_tree = etree.parse(xml_path)
                 xml_root = xml_tree.getroot()
 
@@ -190,7 +193,7 @@ class XMLSigner:
                     )
 
                     # Add reference to document
-                    ref = xmlsec.template.add_reference(
+                    xmlsec.template.add_reference(
                         signature_node,
                         xmlsec.constants.TransformSha256,
                         uri=""
@@ -307,7 +310,7 @@ class XMLSigner:
                 algorithm=algorithm
             )
 
-            _logger.info(f"[XMLDSig] ✅ Documento signed successfully")
+            _logger.info("[XMLDSig] ✅ Documento signed successfully")
             return signed_xml
 
         except Exception as e:
@@ -362,7 +365,7 @@ class XMLSigner:
                 algorithm=algorithm
             )
 
-            _logger.info(f"[XMLDSig] ✅ SetDTE signed successfully")
+            _logger.info("[XMLDSig] ✅ SetDTE signed successfully")
             return signed_xml
 
         except Exception as e:
@@ -412,11 +415,15 @@ class XMLSigner:
                 cert_file.flush()
                 cert_path = cert_file.name
 
-                xml_file.write(xml_string)
+                # Validate XML first (blocks XXE)
+                validated_tree = fromstring_safe(xml_string)
+
+                # Write validated XML to temp file
+                xml_file.write(etree.tostring(validated_tree, encoding='ISO-8859-1').decode('ISO-8859-1'))
                 xml_file.flush()
                 xml_path = xml_file.name
 
-                # Parse XML
+                # Parse XML (now safe - validated content)
                 xml_tree = etree.parse(xml_path)
                 xml_root = xml_tree.getroot()
 

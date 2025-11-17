@@ -53,18 +53,30 @@ def extract_json_from_llm_response(text: str) -> Dict[str, Any]:
         text = json_match.group(1)
         logger.debug("json_extracted_from_markdown")
     
-    # 2. Buscar primer { y último } (maneja texto antes/después)
-    start = text.find('{')
-    end = text.rfind('}')
-    
+    # 2. Buscar primer { o [ (lo que aparezca primero)
+    start_obj = text.find('{')
+    start_arr = text.find('[')
+
+    # Determinar cuál viene primero
+    if start_obj == -1 and start_arr == -1:
+        logger.error("no_json_found", text_preview=text[:200])
+        raise ValueError(f"No JSON found in LLM response. Preview: {text[:200]}")
+    elif start_obj == -1:
+        # Solo hay array
+        start, end = start_arr, text.rfind(']')
+    elif start_arr == -1:
+        # Solo hay objeto
+        start, end = start_obj, text.rfind('}')
+    elif start_arr < start_obj:
+        # Array viene primero
+        start, end = start_arr, text.rfind(']')
+    else:
+        # Objeto viene primero
+        start, end = start_obj, text.rfind('}')
+
     if start == -1 or end == -1 or start > end:
-        # No hay {} válidos, intentar con []
-        start = text.find('[')
-        end = text.rfind(']')
-        
-        if start == -1 or end == -1 or start > end:
-            logger.error("no_json_found", text_preview=text[:200])
-            raise ValueError(f"No JSON found in LLM response. Preview: {text[:200]}")
+        logger.error("invalid_json_bounds", text_preview=text[:200])
+        raise ValueError(f"Invalid JSON bounds in response. Preview: {text[:200]}")
     
     # 3. Extraer substring JSON
     json_str = text[start:end+1].strip()

@@ -70,7 +70,42 @@ class HrPayslipAsignacionFamiliar(models.Model):
         currency_field='company_currency_id',
         compute='_compute_asignacion_familiar_total',
         store=True,
-        help='Total asignación familiar del período'
+        help='Total asignación familiar del período (proporcional por días trabajados)'
+    )
+
+    # ═══════════════════════════════════════════════════════════
+    # CAMPOS AUDITORÍA PROPORCIONALIDAD (GAP-001)
+    # ═══════════════════════════════════════════════════════════
+
+    asignacion_familiar_dias_trabajados = fields.Integer(
+        string='Días Trabajados',
+        compute='_compute_asignacion_familiar_total',
+        store=True,
+        help='Días efectivamente trabajados en el período (para proporcionalidad)'
+    )
+
+    asignacion_familiar_factor_proporcional = fields.Float(
+        string='Factor Proporcional',
+        digits=(5, 4),
+        compute='_compute_asignacion_familiar_total',
+        store=True,
+        help='Factor de proporcionalidad = días_trabajados / días_mes (DFL 150)'
+    )
+
+    asignacion_familiar_total_base = fields.Monetary(
+        string='Asignación Familiar Base',
+        currency_field='company_currency_id',
+        compute='_compute_asignacion_familiar_total',
+        store=True,
+        help='Total sin proporcionalidad (referencia auditoría)'
+    )
+
+    asignacion_familiar_total_proporcional = fields.Monetary(
+        string='Asignación Familiar Proporcional',
+        currency_field='company_currency_id',
+        compute='_compute_asignacion_familiar_total',
+        store=True,
+        help='Total con proporcionalidad aplicada (= total_base × factor)'
     )
     
     # ═══════════════════════════════════════════════════════════
@@ -127,39 +162,126 @@ class HrPayslipAsignacionFamiliar(models.Model):
     @api.depends('asignacion_familiar_simple_amount',
                  'asignacion_familiar_maternal_amount',
                  'contract_id.family_allowance_simple',
-                 'contract_id.family_allowance_maternal')
+                 'contract_id.family_allowance_maternal',
+                 'date_from', 'date_to',
+                 'employee_id.date_start', 'employee_id.date_end')
     def _compute_asignacion_familiar_total(self):
         """
-        Calcular total asignación familiar
-        
-        Total = (simple_amount × num_simples) + (maternal_amount × num_maternales)
+        Calcular asignación familiar proporcional por días trabajados.
+
+        Normativa: DFL 150 Art. 1° - Proporcionalidad obligatoria
+        Fix: 2025-11-09 GAP-001
+
+        Formula:
+            total_base = (simple_amount × num_simples) + (maternal_amount × num_maternales)
+            factor_proporcional = dias_trabajados / dias_mes
+            total_proporcional = total_base × factor_proporcional
         """
         for payslip in self:
             if not payslip.contract_id:
                 payslip.asignacion_familiar_total = 0.0
+                payslip.asignacion_familiar_dias_trabajados = 0
+                payslip.asignacion_familiar_factor_proporcional = 0.0
+                payslip.asignacion_familiar_total_base = 0.0
+                payslip.asignacion_familiar_total_proporcional = 0.0
                 continue
-            
+
+            # 1. Obtener días trabajados
+            dias_trabajados = payslip._compute_dias_trabajados()
+            dias_mes = payslip._get_dias_mes()
+            factor_proporcional = dias_trabajados / dias_mes if dias_mes > 0 else 0.0
+
+            # 2. Calcular asignación base (sin proporcionalidad)
             num_simple = payslip.contract_id.family_allowance_simple or 0
             num_maternal = payslip.contract_id.family_allowance_maternal or 0
-            
-            total = (
+            total_base = (
                 (payslip.asignacion_familiar_simple_amount * num_simple) +
                 (payslip.asignacion_familiar_maternal_amount * num_maternal)
             )
-            
-            payslip.asignacion_familiar_total = total
-            
-            if total > 0:
+
+            # 3. Aplicar proporcionalidad
+            total_proporcional = total_base * factor_proporcional
+
+            # 4. Registrar campos para auditoría
+            payslip.asignacion_familiar_dias_trabajados = dias_trabajados
+            payslip.asignacion_familiar_factor_proporcional = factor_proporcional
+            payslip.asignacion_familiar_total_base = total_base
+            payslip.asignacion_familiar_total_proporcional = total_proporcional
+            payslip.asignacion_familiar_total = total_proporcional
+
+            if total_proporcional > 0:
                 _logger.info(
-                    f"Asignación familiar calculada: ${total:,.0f} "
-                    f"(Simples: {num_simple}, Maternales: {num_maternal}, "
+                    f"Asignación familiar calculada: ${total_proporcional:,.0f} "
+                    f"(Base: ${total_base:,.0f}, Factor: {factor_proporcional:.4f}, "
+                    f"Días: {dias_trabajados}/{dias_mes}, "
+                    f"Simples: {num_simple}, Maternales: {num_maternal}, "
                     f"Tramo: {payslip.asignacion_familiar_tramo})"
                 )
     
     # ═══════════════════════════════════════════════════════════
     # HELPER METHODS
     # ═══════════════════════════════════════════════════════════
-    
+
+    def _compute_dias_trabajados(self):
+        """
+        Calcula días efectivamente trabajados en el período.
+
+        Normativa: DFL 150 Art. 1° - Proporcionalidad por días trabajados
+        Fix: 2025-11-09 GAP-001
+
+        Considera:
+            - Fecha ingreso trabajador (employee.date_start)
+            - Fecha egreso trabajador (employee.date_end)
+            - Ausencias injustificadas (futuro enhancement)
+
+        Returns:
+            int: Días naturales trabajados en el período
+        """
+        self.ensure_one()
+
+        if not self.date_from or not self.date_to:
+            return 0
+
+        date_from = self.date_from
+        date_to = self.date_to
+        employee = self.employee_id
+
+        # Fecha inicio efectiva (considerar fecha ingreso)
+        if employee.date_start and employee.date_start > date_from:
+            date_from_effective = employee.date_start
+        else:
+            date_from_effective = date_from
+
+        # Fecha fin efectiva (considerar fecha egreso)
+        if employee.date_end and employee.date_end < date_to:
+            date_to_effective = employee.date_end
+        else:
+            date_to_effective = date_to
+
+        # Calcular días naturales trabajados
+        dias_naturales = (date_to_effective - date_from_effective).days + 1
+
+        # TODO (GAP-001 Phase 2): Descontar ausencias injustificadas
+        # ausencias = self._compute_ausencias_injustificadas()
+        # dias_trabajados = dias_naturales - ausencias
+
+        return max(dias_naturales, 0)
+
+    def _get_dias_mes(self):
+        """
+        Retorna días naturales del mes del período.
+
+        Returns:
+            int: Días naturales del período (date_to - date_from + 1)
+        """
+        self.ensure_one()
+
+        if not self.date_from or not self.date_to:
+            return 30  # Default estándar
+
+        dias_mes = (self.date_to - self.date_from).days + 1
+        return max(dias_mes, 1)  # Mínimo 1 día
+
     def _get_previous_month_imponible(self):
         """
         Obtener imponible del mes anterior

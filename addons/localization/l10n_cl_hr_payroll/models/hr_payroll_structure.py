@@ -126,11 +126,11 @@ class HrPayrollStructure(models.Model):
     def _check_parent_recursion(self):
         """
         Validar recursión en jerarquía
-        
+
         Técnica Odoo 19 CE:
-        - _check_recursion() built-in method
+        - _has_cycle() method (replaces deprecated _check_recursion)
         """
-        if not self._check_recursion():
+        if self._has_cycle():
             raise ValidationError(_(
                 'No puede crear estructuras recursivas (padre → hijo → padre)'
             ))

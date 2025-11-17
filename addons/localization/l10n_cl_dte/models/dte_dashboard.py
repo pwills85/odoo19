@@ -13,8 +13,7 @@ Fase: 2.1 - Dashboard Central de DTE
 """
 
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError, UserError
-from datetime import datetime, timedelta
+from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 import logging
 
@@ -67,18 +66,24 @@ class DteDashboard(models.Model):
     dtes_aceptados_30d = fields.Integer(
         string='DTEs Aceptados (30d)',
         compute='_compute_kpis_30d',
+        store=True,
+        compute_sudo=True,  # Odoo 19 CE: Consistency with other _compute_kpis_30d fields
         help='DTEs aceptados por el SII en los últimos 30 días'
     )
 
     dtes_rechazados_30d = fields.Integer(
         string='DTEs Rechazados (30d)',
         compute='_compute_kpis_30d',
+        store=True,
+        compute_sudo=True,  # Odoo 19 CE: Consistency with other _compute_kpis_30d fields
         help='DTEs rechazados por el SII en los últimos 30 días'
     )
 
     dtes_pendientes = fields.Integer(
         string='DTEs Pendientes',
         compute='_compute_kpis_30d',
+        store=True,
+        compute_sudo=True,  # Odoo 19 CE: Required for stored computed fields
         help='DTEs pendientes de envío al SII'
     )
 
@@ -86,6 +91,8 @@ class DteDashboard(models.Model):
         string='Monto Facturado Mes Actual',
         currency_field='currency_id',
         compute='_compute_kpis_30d',
+        store=True,
+        compute_sudo=True,  # Odoo 19 CE: Required for stored computed fields
         help='Monto total facturado con DTEs aceptados en el mes actual (CLP)'
     )
 
@@ -96,12 +103,16 @@ class DteDashboard(models.Model):
     total_dtes_emitidos_mes = fields.Integer(
         string='Total DTEs Mes',
         compute='_compute_kpis_30d',
+        store=True,
+        compute_sudo=True,  # Odoo 19 CE: Required for stored computed fields
         help='Total de DTEs emitidos en el mes actual'
     )
 
     dtes_con_reparos = fields.Integer(
         string='DTEs con Reparos',
         compute='_compute_kpis_30d',
+        store=True,
+        compute_sudo=True,  # Odoo 19 CE: Required for stored computed fields
         help='DTEs que requieren acción del usuario (rechazados o con errores)'
     )
 
@@ -112,6 +123,7 @@ class DteDashboard(models.Model):
     tasa_aceptacion_30d = fields.Float(
         string='Tasa Aceptación (%)',
         compute='_compute_kpis_30d',
+        store=True,  # Odoo 19 CE: Required for searchable fields in filters
         digits=(5, 2),
         help='Porcentaje de DTEs aceptados sobre el total emitido (últimos 30 días)'
     )
@@ -119,6 +131,7 @@ class DteDashboard(models.Model):
     tasa_rechazo_30d = fields.Float(
         string='Tasa Rechazo (%)',
         compute='_compute_kpis_30d',
+        store=True,  # Odoo 19 CE: Required for searchable fields in filters
         digits=(5, 2),
         help='Porcentaje de DTEs rechazados sobre el total emitido (últimos 30 días)'
     )

@@ -1,0 +1,4 @@
+[0;34m[TEST 1/15][0m Testing gemini-2.5-flash-lite - Análisis código
+[0;32m✅[0m gemini-2.5-flash-lite completado en 44s
+[1;33m📊[0m Tokens (estimado): 184 | Chars: 1139 | Velocidad: 4 tok/s
+44|184|1139

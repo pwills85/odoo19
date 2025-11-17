@@ -1,5 +1,112 @@
 # 🚀 Odoo 19 Community Edition - Facturación Electrónica Chilena + Nóminas
 
+[![License: LGPL-3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+[![Odoo Version](https://img.shields.io/badge/Odoo-19.0-purple.svg)](https://github.com/odoo/odoo/tree/19.0)
+[![Python Version](https://img.shields.io/badge/Python-3.11+-green.svg)](https://www.python.org/)
+[![Docker](https://img.shields.io/badge/Docker-Required-2496ED.svg?logo=docker)](https://www.docker.com/)
+[![CI/CD](https://github.com/pwills85/odoo19/actions/workflows/ci.yml/badge.svg)](https://github.com/pwills85/odoo19/actions)
+[![Coverage](https://img.shields.io/badge/Coverage-80%25-yellow.svg)](./coverage.xml)
+[![Compliance](https://img.shields.io/badge/Odoo%2019%20CE-80.4%25-orange.svg)](./CIERRE_BRECHAS_ODOO19_INFORME_FINAL.md)
+[![SII Certified](https://img.shields.io/badge/SII-Resolution%2080%2F2014-success.svg)](https://www.sii.cl/)
+[![Previred](https://img.shields.io/badge/Previred-Compatible-success.svg)](https://www.previred.com/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
+
+---
+
+## 🆕 ACTUALIZACIÓN: Nueva Estrategia Git/GitHub (Nov 2025)
+
+**IMPORTANTE PARA CONTRIBUIDORES**: Hemos actualizado nuestra estrategia de control de versiones para prevenir pérdida de código y conflictos masivos.
+
+### 📚 Documentación Git/GitHub
+
+| Documento | Propósito | Audiencia |
+|-----------|-----------|-----------|
+| [.claude/GIT_STRATEGY.md](.claude/GIT_STRATEGY.md) | Estrategia completa | Tech Leads, Seniors |
+| [.claude/GIT_WORKFLOW_QUICK.md](.claude/GIT_WORKFLOW_QUICK.md) | Quick reference diaria | Todos los devs |
+| [docs/development/GIT_BEST_PRACTICES.md](docs/development/GIT_BEST_PRACTICES.md) | Guía best practices | Juniors, nuevos |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Guía contribución | Externos, colaboradores |
+
+### 🎯 Cambios Clave (Obligatorios)
+
+- ✅ **Integración diaria** a `develop` (feature branches MAX 3 días)
+- ✅ **Squash merge** obligatorio (historia Git limpia)
+- ✅ **Conventional Commits** estricto (`feat(module): description`)
+- ✅ **Versionado por módulo** (`l10n_cl_dte/19.0.7.0.0`)
+- ⚠️ **NO más** branches con 100+ commits sin integrar
+- ⚠️ **NO más** merges "big bang" con conflictos masivos
+
+**Ver detalles**: [.claude/GIT_STRATEGY.md](.claude/GIT_STRATEGY.md)
+
+---
+
+## ⚡ INICIO RÁPIDO PARA AGENTES NUEVOS
+
+**Si eres un agente nuevo (Claude, Copilot, Gemini, etc.), lee PRIMERO:**
+
+### 📖 Documentación Esencial (5 minutos)
+
+**1. Sistema de Prompts (TODO sobre desarrollo/auditoría/compliance):**  
+→ **`docs/prompts/INICIO_RAPIDO_AGENTES.md`** ← **LEER ESTO PRIMERO**
+
+**Contiene:**
+- ✅ Stack 100% Dockerizado (comandos `docker compose exec odoo`)
+- ✅ Deprecaciones Odoo 19 CE críticas (P0/P1)
+- ✅ Comandos Docker + Odoo CLI profesionales
+- ✅ Knowledge base completo (`.github/agents/knowledge/`)
+- ✅ Workflows por necesidad (auditoría, desarrollo, cierre brechas)
+
+---
+
+**2. Compliance Odoo 19 CE (BLOQUEANTE):**  
+→ `docs/prompts/02_compliance/CHECKLIST_ODOO19_VALIDACIONES.md`
+
+**SIEMPRE validar 8 patrones deprecación ANTES de desarrollar:**
+- ❌ `t-esc` → ✅ `t-out` (QWeb)
+- ❌ `type='json'` → ✅ `type='jsonrpc'` + `csrf=False`
+- ❌ `attrs={}` → ✅ Python expressions
+- ❌ `self._cr` → ✅ `self.env.cr`
+
+**Status migración:** `CIERRE_BRECHAS_ODOO19_INFORME_FINAL.md` (137 ✅, 27 ⚠️)
+
+---
+
+**3. Comandos Docker + Odoo CLI:**  
+→ `.github/agents/knowledge/docker_odoo_command_reference.md`
+
+**Ejemplos:**
+```bash
+# Actualizar módulo
+docker compose exec odoo odoo-bin -u l10n_cl_dte -d odoo19_db --stop-after-init
+
+# Tests
+docker compose exec odoo pytest /mnt/extra-addons/localization/l10n_cl_dte/tests/ -v
+
+# Shell Odoo
+docker compose exec odoo odoo-bin shell -d odoo19_db
+```
+
+---
+
+**4. Knowledge Base Completo:**  
+→ `.github/agents/knowledge/` (7 archivos maestros)
+
+- `odoo19_deprecations_reference.md` ← **Técnicas obsoletas**
+- `odoo19_patterns.md` (patrones modernos Odoo 19 CE)
+- `sii_regulatory_context.md` (DTE chileno)
+- `deployment_environment.md` (Docker stack)
+- `docker_odoo_command_reference.md` (comandos profesionales)
+
+---
+
+**✅ Después de leer estos 4 documentos, estarás en condiciones de:**
+- Crear prompts de máxima precisión
+- Auditar dominios del stack
+- Desarrollar con técnicas modernas Odoo 19 CE
+- Operar instancias Dockerizadas correctamente
+
+---
+
 ## 🎖️ CERTIFICACIÓN PROFESIONAL v1.0.5 - PRODUCTION-READY (2025-11-08) ⭐⭐⭐⭐⭐
 
 **Estado General:** 🟢 **CERTIFICADO - ZERO CRITICAL WARNINGS** 🎉

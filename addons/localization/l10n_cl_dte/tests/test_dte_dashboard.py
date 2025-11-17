@@ -17,9 +17,7 @@ Fase: 2.1 - Dashboard Central de DTE
 """
 
 from odoo.tests.common import TransactionCase
-from odoo.exceptions import ValidationError
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
 
 
 class TestDteDashboard(TransactionCase):
@@ -66,7 +64,7 @@ class TestDteDashboard(TransactionCase):
         self.fecha_inicio_mes = self.today.replace(day=1)
 
         # Crear facturas de prueba con diferentes estados
-        self._create_test_invoices()
+        self.env.create_test_invoices()
 
         # Crear dashboard
         self.dashboard = self.env['l10n_cl.dte_dashboard'].get_or_create_dashboard(

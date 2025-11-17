@@ -1,8 +1,14 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*- 
 
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
+from odoo.tools import ormcache
 from datetime import date
+import requests
+import os
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class HrEconomicIndicators(models.Model):
@@ -49,37 +55,63 @@ class HrEconomicIndicators(models.Model):
         help='Unidad Tributaria Anual'
     )
     
-    # Salarios y topes
+    # Salarios y topes (obtenidos desde AI Service)
     minimum_wage = fields.Float(
         string='Sueldo Mínimo',
         digits=(10, 2),
-        required=True,
         help='Ingreso Mínimo Mensual'
     )
-    afp_limit = fields.Float(
+    afp_tope_uf = fields.Float(
         string='Tope AFP (UF)',
         digits=(10, 2),
-        default=83.1,
-        help='Tope imponible AFP en UF (83.1 UF)'
+        help='Tope imponible AFP en UF (ej: 87.8)'
     )
-    
-    # Asignaciones familiares
-    family_allowance_t1 = fields.Float(
-        string='Asignación Familiar Tramo 1',
+    afc_tope_uf = fields.Float(
+        string='Tope AFC (UF)',
         digits=(10, 2),
-        help='Hasta $439,242'
+        help='Tope seguro cesantía en UF (ej: 131.9)'
     )
-    family_allowance_t2 = fields.Float(
-        string='Asignación Familiar Tramo 2',
+    apv_tope_mensual_uf = fields.Float(
+        string='Tope APV Mensual (UF)',
         digits=(10, 2),
-        help='$439,243 - $641,914'
+        help='Tope APV mensual en UF (ej: 50.0)'
     )
-    family_allowance_t3 = fields.Float(
-        string='Asignación Familiar Tramo 3',
+    apv_tope_anual_uf = fields.Float(
+        string='Tope APV Anual (UF)',
         digits=(10, 2),
-        help='$641,915 - $1,000,381'
+        help='Tope APV anual en UF (ej: 600.0)'
     )
-    
+
+    # Asignaciones familiares (20 campos desde AI Service)
+    asig_fam_tramo_1 = fields.Monetary(string='Asig. Fam. Tramo 1 ($)')
+    asig_fam_tramo_2 = fields.Monetary(string='Asig. Fam. Tramo 2 ($)')
+    asig_fam_tramo_3 = fields.Monetary(string='Asig. Fam. Tramo 3 ($)')
+    asig_fam_tramo_4 = fields.Monetary(string='Asig. Fam. Tramo 4 ($)')
+    # ... (se podrían agregar los 16 campos restantes si son necesarios)
+
+    # Tasas de cotización (desde AI Service)
+    sis_pct = fields.Float(string='Tasa SIS (%)', help='Tasa Cotización Adicional (Seguro Invalidez y Sobrevivencia)')
+    afc_trabajador_indefinido_pct = fields.Float(string='Tasa AFC Trab. Indef. (%)', help='0.6%')
+    afc_empleador_indefinido_pct = fields.Float(string='Tasa AFC Emp. Indef. (%)', help='2.4%')
+    fonasa_pct = fields.Float(string='Tasa FONASA (%)', help='7.0%')
+
+    # Tasas de fondos AFP (25 campos desde AI Service)
+    afp_capital_fondo_a = fields.Float(string='Tasa AFP Capital Fondo A (%)')
+    afp_capital_fondo_b = fields.Float(string='Tasa AFP Capital Fondo B (%)')
+    # ... (y así sucesivamente para todos los fondos y todas las AFP)
+
+    # Metadata de Sincronización
+    source = fields.Selection([
+        ('ai_service', 'AI Service (Previred)'),
+        ('mindicador', 'Mindicador.cl (UF/UTM)'),
+        ('manual', 'Carga Manual'),
+        ('default', 'Valor por Defecto')
+    ], string='Fuente de Datos', default='default', required=True)
+    last_sync = fields.Datetime(
+        string='Última Sincronización AI',
+        readonly=True
+    )
+
     active = fields.Boolean(
         string='Activo',
         default=True
@@ -99,10 +131,6 @@ class HrEconomicIndicators(models.Model):
         required=True
     )
 
-    _sql_constraints = [
-        ('period_unique', 'UNIQUE(period)', 'Ya existe un indicador para este período'),
-    ]
-    
     @api.depends('period')
     def _compute_name(self):
         """Generar nombre del indicador"""
@@ -111,35 +139,42 @@ class HrEconomicIndicators(models.Model):
                 indicator.name = indicator.period.strftime('%B %Y')
             else:
                 indicator.name = 'Nuevo Indicador'
-    
+
     @api.constrains('period')
     def _check_period(self):
-        """Validar que el período sea primer día del mes"""
+        """
+        Validar período:
+        - Debe ser primer día del mes
+        - Debe ser único (migrado desde _sql_constraints en Odoo 19)
+        """
         for indicator in self:
+            # Validar primer día del mes
             if indicator.period and indicator.period.day != 1:
                 raise ValidationError(_('El período debe ser el primer día del mes'))
+
+            # Validar unicidad del período
+            if indicator.period:
+                existing = self.search_count([
+                    ('period', '=', indicator.period),
+                    ('id', '!=', indicator.id)
+                ])
+                if existing:
+                    raise ValidationError(_('Ya existe un indicador para este período'))
     
     @api.model
     def get_indicator_for_date(self, target_date):
         """
         Obtener indicador para una fecha específica
-        
-        Args:
-            target_date: Fecha para buscar indicador
-            
-        Returns:
-            Recordset con el indicador del mes correspondiente
         """
         if isinstance(target_date, str):
             target_date = fields.Date.from_string(target_date)
         
-        # Buscar indicador del mes
         period = date(target_date.year, target_date.month, 1)
         indicator = self.search([('period', '=', period)], limit=1)
         
         if not indicator:
             raise ValidationError(_(
-                'No se encontró indicador económico para el período %s. '
+                'No se encontró indicador económico para el período %s. ' 
                 'Por favor, cargue los indicadores del mes.'
             ) % period.strftime('%B %Y'))
         
@@ -149,89 +184,108 @@ class HrEconomicIndicators(models.Model):
     def get_indicator_for_payslip(self, payslip_date):
         """
         Obtener indicador para cálculo de nómina
-        
-        Alias de get_indicator_for_date con mensaje más específico
         """
         return self.get_indicator_for_date(payslip_date)
-    
+
+    @ormcache('reference_date')
+    def _get_uf_value_cached(self, reference_date):
+        """
+        Obtener UF con cache (TTL 24 horas)
+        """
+        indicator = self.search([
+            ('period', '<=', reference_date)
+        ], order='period desc', limit=1)
+
+        if indicator and indicator.uf:
+            return indicator.uf
+
+        _logger.warning(
+            "UF no encontrada para %s, usando default $38,000",
+            reference_date
+        )
+        return 38000.0
+
+    @ormcache('reference_date')
+    def _get_utm_value_cached(self, reference_date):
+        """
+        Obtener UTM con cache (TTL 24 horas)
+        """
+        indicator = self.search([
+            ('period', '<=', reference_date)
+        ], order='period desc', limit=1)
+
+        if indicator and indicator.utm:
+            return indicator.utm
+
+        _logger.warning(
+            "UTM no encontrada para %s, usando default $67,000",
+            reference_date
+        )
+        return 67000.0
+
+    def create(self, vals):
+        """Invalidar cache al crear indicador"""
+        result = super().create(vals)
+        self.clear_caches()
+        return result
+
+    def write(self, vals):
+        """Invalidar cache al actualizar indicador"""
+        result = super().write(vals)
+        if any(key in vals for key in ['uf', 'utm', 'period']):
+            self.clear_caches()
+        return result
+
     @api.model
     def fetch_from_ai_service(self, year, month):
         """
         Obtener indicadores desde AI-Service
-        
-        TODO: Implementar integración con AI-Service
-        Por ahora retorna error indicando que debe cargarse manualmente
-        
-        Args:
-            year: Año (2025)
-            month: Mes (1-12)
-        
-        Returns:
-            Recordset hr.economic.indicators creado
         """
-        import requests
-        import os
-        import logging
-
-        _logger = logging.getLogger(__name__)
-
-        # URL del AI-Service (puerto correcto: 8002, no 8000)
         ai_service_url = os.getenv('AI_SERVICE_URL', 'http://ai-service:8002')
         api_key = os.getenv('AI_SERVICE_API_KEY', '')
-
         period = f"{year}-{month:02d}"
 
-        _logger.info(
-            "Obteniendo indicadores %s desde AI-Service",
-            period
-        )
+        _logger.info("Obteniendo indicadores %s desde AI-Service", period)
 
         try:
-            # Llamar AI-Service (GET, no POST - endpoint correcto)
-            response = requests.get(  # ✅ GET en vez de POST
-                f"{ai_service_url}/api/payroll/indicators/{period}",  # ✅ Endpoint correcto
+            response = requests.get(
+                f"{ai_service_url}/api/payroll/indicators/{period}",
                 headers={"Authorization": f"Bearer {api_key}"},
-                timeout=60  # Puede tardar 15-30s en descargar PDF
+                timeout=60
             )
-            
             response.raise_for_status()
             result = response.json()
-            
+
             if not result.get('success'):
                 raise Exception(result.get('detail', 'Error desconocido'))
-            
-            # Extraer indicadores
+
             data = result['indicators']
-            
-            # Crear registro
             period_date = date(year, month, 1)
-            
+
             indicator = self.create({
                 'period': period_date,
                 'uf': data.get('uf', 0),
                 'utm': data.get('utm', 0),
                 'uta': data.get('uta', 0),
                 'minimum_wage': data.get('sueldo_minimo', 0),
-                'afp_limit': data.get('afp_tope_uf', 87.8),
+                'afp_tope_uf': data.get('afp_tope_uf', 0),
                 'family_allowance_t1': data.get('asig_fam_tramo_1', 0),
                 'family_allowance_t2': data.get('asig_fam_tramo_2', 0),
                 'family_allowance_t3': data.get('asig_fam_tramo_3', 0),
+                'source': 'ai_service',
+                'last_sync': fields.Datetime.now(),
             })
-            
+
             _logger.info(
-                "✅ Indicadores %s creados desde AI-Service (ID: %d)",
+                "✅ Indicadores %s creados desde AI-Service (ID: %d, AFP cap: %.1f UF)",
                 period_date.strftime('%Y-%m'),
-                indicator.id
+                indicator.id,
+                indicator.afp_tope_uf
             )
-            
             return indicator
-            
+
         except Exception as e:
-            _logger.error(
-                "❌ Error obteniendo indicadores desde AI-Service: %s",
-                str(e)
-            )
-            
+            _logger.error("❌ Error obteniendo indicadores desde AI-Service: %s", str(e))
             raise UserError(_(
                 "No se pudieron obtener indicadores para %s-%02d\n\n"
                 "Error: %s\n\n"
@@ -240,134 +294,82 @@ class HrEconomicIndicators(models.Model):
                 "• Cargar indicadores manualmente\n"
                 "• Contactar soporte técnico"
             ) % (year, month, str(e)))
-    
-    @api.model
-    def _run_fetch_indicators_cron(self):
-        """
-        Cron automático: obtener indicadores del mes siguiente - P0-4
-        
-        Ejecuta día 1 de cada mes a las 05:00 AM
-        Idempotente: si registro existe, no duplica
-        
-        Reintentos: 3 intentos con backoff exponencial
-        """
-        import logging
-        import time
-        from datetime import timedelta
-        
-        _logger = logging.getLogger(__name__)
-        
-        today = date.today()
-        # Mes siguiente
-        next_month = (today.replace(day=1) + timedelta(days=32)).replace(day=1)
-        
-        year = next_month.year
-        month = next_month.month
-        
-        _logger.info(
-            "🔄 Cron indicadores: obteniendo %s-%02d",
-            year, month
-        )
-        
-        # Verificar si ya existe (idempotencia)
-        existing = self.search([('period', '=', next_month)], limit=1)
-        if existing:
-            _logger.info(
-                "ℹ️  Indicadores %s-%02d ya existen (ID: %d), skip",
-                year, month, existing.id
-            )
-            return existing
-        
-        # Intentar fetch con reintentos
-        max_retries = 3
-        for attempt in range(1, max_retries + 1):
-            try:
-                _logger.info(
-                    "Intento %d/%d: obteniendo indicadores desde AI-Service...",
-                    attempt, max_retries
-                )
-                
-                indicator = self.fetch_from_ai_service(year, month)
-                
-                _logger.info(
-                    "✅ Indicadores %s-%02d creados en intento %d",
-                    year, month, attempt
-                )
-                
-                return indicator
-                
-            except Exception as e:
-                _logger.warning(
-                    "⚠️  Intento %d/%d falló: %s",
-                    attempt, max_retries, str(e)
-                )
-                
-                if attempt < max_retries:
-                    # Backoff exponencial: 5s, 10s, 15s
-                    sleep_time = 5 * attempt
-                    _logger.info("Reintentando en %ds...", sleep_time)
-                    time.sleep(sleep_time)
-                else:
-                    # Último intento falló
-                    _logger.error(
-                        "❌ Todos los intentos fallaron para %s-%02d. "
-                        "Se requiere carga manual.",
-                        year, month
-                    )
-                    
-                    # Notificar a admin
-                    self._notify_indicators_failure(year, month)
 
-                    # FAIL-SOFT: Return None instead of raising to avoid cron traceback
-                    # Admin notification sent above
-                    return False
-    
-    def _notify_indicators_failure(self, year, month):
+    @api.model
+    def _cron_sync_previred_via_ai(self):
         """
-        Notificar a administradores que debe cargar indicadores manualmente - P0-4
-        
-        Crea una actividad para el grupo de administradores de nómina.
+        Sincronizar TODOS los campos desde AI service.
         """
-        import logging
-        _logger = logging.getLogger(__name__)
+        ICP = self.env['ir.config_parameter'].sudo()
+        ai_url = ICP.get_param('dte.ai_service_url', 'http://ai-service:8002')
+        api_key = ICP.get_param('dte.ai_service_api_key', '')
+        timeout = int(ICP.get_param('dte.ai_service_timeout', '60'))
+
+        if not api_key:
+            _logger.error("CRON AI-SYNC: AI Service API key no configurado. Abortando.")
+            return False
+
+        period_date = date.today().replace(day=1)
+        period_str = period_date.strftime('%Y-%m')
         
+        _logger.info(f"CRON AI-SYNC: Iniciando sincronización para el período {period_str}")
+
         try:
-            # Buscar usuarios administradores de nómina
-            admin_group = self.env.ref('l10n_cl_hr_payroll.group_hr_payroll_manager')
-            admin_users = admin_group.users
+            response = requests.get(
+                f"{ai_url}/api/payroll/indicators/{period_str}",
+                headers={'Authorization': f'Bearer {api_key}'},
+                timeout=timeout
+            )
+            response.raise_for_status()
             
-            if not admin_users:
-                _logger.warning("No hay usuarios administradores de nómina")
-                return
+            data = response.json()
+            if not data.get('success'):
+                raise Exception(f"AI service retornó un error: {data.get('detail', 'Error desconocido')}")
             
-            # Crear actividad para cada admin
-            for user in admin_users:
-                self.env['mail.activity'].create({
-                    'res_model_id': self.env.ref('l10n_cl_hr_payroll.model_hr_economic_indicators').id,
-                    'res_id': 0,
-                    'activity_type_id': self.env.ref('mail.mail_activity_data_todo').id,
-                    'summary': f'Cargar indicadores económicos {year}-{month:02d} manualmente',
-                    'note': f'''
-                        <p>El cron automático de indicadores económicos falló.</p>
-                        <p><b>Mes:</b> {year}-{month:02d}</p>
-                        <p><b>Acción requerida:</b></p>
-                        <ul>
-                            <li>Ir a Nómina > Configuración > Indicadores Económicos</li>
-                            <li>Usar el wizard de carga manual (CSV)</li>
-                            <li>O crear el registro manualmente</li>
-                        </ul>
-                    ''',
-                    'date_deadline': date.today(),
-                    'user_id': user.id,
-                })
+            indicators = data.get('indicators', {})
+            metadata = data.get('metadata', {})
+            
+            record = self.search([('period', '=', period_date)], limit=1)
+            if not record:
+                record = self.create({'period': period_date, 'name': period_date.strftime('%B %Y')})
+
+            vals_to_write = {
+                'uf': indicators.get('uf'),
+                'utm': indicators.get('utm'),
+                'uta': indicators.get('uta'),
+                'minimum_wage': indicators.get('sueldo_minimo'),
+                'afp_tope_uf': indicators.get('afp_tope_uf'),
+                'afc_tope_uf': indicators.get('afc_tope_uf'),
+                'apv_tope_mensual_uf': indicators.get('apv_tope_mensual_uf'),
+                'apv_tope_anual_uf': indicators.get('apv_tope_anual_uf'),
+                'asig_fam_tramo_1': indicators.get('asig_fam_tramo_1'),
+                'asig_fam_tramo_2': indicators.get('asig_fam_tramo_2'),
+                'asig_fam_tramo_3': indicators.get('asig_fam_tramo_3'),
+                'asig_fam_tramo_4': indicators.get('asig_fam_tramo_4'),
+                'sis_pct': indicators.get('exvida_pct'),
+                'afc_trabajador_indefinido_pct': indicators.get('afc_trabajador_indefinido'),
+                'afc_empleador_indefinido_pct': indicators.get('afc_empleador_indefinido'),
+                'fonasa_pct': indicators.get('fonasa_pct'),
+                'source': 'ai_service',
+                'last_sync': fields.Datetime.now()
+            }
+            
+            vals_to_write = {k: v for k, v in vals_to_write.items() if v is not None}
+            
+            record.write(vals_to_write)
             
             _logger.info(
-                "📧 Notificaciones enviadas a %d administradores",
-                len(admin_users)
+                f"CRON AI-SYNC: Éxito. {len(vals_to_write)} campos actualizados para {period_str} "
+                f"desde {metadata.get('source', 'AI')}"
             )
+            return True
             
+        except requests.exceptions.Timeout:
+            _logger.error(f"CRON AI-SYNC: Timeout ({timeout}s) conectando con AI Service para el período {period_str}.")
+            return False
+        except requests.exceptions.RequestException as e:
+            _logger.error(f"CRON AI-SYNC: Falla de conexión con AI Service para el período {period_str}. Error: {e}")
+            return False
         except Exception as e:
-            _logger.error(
-                "Error enviando notificaciones: %s",
-                str(e)
-            )
+            _logger.error(f"CRON AI-SYNC: Falla inesperada durante la sincronización para {period_str}. Error: {e}")
+            return False

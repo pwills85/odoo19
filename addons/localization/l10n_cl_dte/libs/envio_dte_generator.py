@@ -33,8 +33,12 @@ Reference: http://www.sii.cl/factura_electronica/formato_dte.pdf
 import logging
 from datetime import datetime
 from lxml import etree
-from odoo import _
-from odoo.exceptions import UserError, ValidationError
+from .i18n import gettext as _
+from .exceptions import (
+    DTEAuthenticationError as UserError,
+    DTEValidationError as ValidationError,
+)
+from .safe_xml_parser import fromstring_safe
 
 _logger = logging.getLogger(__name__)
 
@@ -136,9 +140,9 @@ class EnvioDTEGenerator:
             try:
                 # Parse DTE XML
                 if isinstance(dte_xml, str):
-                    dte_element = etree.fromstring(dte_xml.encode('utf-8'))
+                    dte_element = fromstring_safe(dte_xml)
                 elif isinstance(dte_xml, bytes):
-                    dte_element = etree.fromstring(dte_xml)
+                    dte_element = fromstring_safe(dte_xml.decode('utf-8'))
                 else:
                     dte_element = dte_xml
 
@@ -254,9 +258,9 @@ class EnvioDTEGenerator:
             try:
                 # Parse DTE to extract type
                 if isinstance(dte_xml, str):
-                    dte = etree.fromstring(dte_xml.encode('utf-8'))
+                    dte = fromstring_safe(dte_xml)
                 elif isinstance(dte_xml, bytes):
-                    dte = etree.fromstring(dte_xml)
+                    dte = fromstring_safe(dte_xml.decode('utf-8'))
                 else:
                     dte = dte_xml
 

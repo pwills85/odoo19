@@ -1,0 +1,45 @@
+Loaded cached credentials.
+Aquí tienes una propuesta de arquitectura micro-servicio AI para la validación de DTEs en Odoo 19:
+
+**1. Diagrama de Componentes (Texto):**
+
+```
+[Odoo 19 Module]
+      | (REST API Call)
+      V
+[API Gateway]
+      | (Routes Request)
+      V
+[DTE Validation Service] <-----> [PostgreSQL/S3] (DTE Data, Schema)
+      | (Publishes to Queue)
+      V
+[Message Queue (RabbitMQ)]
+      | (Consumes from Queue)
+      V
+[ML Anomaly Detection Service] <-----> [PostgreSQL/S3] (ML Models, Results)
+```
+
+**2. Stack Tecnológico Justificado:**
+
+*   **Odoo 19 Module (Python):** Interfaz nativa para envío de DTEs.
+*   **API Gateway (Nginx/Kong):** Punto de entrada seguro y escalable, balanceo de carga.
+*   **DTE Validation Service (Python - FastAPI):** Ligero, asíncrono, ideal para validación XML (librerías `lxml`).
+*   **ML Anomaly Detection Service (Python - FastAPI + Scikit-learn/TensorFlow):** Permite desplegar modelos de ML eficientemente.
+*   **Data Storage (PostgreSQL):** Para metadatos de DTEs y resultados de validación. **S3:** Almacenamiento de XMLs brutos y modelos ML.
+*   **Message Queue (RabbitMQ/Kafka):** Desacopla servicios, permite procesamiento asíncrono de ML, mejora resiliencia.
+*   **Contenedores (Docker/Kubernetes):** Para despliegue y orquestación escalable de microservicios.
+
+**3. Flujo de Validación End-to-End:**
+
+1.  El módulo Odoo envía el XML DTE a la **API Gateway**.
+2.  **API Gateway** lo dirige al **DTE Validation Service**.
+3.  **DTE Validation Service** realiza la validación síncrona contra el esquema SII, almacena el DTE y el resultado inicial en **PostgreSQL/S3**, y publica el DTE en la **Message Queue**.
+4.  **ML Anomaly Detection Service** consume el DTE de la cola, aplica modelos de ML para detectar anomalías y actualiza el estado en **PostgreSQL**.
+5.  El **DTE Validation Service** responde a Odoo con el resultado de la validación de esquema. Odoo puede consultar asíncronamente los resultados de ML.
+
+**4. Métricas de Performance Esperadas:**
+
+*   **Latencia (Validación de Esquema):** < 100 ms.
+*   **Latencia (Detección de Anomalías ML):** < 500 ms (asíncrono).
+*   **Throughput:** > 100 DTEs/segundo.
+*   **Precisión (ML):** > 95% F1-score en detección de anomalías.

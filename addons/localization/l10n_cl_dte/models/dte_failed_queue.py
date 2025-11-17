@@ -12,7 +12,7 @@ from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 import logging
 import base64
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 _logger = logging.getLogger(__name__)
 
@@ -440,7 +440,7 @@ class DTEFailedQueue(models.Model):
                 exception_count += 1
 
         _logger.info("=" * 60)
-        _logger.info(f"✅ Retry completed:")
+        _logger.info("✅ Retry completed:")
         _logger.info(f"   Total: {total_count}")
         _logger.info(f"   Success: {success_count}")
         _logger.info(f"   Failed: {failed_count}")

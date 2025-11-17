@@ -224,7 +224,7 @@ class TestL10nClF22RealCalculations(TransactionCase):
         }
         
         # Crear movimientos contables
-        self._create_account_moves(self.test_year, income_data, expense_data)
+        self.env.create_account_moves(self.test_year, income_data, expense_data)
         
         # Crear F22
         f22 = self.env['l10n_cl.f22'].create({
@@ -278,7 +278,7 @@ class TestL10nClF22RealCalculations(TransactionCase):
         }
         
         # Crear movimientos
-        self._create_account_moves(self.test_year, income_data, expense_data)
+        self.env.create_account_moves(self.test_year, income_data, expense_data)
         
         # Crear F22
         f22 = self.env['l10n_cl.f22'].create({
@@ -318,7 +318,7 @@ class TestL10nClF22RealCalculations(TransactionCase):
             monthly_income = {k: v // 12 for k, v in large_income.items()}
             monthly_expenses = {k: v // 12 for k, v in large_expenses.items()}
             
-            self._create_account_moves(
+            self.env.create_account_moves(
                 self.test_year, 
                 monthly_income, 
                 monthly_expenses
@@ -355,7 +355,7 @@ class TestL10nClF22RealCalculations(TransactionCase):
         loss_data_income = {'operacional': 100000}
         loss_data_expenses = {'costo_ventas': 150000}
         
-        self._create_account_moves(self.test_year, loss_data_income, loss_data_expenses)
+        self.env.create_account_moves(self.test_year, loss_data_income, loss_data_expenses)
         
         f22_loss = self.env['l10n_cl.f22'].create({
             'company_id': self.company.id,
@@ -378,7 +378,7 @@ class TestL10nClF22RealCalculations(TransactionCase):
             ('date', '<=', f'{self.test_year}-12-31'),
         ]).button_cancel()
         
-        self._create_account_moves(self.test_year, financial_only_income, {})
+        self.env.create_account_moves(self.test_year, financial_only_income, {})
         
         f22_financial = self.env['l10n_cl.f22'].create({
             'company_id': self.company.id,
@@ -401,7 +401,7 @@ class TestL10nClF22RealCalculations(TransactionCase):
         income_data = {'operacional': 500000}
         expense_data = {'costo_ventas': 300000}
         
-        self._create_account_moves(self.test_year, income_data, expense_data)
+        self.env.create_account_moves(self.test_year, income_data, expense_data)
         
         # Primera llamada (sin cache)
         start_time = time.time()
@@ -450,7 +450,7 @@ class TestL10nClF22RealCalculations(TransactionCase):
         
         # Caso 2: F22 ya validado (debe dar error al recalcular)
         income_data = {'operacional': 100000}
-        self._create_account_moves(self.test_year, income_data, {})
+        self.env.create_account_moves(self.test_year, income_data, {})
         
         f22_validated = self.env['l10n_cl.f22'].create({
             'company_id': self.company.id,

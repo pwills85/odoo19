@@ -22,8 +22,8 @@ Contenido:
 - Resumen montos por tipo operación
 """
 
-from lxml import etree, objectify
-from datetime import datetime, date
+from lxml import etree
+from datetime import datetime
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -134,10 +134,10 @@ class LibroGuiasGenerator:
         envio_libro.set('ID', 'LibroGuia')
 
         # Caratula
-        caratula = LibroGuiasGenerator._generate_caratula(envio_libro, libro_data)
+        LibroGuiasGenerator._generate_caratula(envio_libro, libro_data)
 
         # ResumenPeriodo (opcional pero recomendado)
-        resumen = LibroGuiasGenerator._generate_resumen_periodo(envio_libro, libro_data)
+        LibroGuiasGenerator._generate_resumen_periodo(envio_libro, libro_data)
 
         # Detalle por cada guía
         for guia in libro_data.get('guias', []):

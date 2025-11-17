@@ -139,14 +139,13 @@
                 <filter string="High Margin (&gt;20%)" name="high_margin" 
                         domain="[('benefit_margin_percentage', '&gt;', 20)]"/>
                 
-                <group expand="0" string="Group By">
-                    <filter string="Analytic Account" name="group_analytic_account" 
-                            context="{'group_by': 'analytic_account_id'}"/>
-                    <filter string="Month" name="group_month" 
-                            context="{'group_by': 'date_from:month'}"/>
-                    <filter string="Company" name="group_company" 
-                            context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
-                </group>
+                <separator/>
+                <filter string="Analytic Account" name="group_analytic_account"
+                        context="{'group_by': 'analytic_account_id'}"/>
+                <filter string="Month" name="group_month"
+                        context="{'group_by': 'date_from:month'}"/>
+                <filter string="Company" name="group_company"
+                        context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
             </search>
         </field>
     </record>

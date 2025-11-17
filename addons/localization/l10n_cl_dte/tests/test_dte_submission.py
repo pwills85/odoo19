@@ -20,8 +20,8 @@ License: LGPL-3
 """
 
 from odoo.tests.common import TransactionCase
-from odoo.exceptions import ValidationError, UserError
-from unittest.mock import patch, MagicMock, Mock
+from odoo.exceptions import UserError
+from unittest.mock import patch, MagicMock
 from lxml import etree
 import base64
 
@@ -110,7 +110,7 @@ class TestDTESubmission(TransactionCase):
             'folio_hasta': 1000,
             'company_id': self.company.id,
             'status': 'valid',
-            'caf_file': base64.b64encode(self._create_mock_caf_xml()),
+            'caf_file': base64.b64encode(self.env.create_mock_caf_xml()),
         })
 
         # Set SII environment to sandbox for tests
@@ -375,7 +375,7 @@ class TestDTESubmission(TransactionCase):
             mock_move_xmlsec.sign_node.return_value = None
 
             # Create and post invoice
-            invoice = self._create_test_invoice()
+            invoice = self.env.create_test_invoice()
 
             # Trigger DTE submission
             result = invoice.action_send_to_sii()
@@ -450,7 +450,7 @@ class TestDTESubmission(TransactionCase):
             mock_sign_dd.return_value = 'TED_SIG'
 
             # Create and send
-            invoice = self._create_test_invoice()
+            invoice = self.env.create_test_invoice()
             result = invoice.action_send_to_sii()
 
             # Verify token was obtained

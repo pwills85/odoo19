@@ -67,9 +67,25 @@
          SII SOAP Configuration
          ═══════════════════════════════════════════════════════════════════ -->
 
+    <!-- H10 GAP CLOSURE: Multi-Environment SII Certificate Management -->
     <record id="config_sii_environment" model="ir.config_parameter">
       <field name="key">l10n_cl_dte.sii_environment</field>
       <field name="value">sandbox</field>
+    </record>
+
+    <record id="config_sii_environment_description" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.sii_environment.description</field>
+      <field name="value">Ambiente SII: 'sandbox'|'testing'|'certification' = Maullin (staging), 'production' = Palena (production)</field>
+    </record>
+
+    <record id="config_sii_certificate_maullin_url" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.sii_certificate_maullin_url</field>
+      <field name="value">https://maullin.sii.cl - Certificado en data/certificates/staging/sii_cert_maullin.pem</field>
+    </record>
+
+    <record id="config_sii_certificate_palena_url" model="ir.config_parameter">
+      <field name="key">l10n_cl_dte.sii_certificate_palena_url</field>
+      <field name="value">https://palena.sii.cl - Certificado en data/certificates/production/sii_cert_palena.pem</field>
     </record>
 
     <record id="config_sii_timeout" model="ir.config_parameter">

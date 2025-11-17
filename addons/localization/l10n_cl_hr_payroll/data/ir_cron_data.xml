@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Cron Job to sync payroll indicators from AI Service -->
+        <record id="ir_cron_sync_previred_via_ai_monthly" model="ir.cron">
+            <field name="name">Chilean Payroll: Sync Previred Indicators via AI Service</field>
+            <field name="model_id" ref="model_hr_economic_indicators"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_sync_previred_via_ai()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">months</field>
+        </record>
+    </data>
+</odoo>
