@@ -391,6 +391,57 @@ class AccountMoveDTE(models.Model):
                 if not move.partner_id.vat:
                     raise ValidationError(_('El cliente debe tener RUT configurado para emitir DTE.'))
 
+    @api.constrains('narration', 'ref', 'l10n_cl_dte_observations')
+    def _check_xss_injection(self):
+        """
+        Valida XSS en campos de texto antes de generación DTE.
+        
+        Security: P2-002 (Sprint 2)
+        Previene inyección de scripts maliciosos en XML del DTE.
+        
+        Patterns bloqueados:
+        - <script>, </script> (tags de script)
+        - javascript: (protocol handlers)
+        - onerror=, onclick=, onload= (event handlers)
+        - <iframe> (embedded content)
+        
+        Raises:
+            ValidationError: Si se detecta patrón XSS potencial
+        """
+        xss_patterns = [
+            '<script',
+            '</script>',
+            'javascript:',
+            'onerror=',
+            'onclick=',
+            'onload=',
+            'onmouseover=',
+            '<iframe',
+            'eval(',
+            'expression(',
+        ]
+        
+        for move in self:
+            # Solo validar en facturas de venta (out_invoice, out_refund)
+            if move.move_type not in ['out_invoice', 'out_refund']:
+                continue
+                
+            fields_to_check = {
+                'narration': move.narration or '',
+                'ref': move.ref or '',
+                'l10n_cl_dte_observations': move.l10n_cl_dte_observations or '',
+            }
+            
+            for field_name, field_value in fields_to_check.items():
+                value_lower = field_value.lower()
+                for pattern in xss_patterns:
+                    if pattern.lower() in value_lower:
+                        raise ValidationError(
+                            _('Potential XSS detected in field "%(field)s": "%(pattern)s" is not allowed. '
+                              'Please remove any script tags or JavaScript code.',
+                              field=field_name, pattern=pattern)
+                        )
+
     # ═══════════════════════════════════════════════════════════
     # WRAPPER METHODS - LIBS/ DELEGATION (FASE 2 REFACTOR)
     # ═══════════════════════════════════════════════════════════
@@ -1493,8 +1544,13 @@ class AccountMoveDTE(models.Model):
 
         Returns 'productos' array with 'numero_linea' instead of 'linea'.
         """
+        # Prefetch para evitar N+1 queries en product_id y product_uom_id
+        lines = self.invoice_line_ids.filtered(lambda inv_line: not inv_line.display_type)
+        lines.mapped('product_id.name')  # Warm up cache
+        lines.mapped('product_uom_id.name')  # Warm up cache
+        
         productos = []
-        for idx, line in enumerate(self.invoice_line_ids.filtered(lambda inv_line: not inv_line.display_type), start=1):
+        for idx, line in enumerate(lines, start=1):
             productos.append({
                 'numero_linea': idx,
                 'nombre': line.product_id.name or line.name or '',

@@ -63,3 +63,7 @@ access_account_move_reference_manager,access_account_move_reference_manager,mode
 access_account_move_reference_readonly,access_account_move_reference_readonly,model_account_move_reference,account.group_account_readonly,1,0,0,0
 access_ai_agent_selector_user,ai.agent.selector.user,model_ai_agent_selector,base.group_user,1,0,0,0
 access_ai_agent_selector_manager,ai.agent.selector.manager,model_ai_agent_selector,account.group_account_manager,1,1,1,1
+access_ai_chat_universal_wizard_user,ai.chat.universal.wizard.user,model_ai_chat_universal_wizard,base.group_user,1,1,1,1
+access_ai_chat_universal_wizard_manager,ai.chat.universal.wizard.manager,model_ai_chat_universal_wizard,account.group_account_manager,1,1,1,1
+access_l10n_cl_rcv_integration_user,l10n_cl.rcv.integration.user,model_l10n_cl_rcv_integration,account.group_account_user,1,0,0,0
+access_l10n_cl_rcv_integration_manager,l10n_cl.rcv.integration.manager,model_l10n_cl_rcv_integration,account.group_account_manager,1,1,1,1
