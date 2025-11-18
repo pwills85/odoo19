@@ -164,6 +164,8 @@ class ProjectCashFlowReport(models.Model):
         except Exception as e:
             _logger.error("Error in _compute_net_forecast: %s", str(e))
             # Mantener valores por defecto en caso de error
+    
+    @api.depends('max_cash_gap', 'net_forecast', 'dso')
     def _compute_cash_health(self):
         """Método compute optimizado con manejo de errores"""
         _logger.debug("Computing _compute_cash_health for %d records", len(self))
@@ -183,6 +185,8 @@ class ProjectCashFlowReport(models.Model):
         except Exception as e:
             _logger.error("Error in _compute_cash_health: %s", str(e))
             # Mantener valores por defecto en caso de error
+    
+    @api.depends('max_cash_gap')
     def _compute_cash_gaps(self):
         """Método compute optimizado con manejo de errores"""
         _logger.debug("Computing _compute_cash_gaps for %d records", len(self))

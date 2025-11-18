@@ -799,6 +799,10 @@ class L10nClF29(models.Model):
 
         moves = self.env['account.move'].search(domain)
 
+        # Prefetch para evitar N+1 queries
+        moves.mapped('line_ids.tax_ids')
+        moves.mapped('line_ids.tax_line_id')
+
         # Inicializar contadores
         total_ventas = 0.0
         total_iva_debito = 0.0

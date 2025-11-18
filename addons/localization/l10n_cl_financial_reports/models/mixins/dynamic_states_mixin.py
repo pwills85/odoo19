@@ -55,11 +55,41 @@ class DynamicStatesMixin(models.AbstractModel):
 
     @api.model
     def get_view(self, view_id=None, view_type='form', **options):
-        """Override to inject dynamic attrs"""
-        result = super().fields_view_get(view_id, view_type, toolbar, submenu)
+        """
+        Override get_view to inject dynamic attrs based on record state.
+        
+        This mixin replaces deprecated 'states' parameter in field definitions
+        with computed fields (is_readonly, is_required) and dynamic view manipulation.
+        
+        Migrated from fields_view_get() (Odoo 19 CE compliance - 2025-11-17).
+        
+        Args:
+            view_id (int|None): View ID to load (None = default view for view_type)
+            view_type (str): Type of view ('form', 'tree', 'pivot', 'graph', 'search')
+            **options (dict): Additional options
+                - toolbar (bool): Include toolbar actions
+                - submenu (bool): Include submenu actions
+                - context (dict): Execution context
+        
+        Returns:
+            dict: View definition with keys:
+                - arch (str): XML architecture of the view
+                - fields (dict): Field definitions
+                - toolbar (dict): Available actions (if requested)
+                - name (str): View name
+                - type (str): View type
+        
+        Example:
+            >>> model = env['account.balance.sheet']
+            >>> view = model.get_view(view_type='form')
+            >>> print(view.keys())
+            dict_keys(['arch', 'fields', 'toolbar', 'name', 'type'])
+        """
+        # Call new Odoo 19 API (not deprecated fields_view_get)
+        result = super().get_view(view_id, view_type, **options)
 
+        # Inject dynamic attrs only for form views with state field
         if view_type == 'form' and hasattr(self, 'state'):
-            # Inject dynamic attrs into form view
             self._inject_dynamic_attrs(result)
 
         return result
