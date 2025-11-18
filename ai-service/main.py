@@ -859,9 +859,12 @@ async def liveness_check(request: Request):
 
 @limiter.limit("1000/minute")  # High limit for Prometheus scraping
 @app.get("/metrics")
-async def metrics(request: Request):
+async def metrics(
+    request: Request,
+    _: None = Depends(verify_api_key)
+):
     """
-    Prometheus metrics endpoint.
+    Prometheus metrics endpoint (requires authentication).
 
     Exposes metrics in Prometheus text format:
     - HTTP request metrics (count, latency, errors)
@@ -870,8 +873,18 @@ async def metrics(request: Request):
     - Cache metrics
     - Business metrics (DTEs, projects, payroll)
 
-    Note: This endpoint does NOT require authentication
-    to allow Prometheus scraper access.
+    Security: P2-003 (Sprint 2)
+    Authentication required via X-API-Key header to prevent
+    unauthorized access to sensitive metrics data.
+
+    Headers:
+        X-API-Key: API key for authentication (configured in settings)
+
+    Returns:
+        Response: Prometheus text format metrics
+
+    Raises:
+        HTTPException(401): If API key is missing or invalid
     """
     from fastapi.responses import Response
     from utils.metrics import get_metrics, get_content_type
