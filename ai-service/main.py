@@ -85,15 +85,29 @@ app = FastAPI(
 # ═══════════════════════════════════════════════════════════
 
 from middleware.observability import ObservabilityMiddleware, ErrorTrackingMiddleware
+from middleware.security_headers import SecurityHeadersMiddleware
 
-# CORS Middleware
+# CORS Middleware - Explicit methods and headers (Security: Sec-2)
+ALLOWED_CORS_METHODS = ["GET", "POST", "OPTIONS"]  # Solo métodos necesarios
+ALLOWED_CORS_HEADERS = [
+    "Authorization",
+    "Content-Type",
+    "Accept",
+    "X-Request-ID",
+    "X-API-Key"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.allowed_origins,
+    allow_origins=settings.allowed_origins,  # Ya restrictivo
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=ALLOWED_CORS_METHODS,  # ✅ Explícito (was: ["*"])
+    allow_headers=ALLOWED_CORS_HEADERS,  # ✅ Explícito (was: ["*"])
+    max_age=600  # Cache preflight 10 minutos
 )
+
+# Security Headers Middleware (OWASP best practices)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Observability Middleware
 app.add_middleware(ObservabilityMiddleware)
@@ -256,82 +270,125 @@ class DTEValidationRequest(BaseModel):
         - Tipo DTE válido según SII
 
         Performance: ~2-3ms (sin impacto significativo)
+        Complexity: Reduced from 24 to <10 (Sprint 1 - Task 1.3)
         """
-        import structlog
-        logger = structlog.get_logger()
-
         if not isinstance(v, dict) or not v:
             raise ValueError("dte_data debe ser un diccionario no vacío")
 
-        # Validar RUT emisor (si existe)
-        if 'rut_emisor' in v:
-            rut = str(v['rut_emisor']).strip()
-            if not re.match(r'^\d{1,8}-[\dkK]$', rut):
-                logger.warning("validation_failed_rut_emisor", rut=rut)
-                raise ValueError(f"RUT emisor inválido: {rut}. Formato esperado: 12345678-9")
+        cls._validate_required_fields(v)
+        cls._validate_emisor(v)
+        cls._validate_receptor(v)
+        cls._validate_totales(v)
+        cls._validate_fecha_emision(v)
+        cls._validate_tipo_dte(v)
 
-            # Validar dígito verificador
-            try:
-                rut_num, dv = rut.split('-')
-                expected_dv = cls._calculate_dv(rut_num)
-                if expected_dv.upper() != dv.upper():
-                    logger.warning("validation_failed_dv_emisor", rut=rut, expected=expected_dv, got=dv)
-                    raise ValueError(f"RUT emisor con dígito verificador inválido: {rut} (esperado: {expected_dv})")
-            except ValueError:
-                raise
-            except:
-                pass  # Si falla parsing, continuar (formato ya validado)
+        return v
 
-        # Validar RUT receptor (si existe)
-        if 'rut_receptor' in v:
-            rut = str(v['rut_receptor']).strip()
-            if not re.match(r'^\d{1,8}-[\dkK]$', rut):
-                logger.warning("validation_failed_rut_receptor", rut=rut)
-                raise ValueError(f"RUT receptor inválido: {rut}. Formato esperado: 12345678-9")
-
-        # Validar monto total positivo
-        if 'monto_total' in v:
-            try:
-                monto = float(v['monto_total'])
-                if monto <= 0:
-                    logger.warning("validation_failed_monto_negative", monto=monto)
-                    raise ValueError(f"Monto total debe ser positivo: {monto}")
-                if monto > 999999999999:  # ~1 trillion CLP (sanity check)
-                    logger.warning("validation_failed_monto_excessive", monto=monto)
-                    raise ValueError(f"Monto total excede límite razonable: {monto}")
-            except (TypeError, ValueError) as e:
-                if "debe ser positivo" in str(e) or "excede límite" in str(e):
-                    raise
-                raise ValueError(f"Monto total inválido: {v['monto_total']}")
-
-        # Validar fecha emisión no futura
-        if 'fecha_emision' in v:
-            from datetime import datetime, timedelta
-            try:
-                # Soportar múltiples formatos
-                fecha_str = str(v['fecha_emision'])
-
-                # Intentar parsear ISO format (YYYY-MM-DD o YYYY-MM-DDTHH:MM:SS)
-                if 'T' in fecha_str:
-                    fecha = datetime.fromisoformat(fecha_str.replace('Z', '+00:00'))
-                else:
-                    fecha = datetime.strptime(fecha_str, '%Y-%m-%d')
-
-                # Permitir +24 horas (zona horaria)
-                now_plus_buffer = datetime.now() + timedelta(hours=24)
-
-                if fecha > now_plus_buffer:
-                    logger.warning("validation_failed_fecha_futura", fecha=fecha_str)
-                    raise ValueError(f"Fecha emisión no puede ser futura: {fecha_str}")
-
-            except ValueError as e:
-                if "no puede ser futura" in str(e):
-                    raise
-                raise ValueError(f"Fecha emisión inválida: {v['fecha_emision']}")
-
-        # Validar tipo_dte
+    @classmethod
+    def _validate_required_fields(cls, v: Dict[str, Any]) -> None:
+        """Validate required fields presence. Complexity: ~2"""
         if 'tipo_dte' not in v:
             raise ValueError("Campo 'tipo_dte' es requerido en dte_data")
+
+    @classmethod
+    def _validate_emisor(cls, v: Dict[str, Any]) -> None:
+        """Validate RUT emisor format and check digit. Complexity: ~5"""
+        import structlog
+        logger = structlog.get_logger()
+
+        if 'rut_emisor' not in v:
+            return
+
+        rut = str(v['rut_emisor']).strip()
+        if not re.match(r'^\d{1,8}-[\dkK]$', rut):
+            logger.warning("validation_failed_rut_emisor", rut=rut)
+            raise ValueError(f"RUT emisor inválido: {rut}. Formato esperado: 12345678-9")
+
+        # Validar dígito verificador
+        try:
+            rut_num, dv = rut.split('-')
+            expected_dv = cls._calculate_dv(rut_num)
+            if expected_dv.upper() != dv.upper():
+                logger.warning("validation_failed_dv_emisor", rut=rut, expected=expected_dv, got=dv)
+                raise ValueError(f"RUT emisor con dígito verificador inválido: {rut} (esperado: {expected_dv})")
+        except ValueError:
+            raise
+        except:
+            pass  # Si falla parsing, continuar (formato ya validado)
+
+    @classmethod
+    def _validate_receptor(cls, v: Dict[str, Any]) -> None:
+        """Validate RUT receptor format. Complexity: ~3"""
+        import structlog
+        logger = structlog.get_logger()
+
+        if 'rut_receptor' not in v:
+            return
+
+        rut = str(v['rut_receptor']).strip()
+        if not re.match(r'^\d{1,8}-[\dkK]$', rut):
+            logger.warning("validation_failed_rut_receptor", rut=rut)
+            raise ValueError(f"RUT receptor inválido: {rut}. Formato esperado: 12345678-9")
+
+    @classmethod
+    def _validate_totales(cls, v: Dict[str, Any]) -> None:
+        """Validate monto_total is positive and reasonable. Complexity: ~6"""
+        import structlog
+        logger = structlog.get_logger()
+
+        if 'monto_total' not in v:
+            return
+
+        try:
+            monto = float(v['monto_total'])
+            if monto <= 0:
+                logger.warning("validation_failed_monto_negative", monto=monto)
+                raise ValueError(f"Monto total debe ser positivo: {monto}")
+            if monto > 999999999999:  # ~1 trillion CLP (sanity check)
+                logger.warning("validation_failed_monto_excessive", monto=monto)
+                raise ValueError(f"Monto total excede límite razonable: {monto}")
+        except (TypeError, ValueError) as e:
+            if "debe ser positivo" in str(e) or "excede límite" in str(e):
+                raise
+            raise ValueError(f"Monto total inválido: {v['monto_total']}")
+
+    @classmethod
+    def _validate_fecha_emision(cls, v: Dict[str, Any]) -> None:
+        """Validate fecha_emision is not in the future. Complexity: ~6"""
+        import structlog
+        logger = structlog.get_logger()
+
+        if 'fecha_emision' not in v:
+            return
+
+        from datetime import datetime, timedelta
+        try:
+            # Soportar múltiples formatos
+            fecha_str = str(v['fecha_emision'])
+
+            # Intentar parsear ISO format (YYYY-MM-DD o YYYY-MM-DDTHH:MM:SS)
+            if 'T' in fecha_str:
+                fecha = datetime.fromisoformat(fecha_str.replace('Z', '+00:00'))
+            else:
+                fecha = datetime.strptime(fecha_str, '%Y-%m-%d')
+
+            # Permitir +24 horas (zona horaria)
+            now_plus_buffer = datetime.now() + timedelta(hours=24)
+
+            if fecha > now_plus_buffer:
+                logger.warning("validation_failed_fecha_futura", fecha=fecha_str)
+                raise ValueError(f"Fecha emisión no puede ser futura: {fecha_str}")
+
+        except ValueError as e:
+            if "no puede ser futura" in str(e):
+                raise
+            raise ValueError(f"Fecha emisión inválida: {v['fecha_emision']}")
+
+    @classmethod
+    def _validate_tipo_dte(cls, v: Dict[str, Any]) -> None:
+        """Validate tipo_dte is valid per SII. Complexity: ~3"""
+        import structlog
+        logger = structlog.get_logger()
 
         # Validar tipo_dte válido (DTEs más comunes en Chile según SII)
         valid_types = [
@@ -356,8 +413,6 @@ class DTEValidationRequest(BaseModel):
                 f"tipo_dte '{tipo_dte}' no válido. "
                 f"Tipos permitidos: {', '.join(valid_types)}"
             )
-
-        return v
 
     @staticmethod
     def _calculate_dv(rut_num: str) -> str:
@@ -598,6 +653,8 @@ async def health_check(request: Request):
         200: All dependencies healthy
         207: Service degraded (some non-critical issues)
         503: Service unhealthy (critical dependency down)
+    
+    Complexity: Reduced from 18 to <10 (Sprint 1 - Task 1.3)
     """
     from fastapi.responses import JSONResponse
 
@@ -605,7 +662,54 @@ async def health_check(request: Request):
     overall_status = "healthy"
     dependencies = {}
 
-    # 1. Check Redis Sentinel
+    # Check all dependencies
+    redis_status = await _check_redis_health()
+    dependencies["redis"] = redis_status
+    if redis_status["status"] in ["down", "unhealthy"]:
+        overall_status = "unhealthy"
+    elif redis_status.get("warning"):
+        overall_status = "degraded"
+
+    anthropic_status = _check_anthropic_health()
+    dependencies["anthropic"] = anthropic_status
+    if anthropic_status.get("status") == "error":
+        overall_status = "degraded"
+
+    plugin_status = _check_plugin_registry_health()
+    dependencies["plugin_registry"] = plugin_status
+    if plugin_status.get("status") == "error":
+        overall_status = "degraded"
+
+    kb_status = _check_knowledge_base_health()
+    dependencies["knowledge_base"] = kb_status
+    if kb_status.get("status") == "error":
+        overall_status = "degraded"
+
+    # Get optional metrics
+    metrics = _get_service_metrics(dependencies)
+
+    # Build response
+    health_response = _build_health_response(
+        overall_status, dependencies, metrics, start_time
+    )
+
+    # Return appropriate HTTP status code
+    status_code = 200 if overall_status == "healthy" else (
+        503 if overall_status == "unhealthy" else 207  # 207 = Multi-Status (degraded)
+    )
+
+    logger.info("health_check_completed",
+                status=overall_status,
+                duration_ms=health_response["health_check_duration_ms"])
+
+    return JSONResponse(
+        content=health_response,
+        status_code=status_code
+    )
+
+
+async def _check_redis_health() -> Dict[str, Any]:
+    """Check Redis Sentinel cluster health. Complexity: ~8"""
     try:
         from utils.redis_helper import get_redis_client
 
@@ -633,7 +737,7 @@ async def health_check(request: Request):
         except:
             sentinel_info = {"type": "standalone"}
 
-        dependencies["redis"] = {
+        redis_status = {
             "status": "up",
             **sentinel_info,
             "latency_ms": round(redis_latency, 2)
@@ -641,51 +745,41 @@ async def health_check(request: Request):
 
         # Alert if latency > 100ms (P1-7)
         if redis_latency > 100:
-            overall_status = "degraded"
-            dependencies["redis"]["warning"] = f"High latency: {redis_latency:.1f}ms"
+            redis_status["warning"] = f"High latency: {redis_latency:.1f}ms"
             logger.warning("health_check_redis_slow", latency_ms=redis_latency)
+
+        return redis_status
+
     except Exception as e:
-        dependencies["redis"] = {
+        logger.error("health_check_redis_failed", error=str(e))
+        return {
             "status": "down",
             "error": str(e)[:200]
         }
-        overall_status = "unhealthy"
-        logger.error("health_check_redis_failed", error=str(e))
 
-    # 2. Check Anthropic API
+
+def _check_anthropic_health() -> Dict[str, Any]:
+    """Check Anthropic API configuration. Complexity: ~4"""
     try:
         api_key_present = bool(settings.anthropic_api_key and
                               settings.anthropic_api_key != "default_key")
 
-        anthropic_status = {
+        return {
             "status": "configured" if api_key_present else "not_configured",
             "model": settings.anthropic_model,
             "api_key_present": api_key_present
         }
 
-        # Optional: Test actual connectivity (commented out for performance)
-        # Uncomment if you want to test real API calls
-        # try:
-        #     from clients.anthropic_client import AnthropicClient
-        #     client = AnthropicClient()
-        #     # Make a lightweight test call (count tokens)
-        #     await client.estimate_tokens("health check test", max_tokens=10)
-        #     anthropic_status["connectivity"] = "ok"
-        # except:
-        #     anthropic_status["connectivity"] = "unreachable"
-        #     overall_status = "degraded"
-
-        dependencies["anthropic"] = anthropic_status
-
     except Exception as e:
-        dependencies["anthropic"] = {
+        logger.error("health_check_anthropic_failed", error=str(e))
+        return {
             "status": "error",
             "error": str(e)[:200]
         }
-        overall_status = "degraded"
-        logger.error("health_check_anthropic_failed", error=str(e))
 
-    # 3. Check Plugin Registry
+
+def _check_plugin_registry_health() -> Dict[str, Any]:
+    """Check Plugin Registry status. Complexity: ~4"""
     try:
         from plugins.registry import get_plugin_registry
 
@@ -695,20 +789,21 @@ async def health_check(request: Request):
         # Extract module names from plugin dicts
         plugin_modules = [plugin.get('module', 'unknown') for plugin in plugins_list]
 
-        dependencies["plugin_registry"] = {
+        return {
             "status": "loaded",
             "plugins_count": len(plugins_list),
             "plugins": plugin_modules
         }
     except Exception as e:
-        dependencies["plugin_registry"] = {
+        logger.error("health_check_plugins_failed", error=str(e))
+        return {
             "status": "error",
             "error": str(e)[:200]
         }
-        overall_status = "degraded"
-        logger.error("health_check_plugins_failed", error=str(e))
 
-    # 4. Check Knowledge Base
+
+def _check_knowledge_base_health() -> Dict[str, Any]:
+    """Check Knowledge Base status. Complexity: ~4"""
     try:
         from chat.knowledge_base import KnowledgeBase
 
@@ -718,20 +813,21 @@ async def health_check(request: Request):
         for doc in knowledge_base.documents:
             modules_set.add(doc.get("module", "unknown"))
 
-        dependencies["knowledge_base"] = {
+        return {
             "status": "loaded",
             "documents_count": len(knowledge_base.documents),
             "modules": sorted(list(modules_set))
         }
     except Exception as e:
-        dependencies["knowledge_base"] = {
+        logger.error("health_check_knowledge_base_failed", error=str(e))
+        return {
             "status": "error",
             "error": str(e)[:200]
         }
-        overall_status = "degraded"
-        logger.error("health_check_knowledge_base_failed", error=str(e))
 
-    # 5. Get metrics (optional, from Redis if available)
+
+def _get_service_metrics(dependencies: Dict[str, Any]) -> Dict[str, Any]:
+    """Get optional service metrics from Redis. Complexity: ~5"""
     metrics = {}
     try:
         if dependencies.get("redis", {}).get("status") == "up":
@@ -754,8 +850,17 @@ async def health_check(request: Request):
     except:
         # Metrics are optional
         pass
+    
+    return metrics
 
-    # Build response
+
+def _build_health_response(
+    overall_status: str,
+    dependencies: Dict[str, Any],
+    metrics: Dict[str, Any],
+    start_time: float
+) -> Dict[str, Any]:
+    """Build health check response object. Complexity: ~3"""
     health_response = {
         "status": overall_status,
         "service": "AI Microservice - DTE Intelligence",
@@ -769,19 +874,7 @@ async def health_check(request: Request):
     if metrics:
         health_response["metrics"] = metrics
 
-    # Return appropriate HTTP status code
-    status_code = 200 if overall_status == "healthy" else (
-        503 if overall_status == "unhealthy" else 207  # 207 = Multi-Status (degraded)
-    )
-
-    logger.info("health_check_completed",
-                status=overall_status,
-                duration_ms=health_response["health_check_duration_ms"])
-
-    return JSONResponse(
-        content=health_response,
-        status_code=status_code
-    )
+    return health_response
 
 
 @limiter.limit("1000/minute")  # High limit for orchestrator probes
@@ -1410,110 +1503,133 @@ class SIIMonitorResponse(BaseModel):
 # Lazy initialization del orchestrator
 _orchestrator = None
 
+def _initialize_anthropic_client():
+    """Initialize Anthropic API client. Complexity: ~2"""
+    from clients.anthropic_client import get_anthropic_client
+    
+    return get_anthropic_client(
+        settings.anthropic_api_key,
+        settings.anthropic_model
+    )
+
+
+def _initialize_redis_with_retry(max_retries: int = 3, initial_delay: int = 1):
+    """
+    Initialize Redis client with retry logic and graceful degradation.
+    
+    Args:
+        max_retries: Maximum connection attempts
+        initial_delay: Initial delay between retries (seconds, exponential backoff)
+        
+    Returns:
+        Redis client instance or None if all retries fail
+        
+    Complexity: <10 (simplified error handling)
+    """
+    import redis
+    import os
+    import time
+    from redis.connection import ConnectionPool
+    
+    redis_client = None
+    retry_delay = initial_delay
+    
+    for attempt in range(1, max_retries + 1):
+        try:
+            # Create connection pool for efficient resource management
+            redis_pool = ConnectionPool(
+                host=os.getenv('REDIS_HOST', 'redis'),
+                port=int(os.getenv('REDIS_PORT', 6379)),
+                db=int(os.getenv('REDIS_DB', 0)),
+                max_connections=20,
+                socket_connect_timeout=5,
+                socket_keepalive=True,
+                health_check_interval=30,
+                decode_responses=False
+            )
+            
+            redis_client = redis.Redis(connection_pool=redis_pool)
+            redis_client.ping()
+            
+            logger.info(
+                "redis_connected",
+                pool_size=20,
+                host=os.getenv('REDIS_HOST', 'redis'),
+                attempt=attempt
+            )
+            break  # Success, exit retry loop
+            
+        except (redis.ConnectionError, redis.TimeoutError) as e:
+            # Handle connection and timeout errors with retry logic
+            error_type = type(e).__name__
+            logger.warning(
+                f"redis_{error_type.lower()}",
+                error=str(e),
+                attempt=attempt,
+                max_retries=max_retries
+            )
+            
+            if attempt < max_retries:
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+            else:
+                logger.error(
+                    "redis_connection_failed_all_retries",
+                    error=str(e),
+                    mode="graceful_degradation"
+                )
+                redis_client = None
+                
+        except Exception as e:
+            # Handle unexpected errors
+            logger.exception(
+                "redis_unexpected_error",
+                error=str(e),
+                error_type=type(e).__name__,
+                attempt=attempt
+            )
+            if attempt >= max_retries:
+                redis_client = None
+    
+    # Final status log
+    if redis_client is None:
+        logger.warning(
+            "service_starting_no_cache_mode",
+            message="AI Service running WITHOUT Redis cache (graceful degradation). "
+                    "Performance may be reduced. Check Redis connection."
+        )
+    else:
+        logger.info("service_starting_with_cache", cache_mode="redis_enabled")
+    
+    return redis_client
+
+
+def _create_orchestrator_instance(anthropic_client, redis_client, slack_token: str = None):
+    """Create MonitoringOrchestrator instance. Complexity: ~1"""
+    from sii_monitor.orchestrator import MonitoringOrchestrator
+    
+    return MonitoringOrchestrator(
+        anthropic_client=anthropic_client,
+        redis_client=redis_client,
+        slack_token=slack_token
+    )
+
+
 def get_orchestrator():
-    """Obtiene instancia del orchestrator (singleton)"""
+    """Obtiene instancia del orchestrator (singleton). Complexity: reduced to <10"""
     global _orchestrator
     
     if _orchestrator is None:
-        # Importar aquí para evitar import circular
-        from sii_monitor.orchestrator import MonitoringOrchestrator
-        from clients.anthropic_client import get_anthropic_client
-        import redis
         import os
         
-        # Inicializar clientes
-        anthropic_client = get_anthropic_client(
-            settings.anthropic_api_key,
-            settings.anthropic_model
-        )
-
-        # ✅ FIX [P0-3]: Redis with ROBUST error handling, retry logic, graceful degradation, and connection pool
-        redis_client = None
-        max_retries = 3
-        retry_delay = 1  # seconds
-
-        for attempt in range(1, max_retries + 1):
-            try:
-                from redis.connection import ConnectionPool
-
-                # Create connection pool for efficient resource management
-                redis_pool = ConnectionPool(
-                    host=os.getenv('REDIS_HOST', 'redis'),
-                    port=int(os.getenv('REDIS_PORT', 6379)),
-                    db=int(os.getenv('REDIS_DB', 0)),
-                    max_connections=20,  # Connection pool optimization
-                    socket_connect_timeout=5,
-                    socket_keepalive=True,
-                    health_check_interval=30,  # Health check every 30s
-                    decode_responses=False
-                )
-
-                redis_client = redis.Redis(connection_pool=redis_pool)
-
-                # Test connection with timeout
-                redis_client.ping()
-                logger.info(
-                    "redis_connected",
-                    pool_size=20,
-                    host=os.getenv('REDIS_HOST', 'redis'),
-                    attempt=attempt
-                )
-                break  # Success, exit retry loop
-
-            except redis.ConnectionError as e:
-                logger.warning(
-                    "redis_connection_error",
-                    error=str(e),
-                    attempt=attempt,
-                    max_retries=max_retries
-                )
-                if attempt < max_retries:
-                    import time
-                    time.sleep(retry_delay)
-                    retry_delay *= 2  # Exponential backoff
-                else:
-                    logger.error(
-                        "redis_connection_failed_all_retries",
-                        error=str(e),
-                        mode="graceful_degradation"
-                    )
-                    redis_client = None
-
-            except redis.TimeoutError as e:
-                logger.warning(
-                    "redis_timeout_error",
-                    error=str(e),
-                    attempt=attempt
-                )
-                if attempt >= max_retries:
-                    redis_client = None
-
-            except Exception as e:
-                logger.exception(
-                    "redis_unexpected_error",
-                    error=str(e),
-                    error_type=type(e).__name__,
-                    attempt=attempt
-                )
-                if attempt >= max_retries:
-                    redis_client = None
-
-        # Final status log
-        if redis_client is None:
-            logger.warning(
-                "service_starting_no_cache_mode",
-                message="AI Service running WITHOUT Redis cache (graceful degradation). "
-                        "Performance may be reduced. Check Redis connection."
-            )
-        else:
-            logger.info("service_starting_with_cache", cache_mode="redis_enabled")
-
+        anthropic_client = _initialize_anthropic_client()
+        redis_client = _initialize_redis_with_retry()
         slack_token = os.getenv('SLACK_TOKEN')
         
-        _orchestrator = MonitoringOrchestrator(
-            anthropic_client=anthropic_client,
-            redis_client=redis_client,
-            slack_token=slack_token
+        _orchestrator = _create_orchestrator_instance(
+            anthropic_client,
+            redis_client,
+            slack_token
         )
     
     return _orchestrator

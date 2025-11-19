@@ -6,6 +6,7 @@ Configuración del AI Microservice
 from pydantic_settings import BaseSettings
 from pydantic import Field, field_validator
 from typing import Optional
+import re
 
 
 class Settings(BaseSettings):
@@ -58,6 +59,43 @@ class Settings(BaseSettings):
         return v
     allowed_origins: list[str] = ["http://odoo:8069", "http://odoo-eergy-services:8001"]
     
+    @field_validator('allowed_origins')
+    @classmethod
+    def validate_cors_origins(cls, v: list[str]) -> list[str]:
+        """
+        Validate CORS origins format and security.
+        
+        Rules:
+        - No wildcard in production
+        - Must be valid URLs with scheme
+        - HTTPS recommended in production
+        """
+        # Check wildcard
+        if "*" in v and not cls.model_config.get('debug', False):
+            raise ValueError(
+                "Wildcard CORS not allowed in production. "
+                "Specify explicit origins."
+            )
+        
+        # Validate each origin
+        url_pattern = re.compile(
+            r'^https?://'  # http or https
+            r'(?:[\w-]+\.)*[\w-]+'  # domain
+            r'(?::\d+)?$'  # optional port
+        )
+        
+        for origin in v:
+            if origin == "*":
+                continue  # Already checked above
+            
+            if not url_pattern.match(origin):
+                raise ValueError(
+                    f"Invalid CORS origin format: {origin}. "
+                    f"Expected: http(s)://domain[:port]"
+                )
+        
+        return v
+    
     # ═══════════════════════════════════════════════════════════
     # ANTHROPIC API (Solo Claude) - Actualizado 2025-10-23
     # ═══════════════════════════════════════════════════════════
@@ -106,8 +144,14 @@ class Settings(BaseSettings):
     # REDIS CACHE
     # ═══════════════════════════════════════════════════════════
     
-    redis_url: str = "redis://redis:6379/1"
+    # ✅ FIX [P0-9]: Redis TLS encryption for data in transit
+    redis_url: str = "rediss://redis:6379/1"  # rediss:// protocol for TLS
     redis_cache_ttl: int = 3600  # 1 hora
+    
+    # TLS Configuration (Task 1.2 - Sprint 1)
+    redis_tls_enabled: bool = True
+    redis_ssl_cert_reqs: str = 'required'  # 'required' in production, 'none' in dev
+    redis_ssl_ca_certs: Optional[str] = None  # Path to CA certs in production
     
     # ═══════════════════════════════════════════════════════════
     # ODOO INTEGRATION

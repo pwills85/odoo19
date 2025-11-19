@@ -58,7 +58,12 @@
       "Bash(docker pull:*)",
       "Bash(docker --help:*)",
       "Bash(docker context:*)",
-      "Bash(docker login --help:*)"
+      "Bash(docker login --help:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(docker exec:*)",
+      "Bash(if [ -f /Users/pedro/Documents/odoo19/docs/prompts/06_outputs/2025-11/sprint1/TASK1_EXECUTION.log ])",
+      "Bash(then tail -50 /Users/pedro/Documents/odoo19/docs/prompts/06_outputs/2025-11/sprint1/TASK1_EXECUTION.log)",
+      "Bash(else echo \"Log file not created yet\")"
     ],
     "deny": [],
     "ask": []

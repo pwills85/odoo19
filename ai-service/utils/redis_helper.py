@@ -11,17 +11,24 @@ Architecture:
 - Lazy initialization
 - Thread-safe
 - Configurable via environment variables
+- TLS encryption support (Task 1.2 - Sprint 1)
 
 HA Features:
 - Master discovery via Sentinel
 - Automatic failover detection
 - Read scaling with replicas
 - Health checks
+
+Security Features (Task 1.2):
+- TLS/SSL encryption for data in transit
+- Certificate verification (production)
+- Graceful fallback for development
 """
 
 import redis
 from redis.sentinel import Sentinel
 import os
+import ssl
 import structlog
 from typing import Optional
 
@@ -175,6 +182,13 @@ def _get_sentinel_client(read_only: bool = False) -> redis.Redis:
 def _get_direct_client() -> redis.Redis:
     """
     Get Redis client directly (non-HA mode, for backwards compatibility).
+    
+    ✅ ENHANCEMENT [P0-9 Task 1.2]: TLS encryption support
+    
+    TLS Configuration:
+    - Development: TLS optional, CERT_NONE (allows testing without certs)
+    - Production: TLS required, CERT_REQUIRED (enforces certificate validation)
+    - Controlled via REDIS_TLS_ENABLED and REDIS_SSL_CERT_REQS env vars
 
     Returns:
         Redis client instance
@@ -192,11 +206,39 @@ def _get_direct_client() -> redis.Redis:
                 "Please set it in .env file or environment."
             )
 
+        # ✅ TLS Configuration (Task 1.2 - Sprint 1)
+        tls_enabled = os.getenv('REDIS_TLS_ENABLED', 'true').lower() == 'true'
+        ssl_cert_reqs_str = os.getenv('REDIS_SSL_CERT_REQS', 'none')  # 'none' in dev, 'required' in prod
+        ssl_ca_certs = os.getenv('REDIS_SSL_CA_CERTS', None)
+        
+        ssl_config = None
+        if tls_enabled:
+            ssl_config = ssl.create_default_context()
+            
+            # Certificate verification mode
+            if ssl_cert_reqs_str == 'required':
+                ssl_config.check_hostname = True
+                ssl_config.verify_mode = ssl.CERT_REQUIRED
+                if ssl_ca_certs:
+                    ssl_config.load_verify_locations(ssl_ca_certs)
+                logger.info("redis_tls_enabled_production_mode",
+                           verify_mode="CERT_REQUIRED",
+                           check_hostname=True,
+                           ca_certs=ssl_ca_certs)
+            else:
+                # Development mode: TLS encryption without cert verification
+                ssl_config.check_hostname = False
+                ssl_config.verify_mode = ssl.CERT_NONE
+                logger.info("redis_tls_enabled_development_mode",
+                           verify_mode="CERT_NONE",
+                           check_hostname=False)
+
         logger.info("redis_client_initializing",
                    host=host,
                    port=port,
                    db=db,
-                   has_password=bool(password))
+                   has_password=bool(password),
+                   tls_enabled=tls_enabled)
 
         try:
             _redis_master_client = redis.Redis(
@@ -208,7 +250,8 @@ def _get_direct_client() -> redis.Redis:
                 socket_connect_timeout=5,
                 socket_timeout=5,
                 retry_on_timeout=True,
-                health_check_interval=30
+                health_check_interval=30,
+                ssl=ssl_config if ssl_config else None  # TLS support
             )
 
             # Test connection
@@ -217,12 +260,14 @@ def _get_direct_client() -> redis.Redis:
             logger.info("redis_client_initialized",
                        host=host,
                        port=port,
-                       db=db)
+                       db=db,
+                       tls_enabled=tls_enabled)
 
         except redis.ConnectionError as e:
             logger.error("redis_connection_failed",
                         host=host,
                         port=port,
+                        tls_enabled=tls_enabled,
                         error=str(e))
             raise
 
