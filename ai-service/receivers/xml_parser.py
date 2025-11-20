@@ -40,8 +40,18 @@ class XMLParser:
         logger.info("parsing_dte_xml")
         
         try:
-            # Parsear XML
-            root = etree.fromstring(dte_xml.encode('ISO-8859-1'))
+            # ✅ SECURITY FIX [P0-1]: XXE Protection
+            # Create secure XML parser with disabled external entities
+            parser = etree.XMLParser(
+                resolve_entities=False,  # Block XXE attacks
+                no_network=True,         # Block SSRF attacks
+                dtd_validation=False,    # Disable DTD validation
+                load_dtd=False,          # Don't load external DTDs
+                huge_tree=False          # Prevent DoS attacks
+            )
+            
+            # Parse XML with secure parser
+            root = etree.fromstring(dte_xml.encode('ISO-8859-1'), parser)
             
             # Extraer datos del encabezado
             tipo_dte = self._extract_text(root, './/IdDoc/TipoDTE')

@@ -1,0 +1,72 @@
+{
+  "timestamp": "2025-11-15T17:57:41.036558",
+  "total_issues": 5,
+  "by_severity": {
+    "P0": 3,
+    "P1": 2,
+    "P2": 0
+  },
+  "by_category": {
+    "Security": 3,
+    "Performance": 1,
+    "Reliability": 1
+  },
+  "stats": {
+    "pydantic_models": 22,
+    "todos": 14,
+    "test_files": 22,
+    "dependencies": 30
+  },
+  "issues": [
+    {
+      "severity": "P0",
+      "category": "Security",
+      "title": "Hardcoded API key",
+      "description": "Potential hardcoded secret found",
+      "file_path": "main.py",
+      "line_number": 120,
+      "recommendation": "Use environment variables or secrets management",
+      "roi_impact": null
+    },
+    {
+      "severity": "P0",
+      "category": "Security",
+      "title": "Potential XXE vulnerability",
+      "description": "XML parsing without disabled external entities",
+      "file_path": "receivers/xml_parser.py",
+      "line_number": null,
+      "recommendation": "Use parser with resolve_entities=False",
+      "roi_impact": null
+    },
+    {
+      "severity": "P0",
+      "category": "Security",
+      "title": "Potential SQL injection",
+      "description": "SQL query with string formatting",
+      "file_path": "audits/comprehensive_audit.py",
+      "line_number": 331,
+      "recommendation": "Use parameterized queries",
+      "roi_impact": null
+    },
+    {
+      "severity": "P1",
+      "category": "Performance",
+      "title": "Low async/await usage",
+      "description": "Only 14.3% of functions are async",
+      "file_path": null,
+      "line_number": null,
+      "recommendation": "Convert I/O-bound functions to async",
+      "roi_impact": "2-3x throughput improvement"
+    },
+    {
+      "severity": "P1",
+      "category": "Reliability",
+      "title": "Bare except clauses",
+      "description": "11 bare except: clauses found",
+      "file_path": null,
+      "line_number": null,
+      "recommendation": "Use specific exception types",
+      "roi_impact": null
+    }
+  ]
+}
